@@ -286,7 +286,7 @@ create table public.stock_balances (
 );
 
 create type public.movement_type as enum (
-  'receipt_in','requisition_out','defect_out','repair_out',
+  'receipt_in','requisition_out','return_in','defect_out','repair_out',
   'repair_return_in','liquidation_out','adjustment_in','adjustment_out','transfer'
 );
 
@@ -693,6 +693,11 @@ export const SEVERITY_LEVEL = { light:"Nhẹ", medium:"Vừa", severe:"Nặng" }
 export const DAMAGE_TYPE = { cracked:"Nứt", chipped:"Mẻ", broken:"Gãy", worn:"Mòn", electrical:"Hỏng điện", chemical:"Hỏng hóa chất", other:"Khác" };
 export const DEFECT_RESOLUTION = { repaired:"Đã sửa", liquidated:"Đã thanh lý" };
 export const REPAIR_OUTCOME = { returned_to_stock:"Nhập lại kho", liquidation:"Thanh lý" };
+export const MOVEMENT_TYPE = {
+  receipt_in:"Nhập kho", requisition_out:"Cấp phát", return_in:"Nhập trả lại",
+  defect_out:"Chuyển kho hỏng", repair_out:"Đưa đi sửa", repair_return_in:"Nhập lại kho (sửa xong)",
+  liquidation_out:"Thanh lý", adjustment_in:"Điều chỉnh +", adjustment_out:"Điều chỉnh -", transfer:"Chuyển kho"
+};
 ```
 
 ---
@@ -741,6 +746,8 @@ for update;
 | 17 | `reject_liquidation` | id, by, reason | — | pending→rejected |
 | 18 | `post_stocktake` | session_id, by | — | draft→posted, tạo adjustment |
 | 19 | `transfer_stock` | items jsonb, from_loc, to_loc, by | — | chuyển kho giữa locations |
+| 20 | `return_requisition_items` | requisition_id, items jsonb, by | — | nhập trả lại: cộng stock + ledger `return_in` |
+| 21 | `adjust_stock` | variant_id, location_id, delta, reason, by | — | điều chỉnh tồn thủ công (delta ±, bắt buộc reason) |
 
 ### 8.3 Ví dụ RPC `fulfill_requisition` (đầy đủ pattern)
 ```sql
@@ -961,6 +968,7 @@ create trigger trg_profiles_no_escalation
 | `/repairs` | Sửa chữa | manager |
 | `/liquidations` | Thanh lý | manager |
 | `/stocktake` | Kiểm kê | manager |
+| `/transfers` | Chuyển kho | manager |
 | `/reports` | Báo cáo | manager |
 | `/admin/{products,categories,zones,locations,suppliers,users}` | Quản trị | manager |
 
@@ -992,7 +1000,7 @@ create trigger trg_profiles_no_escalation
 - Bảng: mã, người yêu cầu, khu vực, ngày, **badge trạng thái** (7 trạng thái).
 - Filter theo status + phân trang.
 - Chi tiết: items, mục đích, timeline (ai duyệt/cấp/nhận + thời gian).
-- Hành động theo role: requester (gửi/hủy/xác nhận nhận), manager (duyệt/từ chối/cấp phát).
+- Hành động theo role: requester (gửi/hủy/xác nhận nhận, **trả lại vật tư không dùng hết**), manager (duyệt/từ chối/cấp phát).
 
 ### 14.7 Phiếu nhập kho
 - Danh sách: mã, nhà cung cấp, ngày, **badge** (Nháp/Đã ghi nhận/Hủy).
@@ -1028,6 +1036,10 @@ create trigger trg_profiles_no_escalation
 
 ### 14.13 Báo cáo — mục 18
 
+### 14.14 Chuyển kho & Điều chỉnh tồn (manager)
+- **Chuyển kho (`/transfers`):** chọn `from_location` → `to_location` → thêm item (biến thể + số lượng) → lý do → "Chuyển" (RPC `transfer_stock`). Ghi ledger `transfer`.
+- **Điều chỉnh tồn thủ công:** chọn biến thể + location → nhập delta (±) → **bắt buộc lý do** → "Lưu" (RPC `adjust_stock`). Ghi `adjustment_in`/`adjustment_out`.
+
 ---
 
 ## 15. Quy tắc nghiệp vụ & luồng xử lý
@@ -1058,6 +1070,20 @@ stock(variant) = có components ? min(floor(stock(child)/qty)) : sum(stock_balan
 
 ### 15.7 Kiểm kê
 - `post_stocktake`: mỗi lệch `actual - system` tạo `adjustment_in`/`adjustment_out` + ledger.
+
+### 15.8 Nhập trả lại kho (return-to-stock)
+- Khi requester nhận vật tư nhưng **dùng không hết**, trả lại Kho chính qua RPC `return_requisition_items`.
+- Điều kiện: requisition ở `issued`/`received`; số trả ≤ (đã cấp − đã trả trước đó).
+- Xử lý: cộng `stock_balances` Kho chính + ledger `return_in` (ref requisition). **KHÔNG qua receipts** (không phải nhập từ NCC).
+- Ghi audit `requisition.return`.
+
+### 15.9 Điều chỉnh tồn thủ công (ngoài kỳ kiểm kê)
+- RPC `adjust_stock(variant_id, location_id, delta, reason, by)`: delta dương → `adjustment_in`, âm → `adjustment_out`.
+- **Bắt buộc `reason`** (không rỗng); ghi ledger + audit. Khác kiểm kê: không cần session.
+
+### 15.10 Quy đổi đơn vị (chưa hỗ trợ)
+- MVP giả định **nhập-xuất cùng đơn vị** (bao→bao, cái→cái). Không quy đổi kg↔bao.
+- Nếu thực tế cần (cám mua bao 25kg, cấp theo kg): thêm bảng `unit_conversions` (variant_id, from_unit, to_unit, factor) + UoM sau. **KHÔNG làm trong MVP**.
 
 ---
 
