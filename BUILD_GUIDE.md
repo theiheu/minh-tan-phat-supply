@@ -861,20 +861,43 @@ create policy "requester_insert_own" on public.requisitions
 
 ---
 
-## 12. Design system & UI
+## 12. Design system & UI (kế thừa chuẩn repo cũ)
 
-| Yếu tố | Giá trị |
-|---|---|
-| Primary | Emerald `#059669`; nền Zinc/Slate |
-| Status màu | draft=Gray, pending=Amber, approved=Blue, issued=Emerald, received=Teal, rejected=Rose, cancelled=Gray |
-| Font | Inter; bảng số `tabular-nums` |
-| Bo góc | 8–12px; shadow nhẹ |
-| Components | shadcn/ui + sonner toast |
+### 12.1 Màu sắc
+| Vai trò | Class | Hex |
+|---|---|---|
+| Primary | `sky-600` (hover `sky-700`, gradient `from-sky-600 to-sky-700`) | `#0284c7` |
+| Success (tồn kho còn, issued) | `emerald-600` (bg `emerald-100`) | `#16a34a` |
+| Warning (nút "Thêm", pending) | `amber-500` / `amber-600` | `#f59e0b` / `#d97706` |
+| Danger (hết hàng, rejected) | `red-600` (bg `red-100`) | `#dc2626` |
+| Neutral | gray-50 (nền), gray-200 (border), gray-600 (text phụ), gray-900 (text chính) | — |
 
-- **Desktop:** Sidebar + Topbar + nội dung.
-- **Mobile:** Topbar + Bottom nav (5) + Drawer.
+**Status màu (badge):** draft=gray, pending=amber, approved=sky, issued=emerald, received=teal, rejected=red, cancelled=gray.
+
+### 12.2 Typography
+- Font hệ thống: `system-ui, -apple-system, "Segoe UI", Roboto` (không cần import).
+- Size: text-xs(0.75rem) → text-4xl(2.25rem). Heading: h1=2.25rem bold → h6=1rem semibold.
+- Weight: light / normal / medium / semibold / bold. Bảng số dùng `tabular-nums`.
+
+### 12.3 Spacing, bo góc, shadow
+- Padding/gap theo lưới 8px: p-1(0.5rem) → p-8(3rem); margin tương tự.
+- Bo góc: rounded-md(0.5rem) / lg(0.75) / xl(1rem) / 2xl(1.5rem) / full.
+- Shadow: `shadow-sm` → `shadow-2xl`.
+
+### 12.4 Hover & animation
+- `hover:scale-110` (icon), `hover:-translate-y-1` (card), `hover:shadow-lg`, `hover:bg-gray-100`.
+- `transition-colors` / `transition-all` (150–300ms); `animate-fadeIn / slideInUp / pulse / spin`.
+
+### 12.5 Layout
+- Desktop: Sidebar + Topbar + nội dung.
+- Mobile: Topbar + Bottom nav (5) + Drawer.
 - Loading=skeleton, Empty=minh họa+text+nút, Error=toast+retry.
-- Badge trạng thái hiển thị theo `*_STATUS` label map + màu.
+
+### 12.6 Best practice (bắt buộc)
+- KHÔNG inline style; KHÔNG arbitrary color `bg-[#0284c7]` — dùng class design system.
+- Mobile-first; luôn có hover/focus state; `aria-label` cho nút chỉ có icon.
+- Badge trạng thái hiển thị theo `*_STATUS` label map + màu mục 12.1.
+- Components: shadcn/ui + sonner toast.
 
 ---
 
@@ -1036,12 +1059,28 @@ export const receiptItemSchema = z.object({
 
 ## 17. Seed data (đầy đủ, chạy được)
 
-### 17.1 Categories, zones, locations, suppliers
+### 17.1 Categories (8 — kế thừa repo cũ) + icon mapping
+| Danh mục | display_order | Icon (SVG) | Nguồn |
+|---|---|---|---|
+| Thức ăn chăn nuôi | 1 | `feed` | repo cũ `assets/icons/feed.svg` |
+| Thuốc & Vắc-xin | 2 | `medicine` | repo cũ `assets/icons/medicine.svg` |
+| Dụng cụ chăn nuôi | 3 | `tool` | vẽ thêm |
+| Hệ thống chuồng trại | 4 | `coop` | repo cũ `assets/icons/coop.svg` |
+| Vệ sinh & Sát trùng | 5 | `clean` | repo cũ `assets/icons/clean.svg` |
+| Bảo hộ lao động | 6 | `ppe` | vẽ thêm |
+| Phụ tùng & Sửa chữa | 7 | `repair` | vẽ thêm |
+| Khác | 8 | `other` | repo cũ `assets/icons/other.svg` |
+
+> **Icon:** kế thừa 5 file SVG từ repo cũ (`feed`, `medicine`, `coop`, `clean`, `other`) + vẽ thêm 3 (`tool`, `ppe`, `repair`). Lưu vào `public/icons/*.svg`; map trong code `categoryIcons: Record<string, string>`. Cột `categories.icon` lưu **key icon** (VD `'feed'`).
+
 ```sql
-insert into public.categories (name, display_order) values
-('Thức ăn chăn nuôi',1),('Thuốc & Vắc-xin',2),('Dụng cụ chăn nuôi',3),
-('Hệ thống chuồng trại',4),('Vệ sinh & Sát trùng',5),('Bảo hộ lao động',6),
-('Phụ tùng & Sửa chữa',7),('Khác',8);
+insert into public.categories (name, icon, display_order) values
+('Thức ăn chăn nuôi','feed',1),('Thuốc & Vắc-xin','medicine',2),
+('Dụng cụ chăn nuôi','tool',3),('Hệ thống chuồng trại','coop',4),
+('Vệ sinh & Sát trùng','clean',5),('Bảo hộ lao động','ppe',6),
+('Phụ tùng & Sửa chữa','repair',7),('Khác','other',8);
+
+-- zones, locations, suppliers
 
 insert into public.zones (name) values ('Khu 1'),('Khu 2'),('Khu 3'),('Khu 4');
 
@@ -1115,6 +1154,54 @@ from variants v;
 **Xuất phiếu PDF:** nút "In/Xuất PDF" trên mỗi phiếu → `@react-pdf/renderer` (server).
 **Xuất báo cáo:** PDF + Excel/CSV (`xlsx`).
 
+### 18.1 Phiếu xuất mẫu (Print Templates — CHUẨN)
+> Đây là **chuẩn in ấn** toàn hệ thống. Mọi phiếu in ra giấy (A4) phải theo cấu trúc này. In bằng `@react-pdf/renderer` (server), khổ A4, lề 20mm, font hệ thống.
+
+**Cấu trúc chung (mọi phiếu):**
+```
+┌──────────────────────────────────────────────┐
+│ [LOGO]  TRẠI GÀ MINH TÂN PHÁT                │
+│         <TIÊU ĐỀ PHIẾU>     Mã: <CODE>        │
+│         Ngày: <DD/MM/YYYY>                    │
+├──────────────────────────────────────────────┤
+│ Thông tin chung (theo từng loại phiếu)        │
+├──────────────────────────────────────────────┤
+│ Bảng chi tiết items (cột theo từng loại phiếu)│
+├──────────────────────────────────────────────┤
+│ Tổng / Ghi chú                                │
+│ Người lập     Người duyệt     Người nhận      │
+└──────────────────────────────────────────────┘
+```
+
+**1. Phiếu yêu cầu vật tư (REQ)**
+- Thông tin: Người yêu cầu, Khu vực, Mục đích, Loại (cấp mới/đổi mới), Trạng thái.
+- Bảng: STT | Tên vật tư | Biến thể | Đơn vị | Số lượng | Ghi chú.
+- Ký: Người yêu cầu | Người duyệt | Người cấp phát | Người nhận.
+
+**2. Phiếu nhập kho (GRN)**
+- Thông tin: Nhà cung cấp, Người lập, Ghi chú.
+- Bảng: STT | Tên vật tư | Biến thể | Đơn vị | Số lượng | Đơn giá | Thành tiền | Lô | Hạn sử dụng.
+- Ký: Người lập | Thủ kho | Người duyệt.
+
+**3. Phiếu ghi nhận vật tư hỏng (HONG)**
+- Thông tin: Người báo, Kho nguồn.
+- Bảng: STT | Tên vật tư | Biến thể | Số lượng | Chi tiết hỏng | Kiểu hỏng | Mức độ.
+- Ký: Người báo | Người xác nhận.
+
+**4. Phiếu sửa chữa (SC)**
+- Thông tin: Đơn vị sửa, Ngày gửi, Ngày dự kiến về, Tổng chi phí.
+- Bảng: STT | Tên vật tư | Biến thể | Số lượng | Chi tiết sửa | Chi phí | Kết quả (nhập lại/thanh lý).
+- Ký: Người gửi | Đơn vị sửa | Người nhận lại.
+
+**5. Phiếu thanh lý (TL)**
+- Thông tin: Lý do, Người lập, Người duyệt.
+- Bảng: STT | Tên vật tư | Biến thể | Số lượng | Phương thức (bán/tiêu hủy) | Giá trị | Tiền thu.
+- Ký: Người lập | Người duyệt | Người nhận (nếu bán).
+
+**Quy ước in:**
+- Số tiền định dạng `1.234.567 đ`; số lượng số nguyên; ngày `dd/mm/yyyy`.
+- Bảng lặp lại header khi qua trang; **Tổng tiền = Σ(số lượng × đơn giá)**.
+
 ### Storage (upload ảnh)
 - Buckets: `product-images`, `defect-images` (public read, authenticated write).
 - Flow: upload → lấy public URL → lưu vào `images text[]`.
@@ -1175,15 +1262,27 @@ bunx supabase db push
 
 ---
 
-## 22. Coding conventions
+## 22. Coding conventions & rules (kế thừa repo cũ)
 
-- Feature = `src/features/<name>/{components,actions,api,schema,types}`.
+**Kiến trúc:**
+- Feature = `src/features/<name>/{components,actions,api,schema,types}`; không import internals feature khác.
 - File: component PascalCase, hook `useXxx.ts`, action `create.ts`.
 - Page mặc định Server Component; component tương tác `"use client"`.
 - Query key: `["products"]`, `["requisitions", id]`.
-- Không hardcode tiếng Việt trong logic → dùng label map (7.2).
+
+**Design (bắt buộc theo mục 12):**
+- Không inline style; không arbitrary color `bg-[#...]` → dùng class design system.
+- Spacing nhất quán (lưới 8px); luôn responsive mobile-first; luôn hover/focus.
+- Thêm `aria-label` cho nút icon; giữ semantic HTML.
+
+**Logic & data:**
+- Không hardcode tiếng Việt trong logic → dùng label map (mục 7.2).
 - Service role chỉ dùng server; không lộ ra client.
+- Mọi đổi stock qua RPC (không cập nhật trực tiếp từ client) để ledger đồng bộ.
+
+**Git:**
 - Commit Conventional Commits; branch `main`/`dev`/`feat/*`.
+- Không commit `.env` thật; chỉ `.env.example`.
 
 ---
 
