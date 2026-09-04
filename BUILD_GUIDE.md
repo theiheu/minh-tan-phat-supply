@@ -909,7 +909,6 @@ create trigger trg_profiles_no_escalation
   execute function public.prevent_role_escalation();
 ```
 > Đổi role/zone chỉ qua RPC `security definer` (manager gọi).
-```
 
 ---
 
