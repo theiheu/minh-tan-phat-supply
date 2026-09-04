@@ -212,7 +212,7 @@ $$;
 ```sql
 create table public.suppliers (
   id uuid primary key default gen_random_uuid(),
-  name text not null,
+  name text not null unique,
   contact_name text,
   phone text,
   email text,
@@ -308,6 +308,9 @@ create table public.stock_movements (
 ### 5.6 `0006_defects.sql` (TRƯỚC requisitions)
 ```sql
 create type public.defect_status as enum ('staging','in_repair','returned','liquidated','cancelled');
+create type public.severity_level as enum ('light','medium','severe');
+create type public.damage_type as enum ('cracked','chipped','broken','worn','electrical','chemical','other');
+create type public.defect_resolution as enum ('repaired','liquidated');
 
 create table public.defect_notes (
   id uuid primary key default gen_random_uuid(),
@@ -326,11 +329,11 @@ create table public.defect_note_items (
   variant_id uuid not null references public.variants(id),
   quantity integer not null default 1 check (quantity > 0),
   damage_detail text,
-  damage_type text,
-  severity text,
+  damage_type public.damage_type,
+  severity public.severity_level,
   images text[] not null default '{}',
   unit_cost numeric(12,2),
-  resolution text,                 -- 'repaired'|'liquidated'
+  resolution public.defect_resolution,
   created_at timestamptz not null default now()
 );
 ```
@@ -375,6 +378,7 @@ create table public.requisition_items (
 ### 5.8 `0008_repairs.sql`
 ```sql
 create type public.repair_status as enum ('in_repair','returned','cancelled');
+create type public.repair_outcome as enum ('returned_to_stock','liquidation');
 
 create table public.repair_orders (
   id uuid primary key default gen_random_uuid(),
@@ -399,7 +403,7 @@ create table public.repair_order_items (
   quantity integer not null default 1 check (quantity > 0),
   repair_detail text,
   cost numeric(12,2),
-  outcome text,                    -- 'returned_to_stock'|'liquidation'
+  outcome public.repair_outcome,
   created_at timestamptz not null default now()
 );
 ```
@@ -541,6 +545,10 @@ create index idx_balances_location on public.stock_balances(location_id);
 create index idx_movements_variant on public.stock_movements(variant_id);
 create index idx_movements_type on public.stock_movements(movement_type);
 create index idx_requisitions_status on public.requisitions(status);
+-- 1 defect chỉ được tạo 1 phiếu đổi mới (chống tạo trùng)
+create unique index idx_requisitions_unique_replacement
+  on public.requisitions (linked_defect_id)
+  where requisition_type = 'replacement' and linked_defect_id is not null;
 create index idx_requisition_items_req on public.requisition_items(requisition_id);
 create index idx_receipt_items_receipt on public.receipt_items(receipt_id);
 create index idx_defect_items_note on public.defect_note_items(defect_note_id);
@@ -681,6 +689,10 @@ export const LIQUIDATION_STATUS = { pending:"Chờ duyệt", approved:"Đã duy�
 export const LIQUIDATION_METHOD = { sale:"Bán", dispose:"Tiêu hủy" };
 export const REQUISITION_TYPE = { new_supply:"Cấp mới", replacement:"Đổi mới" };
 export const STOCKTAKE_STATUS = { draft:"Nháp", posted:"Đã chốt", cancelled:"Đã hủy" };
+export const SEVERITY_LEVEL = { light:"Nhẹ", medium:"Vừa", severe:"Nặng" };
+export const DAMAGE_TYPE = { cracked:"Nứt", chipped:"Mẻ", broken:"Gãy", worn:"Mòn", electrical:"Hỏng điện", chemical:"Hỏng hóa chất", other:"Khác" };
+export const DEFECT_RESOLUTION = { repaired:"Đã sửa", liquidated:"Đã thanh lý" };
+export const REPAIR_OUTCOME = { returned_to_stock:"Nhập lại kho", liquidation:"Thanh lý" };
 ```
 
 ---
@@ -690,8 +702,16 @@ export const STOCKTAKE_STATUS = { draft:"Nháp", posted:"Đã chốt", cancelled
 > **Nguyên tắc:** mọi thay đổi stock + chuyển trạng thái chạy qua **RPC `security definer`**, bên trong dùng `SELECT ... FOR UPDATE` để chống race. Server Action chỉ gọi RPC + `revalidatePath`.
 
 ### 8.1 Pattern chống race (bắt buộc)
+> **3 quy tắc cứng cho MỌI RPC đổi trạng thái + đổi stock:**
+> 1. **Khóa dòng chứng từ trước** bằng `select ... for update` rồi mới check trạng thái (chống duyệt/cấp phát trùng khi double-click / 2 tab).
+> 2. **Khóa stock theo thứ tự cố định** `order by variant_id` khi lặp nhiều dòng (chống deadlock).
+> 3. Kiểm tra `quantity` **sau khi khóa** rồi mới trừ.
+
 ```sql
--- luôn khóa dòng stock trước khi cập nhật
+-- 1) khóa dòng chứng từ trước khi check trạng thái
+select status into v_status from public.requisitions where id = p_id for update;
+
+-- 2) khóa stock theo thứ tự cố định
 select quantity into v_qty
 from public.stock_balances
 where variant_id = v_variant and location_id = v_loc
@@ -730,14 +750,19 @@ declare
   it record;
   v_qty int;
   v_main uuid;
+  v_status public.requisition_status;
 begin
   select id into v_main from public.stock_locations where code = 'KHO_CHINH';
-  if not exists (select 1 from public.requisitions where id = p_id and status = 'approved') then
-    raise exception 'Phiếu không ở trạng thái đã duyệt';
+
+  -- 0. KHÓA dòng chứng từ TRƯỚC khi check trạng thái (chống cấp phát trùng)
+  select status into v_status from public.requisitions where id = p_id for update;
+  if v_status <> 'approved' then
+    raise exception 'Phiếu không ở trạng thái đã duyệt (hiện tại: %)', v_status;
   end if;
 
-  -- 1. kiểm tra đủ tồn
-  for it in select * from public.requisition_items where requisition_id = p_id loop
+  -- 1. kiểm tra đủ tồn (khóa theo thứ tự variant_id cố định để tránh deadlock)
+  for it in select * from public.requisition_items where requisition_id = p_id
+             order by variant_id loop
     select quantity into v_qty from public.stock_balances
     where variant_id = it.variant_id and location_id = v_main for update;
     if v_qty is null or v_qty < it.quantity then
@@ -745,8 +770,9 @@ begin
     end if;
   end loop;
 
-  -- 2. trừ stock + ghi ledger
-  for it in select * from public.requisition_items where requisition_id = p_id loop
+  -- 2. trừ stock + ghi ledger (cùng thứ tự variant_id)
+  for it in select * from public.requisition_items where requisition_id = p_id
+             order by variant_id loop
     update public.stock_balances set quantity = quantity - it.quantity, updated_at = now()
     where variant_id = it.variant_id and location_id = v_main;
 
@@ -841,7 +867,7 @@ Chỉ giữ state **phiên/UI** ở Zustand; dữ liệu nghiệp vụ ở TanSt
 
 | Bảng | SELECT | INSERT | UPDATE | DELETE |
 |---|---|---|---|---|
-| profiles | authenticated | auth.uid()=id | auth.uid()=id | — |
+| profiles | authenticated | auth.uid()=id | auth.uid()=id **chỉ cột `name`** (role/zone qua RPC) | — |
 | categories/zones/products/variants/variant_components/suppliers/stock_locations | authenticated | manager | manager | manager (soft delete) |
 | stock_balances | authenticated | manager | manager | — |
 | stock_movements | manager (requester nếu cần) | — | — | — |
@@ -857,6 +883,25 @@ create policy "requester_read_own" on public.requisitions
 create policy "requester_insert_own" on public.requisitions
   for insert with check (auth.uid() = requester_id);
 -- ... áp dụng tương tự cho các bảng khác theo bảng trên
+```
+
+**CHỐNG LEO QUYỀN (bắt buộc):** requester KHÔNG được tự đổi `role`/`zone_id`. Chặn bằng trigger:
+```sql
+create or replace function public.prevent_role_escalation()
+returns trigger language plpgsql security definer as $$
+begin
+  if new.role is distinct from old.role or new.zone_id is distinct from old.zone_id then
+    raise exception 'Không được tự đổi role/zone';
+  end if;
+  return new;
+end;
+$$;
+create trigger trg_profiles_no_escalation
+  before update on public.profiles for each row
+  when (auth.uid() = old.id and not public.is_manager())
+  execute function public.prevent_role_escalation();
+```
+> Đổi role/zone chỉ qua RPC `security definer` (manager gọi).
 ```
 
 ---
@@ -997,7 +1042,7 @@ stock(variant) = có components ? min(floor(stock(child)/qty)) : sum(stock_balan
 - Requester `receive` → `received` (đóng phiếu).
 
 ### 15.3 Nhập kho + auto cấp phát
-- `post_receipt`: cộng stock (lưu unit_cost + lô/hạn) → lấy các requisition `pending`/`approved` theo `created_at` tăng dần (FIFO) → lần lượt `fulfill` → ghi id vào `linked_requisition_ids`.
+- `post_receipt`: cộng stock (lưu unit_cost + lô/hạn) → lấy các requisition `pending`/`approved` theo `created_at, id` tăng dần (FIFO, tie-break bằng id) → lần lượt `fulfill` → ghi id vào `linked_requisition_ids`.
 
 ### 15.4 Hỏng → sửa → nhập lại / thanh lý
 1. `record_defect`: Kho chính −qty → Kho hỏng +qty (ledger `defect_out`).
@@ -1009,6 +1054,7 @@ stock(variant) = có components ? min(floor(stock(child)/qty)) : sum(stock_balan
 
 ### 15.6 Đổi mới
 - Phiếu yêu cầu `replacement` + `linked_defect_id` → manager cấp phát cái mới → `issued` → `received`.
+- **1 defect chỉ được tạo 1 phiếu đổi mới** (partial unique index ở mục 5.15 chặn trùng `linked_defect_id`).
 
 ### 15.7 Kiểm kê
 - `post_stocktake`: mỗi lệch `actual - system` tạo `adjustment_in`/`adjustment_out` + ledger.
@@ -1044,8 +1090,10 @@ export const requisitionSchema = z.object({
 
 export const defectItemSchema = z.object({
   variantId: z.string().uuid(), quantity: z.number().int().positive(),
-  damageDetail: z.string().min(1), damageType: z.string().optional(),
-  severity: z.enum(["nhẹ","vừa","nặng"]).optional(), images: z.array(z.string()).default([]),
+  damageDetail: z.string().min(1),
+  damageType: z.enum(["cracked","chipped","broken","worn","electrical","chemical","other"]).optional(),
+  severity: z.enum(["light","medium","severe"]).optional(),
+  images: z.array(z.string()).default([]),
 });
 
 export const receiptItemSchema = z.object({
@@ -1078,18 +1126,25 @@ insert into public.categories (name, icon, display_order) values
 ('Thức ăn chăn nuôi','feed',1),('Thuốc & Vắc-xin','medicine',2),
 ('Dụng cụ chăn nuôi','tool',3),('Hệ thống chuồng trại','coop',4),
 ('Vệ sinh & Sát trùng','clean',5),('Bảo hộ lao động','ppe',6),
-('Phụ tùng & Sửa chữa','repair',7),('Khác','other',8);
+('Phụ tùng & Sửa chữa','repair',7),('Khác','other',8)
+on conflict (name) do nothing;
 
 -- zones, locations, suppliers
 
-insert into public.zones (name) values ('Khu 1'),('Khu 2'),('Khu 3'),('Khu 4');
+insert into public.zones (name) values ('Khu 1'),('Khu 2'),('Khu 3'),('Khu 4')
+on conflict (name) do nothing;
 
 insert into public.stock_locations (code, name, type) values
-('KHO_CHINH','Kho chính','main'),('KHO_HONG','Kho hỏng tập kết','defect'),('KHO_DANG_SUA','Đang sửa chữa','repair');
+('KHO_CHINH','Kho chính','main'),('KHO_HONG','Kho hỏng tập kết','defect'),('KHO_DANG_SUA','Đang sửa chữa','repair')
+on conflict (code) do nothing;
 
 insert into public.suppliers (name, contact_name, phone) values
 ('Công ty TNHH Thức ăn Chăn nuôi Minh Phát','Ô. Hùng','0900000001'),
-('Công ty Thuốc Thú y An Bình','Bà. Lan','0900000002');
+('Công ty Thuốc Thú y An Bình','Bà. Lan','0900000002')
+on conflict (name) do nothing;
+
+-- Dữ liệu động (products/variants/stock_balances): chạy 1 lần sau `db reset`;
+-- nếu cần idempotent, thêm unique key hoặc guard `where not exists`.
 ```
 
 ### 17.2 Sản phẩm + variants + stock_balances
@@ -1205,7 +1260,13 @@ from variants v;
 ### Storage (upload ảnh)
 - Buckets: `product-images`, `defect-images` (public read, authenticated write).
 - Flow: upload → lấy public URL → lưu vào `images text[]`.
-- Chấp nhận png/jpg/webp, max 5MB, resize ≤ 1600px.
+- Chấp nhận png/jpg/webp, max 5MB.
+- **Resize 2 tầng:** (1) client resize bằng `browser-image-compression`/canvas trước khi upload (≤ 1200px, jpeg ~0.7) để tiết kiệm data; (2) server/edge resize nếu cần.
+
+### Offline & mạng yếu (đặc thù trại gà)
+- **Ảnh:** luôn nén/resize ở client trước upload (xem trên) — 3G/4G nông thôn yếu.
+- **Form tạo phiếu / báo hỏng:** giữ nguyên dữ liệu form khi submit lỗi mạng (KHÔNG reset); hiện toast "Mất kết nối, thử lại" + nút Retry. Dùng `useTransition` + `isPending` để chống double-submit.
+- (Tuỳ chọn, không bắt buộc MVP) optimistic UI + retry queue; PWA offline sau này.
 
 ---
 
@@ -1218,8 +1279,14 @@ from variants v;
   2. `fulfill_requisition` thiếu stock → raise, không trừ.
   3. `post_receipt` → stock tăng + ledger + auto fulfill.
   4. `record_defect` → Kho chính giảm, Kho hỏng tăng, ledger đúng.
-  5. **Race:** 2 `fulfill` song song không làm stock âm (FOR UPDATE).
-  6. State machine: reject chuyển trạng thái sai → lỗi.
+  5. **Race thực:** gọi 2 `fulfill` song song (`Promise.all`) trên cùng 1 phiếu → chỉ 1 thành công, stock chỉ trừ 1 lần.
+  6. **Deadlock:** 2 RPC cùng lúc với tập variant đảo thứ tự [X,Y] vs [Y,X] → không deadlock (nhờ `order by variant_id`).
+  7. State machine: chuyển trạng thái sai → lỗi (VD `pending→issued` không qua `approved` bị chặn).
+  8. **FIFO tie-break:** 2 phiếu cùng `created_at` → cấp phát theo `id` tăng dần.
+- **RLS (test âm, bắt buộc):**
+  - requester KHÔNG đọc được requisition của người khác.
+  - requester KHÔNG tự UPDATE `role` thành manager (trigger chặn).
+  - requester KHÔNG đọc/ghi receipts (manager-only).
 - **E2E (Playwright):** login → tạo phiếu → duyệt → cấp → nhận.
 
 ---
