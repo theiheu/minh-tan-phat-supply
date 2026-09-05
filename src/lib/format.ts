@@ -20,3 +20,12 @@ export function formatDate(value: string | null | undefined): string {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
+
+// Khoảng ngày "YYYY-MM-DD" (múi giờ VN +07:00) → ISO UTC cho filter created_at.
+export function dayRange(from: string | null, to: string | null): { gte?: string; lte?: string } {
+  const range: { gte?: string; lte?: string } = {};
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (from && DATE_RE.test(from)) range.gte = new Date(`${from}T00:00:00+07:00`).toISOString();
+  if (to && DATE_RE.test(to)) range.lte = new Date(`${to}T23:59:59+07:00`).toISOString();
+  return range;
+}

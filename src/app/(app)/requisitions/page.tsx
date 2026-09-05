@@ -8,47 +8,97 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { REQUISITION_STATUS, statusBadgeClass } from "@/lib/labels";
+import { ListFilters } from "@/components/list-filters";
+import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/format";
+import { dayRange, formatDate } from "@/lib/format";
 
 const PAGE_SIZE = 20;
 type ReqStatus = "draft" | "pending" | "approved" | "issued" | "received" | "rejected" | "cancelled";
 const STATUSES: ReqStatus[] = ["draft", "pending", "approved", "issued", "received", "rejected", "cancelled"];
+const TYPES = ["new_supply", "replacement"] as const;
 
 export const dynamic = "force-dynamic";
+
+interface Filters {
+  status?: string | null;
+  type?: string | null;
+  zone?: string | null;
+  q?: string | null;
+  from?: string | null;
+  to?: string | null;
+  page?: number | null;
+}
+
+// Dựng URL giữ nguyên các filter đang chọn khi chuyển tab/phân trang.
+function buildHref({ status, type, zone, q, from, to, page }: Filters): string {
+  const sp = new URLSearchParams();
+  if (q) sp.set("q", q);
+  if (type) sp.set("type", type);
+  if (zone) sp.set("zone", zone);
+  if (status) sp.set("status", status);
+  if (from) sp.set("from", from);
+  if (to) sp.set("to", to);
+  if (page && page > 1) sp.set("page", String(page));
+  const s = sp.toString();
+  return s ? `/requisitions?${s}` : "/requisitions";
+}
 
 export default async function RequisitionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; type?: string; zone?: string; q?: string; from?: string; to?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
+  const type = sp.type ?? null;
+  const zone = sp.zone ?? null;
+  const q = sp.q?.trim() ?? "";
+  const from = sp.from ?? null;
+  const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
+
+  const { data: zones } = await supabase.from("zones").select("id, name").order("name");
+
   let query = supabase
     .from("requisitions")
     .select(
-      "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
+      "id, code, purpose, status, requisition_type, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as ReqStatus)) query = query.eq("status", status as ReqStatus);
+  if (type && (TYPES as readonly string[]).includes(type)) query = query.eq("requisition_type", type as (typeof TYPES)[number]);
+  if (zone) query = query.eq("zone_id", zone);
+  if (q) query = query.or(`code.ilike.%${q}%,purpose.ilike.%${q}%`);
+  const { gte, lte } = dayRange(from, to);
+  if (gte) query = query.gte("created_at", gte);
+  if (lte) query = query.lte("created_at", lte);
 
   const { data, count } = await query;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
+  const statusOptions = STATUSES.map((s) => ({ value: s, label: REQUISITION_STATUS[s] }));
+  const typeOptions = TYPES.map((k) => ({ value: k, label: REQUISITION_TYPE[k] }));
+  const zoneOptions = (zones ?? []).map((z) => ({ value: z.id, label: z.name }));
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <FilterTab active={!status} href="/requisitions" label="Tất cả" />
-        {STATUSES.map((s) => (
-          <FilterTab key={s} active={status === s} href={`/requisitions?status=${s}`} label={REQUISITION_STATUS[s]} />
-        ))}
-      </div>
+      <ListFilters
+        basePath="/requisitions"
+        searchPlaceholder="Tìm mã phiếu, mục đích…"
+        title="Lọc phiếu yêu cầu"
+        showDateRange
+        filters={[
+          { param: "status", label: "Trạng thái", options: statusOptions },
+          { param: "type", label: "Loại phiếu", options: typeOptions },
+          { param: "zone", label: "Khu vực", options: zoneOptions },
+        ]}
+        initial={{ q, status: status ?? "", type: type ?? "", zone: zone ?? "", from: from ?? "", to: to ?? "" }}
+      />
 
       <div className="rounded-lg border">
         <Table>
@@ -58,6 +108,7 @@ export default async function RequisitionsPage({
               <TableHead>Người yêu cầu</TableHead>
               <TableHead>Khu vực</TableHead>
               <TableHead>Mục đích</TableHead>
+              <TableHead className="hidden md:table-cell">Loại</TableHead>
               <TableHead>Ngày</TableHead>
               <TableHead>Trạng thái</TableHead>
             </TableRow>
@@ -65,7 +116,7 @@ export default async function RequisitionsPage({
           <TableBody>
             {(data ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   Không có phiếu yêu cầu nào.
                 </TableCell>
               </TableRow>
@@ -80,6 +131,9 @@ export default async function RequisitionsPage({
                 <TableCell>{r.requester?.name ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{r.zone?.name ?? "—"}</TableCell>
                 <TableCell className="max-w-[240px] truncate text-muted-foreground">{r.purpose}</TableCell>
+                <TableCell className="hidden text-muted-foreground md:table-cell">
+                  {REQUISITION_TYPE[r.requisition_type] ?? "—"}
+                </TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={statusBadgeClass(r.status)}>
@@ -95,7 +149,7 @@ export default async function RequisitionsPage({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <Link
-            href={`/requisitions?${status ? `status=${status}&` : ""}page=${page - 1}`}
+            href={buildHref({ status, type, zone, q, from, to, page: page - 1 })}
             className="text-sm text-primary hover:underline"
           >
             ← Trước
@@ -104,7 +158,7 @@ export default async function RequisitionsPage({
             Trang {page} / {totalPages}
           </span>
           <Link
-            href={`/requisitions?${status ? `status=${status}&` : ""}page=${page + 1}`}
+            href={buildHref({ status, type, zone, q, from, to, page: page + 1 })}
             className="text-sm text-primary hover:underline"
           >
             Sau →
@@ -112,20 +166,5 @@ export default async function RequisitionsPage({
         </div>
       )}
     </div>
-  );
-}
-
-function FilterTab({ active, href, label }: { active: boolean; href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-      }`}
-    >
-      {label}
-    </Link>
   );
 }

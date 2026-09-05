@@ -1,10 +1,8 @@
-import { LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ListFilters } from "@/components/list-filters";
 import { ProductCard } from "@/features/products/components/product-card";
 import type { VariantWithStock } from "@/features/products/types";
-import { categoryIcon } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
@@ -79,33 +77,27 @@ export default async function ProductsPage({
   }
 
   const categoryIconMap = new Map((categories ?? []).map((c) => [c.id, c.icon]));
+  const categoryOptions = (categories ?? []).map((c) => ({ value: c.id, label: c.name }));
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
     <div className="space-y-4">
-      <form method="get" className="flex gap-2">
-        <Input type="search" name="q" defaultValue={q} placeholder="Tìm vật tư…" className="max-w-sm" />
-        {categoryId ? <input type="hidden" name="category" value={categoryId} /> : null}
-        <Button type="submit" variant="outline">
-          Tìm
-        </Button>
-      </form>
+      <ListFilters
+        basePath="/products"
+        searchPlaceholder="Tìm vật tư…"
+        title="Lọc vật tư"
+        filters={[{ param: "category", label: "Danh mục", options: categoryOptions }]}
+        initial={{ q, category: categoryId ?? "" }}
+      />
 
-      <div className="grid auto-cols-[5rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1">
-        <CategoryTile active={!categoryId} href={q ? `?q=${encodeURIComponent(q)}` : "?"} label="Tất cả" icon={LayoutGrid} />
-        {(categories ?? []).map((c) => {
-          const Icon = categoryIcon(c.icon);
-          const href = `?category=${c.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-          return (
-            <CategoryTile key={c.id} active={categoryId === c.id} href={href} label={c.name} icon={Icon} />
-          );
-        })}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{count ?? 0} vật tư</p>
       </div>
 
       {(products ?? []).length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Không tìm thấy vật tư nào.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
           {(products ?? []).map((p: Product) => (
             <ProductCard
               key={p.id}
@@ -135,31 +127,5 @@ export default async function ProductsPage({
         </div>
       )}
     </div>
-  );
-}
-
-function CategoryTile({
-  active,
-  href,
-  label,
-  icon: Icon,
-}: {
-  active: boolean;
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border p-1.5 text-center transition-colors ${
-        active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
-      }`}
-    >
-      <Icon className="size-6 shrink-0" />
-      <span className="line-clamp-2 text-[11px] leading-tight">{label}</span>
-    </Link>
   );
 }

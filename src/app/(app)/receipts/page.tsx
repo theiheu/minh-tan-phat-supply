@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { ListFilters } from "@/components/list-filters";
 import {
   Table,
   TableBody,
@@ -9,64 +10,110 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
-import { formatDate } from "@/lib/format";
+import { dayRange, formatDate } from "@/lib/format";
 import { RECEIPT_STATUS, statusBadgeClass } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
+type ReceiptStatus = "draft" | "posted" | "cancelled";
+const STATUSES: ReceiptStatus[] = ["draft", "posted", "cancelled"];
+
 export const dynamic = "force-dynamic";
 
-export default async function ReceiptsPage() {
+export default async function ReceiptsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; supplier?: string; q?: string; from?: string; to?: string }>;
+}) {
+  const sp = await searchParams;
+  const status = sp.status ?? null;
+  const supplier = sp.supplier ?? null;
+  const q = sp.q?.trim() ?? "";
+  const from = sp.from ?? null;
+  const to = sp.to ?? null;
+
   const supabase = await createClient();
-  const { data } = await supabase
+
+  const { data: suppliers } = await supabase
+    .from("suppliers")
+    .select("id, name")
+    .is("deleted_at", null)
+    .order("name");
+
+  let query = supabase
     .from("receipts")
     .select("id, code, status, created_at, supplier:suppliers(name), creator:profiles(name)")
     .order("created_at", { ascending: false })
     .limit(100);
+  if (status && STATUSES.includes(status as ReceiptStatus)) query = query.eq("status", status as ReceiptStatus);
+  if (supplier) query = query.eq("supplier_id", supplier);
+  if (q) query = query.ilike("code", `%${q}%`);
+  const { gte, lte } = dayRange(from, to);
+  if (gte) query = query.gte("created_at", gte);
+  if (lte) query = query.lte("created_at", lte);
+
+  const { data } = await query;
+
+  const statusOptions = STATUSES.map((s) => ({ value: s, label: RECEIPT_STATUS[s] }));
+  const supplierOptions = (suppliers ?? []).map((s) => ({ value: s.id, label: s.name }));
 
   return (
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Mã</TableHead>
-            <TableHead>Nhà cung cấp</TableHead>
-            <TableHead>Người lập</TableHead>
-            <TableHead>Ngày</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {(data ?? []).length === 0 && (
+    <div className="space-y-4">
+      <ListFilters
+        basePath="/receipts"
+        searchPlaceholder="Tìm mã phiếu nhập…"
+        title="Lọc phiếu nhập"
+        showDateRange
+        filters={[
+          { param: "status", label: "Trạng thái", options: statusOptions },
+          { param: "supplier", label: "Nhà cung cấp", options: supplierOptions },
+        ]}
+        initial={{ q, status: status ?? "", supplier: supplier ?? "", from: from ?? "", to: to ?? "" }}
+      />
+
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                Chưa có phiếu nhập kho nào.
-              </TableCell>
+              <TableHead>Mã</TableHead>
+              <TableHead>Nhà cung cấp</TableHead>
+              <TableHead>Người lập</TableHead>
+              <TableHead>Ngày</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead />
             </TableRow>
-          )}
-          {(data ?? []).map((r) => (
-            <TableRow key={r.id}>
-              <TableCell className="font-mono text-sm">{r.code}</TableCell>
-              <TableCell className="text-muted-foreground">{r.supplier?.name ?? "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{r.creator?.name ?? "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
-              <TableCell>
-                <Badge variant="outline" className={statusBadgeClass(r.status)}>
-                  {RECEIPT_STATUS[r.status] ?? r.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1">
-                  <ReceiptActions id={r.id} status={r.status} />
-                  <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
-                    PDF
-                  </Link>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {(data ?? []).length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  Chưa có phiếu nhập kho nào.
+                </TableCell>
+              </TableRow>
+            )}
+            {(data ?? []).map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="font-mono text-sm">{r.code}</TableCell>
+                <TableCell className="text-muted-foreground">{r.supplier?.name ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{r.creator?.name ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={statusBadgeClass(r.status)}>
+                    {RECEIPT_STATUS[r.status] ?? r.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <ReceiptActions id={r.id} status={r.status} />
+                    <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                      PDF
+                    </Link>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
