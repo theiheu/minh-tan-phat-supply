@@ -731,6 +731,85 @@ export type Database = {
           },
         ]
       }
+      requisition_return_items: {
+        Row: {
+          id: string
+          quantity: number
+          return_id: string
+          variant_id: string
+        }
+        Insert: {
+          id?: string
+          quantity: number
+          return_id: string
+          variant_id: string
+        }
+        Update: {
+          id?: string
+          quantity?: number
+          return_id?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisition_return_items_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "requisition_returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisition_return_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "requisition_return_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requisition_returns: {
+        Row: {
+          created_at: string
+          id: string
+          requisition_id: string
+          returned_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requisition_id: string
+          returned_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requisition_id?: string
+          returned_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisition_returns_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "requisitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisition_returns_returned_by_fkey"
+            columns: ["returned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requisitions: {
         Row: {
           approved_at: string | null
