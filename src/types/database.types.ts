@@ -1145,6 +1145,7 @@ export type Database = {
           created_at: string
           id: string
           images: string[]
+          is_default: boolean
           is_trackable_lot: boolean
           min_stock: number
           price: number | null
@@ -1157,6 +1158,7 @@ export type Database = {
           created_at?: string
           id?: string
           images?: string[]
+          is_default?: boolean
           is_trackable_lot?: boolean
           min_stock?: number
           price?: number | null
@@ -1169,6 +1171,7 @@ export type Database = {
           created_at?: string
           id?: string
           images?: string[]
+          is_default?: boolean
           is_trackable_lot?: boolean
           min_stock?: number
           price?: number | null

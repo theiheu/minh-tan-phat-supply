@@ -1,18 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -21,109 +14,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/client";
-import { createProduct, deleteProduct } from "../actions";
-
-interface VariantDraft {
-  attributes: string;
-  price: string;
-  unit: string;
-  minStock: string;
-  isTrackableLot: boolean;
-}
-
-interface ProductRow {
-  id: string;
-  name: string;
-  categoryName: string | null;
-  variantCount: number;
-}
-
-const EMPTY_VARIANT: VariantDraft = {
-  attributes: "{}",
-  price: "",
-  unit: "",
-  minStock: "0",
-  isTrackableLot: false,
-};
+import { formatDate } from "@/lib/format";
+import { deleteProduct } from "../actions";
+import { ProductFormDialog } from "./product-form-dialog";
+import { ProductVariantsDialog } from "./product-variants-dialog";
+import type { AdminProductRow } from "../types";
 
 export function ProductsManager({
   products,
   categories,
+  q,
+  category,
+  sort,
+  order,
 }: {
-  products: ProductRow[];
+  products: AdminProductRow[];
   categories: { id: string; name: string }[];
+  q: string;
+  category: string;
+  sort: string;
+  order: string;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [options, setOptions] = useState("");
-  const [variants, setVariants] = useState<VariantDraft[]>([EMPTY_VARIANT]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<AdminProductRow | null>(null);
+  const [variantsProduct, setVariantsProduct] = useState<AdminProductRow | null>(null);
 
-  function setVariant(i: number, patch: Partial<VariantDraft>) {
-    setVariants((v) => v.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  function sortHref(field: "name" | "created_at") {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (category) params.set("category", category);
+    const nextOrder = sort === field && order === "asc" ? "desc" : "asc";
+    params.set("sort", field);
+    params.set("order", nextOrder);
+    return `/admin/products?${params.toString()}`;
   }
 
-  function onImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setImageFile(file);
-    setImagePreview(file ? URL.createObjectURL(file) : null);
+  function sortIndicator(field: "name" | "created_at") {
+    if (sort !== field) return null;
+    return order === "asc" ? "↑" : "↓";
   }
 
-  async function uploadImage(file: File): Promise<string> {
-    const supabase = createClient();
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(path, file);
-    if (error) throw new Error(error.message);
-    return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
-  }
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function remove(p: AdminProductRow) {
+    if (!window.confirm(`Xóa vật tư "${p.name}"?`)) return;
     startTransition(async () => {
       try {
-        let imageUrl: string | undefined;
-        if (imageFile) imageUrl = await uploadImage(imageFile);
-
-        await createProduct({
-          name,
-          description,
-          categoryId,
-          options,
-          images: imageUrl ? [imageUrl] : [],
-          variants: variants.map((v) => ({
-            attributes: v.attributes,
-            price: v.price === "" ? null : Number(v.price),
-            unit: v.unit || null,
-            minStock: Number(v.minStock) || 0,
-            isTrackableLot: v.isTrackableLot,
-          })),
-        });
-        toast.success("Đã tạo vật tư");
-        setName("");
-        setDescription("");
-        setCategoryId(null);
-        setOptions("");
-        setVariants([EMPTY_VARIANT]);
-        setImageFile(null);
-        setImagePreview(null);
-        setShowForm(false);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Tạo vật tư thất bại");
-      }
-    });
-  }
-
-  function remove(id: string) {
-    startTransition(async () => {
-      try {
-        await deleteProduct(id);
+        await deleteProduct(p.id);
         toast.success("Đã xóa vật tư");
+        router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Xóa thất bại");
       }
@@ -131,137 +70,115 @@ export function ProductsManager({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => setShowForm((s) => !s)}>{showForm ? "Đóng" : "Thêm vật tư"}</Button>
-      </div>
-
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Vật tư mới</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>Tên vật tư</Label>
-                  <Input required value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Danh mục</Label>
-                  <Select value={categoryId ?? "none"} onValueChange={(v) => setCategoryId(v === "none" ? null : v)}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">— Không —</SelectItem>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Hình ảnh vật tư</Label>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={onImageChange}
-                    className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
-                  />
-                  {imagePreview && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={imagePreview} alt="Xem trước" className="mt-2 h-20 w-20 rounded-lg border object-cover" />
-                  )}
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Mô tả</Label>
-                  <Input value={description} onChange={(e) => setDescription(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Options (phân cách bằng dấu phẩy)</Label>
-                  <Input value={options} onChange={(e) => setOptions(e.target.value)} placeholder="Trọng lượng, Liều" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Biến thể</span>
-                  <Button type="button" variant="outline" size="sm" onClick={() => setVariants((v) => [...v, EMPTY_VARIANT])}>
-                    + Thêm biến thể
-                  </Button>
-                </div>
-                {variants.map((v, i) => (
-                  <div key={i} className="grid grid-cols-2 gap-2 rounded-lg border p-3 sm:grid-cols-6">
-                    <div className="space-y-1 sm:col-span-2">
-                      <Label className="text-xs">Thuộc tính (JSON)</Label>
-                      <Input value={v.attributes} onChange={(e) => setVariant(i, { attributes: e.target.value })} placeholder='{"Trọng lượng":"Bao 10kg"}' />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Giá</Label>
-                      <Input type="number" min="0" value={v.price} onChange={(e) => setVariant(i, { price: e.target.value })} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Đơn vị</Label>
-                      <Input value={v.unit} onChange={(e) => setVariant(i, { unit: e.target.value })} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Tồn tối thiểu</Label>
-                      <Input type="number" min="0" value={v.minStock} onChange={(e) => setVariant(i, { minStock: e.target.value })} />
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <label className="flex items-center gap-1.5 text-xs">
-                        <input type="checkbox" checked={v.isTrackableLot} onChange={(e) => setVariant(i, { isTrackableLot: e.target.checked })} className="size-4 accent-primary" />
-                        Theo lô
-                      </label>
-                      <Button type="button" variant="ghost" size="icon-xs" onClick={() => setVariants((arr) => arr.filter((_, idx) => idx !== i))} aria-label="Xóa biến thể">
-                        ×
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Button type="submit" disabled={pending}>
-                {pending ? "Đang lưu…" : "Tạo vật tư"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Danh sách vật tư</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base">Danh sách vật tư</CardTitle>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditing(null);
+            setFormOpen(true);
+          }}
+        >
+          + Thêm vật tư
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>
+                <Link href={sortHref("name")} className="inline-flex items-center gap-1 hover:text-foreground">
+                  Tên {sortIndicator("name")}
+                </Link>
+              </TableHead>
+              <TableHead>Danh mục</TableHead>
+              <TableHead>Biến thể (tồn)</TableHead>
+              <TableHead>Tồn kho</TableHead>
+              <TableHead>
+                <Link href={sortHref("created_at")} className="inline-flex items-center gap-1 hover:text-foreground">
+                  Ngày tạo {sortIndicator("created_at")}
+                </Link>
+              </TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {products.length === 0 && (
               <TableRow>
-                <TableHead>Tên</TableHead>
-                <TableHead>Danh mục</TableHead>
-                <TableHead>Số biến thể</TableHead>
-                <TableHead />
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  Không có vật tư nào.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{p.categoryName ?? "—"}</TableCell>
-                  <TableCell>{p.variantCount}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="destructive" onClick={() => remove(p.id)} disabled={pending}>
+            )}
+            {products.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <button
+                    type="button"
+                    onClick={() => setVariantsProduct(p)}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {p.name}
+                  </button>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{p.categoryName ?? "—"}</TableCell>
+                <TableCell>
+                  {p.variants.length === 0 ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <div className="space-y-0.5">
+                      {p.variants.map((v) => (
+                        <div key={v.id} className="text-xs text-muted-foreground">
+                          {v.label} <span className="tabular-nums">· {v.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="tabular-nums font-medium">{p.totalStock}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(p.createdAt)}</TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditing(p);
+                        setFormOpen(true);
+                      }}
+                    >
+                      Sửa
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => remove(p)} disabled={pending}>
                       Xóa
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+
+      {formOpen && (
+        <ProductFormDialog
+          key={editing?.id ?? "new"}
+          open
+          onOpenChange={setFormOpen}
+          categories={categories}
+          product={editing}
+        />
+      )}
+
+      {variantsProduct && (
+        <ProductVariantsDialog
+          key={variantsProduct.id}
+          open
+          onOpenChange={() => setVariantsProduct(null)}
+          product={variantsProduct}
+        />
+      )}
+    </Card>
   );
 }
