@@ -63,6 +63,9 @@ export default async function DefectsPage() {
                   <Link href="/requisitions/new" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                     Đổi mới
                   </Link>
+                  <Link href={`/api/defects/${d.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                    PDF
+                  </Link>
                 </div>
               </TableCell>
             </TableRow>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -59,17 +60,22 @@ export default async function RepairsPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                <RepairActions
-                  order={{
-                    id: r.id,
-                    status: r.status,
-                    items: (r.repair_order_items ?? []).map((i) => ({
-                      id: i.id,
-                      label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
-                      quantity: i.quantity,
-                    })),
-                  }}
-                />
+                <div className="flex items-center gap-1">
+                  <RepairActions
+                    order={{
+                      id: r.id,
+                      status: r.status,
+                      items: (r.repair_order_items ?? []).map((i) => ({
+                        id: i.id,
+                        label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
+                        quantity: i.quantity,
+                      })),
+                    }}
+                  />
+                  <Link href={`/api/repairs/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                    PDF
+                  </Link>
+                </div>
               </TableCell>
             </TableRow>
           ))}

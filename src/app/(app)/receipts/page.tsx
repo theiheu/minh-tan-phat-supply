@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -55,7 +56,12 @@ export default async function ReceiptsPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                <ReceiptActions id={r.id} status={r.status} />
+                <div className="flex items-center gap-1">
+                  <ReceiptActions id={r.id} status={r.status} />
+                  <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                    PDF
+                  </Link>
+                </div>
               </TableCell>
             </TableRow>
           ))}

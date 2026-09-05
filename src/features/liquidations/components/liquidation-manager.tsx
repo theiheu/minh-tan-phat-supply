@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -156,6 +157,9 @@ export function LiquidationManager({
                       {n.status === "approved" && (
                         <Button size="sm" onClick={() => { setCompleting(n.id); setProceeds({}); }} disabled={pending}>Hoàn tất</Button>
                       )}
+                      <Link href={`/api/liquidations/${n.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                        PDF
+                      </Link>
                     </div>
                   </TableCell>
                 </TableRow>
