@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
 const PAGE_SIZE = 12;
+const EMPTY_UUID = "00000000-0000-0000-0000-000000000000";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,13 @@ export default async function ProductsPage({
     .is("deleted_at", null)
     .order("name")
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-  if (q) productQuery = productQuery.ilike("name", `%${q}%`);
+  if (q) {
+    const { data: matchIds, error: matchError } = await supabase.rpc("search_catalog", { p_query: q });
+    if (matchError) throw new Error(matchError.message);
+    const ids = (matchIds ?? []).map((r) => r.id);
+    // PostgREST không chấp nhận .in() với mảng rỗng → dùng uuid sentinel để trả về 0 dòng.
+    productQuery = productQuery.in("id", ids.length > 0 ? ids : [EMPTY_UUID]);
+  }
   if (categoryId) productQuery = productQuery.eq("category_id", categoryId);
   const { data: products, count } = await productQuery;
 

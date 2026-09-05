@@ -1380,6 +1380,10 @@ export type Database = {
         Args: { p_by: string; p_items: Json; p_requisition_id: string }
         Returns: undefined
       }
+      search_catalog: {
+        Args: { p_query: string }
+        Returns: { id: string }[]
+      }
       send_to_repair: {
         Args: {
           p_by: string
