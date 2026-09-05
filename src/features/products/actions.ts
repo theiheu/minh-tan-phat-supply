@@ -22,7 +22,7 @@ export async function createProduct(input: ProductInput) {
       description: parsed.description || null,
       category_id: parsed.categoryId,
       options,
-      images: [],
+      images: parsed.images,
     })
     .select("id")
     .single();

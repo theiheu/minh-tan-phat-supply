@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase/client";
 import { createProduct, deleteProduct } from "../actions";
 
 interface VariantDraft {
@@ -60,20 +61,41 @@ export function ProductsManager({
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [options, setOptions] = useState("");
   const [variants, setVariants] = useState<VariantDraft[]>([EMPTY_VARIANT]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   function setVariant(i: number, patch: Partial<VariantDraft>) {
     setVariants((v) => v.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  }
+
+  function onImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setImageFile(file);
+    setImagePreview(file ? URL.createObjectURL(file) : null);
+  }
+
+  async function uploadImage(file: File): Promise<string> {
+    const supabase = createClient();
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file);
+    if (error) throw new Error(error.message);
+    return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
       try {
+        let imageUrl: string | undefined;
+        if (imageFile) imageUrl = await uploadImage(imageFile);
+
         await createProduct({
           name,
           description,
           categoryId,
           options,
+          images: imageUrl ? [imageUrl] : [],
           variants: variants.map((v) => ({
             attributes: v.attributes,
             price: v.price === "" ? null : Number(v.price),
@@ -88,6 +110,8 @@ export function ProductsManager({
         setCategoryId(null);
         setOptions("");
         setVariants([EMPTY_VARIANT]);
+        setImageFile(null);
+        setImagePreview(null);
         setShowForm(false);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Tạo sản phẩm thất bại");
@@ -137,6 +161,19 @@ export function ProductsManager({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label>Hình ảnh sản phẩm</Label>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={onImageChange}
+                    className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+                  />
+                  {imagePreview && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imagePreview} alt="Xem trước" className="mt-2 h-20 w-20 rounded-lg border object-cover" />
+                  )}
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>Mô tả</Label>

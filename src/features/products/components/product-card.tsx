@@ -1,10 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatVnd } from "@/lib/format";
 import { categoryIcon } from "@/lib/labels";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
@@ -24,10 +23,7 @@ export function ProductCard({
 
   const totalQty = variants.reduce((n, v) => n + v.stock, 0);
   const low = variants.some((v) => v.stock <= v.min_stock);
-  const minPrice = variants.reduce<number | null>(
-    (m, v) => (v.price != null && (m == null || v.price < m) ? v.price : m),
-    null,
-  );
+  const image = product.images?.[0];
 
   const badge =
     totalQty === 0
@@ -39,27 +35,32 @@ export function ProductCard({
   return (
     <>
       <Card
-        className="cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg"
+        className="cursor-pointer overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg"
         onClick={() => setOpen(true)}
       >
-        <CardContent className="space-y-3 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <Icon className="size-6" />
+        <div className="relative aspect-square w-full bg-muted">
+          {image ? (
+            <Image
+              src={image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+              <Icon className="size-14" />
             </div>
-            <Badge variant="outline" className={badge.cls}>
-              {badge.label}
-            </Badge>
+          )}
+          <Badge variant="outline" className={`absolute top-2 left-2 ${badge.cls}`}>
+            {badge.label}
+          </Badge>
+        </div>
+        <CardContent className="space-y-1 p-3">
+          <div className="line-clamp-2 min-h-10 text-sm font-medium leading-snug">{product.name}</div>
+          <div className="text-sm tabular-nums text-muted-foreground">
+            Tồn: <span className="font-semibold text-foreground">{totalQty}</span>
           </div>
-          <div>
-            <div className="font-medium leading-tight">{product.name}</div>
-            <div className="text-sm text-muted-foreground">
-              {minPrice != null ? formatVnd(minPrice) : "—"}
-            </div>
-          </div>
-          <Button variant="outline" size="sm" className="w-full">
-            Chọn biến thể
-          </Button>
         </CardContent>
       </Card>
       <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} />

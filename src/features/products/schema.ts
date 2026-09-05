@@ -24,6 +24,7 @@ export const productInputSchema = z.object({
   description: z.string().optional().default(""),
   categoryId: z.string().uuid().nullable(),
   options: z.string().optional().default(""),
+  images: z.array(z.string()).default([]),
   variants: z.array(variantInputSchema).min(1, "Phải có ít nhất 1 biến thể"),
 });
 
