@@ -9,9 +9,18 @@ export default async function AdminUsersPage() {
 
   const supabase = await createClient();
   const [{ data: profiles }, { data: zones }] = await Promise.all([
-    supabase.from("profiles").select("*").order("created_at"),
+    supabase.from("profiles").select("*"),
     supabase.from("zones").select("id, name").order("name"),
   ]);
 
-  return <UsersManager profiles={profiles ?? []} zones={zones ?? []} currentRole={current.role} />;
+  // Ưu tiên hiển thị: superuser (tài khoản hệ thống) lên đầu, kế đến manager,
+  // rồi requester — trong từng nhóm giữ thứ tự tạo.
+  const roleRank = { superuser: 0, manager: 1, requester: 2 };
+  const sorted = [...(profiles ?? [])].sort(
+    (a, b) =>
+      (roleRank[a.role as keyof typeof roleRank] ?? 3) - (roleRank[b.role as keyof typeof roleRank] ?? 3) ||
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+
+  return <UsersManager profiles={sorted} zones={zones ?? []} currentRole={current.role} />;
 }
