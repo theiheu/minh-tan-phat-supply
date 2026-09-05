@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DefectActions } from "@/features/defects/components/defect-actions";
+import { ExchangeRequestButton } from "@/features/defects/components/exchange-request-button";
 import { dayRange, formatDate } from "@/lib/format";
 import { DEFECT_STATUS, statusBadgeClass } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
@@ -45,7 +46,7 @@ export default async function DefectsPage({
   let query = supabase
     .from("defect_notes")
     .select(
-      "id, code, status, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id)",
+      "id, code, status, reported_by, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, images)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -59,6 +60,18 @@ export default async function DefectsPage({
 
   const { data, count } = await query;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
+
+  // Phiếu hỏng nào đang có yêu cầu Đổi mới sống → ẩn nút tạo yêu cầu.
+  const noteIds = (data ?? []).map((d) => d.id);
+  const { data: activeReqs } =
+    noteIds.length > 0
+      ? await supabase
+          .from("requisitions")
+          .select("linked_defect_id")
+          .in("linked_defect_id", noteIds)
+          .in("status", ["draft", "pending", "approved", "issued", "received"])
+      : { data: [] as { linked_defect_id: string | null }[] };
+  const activeNoteIds = new Set((activeReqs ?? []).map((r) => r.linked_defect_id));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: DEFECT_STATUS[s] }));
   const locationOptions = (locations ?? []).map((l) => ({ value: l.id, label: l.name }));
@@ -111,9 +124,7 @@ export default async function DefectsPage({
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <DefectActions note={{ id: d.id, status: d.status, itemIds: (d.defect_note_items ?? []).map((i) => i.id) }} />
-                    <Link href="/requisitions/new" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
-                      Đổi mới
-                    </Link>
+                    <ExchangeRequestButton noteId={d.id} disabled={d.status !== "staging" || activeNoteIds.has(d.id)} />
                     <Link href={`/api/defects/${d.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                       PDF
                     </Link>
