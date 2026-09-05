@@ -1179,6 +1179,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_update_profile: {
+        Args: {
+          p_is_active: boolean
+          p_name: string
+          p_role: string
+          p_user_id: string
+          p_zone_id: string
+        }
+        Returns: undefined
+      }
       approve_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined

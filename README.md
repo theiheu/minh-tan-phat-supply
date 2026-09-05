@@ -19,6 +19,8 @@ bun run build      # production build
 
 Môi trường: copy `.env.example` → `.env.local` và điền URL/key Supabase.
 
+Tài khoản test (local): `bun run scripts/bootstrap.ts` tạo `manager@mtp.local` và `requester@mtp.local` (mật khẩu `password123`). Mời thêm người dùng tại màn hình Quản trị → Người dùng.
+
 ## Cấu trúc (theo mục 4 BUILD_GUIDE.md)
 
 - `src/app/` — App Router: `(auth)`, `(app)`, pages theo routing map mục 13
