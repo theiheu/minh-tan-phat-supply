@@ -157,6 +157,13 @@ export type Database = {
             foreignKeyName: "defect_note_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "defect_note_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
           },
@@ -254,6 +261,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "liquidation_notes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidation_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "liquidation_items_variant_id_fkey"
@@ -446,6 +460,13 @@ export type Database = {
             foreignKeyName: "receipt_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "receipt_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
           },
@@ -555,6 +576,13 @@ export type Database = {
             foreignKeyName: "repair_order_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "repair_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
           },
@@ -642,6 +670,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "requisitions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisition_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "requisition_items_variant_id_fkey"
@@ -792,6 +827,13 @@ export type Database = {
             foreignKeyName: "stock_balances_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "stock_balances_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
           },
@@ -893,6 +935,13 @@ export type Database = {
             foreignKeyName: "stock_movements_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
           },
@@ -930,6 +979,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stocktake_sessions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "stocktake_items_variant_id_fkey"
@@ -1057,8 +1113,22 @@ export type Database = {
             foreignKeyName: "variant_components_child_variant_id_fkey"
             columns: ["child_variant_id"]
             isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "variant_components_child_variant_id_fkey"
+            columns: ["child_variant_id"]
+            isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_components_parent_variant_id_fkey"
+            columns: ["parent_variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "variant_components_parent_variant_id_fkey"
@@ -1145,7 +1215,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      variant_stock: {
+        Row: {
+          min_stock: number | null
+          product_id: string | null
+          quantity: number | null
+          unit: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          min_stock?: number | null
+          product_id?: string | null
+          quantity?: never
+          unit?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          min_stock?: number | null
+          product_id?: string | null
+          quantity?: never
+          unit?: string | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _effective_demand: {

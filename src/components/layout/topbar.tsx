@@ -12,8 +12,7 @@ export function Topbar() {
   const title = findTitle(pathname);
   const setMobileDrawerOpen = useUIStore((s) => s.setMobileDrawerOpen);
   const toggleCart = useUIStore((s) => s.toggleCart);
-  const cartCount = useCartStore((s) => s.items.length);
-  const showCart = pathname.startsWith("/products");
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur">
@@ -27,22 +26,20 @@ export function Topbar() {
         <Menu className="size-5" />
       </Button>
       <h1 className="flex-1 truncate text-base font-semibold">{title}</h1>
-      {showCart && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleCart}
-          className="relative"
-          aria-label="Giỏ hàng"
-        >
-          <ShoppingCart className="size-4" />
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-              {cartCount}
-            </span>
-          )}
-        </Button>
-      )}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={toggleCart}
+        className="relative"
+        aria-label="Giỏ hàng"
+      >
+        <ShoppingCart className="size-4" />
+        {cartCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+            {cartCount}
+          </span>
+        )}
+      </Button>
     </header>
   );
 }

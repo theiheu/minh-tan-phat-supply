@@ -147,3 +147,14 @@ export function categoryIcon(key: string | null | undefined): LucideIcon {
   if (!key) return Package;
   return categoryIcons[key] ?? Package;
 }
+
+// Nhãn biến thể: nối các giá trị attributes (VD {"Trọng lượng":"Bao 10kg"} → "Bao 10kg").
+export function variantLabel(attributes: unknown, unit?: string | null): string {
+  if (attributes && typeof attributes === "object" && !Array.isArray(attributes)) {
+    const values = Object.values(attributes as Record<string, unknown>).filter(
+      (v) => typeof v === "string" && v.length > 0,
+    );
+    if (values.length > 0) return values.join(" · ");
+  }
+  return unit ?? "—";
+}

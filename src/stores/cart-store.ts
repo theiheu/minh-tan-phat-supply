@@ -3,11 +3,15 @@ import { create } from "zustand";
 export interface CartItem {
   variantId: string;
   quantity: number;
+  name: string;
+  label: string;
+  unit: string | null;
+  price: number | null;
 }
 
 interface CartState {
   items: CartItem[];
-  addItem: (variantId: string, quantity: number) => void;
+  addItem: (item: CartItem) => void;
   updateQty: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
   clear: () => void;
@@ -15,17 +19,17 @@ interface CartState {
 
 export const useCartStore = create<CartState>()((set) => ({
   items: [],
-  addItem: (variantId, quantity) =>
+  addItem: (item) =>
     set((state) => {
-      const existing = state.items.find((i) => i.variantId === variantId);
+      const existing = state.items.find((i) => i.variantId === item.variantId);
       if (existing) {
         return {
           items: state.items.map((i) =>
-            i.variantId === variantId ? { ...i, quantity: i.quantity + quantity } : i,
+            i.variantId === item.variantId ? { ...i, quantity: i.quantity + item.quantity } : i,
           ),
         };
       }
-      return { items: [...state.items, { variantId, quantity }] };
+      return { items: [...state.items, item] };
     }),
   updateQty: (variantId, quantity) =>
     set((state) => ({

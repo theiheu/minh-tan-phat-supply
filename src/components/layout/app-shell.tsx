@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CartDrawer } from "@/features/products/components/cart-drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, MAIN_NAV, filterByRole } from "@/lib/nav";
@@ -26,6 +27,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
         <main className="flex-1 p-4 pb-24 lg:pb-6">{children}</main>
       </div>
       <MobileNav profile={profile} />
+      <CartDrawer />
       <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <SheetContent side="left" className="w-72 gap-0 p-0">
           <SheetHeader className="border-b">
