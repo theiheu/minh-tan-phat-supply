@@ -84,7 +84,7 @@ export default async function ProductsPage({
         </Button>
       </form>
 
-      <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-9">
+      <div className="grid auto-cols-[5rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1">
         <CategoryTile active={!categoryId} href={q ? `?q=${encodeURIComponent(q)}` : "?"} label="Tất cả" icon={LayoutGrid} />
         {(categories ?? []).map((c) => {
           const Icon = categoryIcon(c.icon);
