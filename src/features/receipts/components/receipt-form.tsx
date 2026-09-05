@@ -144,18 +144,18 @@ export function ReceiptForm({
           {items.map((it, i) => {
             const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
             return (
-              <div key={i} className="relative rounded-lg border bg-muted/30 p-2 pt-7 lg:pt-2">
+              <div key={i} className="relative rounded-lg border bg-muted/30 p-2">
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="absolute right-1.5 top-1.5 z-10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
                   aria-label="Xóa dòng"
                 >
                   <Trash2 className="size-4" />
                 </Button>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-12">
+                <div className="grid grid-cols-1 gap-2 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
                   <div className="space-y-1 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs">Vật tư</Label>
                     <ComboboxInput
