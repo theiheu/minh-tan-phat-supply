@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,16 +23,19 @@ export function ProductDetailDialog({
   onOpenChange,
   product,
   variants,
+  role = "requester",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: Product;
   variants: VariantWithStock[];
+  role?: string;
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const [selectedId, setSelectedId] = useState(variants[0]?.id ?? "");
   const [qty, setQty] = useState(1);
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
+  const showPrice = role === "manager";
 
   function addToCart() {
     if (!selected) return;
@@ -71,16 +75,31 @@ export function ProductDetailDialog({
                   setSelectedId(v.id);
                   setQty(1);
                 }}
-                className="size-4 accent-primary"
+                className="size-4 shrink-0 accent-primary"
               />
+              {v.images?.[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={v.images[0]} alt="" className="size-10 shrink-0 rounded-md border object-cover" />
+              ) : (
+                <div className="size-10 shrink-0 rounded-md border bg-muted" />
+              )}
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{variantLabel(v.attributes, v.unit)}</div>
+                <div className="flex items-center gap-1.5 text-sm font-medium">
+                  <span className="truncate">{variantLabel(v.attributes, v.unit)}</span>
+                  {v.is_default && (
+                    <Badge variant="outline" className="shrink-0 bg-amber-100 text-amber-700">
+                      Mặc định
+                    </Badge>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {v.isComposite ? "Bộ linh kiện" : v.unit ?? ""}
                 </div>
               </div>
-              <div className="text-right text-sm">
-                <div className="tabular-nums">{v.price != null ? formatVnd(v.price) : "—"}</div>
+              <div className="shrink-0 text-right text-sm">
+                {showPrice && (
+                  <div className="tabular-nums">{v.price != null ? formatVnd(v.price) : "—"}</div>
+                )}
                 <div className={`text-xs ${v.stock === 0 ? "text-red-600" : "text-emerald-600"}`}>
                   Tồn: {v.stock}
                 </div>

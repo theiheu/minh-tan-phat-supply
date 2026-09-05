@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,22 +7,36 @@ import { categoryIcon } from "@/lib/labels";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import { ProductDetailDialog } from "./product-detail-dialog";
+import { ProductImageGallery } from "./product-image-gallery";
 
 export function ProductCard({
   product,
   variants,
   categoryIconKey,
+  role = "requester",
 }: {
   product: Product;
   variants: VariantWithStock[];
   categoryIconKey?: string | null;
+  role?: string;
 }) {
   const [open, setOpen] = useState(false);
   const Icon = categoryIcon(categoryIconKey);
 
   const totalQty = variants.reduce((n, v) => n + v.stock, 0);
   const low = variants.some((v) => v.stock <= v.min_stock);
-  const image = product.images?.[0];
+
+  // Toàn bộ ảnh hiển thị trong gallery: biến thể mặc định → ảnh vật tư → biến thể khác.
+  const defaultVariant = variants.find((v) => v.is_default);
+  const imageList = [
+    ...(defaultVariant?.images ?? []),
+    ...(product.images ?? []),
+    ...variants.flatMap((v) => v.images ?? []),
+  ].filter((u): u is string => Boolean(u));
+  const uniqueImages = [...new Set(imageList)];
+
+  // Đơn vị tính đại diện: ưu tiên biến thể mặc định, rồi biến thể đầu tiên có đơn vị.
+  const unit = defaultVariant?.unit ?? variants.find((v) => v.unit)?.unit ?? null;
 
   const badge =
     totalQty === 0
@@ -38,19 +51,13 @@ export function ProductCard({
         className="cursor-pointer overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg"
         onClick={() => setOpen(true)}
       >
-        <div className="relative aspect-square w-full bg-muted">
-          {image ? (
-            <Image
-              src={image}
-              alt={product.name}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+        <div className="relative">
+          {uniqueImages.length === 0 ? (
+            <div className="flex aspect-square w-full items-center justify-center bg-muted text-muted-foreground">
               <Icon className="size-14" />
             </div>
+          ) : (
+            <ProductImageGallery images={uniqueImages} alt={product.name} />
           )}
           <Badge variant="outline" className={`absolute top-2 left-2 ${badge.cls}`}>
             {badge.label}
@@ -58,12 +65,14 @@ export function ProductCard({
         </div>
         <CardContent className="space-y-1 p-3">
           <div className="line-clamp-2 min-h-10 text-sm font-medium leading-snug">{product.name}</div>
-          <div className="text-sm tabular-nums text-muted-foreground">
-            Tồn: <span className="font-semibold text-foreground">{totalQty}</span>
+          <div className="flex items-baseline gap-1 text-sm text-muted-foreground">
+            <span>Tồn:</span>
+            <span className="font-semibold tabular-nums text-foreground">{totalQty}</span>
+            {unit ? <span className="text-xs">{unit}</span> : null}
           </div>
         </CardContent>
       </Card>
-      <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} />
+      <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} role={role} />
     </>
   );
 }

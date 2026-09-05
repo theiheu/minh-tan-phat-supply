@@ -2,6 +2,7 @@ import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { ProductCard } from "@/features/products/components/product-card";
 import type { VariantWithStock } from "@/features/products/types";
+import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
@@ -21,6 +22,8 @@ export default async function ProductsPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
+  const profile = await getCurrentProfile();
+  const role = profile?.role ?? "requester";
 
   const { data: categories } = await supabase
     .from("categories")
@@ -52,6 +55,7 @@ export default async function ProductsPage({
       .from("variants")
       .select("*")
       .in("product_id", productIds)
+      .order("is_default", { ascending: false })
       .order("price", { ascending: true, nullsFirst: false });
 
     const variantIds = (variantRows ?? []).map((v) => v.id);
@@ -103,6 +107,7 @@ export default async function ProductsPage({
               product={p}
               variants={variantsByProduct.get(p.id) ?? []}
               categoryIconKey={p.category_id ? categoryIconMap.get(p.category_id) : null}
+              role={role}
             />
           ))}
         </div>
