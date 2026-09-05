@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { SearchSelect } from "@/components/search-select";
 import { createReceipt, postReceipt } from "../actions";
 
 interface ItemDraft {
@@ -39,6 +41,12 @@ export function ReceiptForm({
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
   const [pending, startTransition] = useTransition();
+
+  // Options cho combobox chọn vật tư (gõ tìm kiếm nhanh giữa ~1000 sản phẩm).
+  const variantOptions = useMemo(
+    () => variants.map((v) => ({ value: v.id, label: v.label })),
+    [variants],
+  );
 
   function setItem(i: number, patch: Partial<ItemDraft>) {
     setItems((arr) => arr.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
@@ -100,6 +108,18 @@ export function ReceiptForm({
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Chưa có nhà cung cấp phù hợp?{" "}
+              <Link
+                href="/admin/suppliers"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                Tạo nhà cung cấp mới
+              </Link>{" "}
+              (mở tab mới, không mất phiếu đang nhập).
+            </p>
           </div>
           <div className="max-w-sm space-y-1.5 pt-3">
             <Label>Ghi chú</Label>
@@ -127,16 +147,14 @@ export function ReceiptForm({
               <div key={i} className="grid grid-cols-2 gap-2 rounded-lg border p-3 lg:grid-cols-7">
                 <div className="space-y-1 lg:col-span-2">
                   <Label className="text-xs">Vật tư</Label>
-                  <Select value={it.variantId} onValueChange={(v) => setItem(i, { variantId: v })}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn vật tư" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {variants.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchSelect
+                    value={it.variantId}
+                    onChange={(v) => setItem(i, { variantId: v })}
+                    options={variantOptions}
+                    placeholder="Chọn vật tư…"
+                    searchPlaceholder="Gõ tên vật tư để tìm…"
+                    emptyText="Không tìm thấy vật tư."
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Số lượng</Label>
