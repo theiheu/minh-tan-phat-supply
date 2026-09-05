@@ -46,6 +46,7 @@ export function ProductDetailDialog({
       label: variantLabel(selected.attributes, selected.unit),
       unit: selected.unit,
       price: selected.price,
+      image: selected.images?.[0] ?? product.images?.[0] ?? null,
     });
     toast.success("Đã thêm vào giỏ");
     onOpenChange(false);

@@ -335,6 +335,47 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string | null
@@ -1352,11 +1393,25 @@ export type Database = {
         Args: { p_by: string; p_location_id: string }
         Returns: string
       }
+      create_notification: {
+        Args: {
+          p_body?: string | null
+          p_link?: string | null
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       fulfill_requisition: {
         Args: { p_by: string; p_id: string; p_notes: string }
         Returns: undefined
       }
       is_manager: { Args: never; Returns: boolean }
+      list_requester_accounts: {
+        Args: never
+        Returns: { email: string; id: string; name: string; zone_id: string | null }[]
+      }
       next_code: { Args: { prefix: string; seq: unknown }; Returns: string }
       post_receipt: { Args: { p_by: string; p_id: string }; Returns: string[] }
       post_stocktake: {

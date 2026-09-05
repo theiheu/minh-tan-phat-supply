@@ -6,6 +6,7 @@ export const requisitionSchema = z
     purpose: z.string().min(1, "Mục đích không được trống"),
     requisitionType: z.enum(["new_supply", "replacement"]).default("new_supply"),
     linkedDefectId: z.string().uuid().optional(),
+    requesterId: z.string().uuid().optional(), // manager tạo dùm người khác
     items: z
       .array(z.object({ variantId: z.string().uuid(), quantity: z.number().int().positive() }))
       .min(1, "Phải có ít nhất 1 vật tư"),
