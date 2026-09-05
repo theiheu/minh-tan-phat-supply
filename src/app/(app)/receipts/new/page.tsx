@@ -16,7 +16,8 @@ export default async function NewReceiptPage() {
 
   const variantOptions = (variants ?? []).map((v) => ({
     id: v.id,
-    label: `${v.products?.name ?? "Vật tư"} — ${variantLabel(v.attributes, v.unit)}`,
+    name: v.products?.name ?? "Vật tư",
+    detail: variantLabel(v.attributes, v.unit),
     isTrackableLot: v.is_trackable_lot,
   }));
 

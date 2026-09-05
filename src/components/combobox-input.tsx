@@ -7,8 +7,14 @@ import { cn } from "@/lib/utils";
 
 export interface ComboboxInputOption {
   value: string;
+  /** Dòng 1 — tên chính (ví dụ tên vật tư). */
   label: string;
+  /** Dòng 2 nhỏ màu xám — chi tiết bổ sung (ví dụ biến thể · đơn vị). */
+  detail?: string;
+  /** Phụ chú bên phải (nếu có). */
   hint?: string;
+  /** Chuỗi hiển thị trong ô sau khi chọn; mặc định = label. */
+  text?: string;
 }
 
 const MAX_VISIBLE = 100;
@@ -38,32 +44,33 @@ export function ComboboxInput({
   const [text, setText] = useState("");
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const selectedLabel = useMemo(
-    () => options.find((o) => o.value === value)?.label ?? "",
-    [options, value],
-  );
+  const selected = useMemo(() => options.find((o) => o.value === value), [options, value]);
+  // Chuỗi hiển thị trong ô khi đã chọn (ưu tiên text, mặc định label).
+  const chosenText = selected ? (selected.text ?? selected.label) : "";
 
   // Đồng bộ ô nhập với lựa chọn thay đổi từ ngoài (reset dòng, chọn xong…).
   useEffect(() => {
-    setText(selectedLabel);
-  }, [selectedLabel]);
+    setText(chosenText);
+  }, [chosenText]);
 
   const filtered = useMemo(() => {
     const q = text.trim().toLowerCase();
     if (!q) return options;
-    return options.filter((o) => `${o.label} ${o.hint ?? ""}`.toLowerCase().includes(q));
+    return options.filter((o) =>
+      `${o.label} ${o.detail ?? ""} ${o.hint ?? ""}`.toLowerCase().includes(q),
+    );
   }, [options, text]);
 
   const visible = filtered.slice(0, MAX_VISIBLE);
   const hiddenCount = filtered.length - visible.length;
 
   function revertQuery() {
-    setText(selectedLabel);
+    setText(chosenText);
   }
 
   function pick(option: ComboboxInputOption) {
     onChange(option.value);
-    setText(option.label);
+    setText(option.text ?? option.label);
     setOpen(false);
   }
 
@@ -75,7 +82,10 @@ export function ComboboxInput({
       return;
     }
     if (e.key === "Enter" && open) {
-      const exact = filtered.find((o) => o.label.toLowerCase() === text.trim().toLowerCase());
+      const q = text.trim().toLowerCase();
+      const exact = filtered.find(
+        (o) => o.label.toLowerCase() === q || (o.detail ?? "").toLowerCase() === q,
+      );
       const target = exact ?? (filtered.length === 1 ? filtered[0] : undefined);
       if (target) {
         pick(target);
@@ -138,7 +148,12 @@ export function ComboboxInput({
                         className={cn("size-4 shrink-0", active ? "opacity-100" : "opacity-0")}
                         aria-hidden
                       />
-                      <span className="min-w-0 flex-1 truncate">{o.label}</span>
+                      <span className="flex min-w-0 flex-1 flex-col items-start">
+                        <span className="w-full truncate font-medium">{o.label}</span>
+                        {o.detail ? (
+                          <span className="w-full truncate text-xs text-muted-foreground">{o.detail}</span>
+                        ) : null}
+                      </span>
                       {o.hint ? (
                         <span className="ml-auto shrink-0 pl-2 text-xs text-muted-foreground">{o.hint}</span>
                       ) : null}

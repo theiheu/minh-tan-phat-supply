@@ -23,7 +23,8 @@ interface ItemDraft {
 
 interface VariantOption {
   id: string;
-  label: string;
+  name: string;
+  detail: string;
   isTrackableLot: boolean;
 }
 
@@ -42,9 +43,16 @@ export function ReceiptForm({
   const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
   const [pending, startTransition] = useTransition();
 
-  // Options cho ô gõ-tìm chọn vật tư (lọc nhanh giữa ~1000 sản phẩm).
+  // Options cho ô gõ-tìm chọn vật tư: dòng 1 = tên, dòng 2 = biến thể · đơn vị,
+  // ô sau khi chọn hiện "Tên — biến thể" để biết chính xác đã chọn biến thể nào.
   const variantOptions = useMemo(
-    () => variants.map((v) => ({ value: v.id, label: v.label })),
+    () =>
+      variants.map((v) => ({
+        value: v.id,
+        label: v.name,
+        detail: v.detail,
+        text: `${v.name} — ${v.detail}`,
+      })),
     [variants],
   );
   const supplierOptions = useMemo(
