@@ -1474,7 +1474,7 @@ export type Database = {
         Returns: undefined
       }
       create_receipt: {
-        Args: { p_by: string; p_items: Json; p_supplier_id: string }
+        Args: { p_by: string; p_items: Json; p_notes?: string; p_supplier_id: string }
         Returns: string
       }
       create_requisition: {
