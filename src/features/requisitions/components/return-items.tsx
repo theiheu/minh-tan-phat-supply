@@ -22,9 +22,20 @@ export function ReturnItems({ requisitionId, items }: { requisitionId: string; i
   const [qty, setQty] = useState<Record<string, string>>({});
 
   function submit() {
+    // Clamp theo phần còn lại: ô <Input max> chỉ advisory, không có <form> nên browser
+    // không tự chặn — gõ 99 khi còn 3 sẽ bị RPC reject cả batch.
     const returns = items
-      .filter((i) => Math.max(0, i.quantity - i.returned) > 0 && Number(qty[i.id]) > 0)
-      .map((i) => ({ variantId: i.variantId, quantity: Number(qty[i.id]) }));
+      .map((i) => ({
+        variantId: i.variantId,
+        remaining: Math.max(0, i.quantity - i.returned),
+        typed: Number(qty[i.id]),
+      }))
+      .filter((r) => r.remaining > 0)
+      .map(({ variantId, remaining, typed }) => ({
+        variantId,
+        quantity: Math.min(typed, remaining),
+      }))
+      .filter((r) => r.quantity > 0);
     if (returns.length === 0) return toast.error("Nhập số lượng cần trả");
     startTransition(async () => {
       try {

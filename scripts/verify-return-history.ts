@@ -1,10 +1,19 @@
 // scripts/verify-return-history.ts — kiểm chứng luồng trả lại vật tư ghi lịch sử.
 // Chạy: bun run scripts/bootstrap.ts && bun run scripts/verify-return-history.ts
+// LƯU Ý (không idempotent trên tồn kho): mỗi lần chạy fulfill trừ 5 rồi trả +2 trên
+// variant đầu → hao ròng 3/lần. Nếu chạy lại gặp "Không đủ tồn", remedy đúng là:
+//   bunx supabase db reset   (chạy lại supabase/seed.sql cấp lại tồn kho)
+//   bun run scripts/bootstrap.ts
+// bootstrap.ts CHỈ seed tài khoản (idempotent), không phục hồi tồn kho.
 import { createClient } from "@supabase/supabase-js";
+import { internalEmailForUsername } from "../src/lib/username";
 
 const URL = "http://127.0.0.1:54321";
 const ANON =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+const SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
 function client(token: string) {
   return createClient(URL, ANON, { global: { headers: { Authorization: `Bearer ${token}` } } });
@@ -78,5 +87,45 @@ const { data: mv } = await mc
   .eq("ref_id", rid)
   .eq("movement_type", "return_in");
 ok((mv ?? []).reduce((n, x) => n + x.quantity, 0) === 2, "stock_movements return_in tổng = 2");
+
+// RLS: manager đọc được requisition_returns của phiếu (nhánh is_manager)
+const { data: mgrEvents, error: mgrErr } = await mc
+  .from("requisition_returns")
+  .select("id")
+  .eq("requisition_id", rid);
+ok(!mgrErr && (mgrEvents?.length ?? 0) === 1, "manager đọc được requisition_returns của phiếu");
+
+// RLS: requester KHÁC (không phải owner) không thấy dòng nào (anti-leak)
+const admin = createClient(URL, SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+const OTHER_USERNAME = "requester2";
+const otherEmail = internalEmailForUsername(OTHER_USERNAME);
+const { data: existingOther } = await admin
+  .from("profiles")
+  .select("id")
+  .ilike("username", OTHER_USERNAME)
+  .maybeSingle();
+if (!existingOther) {
+  const { error: createErr } = await admin.auth.admin.createUser({
+    email: otherEmail,
+    password: "password123",
+    email_confirm: true,
+    user_metadata: {
+      name: "Người yêu cầu 2",
+      role: "requester",
+      zone_id: zone!.id,
+      username: OTHER_USERNAME,
+    },
+  });
+  if (createErr) throw createErr;
+}
+const otherSignIn = await api.auth.signInWithPassword({ email: otherEmail, password: "password123" });
+if (otherSignIn.error) throw otherSignIn.error;
+const { data: otherEvents } = await client(otherSignIn.data.session!.access_token)
+  .from("requisition_returns")
+  .select("id")
+  .eq("requisition_id", rid);
+ok((otherEvents?.length ?? 0) === 0, "requester khác không thấy lịch sử phiếu của người khác");
 
 console.log("PASS");
