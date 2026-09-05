@@ -14,8 +14,8 @@ export async function recordDefect(input: DefectInput) {
     variant_id: i.variantId,
     quantity: i.quantity,
     damage_detail: i.damageDetail,
-    damage_type: i.damageType ?? null,
-    severity: i.severity ?? null,
+    damage_type: i.damageType,
+    severity: i.severity,
     images: i.images,
   }));
 
