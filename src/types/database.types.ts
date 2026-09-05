@@ -1345,6 +1345,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_stocktake: {
+        Args: { p_by: string; p_location_id: string }
+        Returns: string
+      }
       fulfill_requisition: {
         Args: { p_by: string; p_id: string; p_notes: string }
         Returns: undefined
