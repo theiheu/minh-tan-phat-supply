@@ -15,7 +15,7 @@ import { RequisitionActions } from "@/features/requisitions/components/requisiti
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { DAMAGE_TYPE, REQUISITION_STATUS, REQUISITION_TYPE, SEVERITY_LEVEL, statusBadgeClass, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +38,43 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     .from("requisition_items")
     .select("id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images))")
     .eq("requisition_id", id);
+
+  // ---- Chứng cứ vật tư hỏng (phiếu Đổi mới) ----
+  let defectEvidence: {
+    code: string;
+    items: {
+      id: string;
+      productName: string | null;
+      quantity: number;
+      damageDetail: string | null;
+      damageType: string | null;
+      severity: string | null;
+      images: string[];
+    }[];
+  } | null = null;
+  if (req.requisition_type === "replacement" && req.linked_defect_id) {
+    const [{ data: dnote }, { data: ditems }] = await Promise.all([
+      supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
+      supabase
+        .from("defect_note_items")
+        .select("id, quantity, damage_detail, damage_type, severity, images, variants(products(name))")
+        .eq("defect_note_id", req.linked_defect_id),
+    ]);
+    if (dnote) {
+      defectEvidence = {
+        code: dnote.code,
+        items: (ditems ?? []).map((it) => ({
+          id: it.id,
+          productName: (it.variants as { products?: { name: string | null } | null } | null)?.products?.name ?? null,
+          quantity: it.quantity,
+          damageDetail: it.damage_detail,
+          damageType: it.damage_type,
+          severity: it.severity,
+          images: it.images ?? [],
+        })),
+      };
+    }
+  }
 
   // ---- Lịch sử đầy đủ ----
   // Manager đọc được audit_logs (RLS) → timeline đầy đủ cả các bước bị từ chối/hủy/trả lại.
@@ -174,6 +211,50 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
           </Table>
         </CardContent>
       </Card>
+
+      {defectEvidence && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Vật tư hỏng liên quan · <span className="font-mono">{defectEvidence.code}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tên vật tư</TableHead>
+                  <TableHead>Số lượng</TableHead>
+                  <TableHead>Chi tiết hỏng</TableHead>
+                  <TableHead>Kiểu</TableHead>
+                  <TableHead>Mức độ</TableHead>
+                  <TableHead>Ảnh</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {defectEvidence.items.map((it) => (
+                  <TableRow key={it.id}>
+                    <TableCell className="font-medium">{it.productName ?? "—"}</TableCell>
+                    <TableCell className="tabular-nums">{it.quantity}</TableCell>
+                    <TableCell className="max-w-[260px] text-muted-foreground">{it.damageDetail ?? "—"}</TableCell>
+                    <TableCell>{it.damageType ? (DAMAGE_TYPE[it.damageType] ?? it.damageType) : "—"}</TableCell>
+                    <TableCell>{it.severity ? (SEVERITY_LEVEL[it.severity] ?? it.severity) : "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {it.images.map((url) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={url} src={url} alt="" className="size-12 rounded-md border object-cover" />
+                        ))}
+                        {it.images.length === 0 ? <span className="text-muted-foreground">—</span> : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {profile &&
         (req.status === "issued" || req.status === "received") &&
