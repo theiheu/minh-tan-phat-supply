@@ -1,0 +1,16 @@
+# Không đưa vào build context (giảm size + tránh lộ secret)
+node_modules
+.next
+.git
+.github
+.env
+.env.local
+.env.*.local
+.tmp
+.supahome
+*.tsbuildinfo
+*.log
+Dockerfile
+docker-compose*.yml
+DEPLOYMENT.md
+BUILD_GUIDE.md

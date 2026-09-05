@@ -1,0 +1,21 @@
+# Compose cho riêng app Next.js (tách biệt với Supabase self-host official compose).
+# Đọc biến từ file `.env` trong cùng thư mục (copy .env.example → .env rồi điền giá trị thật).
+#
+# Chạy:  docker compose -f docker-compose.app.yml up -d --build
+# App bind 127.0.0.1:3000 — chỉ reverse proxy (Caddy/Nginx) trên cùng máy truy cập,
+# không mở thẳng ra internet.
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY
+        - NEXT_PUBLIC_SITE_URL
+    environment:
+      # Chỉ cần ở runtime (server-only), không bake vào image
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"

@@ -6,6 +6,7 @@ import { z } from "zod";
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(10),
+  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
 });
 
 const serverEnvSchema = publicEnvSchema.extend({
@@ -21,9 +22,16 @@ export function getPublicEnv(): PublicEnv {
     cachedPublic = publicEnvSchema.parse({
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     });
   }
   return cachedPublic;
+}
+
+// URL gốc của app (dùng cho link redirect trong email mời, v.v.).
+// Local mặc định http://localhost:3000; production set qua NEXT_PUBLIC_SITE_URL.
+export function getSiteUrl(): string {
+  return getPublicEnv().NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
 let cachedServer: z.infer<typeof serverEnvSchema> | null = null;
