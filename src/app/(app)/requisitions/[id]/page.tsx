@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { MaterialItemsView, type MaterialItemView } from "@/features/requisitions/components/material-items-view";
 import { RequisitionActions } from "@/features/requisitions/components/requisition-actions";
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { getCurrentProfile } from "@/lib/auth";
@@ -36,8 +36,38 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
 
   const { data: items } = await supabase
     .from("requisition_items")
-    .select("id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images))")
+    .select(
+      "id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images, description))",
+    )
     .eq("requisition_id", id);
+
+  // ---- Tồn kho hiện tại từng vật tư (để quản kho đối chiếu khi cấp phát) ----
+  const variantIds = [...new Set((items ?? []).map((i) => i.variant_id).filter((v): v is string => Boolean(v)))];
+  const stockByVariant = new Map<string, number>();
+  if (variantIds.length > 0) {
+    const { data: stockRows } = await supabase
+      .from("variant_stock")
+      .select("variant_id, quantity")
+      .in("variant_id", variantIds);
+    for (const s of stockRows ?? []) {
+      if (s.variant_id != null && s.quantity != null) stockByVariant.set(s.variant_id, s.quantity);
+    }
+  }
+
+  const materialItems: MaterialItemView[] = (items ?? []).map((i) => ({
+    id: i.id,
+    variantId: i.variant_id,
+    productName: (i.variants as { products?: { name?: string | null } | null } | null)?.products?.name ?? null,
+    description: (i.variants as { products?: { description?: string | null } | null } | null)?.products?.description ?? null,
+    attributes: (i.variants as { attributes?: unknown } | null)?.attributes ?? null,
+    unit: (i.variants as { unit?: string | null } | null)?.unit ?? null,
+    quantity: i.quantity,
+    images: [
+      ...((i.variants as { images?: string[] | null } | null)?.images ?? []),
+      ...((i.variants as { products?: { images?: string[] | null } | null } | null)?.products?.images ?? []),
+    ],
+    stock: i.variant_id ? (stockByVariant.get(i.variant_id) ?? null) : null,
+  }));
 
   // ---- Chứng cứ vật tư hỏng (phiếu Đổi mới) ----
   let defectEvidence: {
@@ -169,42 +199,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
           <CardTitle className="text-base">Vật tư</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tên vật tư</TableHead>
-                <TableHead>Biến thể</TableHead>
-                <TableHead>Đơn vị</TableHead>
-                <TableHead>Số lượng</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(items ?? []).map((i) => {
-                const itemImage = i.variants?.images?.[0] ?? i.variants?.products?.images?.[0];
-                return (
-                  <TableRow key={i.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {itemImage ? (
-                          <Image
-                            src={itemImage}
-                            alt=""
-                            width={40}
-                            height={40}
-                            className="size-10 shrink-0 rounded-md border object-cover"
-                          />
-                        ) : null}
-                        <span className="font-medium">{i.variants?.products?.name ?? "—"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{variantLabel(i.variants?.attributes, i.variants?.unit)}</TableCell>
-                    <TableCell>{i.variants?.unit ?? "—"}</TableCell>
-                    <TableCell className="tabular-nums">{i.quantity}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <MaterialItemsView items={materialItems} />
         </CardContent>
       </Card>
 
