@@ -79,3 +79,16 @@ export async function cancelRequisition(id: string) {
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
 }
+
+export async function returnRequisitionItems(requisitionId: string, items: { variantId: string; quantity: number }[]) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("return_requisition_items", {
+    p_requisition_id: requisitionId,
+    p_items: items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
+    p_by: profile.id,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/requisitions/${requisitionId}`);
+  revalidatePath("/products");
+}

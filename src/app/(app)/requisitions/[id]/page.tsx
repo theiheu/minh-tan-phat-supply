@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { RequisitionActions } from "@/features/requisitions/components/requisition-actions";
+import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass, variantLabel } from "@/lib/labels";
@@ -33,7 +34,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
 
   const { data: items } = await supabase
     .from("requisition_items")
-    .select("id, quantity, variants(attributes, unit, price, products(name))")
+    .select("id, variant_id, quantity, variants(attributes, unit, price, products(name))")
     .eq("requisition_id", id);
 
   const timeline = [
@@ -109,6 +110,27 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
           </Table>
         </CardContent>
       </Card>
+
+      {profile &&
+        (req.status === "issued" || req.status === "received") &&
+        (profile.role === "manager" || profile.id === req.requester_id) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Trả lại vật tư không dùng hết</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ReturnItems
+                requisitionId={req.id}
+                items={(items ?? []).map((i) => ({
+                  id: i.id,
+                  variantId: i.variant_id,
+                  label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
+                  quantity: i.quantity,
+                }))}
+              />
+            </CardContent>
+          </Card>
+        )}
 
       {timeline.length > 0 && (
         <Card>
