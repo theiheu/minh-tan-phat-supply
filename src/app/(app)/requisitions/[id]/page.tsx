@@ -54,6 +54,23 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     }
   }
 
+  // ---- Lịch sử trả lại vật tư (mọi sự kiện của phiếu) ----
+  const { data: returnEvents } = await supabase
+    .from("requisition_returns")
+    .select(
+      "id, returned_by, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(attributes, unit, products(name)))",
+    )
+    .eq("requisition_id", id)
+    .order("created_at", { ascending: false });
+
+  // Tổng đã trả theo variant (qua mọi sự kiện) — dùng cho form trả và dòng vật tư.
+  const returnedByVariant = new Map<string, number>();
+  for (const ev of returnEvents ?? []) {
+    for (const it of (ev as { items?: { variant_id: string; quantity: number }[] }).items ?? []) {
+      returnedByVariant.set(it.variant_id, (returnedByVariant.get(it.variant_id) ?? 0) + it.quantity);
+    }
+  }
+
   const materialItems: MaterialItemView[] = (items ?? []).map((i) => ({
     id: i.id,
     variantId: i.variant_id,
@@ -62,6 +79,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     attributes: (i.variants as { attributes?: unknown } | null)?.attributes ?? null,
     unit: (i.variants as { unit?: string | null } | null)?.unit ?? null,
     quantity: i.quantity,
+    returned: returnedByVariant.get(i.variant_id) ?? 0,
     images: [
       ...((i.variants as { images?: string[] | null } | null)?.images ?? []),
       ...((i.variants as { products?: { images?: string[] | null } | null } | null)?.products?.images ?? []),
@@ -258,11 +276,53 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                   variantId: i.variant_id,
                   label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
                   quantity: i.quantity,
+                  returned: returnedByVariant.get(i.variant_id) ?? 0,
                 }))}
               />
             </CardContent>
           </Card>
         )}
+
+      {returnEvents && returnEvents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Lịch sử trả lại</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {returnEvents.map((ev) => {
+              const evItems =
+                (ev as {
+                  items?: {
+                    variant_id: string;
+                    quantity: number;
+                    variants?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+                  }[];
+                }).items ?? [];
+              return (
+                <div key={ev.id} className="rounded-lg border p-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                    <span className="font-medium">{(ev as { returnedBy?: { name?: string | null } | null }).returnedBy?.name ?? "—"}</span>
+                    <span className="text-xs text-muted-foreground">{formatDate(ev.created_at)}</span>
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {evItems.map((it, idx) => (
+                      <div key={idx} className="flex items-baseline justify-between gap-3 text-sm">
+                        <span className="min-w-0 truncate">
+                          {it.variants?.products?.name ?? "Vật tư"}
+                          <span className="text-muted-foreground">
+                            {" "}· {variantLabel(it.variants?.attributes, it.variants?.unit)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 font-medium tabular-nums">× {it.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {events.length > 0 && (
         <Card>

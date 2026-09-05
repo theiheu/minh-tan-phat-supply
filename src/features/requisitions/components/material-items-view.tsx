@@ -22,6 +22,8 @@ export interface MaterialItemView {
   attributes: unknown;
   unit: string | null;
   quantity: number;
+  /** Số lượng đã trả lại kho (0 nếu chưa trả). */
+  returned: number;
   /** Ảnh biến thể + ảnh sản phẩm (đã gộp, thứ tự ưu tiên biến thể trước). */
   images: string[];
   /** Tồn kho hiện có tại Kho chính (nullable khi không truy vấn được). */
@@ -78,7 +80,12 @@ export function MaterialItemsView({ items }: { items: MaterialItemView[] }) {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-sm font-medium tabular-nums">SL: {it.quantity}</span>
+                    <div className="flex shrink-0 flex-col items-end gap-0.5">
+                      <span className="text-sm font-medium tabular-nums">SL: {it.quantity}</span>
+                      {it.returned > 0 ? (
+                        <span className="text-xs text-muted-foreground">đã trả {it.returned}</span>
+                      ) : null}
+                    </div>
                     <ChevronRight className="size-4 text-muted-foreground" aria-hidden />
                   </div>
                 </button>
