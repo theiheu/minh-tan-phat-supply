@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { productInputSchema, type ProductInput, type VariantInput } from "./schema";
+import { productInputSchema, type ProductInput } from "./schema";
 
 export async function createProduct(input: ProductInput) {
   await requireManager();
@@ -57,5 +57,3 @@ export async function deleteProduct(id: string) {
   revalidatePath("/admin/products");
   revalidatePath("/products");
 }
-
-export type { VariantInput };
