@@ -1,3 +1,4 @@
+import { LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,13 +84,13 @@ export default async function ProductsPage({
         </Button>
       </form>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <CategoryLink active={!categoryId} href={q ? `?q=${encodeURIComponent(q)}` : "?"} label="Tất cả" />
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-9">
+        <CategoryTile active={!categoryId} href={q ? `?q=${encodeURIComponent(q)}` : "?"} label="Tất cả" icon={LayoutGrid} />
         {(categories ?? []).map((c) => {
           const Icon = categoryIcon(c.icon);
           const href = `?category=${c.id}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
           return (
-            <CategoryLink key={c.id} active={categoryId === c.id} href={href} label={c.name} icon={Icon} />
+            <CategoryTile key={c.id} active={categoryId === c.id} href={href} label={c.name} icon={Icon} />
           );
         })}
       </div>
@@ -130,7 +131,7 @@ export default async function ProductsPage({
   );
 }
 
-function CategoryLink({
+function CategoryTile({
   active,
   href,
   label,
@@ -139,19 +140,19 @@ function CategoryLink({
   active: boolean;
   href: string;
   label: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <Link
       href={href}
-      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
+      className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border p-1.5 text-center transition-colors ${
         active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
       }`}
     >
-      {Icon ? <Icon className="size-4" /> : null}
-      {label}
+      <Icon className="size-6 shrink-0" />
+      <span className="line-clamp-2 text-[11px] leading-tight">{label}</span>
     </Link>
   );
 }
