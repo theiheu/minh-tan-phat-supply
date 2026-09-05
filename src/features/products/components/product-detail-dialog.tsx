@@ -12,7 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatVnd } from "@/lib/format";
 import { variantLabel } from "@/lib/labels";
 import { useCartStore } from "@/stores/cart-store";
 import type { Product } from "@/lib/types";
@@ -23,19 +22,16 @@ export function ProductDetailDialog({
   onOpenChange,
   product,
   variants,
-  role = "requester",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: Product;
   variants: VariantWithStock[];
-  role?: string;
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const [selectedId, setSelectedId] = useState(variants[0]?.id ?? "");
   const [qty, setQty] = useState(1);
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
-  const showPrice = role === "manager";
 
   function addToCart() {
     if (!selected) return;
@@ -45,7 +41,6 @@ export function ProductDetailDialog({
       name: product.name,
       label: variantLabel(selected.attributes, selected.unit),
       unit: selected.unit,
-      price: selected.price,
       image: selected.images?.[0] ?? product.images?.[0] ?? null,
     });
     toast.success("Đã thêm vào giỏ");
@@ -98,9 +93,6 @@ export function ProductDetailDialog({
                 </div>
               </div>
               <div className="shrink-0 text-right text-sm">
-                {showPrice && (
-                  <div className="tabular-nums">{v.price != null ? formatVnd(v.price) : "—"}</div>
-                )}
                 <div className={`text-xs ${v.stock === 0 ? "text-red-600" : "text-emerald-600"}`}>
                   Tồn: {v.stock}
                 </div>

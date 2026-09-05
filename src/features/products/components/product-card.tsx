@@ -13,12 +13,10 @@ export function ProductCard({
   product,
   variants,
   categoryIconKey,
-  role = "requester",
 }: {
   product: Product;
   variants: VariantWithStock[];
   categoryIconKey?: string | null;
-  role?: string;
 }) {
   const [open, setOpen] = useState(false);
   const Icon = categoryIcon(categoryIconKey);
@@ -48,7 +46,7 @@ export function ProductCard({
   return (
     <>
       <Card
-        className="cursor-pointer overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg"
+        className="cursor-pointer gap-0 overflow-hidden p-0 transition-all hover:-translate-y-1 hover:shadow-lg"
         onClick={() => setOpen(true)}
       >
         <div className="relative">
@@ -72,7 +70,7 @@ export function ProductCard({
           </div>
         </CardContent>
       </Card>
-      <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} role={role} />
+      <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} />
     </>
   );
 }

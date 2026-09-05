@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatVnd } from "@/lib/format";
 import { MOVEMENT_TYPE, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,7 +18,7 @@ export default async function ReportsPage() {
   const supabase = await createClient();
   const [{ data: variants }, { data: profiles }, { data: stock }, { data: movements }, { data: expiring }, { data: audits }] =
     await Promise.all([
-      supabase.from("variants").select("id, attributes, unit, products(name)"),
+      supabase.from("variants").select("id, attributes, unit, price, products(name)"),
       supabase.from("profiles").select("id, name"),
       supabase.from("variant_stock").select("variant_id, quantity, min_stock").order("quantity", { ascending: true }).limit(200),
       supabase.from("stock_movements").select("variant_id, movement_type, quantity, created_at").order("created_at", { ascending: false }).limit(100),
@@ -55,17 +55,22 @@ export default async function ReportsPage() {
         <CardContent>
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Vật tư</TableHead><TableHead>Biến thể</TableHead><TableHead>Tồn</TableHead><TableHead>Tối thiểu</TableHead>
+              <TableHead>Vật tư</TableHead><TableHead>Biến thể</TableHead><TableHead>Tồn</TableHead><TableHead>Tối thiểu</TableHead><TableHead>Đơn giá</TableHead><TableHead>Giá trị tồn</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {(stock ?? []).map((s, i) => (
-                <TableRow key={i}>
-                  <TableCell>{nameOf(s.variant_id)}</TableCell>
-                  <TableCell className="text-muted-foreground">{labelOf(s.variant_id)}</TableCell>
-                  <TableCell className={`tabular-nums ${(s.quantity ?? 0) <= (s.min_stock ?? 0) ? "font-medium text-red-600" : ""}`}>{s.quantity ?? 0}</TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">{s.min_stock ?? 0}</TableCell>
-                </TableRow>
-              ))}
+              {(stock ?? []).map((s, i) => {
+                const price = s.variant_id ? variantMap.get(s.variant_id)?.price ?? null : null;
+                return (
+                  <TableRow key={i}>
+                    <TableCell>{nameOf(s.variant_id)}</TableCell>
+                    <TableCell className="text-muted-foreground">{labelOf(s.variant_id)}</TableCell>
+                    <TableCell className={`tabular-nums ${(s.quantity ?? 0) <= (s.min_stock ?? 0) ? "font-medium text-red-600" : ""}`}>{s.quantity ?? 0}</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">{s.min_stock ?? 0}</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">{price != null ? formatVnd(price) : "—"}</TableCell>
+                    <TableCell className="tabular-nums">{price != null ? formatVnd((s.quantity ?? 0) * price) : "—"}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

@@ -7,7 +7,6 @@ export interface CartItem {
   name: string;
   label: string;
   unit: string | null;
-  price: number | null;
   image?: string | null;
 }
 

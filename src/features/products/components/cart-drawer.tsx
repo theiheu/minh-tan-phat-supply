@@ -4,7 +4,6 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { formatVnd } from "@/lib/format";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -14,7 +13,7 @@ export function CartDrawer() {
   const items = useCartStore((s) => s.items);
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
-  const total = items.reduce((n, i) => n + (i.price ?? 0) * i.quantity, 0);
+  const totalQty = items.reduce((n, i) => n + i.quantity, 0);
 
   return (
     <Sheet open={isOpen} onOpenChange={setCartOpen}>
@@ -39,9 +38,6 @@ export function CartDrawer() {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{i.name}</div>
                     <div className="text-xs text-muted-foreground">{i.label}</div>
-                    <div className="text-sm tabular-nums">
-                      {i.price != null ? formatVnd(i.price) : "—"}
-                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
@@ -77,9 +73,9 @@ export function CartDrawer() {
         </div>
 
         <div className="space-y-3 border-t px-4 py-4">
-          <div className="flex justify-between text-sm font-medium">
-            <span>Tổng</span>
-            <span className="tabular-nums">{formatVnd(total)}</span>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Tổng số lượng</span>
+            <span className="font-medium tabular-nums text-foreground">{totalQty}</span>
           </div>
           <Button asChild className="w-full" disabled={items.length === 0}>
             <Link href="/requisitions/new" onClick={() => setCartOpen(false)}>
