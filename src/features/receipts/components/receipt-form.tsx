@@ -8,9 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { SearchSelect } from "@/components/search-select";
+import { ComboboxInput } from "@/components/combobox-input";
 import { createReceipt, postReceipt } from "../actions";
 
 interface ItemDraft {
@@ -42,10 +41,14 @@ export function ReceiptForm({
   const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
   const [pending, startTransition] = useTransition();
 
-  // Options cho combobox chọn vật tư (gõ tìm kiếm nhanh giữa ~1000 sản phẩm).
+  // Options cho ô gõ-tìm chọn vật tư (lọc nhanh giữa ~1000 sản phẩm).
   const variantOptions = useMemo(
     () => variants.map((v) => ({ value: v.id, label: v.label })),
     [variants],
+  );
+  const supplierOptions = useMemo(
+    () => suppliers.map((s) => ({ value: s.id, label: s.name })),
+    [suppliers],
   );
 
   function setItem(i: number, patch: Partial<ItemDraft>) {
@@ -97,17 +100,13 @@ export function ReceiptForm({
         <CardContent>
           <div className="max-w-sm space-y-1.5">
             <Label>Nhà cung cấp</Label>
-            <Select value={supplierId ?? "none"} onValueChange={(v) => setSupplierId(v === "none" ? null : v)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Không —</SelectItem>
-                {suppliers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ComboboxInput
+              value={supplierId ?? ""}
+              onChange={(v) => setSupplierId(v === "" ? null : v)}
+              options={supplierOptions}
+              placeholder="Chọn hoặc gõ tên nhà cung cấp…"
+              emptyText="Không tìm thấy nhà cung cấp."
+            />
             <p className="text-xs text-muted-foreground">
               Chưa có nhà cung cấp phù hợp?{" "}
               <Link
@@ -147,12 +146,11 @@ export function ReceiptForm({
               <div key={i} className="grid grid-cols-2 gap-2 rounded-lg border p-3 lg:grid-cols-7">
                 <div className="space-y-1 lg:col-span-2">
                   <Label className="text-xs">Vật tư</Label>
-                  <SearchSelect
+                  <ComboboxInput
                     value={it.variantId}
                     onChange={(v) => setItem(i, { variantId: v })}
                     options={variantOptions}
-                    placeholder="Chọn vật tư…"
-                    searchPlaceholder="Gõ tên vật tư để tìm…"
+                    placeholder="Chọn hoặc gõ tên vật tư…"
                     emptyText="Không tìm thấy vật tư."
                   />
                 </div>

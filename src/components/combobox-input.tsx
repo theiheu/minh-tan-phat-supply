@@ -1,0 +1,160 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+export interface ComboboxInputOption {
+  value: string;
+  label: string;
+  hint?: string;
+}
+
+const MAX_VISIBLE = 100;
+
+/**
+ * Ô chọn kiểu "gõ thẳng" (inline autocomplete): gõ trực tiếp vào ô để lọc
+ * danh sách bên dưới — không cần bấm mở dropdown trước như SearchSelect.
+ * - Chọn 1 dòng → ô hiện đúng tên đã chọn.
+ * - Enter chọn khi còn đúng 1 kết quả (hoặc có kết quả khớp chính xác).
+ * - Xoá hết chữ = bỏ lựa chọn (onChange("")).
+ * - Bấm ra ngoài / Esc mà chưa chọn → trả lại lựa chọn đang có, không làm mất.
+ */
+export function ComboboxInput({
+  value,
+  onChange,
+  options,
+  placeholder = "Chọn…",
+  emptyText = "Không tìm thấy.",
+}: {
+  value: string; // id đang chọn; "" = chưa chọn
+  onChange: (value: string) => void; // "" = xoá lựa chọn
+  options: ComboboxInputOption[];
+  placeholder?: string;
+  emptyText?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const selectedLabel = useMemo(
+    () => options.find((o) => o.value === value)?.label ?? "",
+    [options, value],
+  );
+
+  // Đồng bộ ô nhập với lựa chọn thay đổi từ ngoài (reset dòng, chọn xong…).
+  useEffect(() => {
+    setText(selectedLabel);
+  }, [selectedLabel]);
+
+  const filtered = useMemo(() => {
+    const q = text.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((o) => `${o.label} ${o.hint ?? ""}`.toLowerCase().includes(q));
+  }, [options, text]);
+
+  const visible = filtered.slice(0, MAX_VISIBLE);
+  const hiddenCount = filtered.length - visible.length;
+
+  function revertQuery() {
+    setText(selectedLabel);
+  }
+
+  function pick(option: ComboboxInputOption) {
+    onChange(option.value);
+    setText(option.label);
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      revertQuery();
+      setOpen(false);
+      e.preventDefault();
+      return;
+    }
+    if (e.key === "Enter" && open) {
+      const exact = filtered.find((o) => o.label.toLowerCase() === text.trim().toLowerCase());
+      const target = exact ?? (filtered.length === 1 ? filtered[0] : undefined);
+      if (target) {
+        pick(target);
+        e.preventDefault();
+      }
+    }
+  }
+
+  // Bấm ra ngoài → đóng danh sách (blur sẽ tự trả text về lựa chọn cũ).
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <Input
+        value={text}
+        placeholder={placeholder}
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        onChange={(e) => {
+          setText(e.target.value);
+          setOpen(true);
+          if (e.target.value === "") onChange("");
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={revertQuery}
+        onKeyDown={handleKeyDown}
+        className="pr-8"
+      />
+      <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
+          {visible.length === 0 ? (
+            <p className="px-3 py-4 text-center text-sm">{emptyText}</p>
+          ) : (
+            <ul role="listbox" className="max-h-72 overflow-y-auto p-1">
+              {visible.map((o) => {
+                const active = o.value === value;
+                return (
+                  <li key={o.value}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden",
+                      )}
+                      // Giữ focus trong ô nhập để không kích hoạt blur/revert trước khi chọn.
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => pick(o)}
+                    >
+                      <Check
+                        className={cn("size-4 shrink-0", active ? "opacity-100" : "opacity-0")}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1 truncate">{o.label}</span>
+                      {o.hint ? (
+                        <span className="ml-auto shrink-0 pl-2 text-xs text-muted-foreground">{o.hint}</span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+              {hiddenCount > 0 && (
+                <li className="px-3 py-1.5 text-xs text-muted-foreground">
+                  Còn {hiddenCount} kết quả khác — gõ thêm để thu hẹp danh sách…
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
