@@ -158,3 +158,15 @@ export function variantLabel(attributes: unknown, unit?: string | null): string 
   }
   return unit ?? "—";
 }
+
+// Nhãn vai trò tài khoản (UI) — tránh ternary rải rác.
+export const ROLE_LABELS: Record<string, string> = {
+  requester: "Người yêu cầu",
+  manager: "Quản lý kho",
+  superuser: "Quản trị hệ thống",
+};
+
+export function roleLabel(role: string | null | undefined): string {
+  if (role && role in ROLE_LABELS) return ROLE_LABELS[role];
+  return "—";
+}

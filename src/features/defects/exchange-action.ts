@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
+import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 const LIVE_STATUSES = ["draft", "pending", "approved", "issued", "received"] as const;
@@ -23,7 +24,7 @@ export async function createReplacementRequest(noteId: string): Promise<string> 
 
   if (note.status !== "staging") throw new Error("Chỉ phiếu hỏng đang tập kết mới tạo được yêu cầu đổi mới");
   const isOwner = reporterId === profile.id;
-  if (!isOwner && profile.role !== "manager") throw new Error("Bạn không có quyền tạo yêu cầu cho phiếu hỏng này");
+  if (!isOwner && !isPrivileged(profile.role)) throw new Error("Bạn không có quyền tạo yêu cầu cho phiếu hỏng này");
 
   const items = note.defect_note_items ?? [];
   if (items.length === 0) throw new Error("Phiếu hỏng không có dòng vật tư");

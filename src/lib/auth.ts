@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
+import { isPrivileged, isSuperuser } from "@/lib/types";
 
 export type { Profile, Role } from "@/lib/types";
 
@@ -31,6 +32,12 @@ export const requireProfile = async (): Promise<Profile> => {
 
 export const requireManager = async (): Promise<Profile> => {
   const profile = await requireProfile();
-  if (profile.role !== "manager") redirect("/dashboard");
+  if (!isPrivileged(profile.role)) redirect("/dashboard");
+  return profile;
+};
+
+export const requireSuperuser = async (): Promise<Profile> => {
+  const profile = await requireManager();
+  if (!isSuperuser(profile.role)) redirect("/dashboard");
   return profile;
 };

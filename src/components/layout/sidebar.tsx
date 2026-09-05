@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, MAIN_NAV, filterByRole, type NavItem } from "@/lib/nav";
+import { roleLabel } from "@/lib/labels";
 import type { Profile } from "@/lib/types";
 import { SignOutButton } from "./sign-out-button";
 
@@ -54,7 +55,7 @@ export function Sidebar({ profile }: { profile: Profile }) {
         <div className="min-w-0 text-sm">
           <div className="truncate font-medium">{profile.name}</div>
           <div className="text-xs text-muted-foreground">
-            {profile.role === "manager" ? "Quản lý kho" : "Người yêu cầu"}
+            {roleLabel(profile.role)}
           </div>
         </div>
         <SignOutButton compact />

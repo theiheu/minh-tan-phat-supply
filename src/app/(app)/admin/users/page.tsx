@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
-  await requireManager();
+  const current = await requireManager();
 
   const supabase = await createClient();
   const [{ data: profiles }, { data: zones }] = await Promise.all([
@@ -13,5 +13,5 @@ export default async function AdminUsersPage() {
     supabase.from("zones").select("id, name").order("name"),
   ]);
 
-  return <UsersManager profiles={profiles ?? []} zones={zones ?? []} />;
+  return <UsersManager profiles={profiles ?? []} zones={zones ?? []} currentRole={current.role} />;
 }

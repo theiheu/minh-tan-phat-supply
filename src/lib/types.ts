@@ -1,6 +1,16 @@
 import type { Database } from "@/types/database.types";
 
-export type Role = "requester" | "manager";
+export type Role = "requester" | "manager" | "superuser";
+
+/** true nếu vai trò có quyền quản lý (manager hoặc superuser — superuser = toàn quyền manager). */
+export function isPrivileged(role: string | null | undefined): boolean {
+  return role === "manager" || role === "superuser";
+}
+
+/** true nếu là tài khoản superuser (quyền cao nhất). */
+export function isSuperuser(role: string | null | undefined): boolean {
+  return role === "superuser";
+}
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];

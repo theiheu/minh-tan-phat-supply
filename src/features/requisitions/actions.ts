@@ -11,7 +11,7 @@ async function getManagerIds(supabase: Supabase): Promise<string[]> {
   const { data } = await supabase
     .from("profiles")
     .select("id")
-    .eq("role", "manager")
+    .in("role", ["manager", "superuser"])
     .eq("is_active", true);
   return (data ?? []).map((p) => p.id);
 }

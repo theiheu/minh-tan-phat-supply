@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireManager } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSuperuser } from "@/lib/types";
 import { internalEmailForUsername } from "@/lib/username";
 import { createUserSchema } from "../schema";
 
@@ -13,8 +14,12 @@ export async function createUser(input: {
   zoneId: string | null;
   password: string;
 }) {
-  await requireManager();
+  const caller = await requireManager();
   const parsed = createUserSchema.parse(input);
+  // Chỉ superuser mới được tạo tài khoản superuser (UI ẩn + server chặn 2 lớp).
+  if (parsed.role === "superuser" && !isSuperuser(caller.role)) {
+    throw new Error("Chỉ tài khoản superuser được tạo tài khoản superuser");
+  }
 
   const admin = createAdminClient();
 

@@ -12,6 +12,7 @@ import {
   rejectRequisition,
   submitRequisition,
 } from "../actions";
+import { isPrivileged } from "@/lib/types";
 
 export function RequisitionActions({
   requisitionId,
@@ -31,7 +32,7 @@ export function RequisitionActions({
   const [reason, setReason] = useState("");
 
   const isOwner = requesterId === currentUserId;
-  const isManager = role === "manager";
+  const isManager = isPrivileged(role);
 
   function run(action: () => Promise<void>, success: string) {
     startTransition(async () => {

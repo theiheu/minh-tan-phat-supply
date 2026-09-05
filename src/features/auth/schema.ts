@@ -17,7 +17,7 @@ export const passwordSchema = z.string().min(8, "Mật khẩu tối thiểu 8 k�
 export const createUserSchema = z.object({
   name: z.string().min(1, "Tên không được trống"),
   username: usernameSchema,
-  role: z.enum(["requester", "manager"]),
+  role: z.enum(["requester", "manager", "superuser"]),
   zoneId: z.string().uuid().nullable(),
   password: passwordSchema,
 });
@@ -25,7 +25,7 @@ export const createUserSchema = z.object({
 export const updateProfileSchema = z.object({
   userId: z.string().uuid(),
   name: z.string().min(1, "Tên không được trống"),
-  role: z.enum(["requester", "manager"]),
+  role: z.enum(["requester", "manager", "superuser"]),
   zoneId: z.string().uuid().nullable(),
   isActive: z.boolean(),
 });

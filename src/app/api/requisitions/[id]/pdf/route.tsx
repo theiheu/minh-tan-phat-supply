@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { RequisitionPDF } from "@/features/requisitions/components/requisition-pdf";
 import { requireProfile } from "@/lib/auth";
+import { isPrivileged } from "@/lib/types";
 import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .single();
   if (!req) return new NextResponse("Không tìm thấy phiếu", { status: 404 });
 
-  const isOwnerOrManager = profile.role === "manager" || profile.id === req.requester_id;
+  const isOwnerOrManager = isPrivileged(profile.role) || profile.id === req.requester_id;
   if (!isOwnerOrManager) return new NextResponse("Không có quyền", { status: 403 });
 
   const { data: items } = await supabase

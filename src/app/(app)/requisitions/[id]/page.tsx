@@ -16,6 +16,7 @@ import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -131,7 +132,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   }
 
   let events: TimelineEvent[] = [];
-  const isManager = profile?.role === "manager";
+  const isManager = isPrivileged(profile?.role);
   if (isManager) {
     const AUDIT_LABELS: Record<string, string> = {
       "requisition.create": "Tạo phiếu",
@@ -263,7 +264,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
 
       {profile &&
         (req.status === "issued" || req.status === "received") &&
-        (profile.role === "manager" || profile.id === req.requester_id) && (
+        (isPrivileged(profile.role) || profile.id === req.requester_id) && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Trả lại vật tư không dùng hết</CardTitle>

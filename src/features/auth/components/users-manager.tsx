@@ -27,22 +27,30 @@ import { createUser } from "@/features/auth/actions/create-user";
 import { resetPassword } from "@/features/auth/actions/reset-password";
 import { updateUsername } from "@/features/auth/actions/update-username";
 import { updateProfile } from "@/features/auth/actions/update-profile";
+import { isSuperuser } from "@/lib/types";
+import { roleLabel } from "@/lib/labels";
 import type { Profile } from "@/lib/types";
 
 type ZoneOption = { id: string; name: string };
 
-const ROLE_OPTIONS = [
-  { value: "requester", label: "Người yêu cầu" },
-  { value: "manager", label: "Quản lý kho" },
-];
+// Chỉ superuser mới được tạo/gán vai trò superuser (server cũng chặn).
+function roleOptionsFor(currentRole: string): { value: string; label: string }[] {
+  const base = [
+    { value: "requester", label: "Người yêu cầu" },
+    { value: "manager", label: "Quản lý kho" },
+  ];
+  if (isSuperuser(currentRole)) return [...base, { value: "superuser", label: "Quản trị hệ thống" }];
+  return base;
+}
 
-function CreateAccountForm({ zones }: { zones: ZoneOption[] }) {
+function CreateAccountForm({ zones, currentRole }: { zones: ZoneOption[]; currentRole: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("requester");
+  const roleOptions = roleOptionsFor(currentRole);
   const [zoneId, setZoneId] = useState<string | null>(null);
 
   function submit(e: React.FormEvent) {
@@ -109,7 +117,7 @@ function CreateAccountForm({ zones }: { zones: ZoneOption[] }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ROLE_OPTIONS.map((r) => (
+                {roleOptions.map((r) => (
                   <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                 ))}
               </SelectContent>
@@ -140,7 +148,7 @@ function CreateAccountForm({ zones }: { zones: ZoneOption[] }) {
   );
 }
 
-function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) {
+function UserRow({ profile, zones, currentRole }: { profile: Profile; zones: ZoneOption[]; currentRole: string }) {
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(profile.name);
   const [username, setUsername] = useState(profile.username ?? "");
@@ -149,6 +157,9 @@ function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) 
   const [isActive, setIsActive] = useState(profile.is_active);
   const [resettingPw, setResettingPw] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const roleOptions = roleOptionsFor(currentRole);
+  const isSystemAccount = profile.is_protected;
+  const canEdit = !isSystemAccount; // server vẫn chặn; UI khóa luôn cho rõ
 
   function save() {
     startTransition(async () => {
@@ -181,7 +192,12 @@ function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) 
   return (
     <TableRow>
       <TableCell className="min-w-[160px]">
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="flex items-center gap-1.5">
+          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} />
+          {isSystemAccount && (
+            <Badge variant="outline" className="shrink-0 bg-violet-100 text-violet-700">Hệ thống</Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell className="min-w-[140px]">
         <Input
@@ -190,22 +206,27 @@ function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) 
           maxLength={30}
           pattern="[a-z][a-z0-9._-]{2,29}"
           onChange={(e) => setUsername(e.target.value)}
+          disabled={!canEdit}
         />
       </TableCell>
       <TableCell>
-        <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-full min-w-[140px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLE_OPTIONS.map((r) => (
-              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!canEdit ? (
+          <span className="text-sm font-medium">{roleLabel(profile.role)}</span>
+        ) : (
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full min-w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {roleOptions.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </TableCell>
       <TableCell>
-        <Select value={zoneId ?? "none"} onValueChange={(v) => setZoneId(v === "none" ? null : v)}>
+        <Select value={zoneId ?? "none"} onValueChange={(v) => setZoneId(v === "none" ? null : v)} disabled={!canEdit}>
           <SelectTrigger className="w-full min-w-[120px]">
             <SelectValue />
           </SelectTrigger>
@@ -223,6 +244,7 @@ function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) 
             type="checkbox"
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
+            disabled={!canEdit}
             className="size-4 accent-primary"
           />
           {isActive ? (
@@ -235,19 +257,23 @@ function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) 
       <TableCell className="min-w-[170px]">
         <div className="flex flex-col items-end gap-1.5">
           <div className="flex gap-1.5">
-            <Button variant="outline" size="sm" onClick={save} disabled={pending}>
-              {pending ? "…" : "Lưu"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setResettingPw((v) => !v);
-                setNewPassword("");
-              }}
-            >
-              Đổi mật khẩu
-            </Button>
+            {canEdit ? (
+              <Button variant="outline" size="sm" onClick={save} disabled={pending}>
+                {pending ? "…" : "Lưu"}
+              </Button>
+            ) : null}
+            {(!isSystemAccount || isSuperuser(currentRole)) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setResettingPw((v) => !v);
+                  setNewPassword("");
+                }}
+              >
+                Đổi mật khẩu
+              </Button>
+            )}
           </div>
           {resettingPw && (
             <div className="flex gap-1.5">
@@ -270,10 +296,18 @@ function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) 
   );
 }
 
-export function UsersManager({ profiles, zones }: { profiles: Profile[]; zones: ZoneOption[] }) {
+export function UsersManager({
+  profiles,
+  zones,
+  currentRole,
+}: {
+  profiles: Profile[];
+  zones: ZoneOption[];
+  currentRole: string;
+}) {
   return (
     <div className="space-y-4">
-      <CreateAccountForm zones={zones} />
+      <CreateAccountForm zones={zones} currentRole={currentRole} />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Danh sách người dùng</CardTitle>
@@ -292,7 +326,7 @@ export function UsersManager({ profiles, zones }: { profiles: Profile[]; zones: 
             </TableHeader>
             <TableBody>
               {profiles.map((p) => (
-                <UserRow key={p.id} profile={p} zones={zones} />
+                <UserRow key={p.id} profile={p} zones={zones} currentRole={currentRole} />
               ))}
             </TableBody>
           </Table>

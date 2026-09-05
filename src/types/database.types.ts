@@ -425,6 +425,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_protected: boolean
           name: string
           role: string
           updated_at: string
@@ -435,6 +436,7 @@ export type Database = {
           created_at?: string
           id: string
           is_active?: boolean
+          is_protected?: boolean
           name: string
           role: string
           updated_at?: string
@@ -445,6 +447,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_protected?: boolean
           name?: string
           role?: string
           updated_at?: string
@@ -1495,6 +1498,7 @@ export type Database = {
       }
       get_login_email: { Args: { p_username: string }; Returns: string }
       is_manager: { Args: never; Returns: boolean }
+      is_superuser: { Args: never; Returns: boolean }
       list_requester_accounts: {
         Args: never
         Returns: {

@@ -48,6 +48,8 @@ export const ADMIN_NAV: NavItem[] = [
 ];
 
 export function filterByRole(items: NavItem[], role: string): NavItem[] {
+  // superuser = toàn quyền: thấy mọi mục (kể cả mục dành riêng manager).
+  if (role === "superuser") return items.filter((i) => !i.roles || i.roles.includes("manager") || i.roles.includes("superuser"));
   return items.filter((i) => !i.roles || i.roles.includes(role as Role));
 }
 

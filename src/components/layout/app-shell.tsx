@@ -6,6 +6,7 @@ import { CartDrawer } from "@/features/products/components/cart-drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, MAIN_NAV, filterByRole } from "@/lib/nav";
+import { roleLabel } from "@/lib/labels";
 import type { Profile } from "@/lib/types";
 import { useUIStore } from "@/stores/ui-store";
 import { MobileNav } from "./mobile-nav";
@@ -57,7 +58,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
               <div className="min-w-0 text-sm">
                 <div className="truncate font-medium">{profile.name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {profile.role === "manager" ? "Quản lý kho" : "Người yêu cầu"}
+                  {roleLabel(profile.role)}
                 </div>
               </div>
               <SignOutButton />

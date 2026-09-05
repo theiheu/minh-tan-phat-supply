@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/search-select";
 import { REQUISITION_TYPE } from "@/lib/labels";
 import type { Zone } from "@/lib/types";
+import { isPrivileged } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { createRequisition, submitRequisition } from "../actions";
 
@@ -40,7 +41,7 @@ export function RequisitionForm({
   const removeItem = useCartStore((s) => s.removeItem);
   const clear = useCartStore((s) => s.clear);
 
-  const canChooseRequester = currentUser?.role === "manager";
+  const canChooseRequester = isPrivileged(currentUser?.role);
 
   // Thư mục khớp tên → tài khoản (dùng khi nhập tên thủ công cho người khác).
   const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
