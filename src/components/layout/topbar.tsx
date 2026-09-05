@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, ShoppingCart } from "lucide-react";
+import { ClipboardList, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { findTitle } from "@/lib/nav";
@@ -33,7 +33,7 @@ export function Topbar() {
         className="relative"
         aria-label="Yêu cầu vật tư"
       >
-        <ShoppingCart className="size-4" />
+        <ClipboardList className="size-4" />
         {cartCount > 0 && (
           <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
             {cartCount}
