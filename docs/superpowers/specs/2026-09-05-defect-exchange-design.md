@@ -29,7 +29,7 @@ Các quyết định đã chốt với người dùng:
 1. **Lập HONG** (người giữ vật tư, Kho nguồn): thêm dòng vật tư hỏng → nhập bắt buộc *Mô tả hỏng, Kiểu hỏng, Mức độ*, upload **≥ 1 ảnh/dòng**. Thiếu → chặn lưu. Stock chính → Kho hỏng (như cũ).
 2. HONG ở `staging`, do chính người dùng lập (hoặc manager xem): nút **"Tạo yêu cầu đổi mới"** → tạo phiếu yêu cầu loại Đổi mới:
    - requester = `reported_by` của HONG; items copy từ các dòng HONG (variant + quantity); `linked_defect_id` = HONG; `purpose` mặc định "Thay thế vật tư hỏng <code>"; zone = zone của người yêu cầu (profile.zone_id).
-   - Gate: phiếu `staging`, từng dòng có ≥ 1 ảnh + đủ thông tin; **chưa tồn tại** phiếu yêu cầu Đổi mới liên kết HONG này ở trạng thái chưa huỷ (draft/pending/approved/issued/received/… — ngoại trừ `cancelled`).
+   - Gate: phiếu `staging`, từng dòng có ≥ 1 ảnh + đủ thông tin; **chưa tồn tại** phiếu yêu cầu Đổi mới liên kết HONG này ở trạng thái sống: `draft | pending | approved | issued | received`. Đã `cancelled`/`rejected` thì tạo lại được.
 3. Phiếu Đổi mới chạy luồng phiếu yêu cầu thường: manager duyệt → cấp phát → người lập HONG nhận vật tư mới.
 4. Khi manager xem/duyệt phiếu yêu cầu loại Đổi mới: khối **"Vật tư hỏng liên quan"** hiển thị mã HONG + từng dòng (tên, biến thể, số lượng, mô tả, kiểu, mức độ) + **ảnh** → đối chiếu trước khi duyệt.
 5. HONG sau khi có yêu cầu đổi mới: giữ nguyên trạng thái/quy trình hiện tại (manager tự xử lý sửa/thanh lý).
