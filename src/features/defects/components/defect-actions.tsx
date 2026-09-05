@@ -37,7 +37,7 @@ export function DefectActions({ note }: { note: { id: string; status: string; it
   if (note.status !== "staging") return null;
 
   return (
-    <div className="flex gap-1">
+    <div className="flex flex-wrap items-center gap-1.5">
       <Button size="sm" onClick={() => setOpen(true)} disabled={note.itemIds.length === 0}>
         Đưa đi sửa
       </Button>

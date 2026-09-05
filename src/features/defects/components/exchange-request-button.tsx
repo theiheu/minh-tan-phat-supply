@@ -26,7 +26,7 @@ export function ExchangeRequestButton({ noteId, disabled = false }: { noteId: st
       type="button"
       onClick={go}
       disabled={disabled || pending}
-      className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent disabled:opacity-50"
+      className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent disabled:opacity-50"
     >
       {pending ? "Đang tạo…" : "Tạo yêu cầu đổi mới"}
     </button>

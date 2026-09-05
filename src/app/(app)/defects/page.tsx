@@ -131,10 +131,10 @@ export default async function DefectsPage({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
                     <DefectActions note={{ id: d.id, status: d.status, itemIds: (d.defect_note_items ?? []).map((i) => i.id) }} />
                     <ExchangeRequestButton noteId={d.id} disabled={d.status !== "staging" || activeNoteIds.has(d.id)} />
-                    <Link href={`/api/defects/${d.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                    <Link href={`/api/defects/${d.id}/pdf`} target="_blank" className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent">
                       PDF
                     </Link>
                   </div>
