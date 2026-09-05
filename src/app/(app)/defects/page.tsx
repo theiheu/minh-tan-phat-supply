@@ -78,6 +78,15 @@ export default async function DefectsPage({
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">Ghi nhận vật tư hỏng để đưa đi sửa, thanh lý hoặc tạo yêu cầu đổi mới.</p>
+        <Link
+          href="/defects/new"
+          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          + Ghi nhận hỏng
+        </Link>
+      </div>
       <ListFilters
         basePath="/defects"
         searchPlaceholder="Tìm mã phiếu hỏng…"
