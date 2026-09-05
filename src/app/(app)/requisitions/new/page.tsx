@@ -17,7 +17,7 @@ export default async function NewRequisitionPage() {
       .order("created_at"),
   ]);
 
-  // Danh sách tài khoản người yêu cầu (kèm email) — RPC chỉ cho manager.
+  // Danh sách tài khoản người yêu cầu (kèm tên đăng nhập) — RPC chỉ cho manager.
   const { data: accounts } =
     profile?.role === "manager"
       ? await supabase.rpc("list_requester_accounts")

@@ -16,7 +16,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/search-select";
-import { formatVnd } from "@/lib/format";
 import { REQUISITION_TYPE } from "@/lib/labels";
 import type { Zone } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
@@ -33,7 +32,7 @@ export function RequisitionForm({
   defects: { id: string; code: string }[];
   defaultZoneId?: string | null;
   currentUser?: { id: string; role: string; name: string | null } | null;
-  accounts?: { id: string; name: string | null; email: string; zone_id: string | null }[];
+  accounts?: { id: string; name: string | null; username: string; zone_id: string | null }[];
 }) {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
@@ -52,10 +51,10 @@ export function RequisitionForm({
   }
 
   // MẶC ĐỊNH: phiếu là của tài khoản đang đăng nhập. Chỉ khi "làm cho người khác"
-  // mới chọn tài khoản khác từ danh sách (kèm email).
+  // mới chọn tài khoản khác từ danh sách (hiện tên đăng nhập).
   const otherAccountOptions: { value: string; label: string; hint?: string }[] = accounts
     .filter((a) => a.name)
-    .map((a) => ({ value: a.id, label: a.name as string, hint: a.email }));
+    .map((a) => ({ value: a.id, label: a.name as string, hint: a.username }));
 
   const [requesterName, setRequesterName] = useState(currentUser?.name || "");
   const [requesterAccountId, setRequesterAccountId] = useState(currentUser?.id || "");
@@ -162,7 +161,7 @@ export function RequisitionForm({
                       onChange={onPickAccount}
                       options={otherAccountOptions}
                       placeholder="Chọn tên tài khoản người khác…"
-                      searchPlaceholder="Gõ tên hoặc email để tìm…"
+                      searchPlaceholder="Gõ tên hoặc tên đăng nhập để tìm…"
                       emptyText="Không tìm thấy tài khoản."
                     />
                     {!typingOther ? (
@@ -265,9 +264,6 @@ export function RequisitionForm({
                     <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity - 1)} aria-label="Giảm">−</Button>
                     <span className="w-10 text-center text-sm tabular-nums">{i.quantity}</span>
                     <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity + 1)} aria-label="Tăng">+</Button>
-                  </div>
-                  <div className="w-24 text-right text-sm tabular-nums">
-                    {i.price != null ? formatVnd(i.price * i.quantity) : "—"}
                   </div>
                   <Button variant="ghost" size="icon-xs" onClick={() => removeItem(i.variantId)} aria-label="Xóa">×</Button>
                 </li>

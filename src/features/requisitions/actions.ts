@@ -33,8 +33,8 @@ async function safeNotify(
           p_user_id: uid,
           p_type: type,
           p_title: title,
-          p_body: body ?? null,
-          p_link: link ?? null,
+          p_body: body ?? undefined,
+          p_link: link ?? undefined,
         }),
       ),
     );

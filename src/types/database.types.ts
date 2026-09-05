@@ -428,6 +428,7 @@ export type Database = {
           name: string
           role: string
           updated_at: string
+          username: string
           zone_id: string | null
         }
         Insert: {
@@ -437,6 +438,7 @@ export type Database = {
           name: string
           role: string
           updated_at?: string
+          username: string
           zone_id?: string | null
         }
         Update: {
@@ -446,6 +448,7 @@ export type Database = {
           name?: string
           role?: string
           updated_at?: string
+          username?: string
           zone_id?: string | null
         }
         Relationships: [
@@ -1334,6 +1337,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_update_username: {
+        Args: { p_user_id: string; p_username: string }
+        Returns: undefined
+      }
       approve_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -1374,6 +1381,16 @@ export type Database = {
         Args: { p_by: string; p_items: Json; p_reason: string }
         Returns: string
       }
+      create_notification: {
+        Args: {
+          p_body?: string
+          p_link?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       create_receipt: {
         Args: { p_by: string; p_items: Json; p_supplier_id: string }
         Returns: string
@@ -1393,24 +1410,20 @@ export type Database = {
         Args: { p_by: string; p_location_id: string }
         Returns: string
       }
-      create_notification: {
-        Args: {
-          p_body?: string | null
-          p_link?: string | null
-          p_title: string
-          p_type: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
       fulfill_requisition: {
         Args: { p_by: string; p_id: string; p_notes: string }
         Returns: undefined
       }
+      get_login_email: { Args: { p_username: string }; Returns: string }
       is_manager: { Args: never; Returns: boolean }
       list_requester_accounts: {
         Args: never
-        Returns: { email: string; id: string; name: string; zone_id: string | null }[]
+        Returns: {
+          id: string
+          name: string
+          username: string
+          zone_id: string
+        }[]
       }
       next_code: { Args: { prefix: string; seq: unknown }; Returns: string }
       post_receipt: { Args: { p_by: string; p_id: string }; Returns: string[] }
@@ -1440,7 +1453,9 @@ export type Database = {
       }
       search_catalog: {
         Args: { p_query: string }
-        Returns: { id: string }[]
+        Returns: {
+          id: string
+        }[]
       }
       send_to_repair: {
         Args: {
