@@ -143,43 +143,50 @@ export function ReceiptForm({
           {items.map((it, i) => {
             const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
             return (
-              <div key={i} className="grid grid-cols-2 gap-2 rounded-lg border p-3 lg:grid-cols-7">
-                <div className="space-y-1 lg:col-span-2">
-                  <Label className="text-xs">Vật tư</Label>
-                  <ComboboxInput
-                    value={it.variantId}
-                    onChange={(v) => setItem(i, { variantId: v })}
-                    options={variantOptions}
-                    placeholder="Chọn hoặc gõ tên vật tư…"
-                    emptyText="Không tìm thấy vật tư."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Số lượng</Label>
-                  <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Đơn giá</Label>
-                  <Input type="number" min="0" value={it.unitCost} onChange={(e) => setItem(i, { unitCost: e.target.value })} />
-                </div>
-                {trackable ? (
-                  <>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Lô</Label>
-                      <Input value={it.batchNo} onChange={(e) => setItem(i, { batchNo: e.target.value })} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Hạn sử dụng</Label>
-                      <Input type="date" value={it.expiryDate} onChange={(e) => setItem(i, { expiryDate: e.target.value })} />
-                    </div>
-                  </>
-                ) : (
-                  <div className="lg:col-span-2" />
-                )}
-                <div className="flex items-end">
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))} aria-label="Xóa dòng">
+              <div key={i} className="space-y-2 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-2 border-b pb-2">
+                  <span className="text-xs font-medium text-muted-foreground">Vật tư {i + 1}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
+                    aria-label="Xóa dòng"
+                  >
                     ×
                   </Button>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+                    <Label className="text-xs">Vật tư</Label>
+                    <ComboboxInput
+                      value={it.variantId}
+                      onChange={(v) => setItem(i, { variantId: v })}
+                      options={variantOptions}
+                      placeholder="Chọn hoặc gõ tên vật tư…"
+                      emptyText="Không tìm thấy vật tư."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Số lượng</Label>
+                    <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Đơn giá</Label>
+                    <Input type="number" min="0" value={it.unitCost} onChange={(e) => setItem(i, { unitCost: e.target.value })} />
+                  </div>
+                  {trackable ? (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Lô</Label>
+                        <Input value={it.batchNo} onChange={(e) => setItem(i, { batchNo: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Hạn sử dụng</Label>
+                        <Input type="date" value={it.expiryDate} onChange={(e) => setItem(i, { expiryDate: e.target.value })} />
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
             );
