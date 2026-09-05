@@ -10,6 +10,12 @@ export const receiptItemSchema = z.object({
 
 export const receiptSchema = z.object({
   supplierId: z.string().uuid().nullable(),
+  notes: z
+    .string()
+    .trim()
+    .max(500, "Ghi chú tối đa 500 ký tự")
+    .optional()
+    .transform((v) => (v ? v : undefined)),
   items: z.array(receiptItemSchema).min(1, "Phải có ít nhất 1 vật tư"),
 });
 

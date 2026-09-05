@@ -7,13 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { createReceipt, postReceipt } from "../actions";
 
 interface ItemDraft {
@@ -41,6 +36,7 @@ export function ReceiptForm({
 }) {
   const router = useRouter();
   const [supplierId, setSupplierId] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
   const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
   const [pending, startTransition] = useTransition();
 
@@ -56,6 +52,7 @@ export function ReceiptForm({
       try {
         const id = await createReceipt({
           supplierId,
+          notes: notes.trim() ? notes : undefined,
           items: valid.map((i) => ({
             variantId: i.variantId,
             quantity: Number(i.quantity),
@@ -64,9 +61,18 @@ export function ReceiptForm({
             expiryDate: i.expiryDate || undefined,
           })),
         });
-        if (postAfterCreate) await postReceipt(id);
-        toast.success(postAfterCreate ? "Đã ghi nhận phiếu nhập" : "Đã lưu nháp");
-        router.push("/receipts");
+        if (postAfterCreate) {
+          const linked = (await postReceipt(id)) as string[] | null;
+          toast.success(
+            linked && linked.length > 0
+              ? `Đã ghi nhận phiếu nhập (cấp phát ${linked.length} phiếu yêu cầu)`
+              : "Đã ghi nhận phiếu nhập",
+          );
+          router.push(`/receipts/${id}`);
+        } else {
+          toast.success("Đã lưu nháp");
+          router.push("/receipts");
+        }
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
@@ -94,6 +100,15 @@ export function ReceiptForm({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="max-w-sm space-y-1.5 pt-3">
+            <Label>Ghi chú</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Ghi chú thêm cho phiếu nhập (không bắt buộc)"
+              rows={3}
+            />
           </div>
         </CardContent>
       </Card>

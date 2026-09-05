@@ -22,6 +22,7 @@ export async function createReceipt(input: ReceiptInput) {
     p_items: items,
     p_supplier_id: parsed.supplierId ?? (null as unknown as string),
     p_by: profile.id,
+    ...(parsed.notes != null ? { p_notes: parsed.notes } : {}),
   });
 
   if (error) throw new Error(error.message);
