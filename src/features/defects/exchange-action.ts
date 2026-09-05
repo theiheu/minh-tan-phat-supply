@@ -57,7 +57,12 @@ export async function createReplacementRequest(noteId: string): Promise<string> 
     p_linked_defect_id: noteId,
     p_requester_id: reporterId,
   });
-  if (rpcErr) throw new Error(rpcErr.message);
+  if (rpcErr) {
+    if (/duplicate key|23505/i.test(rpcErr.message)) {
+      throw new Error("Phiếu hỏng này đã có yêu cầu đổi mới đang xử lý");
+    }
+    throw new Error(rpcErr.message);
+  }
   if (!reqId) throw new Error("Không tạo được phiếu yêu cầu");
 
   revalidatePath("/defects");

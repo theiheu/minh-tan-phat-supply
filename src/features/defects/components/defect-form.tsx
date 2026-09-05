@@ -107,7 +107,7 @@ export function DefectForm({
         </CardHeader>
         <CardContent>
           <div className="max-w-sm space-y-1.5">
-            <Label>Vị trí kho</Label>
+            <Label>Kho nguồn (kho chính)</Label>
             <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn kho nguồn" />

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function NewDefectPage() {
   const supabase = await createClient();
   const [{ data: locations }, { data: variants }] = await Promise.all([
-    supabase.from("stock_locations").select("id, name").eq("is_active", true).order("code"),
+    supabase.from("stock_locations").select("id, name").eq("type", "main").eq("is_active", true).order("code"),
     supabase.from("variants").select("id, attributes, unit, products(name)").order("id"),
   ]);
 
