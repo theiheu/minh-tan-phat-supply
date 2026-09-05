@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -57,7 +58,12 @@ export default async function DefectsPage() {
                 </Badge>
               </TableCell>
               <TableCell>
-                <DefectActions note={{ id: d.id, status: d.status, itemIds: (d.defect_note_items ?? []).map((i) => i.id) }} />
+                <div className="flex items-center gap-1">
+                  <DefectActions note={{ id: d.id, status: d.status, itemIds: (d.defect_note_items ?? []).map((i) => i.id) }} />
+                  <Link href="/requisitions/new" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                    Đổi mới
+                  </Link>
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -15,11 +15,18 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatVnd } from "@/lib/format";
+import { REQUISITION_TYPE } from "@/lib/labels";
 import type { Zone } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { createRequisition, submitRequisition } from "../actions";
 
-export function RequisitionForm({ zones }: { zones: Zone[] }) {
+export function RequisitionForm({
+  zones,
+  defects,
+}: {
+  zones: Zone[];
+  defects: { id: string; code: string }[];
+}) {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
   const updateQty = useCartStore((s) => s.updateQty);
@@ -28,19 +35,23 @@ export function RequisitionForm({ zones }: { zones: Zone[] }) {
 
   const [zoneId, setZoneId] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [type, setType] = useState<"new_supply" | "replacement">("new_supply");
+  const [defectId, setDefectId] = useState("");
   const [pending, startTransition] = useTransition();
 
   async function run(submitAfterCreate: boolean) {
     if (items.length === 0) return toast.error("Giỏ hàng trống, hãy thêm vật tư");
     if (!zoneId) return toast.error("Chọn khu vực");
     if (!purpose.trim()) return toast.error("Nhập mục đích");
+    if (type === "replacement" && !defectId) return toast.error("Đổi mới phải chọn phiếu hỏng liên quan");
 
     startTransition(async () => {
       try {
         const id = await createRequisition({
           zoneId,
           purpose: purpose.trim(),
-          requisitionType: "new_supply",
+          requisitionType: type,
+          linkedDefectId: type === "replacement" ? defectId : undefined,
           items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
         });
         if (submitAfterCreate) await submitRequisition(id);
@@ -74,6 +85,34 @@ export function RequisitionForm({ zones }: { zones: Zone[] }) {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1.5">
+            <Label>Loại phiếu</Label>
+            <Select value={type} onValueChange={(v) => setType(v as "new_supply" | "replacement")}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(REQUISITION_TYPE) as ("new_supply" | "replacement")[]).map((k) => (
+                  <SelectItem key={k} value={k}>{REQUISITION_TYPE[k]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {type === "replacement" && (
+            <div className="space-y-1.5">
+              <Label>Phiếu hỏng liên quan</Label>
+              <Select value={defectId} onValueChange={setDefectId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn phiếu hỏng" />
+                </SelectTrigger>
+                <SelectContent>
+                  {defects.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.code}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5 sm:col-span-2">
             <Label>Mục đích</Label>
             <Textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Mục đích sử dụng vật tư…" rows={3} />
