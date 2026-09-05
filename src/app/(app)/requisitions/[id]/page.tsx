@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,15 +60,24 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
             {req.requester?.name ?? "—"}
           </p>
         </div>
-        {profile && (
-          <RequisitionActions
-            requisitionId={req.id}
-            status={req.status}
-            requesterId={req.requester_id}
-            currentUserId={profile.id}
-            role={profile.role}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {profile && (
+            <RequisitionActions
+              requisitionId={req.id}
+              status={req.status}
+              requesterId={req.requester_id}
+              currentUserId={profile.id}
+              role={profile.role}
+            />
+          )}
+          <Link
+            href={`/api/requisitions/${req.id}/pdf`}
+            className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
+            target="_blank"
+          >
+            In PDF
+          </Link>
+        </div>
       </div>
 
       {req.rejection_reason && (
