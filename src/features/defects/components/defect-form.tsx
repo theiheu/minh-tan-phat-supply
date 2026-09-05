@@ -132,8 +132,20 @@ export function DefectForm({
         <CardContent className="space-y-2">
           {items.map((it, i) => (
             <div key={i} className="space-y-2 rounded-lg border p-3">
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-6">
-                <div className="space-y-1 lg:col-span-2">
+              <div className="flex items-center justify-between gap-2 border-b pb-2">
+                <span className="text-xs font-medium text-muted-foreground">Vật tư {i + 1}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
+                  aria-label="Xóa dòng"
+                >
+                  ×
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                <div className="space-y-1 sm:col-span-2 lg:col-span-2">
                   <Label className="text-xs">Vật tư</Label>
                   <Select value={it.variantId} onValueChange={(v) => setItem(i, { variantId: v })}>
                     <SelectTrigger className="w-full">
@@ -150,14 +162,9 @@ export function DefectForm({
                   <Label className="text-xs">Số lượng</Label>
                   <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
                 </div>
-                <div className="space-y-1 lg:col-span-2">
+                <div className="space-y-1 lg:col-span-3">
                   <Label className="text-xs">Chi tiết hỏng</Label>
                   <Input value={it.damageDetail} onChange={(e) => setItem(i, { damageDetail: e.target.value })} placeholder="VD: nứt, gãy…" />
-                </div>
-                <div className="flex items-end">
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))} aria-label="Xóa dòng">
-                    ×
-                  </Button>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 border-t pt-2">
