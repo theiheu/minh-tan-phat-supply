@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --hostname 0.0.0.0",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:up": "bash scripts/dev-up.sh",
+    "dev:down": "bash scripts/dev-down.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
