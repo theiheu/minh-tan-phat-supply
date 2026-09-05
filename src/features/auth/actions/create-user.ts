@@ -40,10 +40,14 @@ export async function createUser(input: {
   });
 
   if (error) {
-    // Race: unique index lower(username) chặn ở trigger handle_new_user
-    if (/duplicate key|already exists|23505/i.test(error.message)) {
-      throw new Error("Tên đăng nhập đã tồn tại");
-    }
+    // Race: unique index lower(username) chặn ở trigger handle_new_user. GoTrue
+    // bọc lỗi DB thành message chung — tra lại profiles để báo chính xác.
+    const { data: exists } = await admin
+      .from("profiles")
+      .select("id")
+      .ilike("username", parsed.username)
+      .maybeSingle();
+    if (exists) throw new Error("Tên đăng nhập đã tồn tại");
     throw new Error(error.message);
   }
 
