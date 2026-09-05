@@ -144,8 +144,7 @@ export function ReceiptForm({
             const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
             return (
               <div key={i} className="space-y-2 rounded-lg border p-3">
-                <div className="flex items-center justify-between gap-2 border-b pb-2">
-                  <span className="text-xs font-medium text-muted-foreground">Vật tư {i + 1}</span>
+                <div className="flex justify-end">
                   <Button
                     type="button"
                     variant="ghost"
