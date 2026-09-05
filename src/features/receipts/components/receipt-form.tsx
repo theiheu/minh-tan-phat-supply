@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,31 +144,27 @@ export function ReceiptForm({
           {items.map((it, i) => {
             const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
             return (
-              <div key={i} className="rounded-lg border bg-muted/30 p-2">
+              <div key={i} className="relative rounded-lg border bg-muted/30 p-2 pt-7 lg:pt-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute right-1.5 top-1.5 z-10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
+                  aria-label="Xóa dòng"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-12">
-                  <div className="space-y-1 sm:col-span-2 lg:col-span-4">
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-3">
                     <Label className="text-xs">Vật tư</Label>
-                    <div className="flex items-center gap-1.5">
-                      <div className="min-w-0 flex-1">
-                        <ComboboxInput
-                          value={it.variantId}
-                          onChange={(v) => setItem(i, { variantId: v })}
-                          options={variantOptions}
-                          placeholder="Chọn hoặc gõ tên vật tư…"
-                          emptyText="Không tìm thấy vật tư."
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
-                        aria-label="Xóa dòng"
-                      >
-                        ×
-                      </Button>
-                    </div>
+                    <ComboboxInput
+                      value={it.variantId}
+                      onChange={(v) => setItem(i, { variantId: v })}
+                      options={variantOptions}
+                      placeholder="Chọn hoặc gõ tên vật tư…"
+                      emptyText="Không tìm thấy vật tư."
+                    />
                   </div>
                   <div className="space-y-1 lg:col-span-2">
                     <Label className="text-xs">Số lượng</Label>
