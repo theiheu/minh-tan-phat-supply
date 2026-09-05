@@ -23,7 +23,7 @@ export function CartDrawer() {
           <SheetTitle>Giỏ hàng</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-4">
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Giỏ hàng trống.</p>
           ) : (
@@ -70,7 +70,7 @@ export function CartDrawer() {
           )}
         </div>
 
-        <div className="space-y-3 border-t pt-3">
+        <div className="space-y-3 border-t px-4 py-4">
           <div className="flex justify-between text-sm font-medium">
             <span>Tổng</span>
             <span className="tabular-nums">{formatVnd(total)}</span>
