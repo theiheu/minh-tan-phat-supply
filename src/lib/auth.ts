@@ -1,5 +1,6 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
@@ -24,12 +25,12 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
 
 export const requireProfile = async (): Promise<Profile> => {
   const profile = await getCurrentProfile();
-  if (!profile) throw new Error("Chưa đăng nhập");
+  if (!profile) redirect("/login");
   return profile;
 };
 
 export const requireManager = async (): Promise<Profile> => {
   const profile = await requireProfile();
-  if (profile.role !== "manager") throw new Error("Yêu cầu quyền quản lý kho");
+  if (profile.role !== "manager") redirect("/dashboard");
   return profile;
 };

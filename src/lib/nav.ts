@@ -39,12 +39,12 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const ADMIN_NAV: NavItem[] = [
-  { href: "/admin/products", label: "Sản phẩm", icon: Package },
-  { href: "/admin/categories", label: "Danh mục", icon: Tags },
-  { href: "/admin/zones", label: "Khu vực", icon: MapPin },
-  { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse },
-  { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2 },
-  { href: "/admin/users", label: "Người dùng", icon: Users },
+  { href: "/admin/products", label: "Sản phẩm", icon: Package, roles: ["manager"] },
+  { href: "/admin/categories", label: "Danh mục", icon: Tags, roles: ["manager"] },
+  { href: "/admin/zones", label: "Khu vực", icon: MapPin, roles: ["manager"] },
+  { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse, roles: ["manager"] },
+  { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ["manager"] },
+  { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["manager"] },
 ];
 
 export function filterByRole(items: NavItem[], role: string): NavItem[] {
