@@ -27,6 +27,18 @@ const locationSchema = z.object({
   type: z.enum(["main", "defect", "repair", "other"]).default("main"),
 });
 
+// Parse và ném ra thông báo lỗi đầu tiên đọc được (thay vì mảng JSON thô của ZodError).
+function requireValid<T>(
+  schema: {
+    safeParse(v: unknown): { success: true; data: T } | { success: false; error: { issues: { message: string }[] } };
+  },
+  data: unknown,
+): T {
+  const r = schema.safeParse(data);
+  if (!r.success) throw new Error(r.error.issues[0]?.message ?? "Dữ liệu không hợp lệ");
+  return r.data;
+}
+
 async function softDelete(table: "categories" | "zones" | "suppliers", id: string, path: string) {
   await requireManager();
   const supabase = await createClient();
@@ -41,7 +53,7 @@ async function softDelete(table: "categories" | "zones" | "suppliers", id: strin
 // ---- Categories ----
 export async function saveCategory(id: string | null, data: Record<string, string>) {
   await requireManager();
-  const parsed = categorySchema.parse(data);
+  const parsed = requireValid(categorySchema, data);
   const supabase = await createClient();
   const payload = { name: parsed.name, icon: parsed.icon, display_order: parsed.display_order };
   const { error } = id
@@ -57,7 +69,7 @@ export async function deleteCategory(id: string) {
 // ---- Zones ----
 export async function saveZone(id: string | null, data: Record<string, string>) {
   await requireManager();
-  const parsed = zoneSchema.parse(data);
+  const parsed = requireValid(zoneSchema, data);
   const supabase = await createClient();
   const { error } = id
     ? await supabase.from("zones").update({ name: parsed.name, description: parsed.description }).eq("id", id)
@@ -72,7 +84,7 @@ export async function deleteZone(id: string) {
 // ---- Suppliers ----
 export async function saveSupplier(id: string | null, data: Record<string, string>) {
   await requireManager();
-  const parsed = supplierSchema.parse(data);
+  const parsed = requireValid(supplierSchema, data);
   const supabase = await createClient();
   const payload = {
     name: parsed.name,
@@ -94,7 +106,7 @@ export async function deleteSupplier(id: string) {
 // ---- Stock locations ----
 export async function saveLocation(id: string | null, data: Record<string, string>) {
   await requireManager();
-  const parsed = locationSchema.parse(data);
+  const parsed = requireValid(locationSchema, data);
   const supabase = await createClient();
   const { error } = id
     ? await supabase.from("stock_locations").update({ code: parsed.code, name: parsed.name, type: parsed.type }).eq("id", id)

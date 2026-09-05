@@ -30,6 +30,29 @@ export interface CrudColumn {
 
 export type CrudRow = { id: string; [key: string]: string | null };
 
+/**
+ * Gộp dữ liệu ô nhập với ô chưa chạm:
+ * - Ô text chưa nhập → "" (để server báo "Tên không được trống" thay vì thiếu key).
+ * - Ô select chưa chọn → bỏ key (để zod dùng default, vd type location = 'main').
+ * - Khi sửa: ô không sửa → lấy giá trị dòng hiện tại (không làm mất dữ liệu cũ).
+ */
+function fullData(
+  columns: CrudColumn[],
+  touched: Record<string, string>,
+  fallback?: CrudRow | null,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const c of columns) {
+    const base = touched[c.key] ?? fallback?.[c.key] ?? "";
+    if (c.kind === "select") {
+      if (base !== "") out[c.key] = base;
+    } else {
+      out[c.key] = base;
+    }
+  }
+  return out;
+}
+
 function Field({
   col,
   value,
@@ -106,7 +129,7 @@ export function EntityCrud({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            run(() => save(null, form), "Đã thêm");
+            run(() => save(null, fullData(columns, form)), "Đã thêm");
           }}
           className="grid grid-cols-2 gap-2 sm:grid-cols-4"
         >
@@ -151,7 +174,7 @@ export function EntityCrud({
                   ))}
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button size="sm" onClick={() => run(() => save(row.id, editForm), "Đã lưu")} disabled={pending}>
+                      <Button size="sm" onClick={() => run(() => save(row.id, fullData(columns, editForm, row)), "Đã lưu")} disabled={pending}>
                         Lưu
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setEditId(null)}>
