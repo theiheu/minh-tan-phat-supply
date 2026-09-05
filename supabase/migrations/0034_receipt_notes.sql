@@ -1,6 +1,10 @@
 -- 0034_receipt_notes.sql — phiếu nhập hỗ trợ ghi chú (cột receipts.notes đã có từ 0010).
 -- create_receipt nhận thêm p_notes (default null) → lưu vào receipts.notes.
--- Idempotent (create or replace) nên an toàn chạy lại khi reset DB.
+-- Lưu ý: phải DROP chữ ký cũ (3 tham số từ 0017) trước — CREATE OR REPLACE chỉ thay
+-- thế khi trùng chính xác danh sách tham số, nếu không sẽ tạo overload làm PostgREST
+-- báo 'Could not choose the best candidate function' khi gọi không kèm p_notes.
+drop function if exists public.create_receipt(p_items jsonb, p_supplier_id uuid, p_by uuid);
+drop function if exists public.create_receipt(p_items jsonb, p_supplier_id uuid, p_by uuid, p_notes text);
 create or replace function public.create_receipt(
   p_items jsonb,
   p_supplier_id uuid,

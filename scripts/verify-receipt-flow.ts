@@ -68,6 +68,19 @@ async function main() {
   console.log("linked_requisition_ids:", JSON.stringify(detailRow.data?.linked_requisition_ids ?? []), "includes rid:", linkedOk);
   console.log("audit receipt events:", JSON.stringify((audit.data ?? []).map((a) => a.action)), "has post:", auditOk);
 
+  // Regression: gọi create_receipt KHÔNG kèm p_notes (3 tham số) — trước đây bị
+  // lỗi overload 'Could not choose the best candidate function'.
+  const noNotes = await mc.rpc("create_receipt", {
+    p_items: [{ variant_id: variant!.id, quantity: 1, unit_cost: null, batch_no: null, expiry_date: null }],
+    p_supplier_id: null,
+    p_by: mgr.data.user!.id,
+  });
+  if (noNotes.error) throw noNotes.error;
+  const noNotesId = noNotes.data as string;
+  const cancelled = await mc.rpc("cancel_receipt", { p_id: noNotesId, p_by: mgr.data.user!.id });
+  if (cancelled.error) throw cancelled.error;
+  console.log("create_receipt without p_notes (3 args): OK");
+
   const stockAfter = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
   const reqRow = await rc.from("requisitions").select("status").eq("id", rid).single();
   const receiptRow = await mc.from("receipts").select("status").eq("id", receiptId).single();
