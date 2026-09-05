@@ -1,6 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { RequisitionPDF } from "@/features/requisitions/components/requisition-pdf";
+import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
 import { variantLabel } from "@/lib/labels";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const profile = await requireProfile();
+  ensurePdfFonts();
   const supabase = await createClient();
 
   const { data: req } = await supabase

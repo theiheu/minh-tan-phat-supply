@@ -3,7 +3,7 @@ import { REQUISITION_STATUS, REQUISITION_TYPE } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
 
 const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 12, fontFamily: "Helvetica" },
+  page: { padding: 40, fontSize: 12, fontFamily: "Roboto" },
   title: { fontSize: 18, fontWeight: "bold", textAlign: "center", marginBottom: 4 },
   subtitle: { fontSize: 12, textAlign: "center", marginBottom: 16, color: "#444" },
   row: { flexDirection: "row", marginBottom: 4 },
