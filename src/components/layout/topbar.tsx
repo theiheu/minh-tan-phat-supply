@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { findTitle } from "@/lib/nav";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
+import { NotificationBell } from "./notification-bell";
 
 export function Topbar() {
   const pathname = usePathname();
@@ -26,6 +27,7 @@ export function Topbar() {
         <Menu className="size-5" />
       </Button>
       <h1 className="flex-1 truncate text-base font-semibold">{title}</h1>
+      <NotificationBell />
       <Button
         variant="outline"
         size="sm"
