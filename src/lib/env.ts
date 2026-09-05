@@ -28,12 +28,6 @@ export function getPublicEnv(): PublicEnv {
   return cachedPublic;
 }
 
-// URL gốc của app (dùng cho link redirect trong email mời, v.v.).
-// Local mặc định http://localhost:3000; production set qua NEXT_PUBLIC_SITE_URL.
-export function getSiteUrl(): string {
-  return getPublicEnv().NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-}
-
 let cachedServer: z.infer<typeof serverEnvSchema> | null = null;
 
 export function getServerEnv(): z.infer<typeof serverEnvSchema> {

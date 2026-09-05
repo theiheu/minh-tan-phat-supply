@@ -44,12 +44,3 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type UpdateUsernameInput = z.infer<typeof updateUsernameSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
-
-// TODO(Task 5): xoá cùng invite-user.ts — chỉ giữ tạm để invite-user.ts còn compile
-export const inviteUserSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  name: z.string().min(1, "Tên không được trống"),
-  role: z.enum(["requester", "manager"]),
-  zoneId: z.string().uuid().nullable(),
-});
-export type InviteUserInput = z.infer<typeof inviteUserSchema>;

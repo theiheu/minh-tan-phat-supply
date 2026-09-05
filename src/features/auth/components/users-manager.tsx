@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { inviteUser } from "@/features/auth/actions/invite-user";
+import { createUser } from "@/features/auth/actions/create-user";
+import { resetPassword } from "@/features/auth/actions/reset-password";
+import { updateUsername } from "@/features/auth/actions/update-username";
 import { updateProfile } from "@/features/auth/actions/update-profile";
 import type { Profile } from "@/lib/types";
 
-type ProfileWithEmail = Profile & { email: string | null };
 type ZoneOption = { id: string; name: string };
 
 const ROLE_OPTIONS = [
@@ -34,10 +36,12 @@ const ROLE_OPTIONS = [
   { value: "manager", label: "Quản lý kho" },
 ];
 
-function InviteForm({ zones }: { zones: ZoneOption[] }) {
+function CreateAccountForm({ zones }: { zones: ZoneOption[] }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("requester");
   const [zoneId, setZoneId] = useState<string | null>(null);
 
@@ -45,14 +49,16 @@ function InviteForm({ zones }: { zones: ZoneOption[] }) {
     e.preventDefault();
     startTransition(async () => {
       try {
-        await inviteUser({ email, name, role, zoneId });
-        toast.success(`Đã gửi lời mời tới ${email}`);
+        await createUser({ name, username, role, zoneId, password });
+        toast.success(`Đã tạo tài khoản ${username.trim().toLowerCase()}`);
         setName("");
-        setEmail("");
+        setUsername("");
+        setPassword("");
         setRole("requester");
         setZoneId(null);
+        router.refresh();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gửi lời mời thất bại");
+        toast.error(err instanceof Error ? err.message : "Tạo tài khoản thất bại");
       }
     });
   }
@@ -60,17 +66,41 @@ function InviteForm({ zones }: { zones: ZoneOption[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Mời người dùng mới</CardTitle>
+        <CardTitle className="text-base">Tạo tài khoản mới</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <div className="space-y-1.5">
-            <Label htmlFor="inv-name">Tên</Label>
-            <Input id="inv-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
+            <Label htmlFor="cu-name">Tên</Label>
+            <Input id="cu-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="inv-email">Email</Label>
-            <Input id="inv-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
+            <Label htmlFor="cu-username">Tên đăng nhập</Label>
+            <Input
+              id="cu-username"
+              required
+              minLength={3}
+              maxLength={30}
+              pattern="[a-z][a-z0-9._-]{2,29}"
+              title="Chữ thường không dấu, số, . _ - ; bắt đầu bằng chữ cái"
+              autoComplete="off"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="nguyen.van.a"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cu-password">Mật khẩu</Label>
+            <Input
+              id="cu-password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Tối thiểu 8 ký tự"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Vai trò</Label>
@@ -101,7 +131,7 @@ function InviteForm({ zones }: { zones: ZoneOption[] }) {
           </div>
           <div className="flex items-end">
             <Button type="submit" disabled={pending} className="w-full">
-              {pending ? "Đang gửi…" : "Mời"}
+              {pending ? "Đang tạo…" : "Tạo tài khoản"}
             </Button>
           </div>
         </form>
@@ -110,16 +140,23 @@ function InviteForm({ zones }: { zones: ZoneOption[] }) {
   );
 }
 
-function UserRow({ profile, zones }: { profile: ProfileWithEmail; zones: ZoneOption[] }) {
+function UserRow({ profile, zones }: { profile: Profile; zones: ZoneOption[] }) {
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(profile.name);
+  const [username, setUsername] = useState(profile.username ?? "");
   const [role, setRole] = useState(profile.role);
   const [zoneId, setZoneId] = useState<string | null>(profile.zone_id);
   const [isActive, setIsActive] = useState(profile.is_active);
+  const [resettingPw, setResettingPw] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   function save() {
     startTransition(async () => {
       try {
+        const un = username.trim().toLowerCase();
+        if (un !== profile.username) {
+          await updateUsername({ userId: profile.id, username: un });
+        }
         await updateProfile({ userId: profile.id, name, role, zoneId, isActive });
         toast.success("Đã cập nhật người dùng");
       } catch (err) {
@@ -128,12 +165,33 @@ function UserRow({ profile, zones }: { profile: ProfileWithEmail; zones: ZoneOpt
     });
   }
 
+  function savePassword() {
+    startTransition(async () => {
+      try {
+        await resetPassword({ userId: profile.id, password: newPassword });
+        toast.success("Đã đặt lại mật khẩu");
+        setNewPassword("");
+        setResettingPw(false);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại");
+      }
+    });
+  }
+
   return (
     <TableRow>
-      <TableCell className="min-w-[180px]">
+      <TableCell className="min-w-[160px]">
         <Input value={name} onChange={(e) => setName(e.target.value)} />
       </TableCell>
-      <TableCell className="text-sm text-muted-foreground">{profile.email ?? "—"}</TableCell>
+      <TableCell className="min-w-[140px]">
+        <Input
+          value={username}
+          minLength={3}
+          maxLength={30}
+          pattern="[a-z][a-z0-9._-]{2,29}"
+          onChange={(e) => setUsername(e.target.value)}
+        />
+      </TableCell>
       <TableCell>
         <Select value={role} onValueChange={setRole}>
           <SelectTrigger className="w-full min-w-[140px]">
@@ -167,22 +225,55 @@ function UserRow({ profile, zones }: { profile: ProfileWithEmail; zones: ZoneOpt
             onChange={(e) => setIsActive(e.target.checked)}
             className="size-4 accent-primary"
           />
-          {isActive ? <Badge variant="outline" className="bg-emerald-100 text-emerald-700">Hoạt động</Badge> : <Badge variant="outline" className="bg-gray-100 text-gray-500">Đã khóa</Badge>}
+          {isActive ? (
+            <Badge variant="outline" className="bg-emerald-100 text-emerald-700">Hoạt động</Badge>
+          ) : (
+            <Badge variant="outline" className="bg-gray-100 text-gray-500">Đã khóa</Badge>
+          )}
         </label>
       </TableCell>
-      <TableCell>
-        <Button variant="outline" size="sm" onClick={save} disabled={pending}>
-          {pending ? "…" : "Lưu"}
-        </Button>
+      <TableCell className="min-w-[170px]">
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex gap-1.5">
+            <Button variant="outline" size="sm" onClick={save} disabled={pending}>
+              {pending ? "…" : "Lưu"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setResettingPw((v) => !v);
+                setNewPassword("");
+              }}
+            >
+              Đổi mật khẩu
+            </Button>
+          </div>
+          {resettingPw && (
+            <div className="flex gap-1.5">
+              <Input
+                type="password"
+                minLength={8}
+                placeholder="Mật khẩu mới (≥8)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="h-8 w-40"
+              />
+              <Button size="sm" onClick={savePassword} disabled={pending || newPassword.length < 8}>
+                Lưu
+              </Button>
+            </div>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );
 }
 
-export function UsersManager({ profiles, zones }: { profiles: ProfileWithEmail[]; zones: ZoneOption[] }) {
+export function UsersManager({ profiles, zones }: { profiles: Profile[]; zones: ZoneOption[] }) {
   return (
     <div className="space-y-4">
-      <InviteForm zones={zones} />
+      <CreateAccountForm zones={zones} />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Danh sách người dùng</CardTitle>
@@ -192,7 +283,7 @@ export function UsersManager({ profiles, zones }: { profiles: ProfileWithEmail[]
             <TableHeader>
               <TableRow>
                 <TableHead>Tên</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Tên đăng nhập</TableHead>
                 <TableHead>Vai trò</TableHead>
                 <TableHead>Khu vực</TableHead>
                 <TableHead>Trạng thái</TableHead>
