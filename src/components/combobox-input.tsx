@@ -138,16 +138,13 @@ export function ComboboxInput({
                       role="option"
                       aria-selected={active}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden",
+                        "flex w-full items-center gap-1.5 rounded-sm px-1.5 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden",
                       )}
                       // Giữ focus trong ô nhập để không kích hoạt blur/revert trước khi chọn.
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => pick(o)}
                     >
-                      <Check
-                        className={cn("size-4 shrink-0", active ? "opacity-100" : "opacity-0")}
-                        aria-hidden
-                      />
+                      {active ? <Check className="size-4 shrink-0" aria-hidden /> : null}
                       <span className="flex min-w-0 flex-1 flex-col items-start">
                         <span className="w-full truncate font-medium">{o.label}</span>
                         {o.detail ? (
