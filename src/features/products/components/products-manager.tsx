@@ -104,7 +104,7 @@ export function ProductsManager({
             isTrackableLot: v.isTrackableLot,
           })),
         });
-        toast.success("Đã tạo sản phẩm");
+        toast.success("Đã tạo vật tư");
         setName("");
         setDescription("");
         setCategoryId(null);
@@ -114,7 +114,7 @@ export function ProductsManager({
         setImagePreview(null);
         setShowForm(false);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Tạo sản phẩm thất bại");
+        toast.error(err instanceof Error ? err.message : "Tạo vật tư thất bại");
       }
     });
   }
@@ -123,7 +123,7 @@ export function ProductsManager({
     startTransition(async () => {
       try {
         await deleteProduct(id);
-        toast.success("Đã xóa sản phẩm");
+        toast.success("Đã xóa vật tư");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Xóa thất bại");
       }
@@ -133,19 +133,19 @@ export function ProductsManager({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm((s) => !s)}>{showForm ? "Đóng" : "Thêm sản phẩm"}</Button>
+        <Button onClick={() => setShowForm((s) => !s)}>{showForm ? "Đóng" : "Thêm vật tư"}</Button>
       </div>
 
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Sản phẩm mới</CardTitle>
+            <CardTitle className="text-base">Vật tư mới</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={submit} className="space-y-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Tên sản phẩm</Label>
+                  <Label>Tên vật tư</Label>
                   <Input required value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
@@ -163,7 +163,7 @@ export function ProductsManager({
                   </Select>
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Hình ảnh sản phẩm</Label>
+                  <Label>Hình ảnh vật tư</Label>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -224,7 +224,7 @@ export function ProductsManager({
               </div>
 
               <Button type="submit" disabled={pending}>
-                {pending ? "Đang lưu…" : "Tạo sản phẩm"}
+                {pending ? "Đang lưu…" : "Tạo vật tư"}
               </Button>
             </form>
           </CardContent>
@@ -233,7 +233,7 @@ export function ProductsManager({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Danh sách sản phẩm</CardTitle>
+          <CardTitle className="text-base">Danh sách vật tư</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

@@ -38,7 +38,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={PackageOpen} label="Tổng sản phẩm" value={data.totalProducts} />
+        <StatCard icon={PackageOpen} label="Tổng vật tư" value={data.totalProducts} />
         <StatCard icon={ClipboardList} label="Phiếu đang chờ" value={data.pendingCount} />
         <StatCard icon={Truck} label="Đã cấp chưa nhận" value={data.issuedCount} />
         <StatCard icon={Users} label="Phiếu nhập đã ghi" value={data.receiptsCount} />

@@ -40,7 +40,7 @@ export function RequisitionForm({
   const [pending, startTransition] = useTransition();
 
   async function run(submitAfterCreate: boolean) {
-    if (items.length === 0) return toast.error("Giỏ hàng trống, hãy thêm vật tư");
+    if (items.length === 0) return toast.error("Chưa có vật tư trong yêu cầu");
     if (!zoneId) return toast.error("Chọn khu vực");
     if (!purpose.trim()) return toast.error("Nhập mục đích");
     if (type === "replacement" && !defectId) return toast.error("Đổi mới phải chọn phiếu hỏng liên quan");
@@ -126,7 +126,7 @@ export function RequisitionForm({
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Giỏ hàng trống. Hãy thêm vật tư từ Kho vật tư.</p>
+            <p className="text-sm text-muted-foreground">Chưa có vật tư. Hãy thêm từ Kho vật tư.</p>
           ) : (
             <ul className="divide-y">
               {items.map((i) => (

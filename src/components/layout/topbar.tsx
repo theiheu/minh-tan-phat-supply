@@ -31,7 +31,7 @@ export function Topbar() {
         size="sm"
         onClick={toggleCart}
         className="relative"
-        aria-label="Giỏ hàng"
+        aria-label="Yêu cầu vật tư"
       >
         <ShoppingCart className="size-4" />
         {cartCount > 0 && (

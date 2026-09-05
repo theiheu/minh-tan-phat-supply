@@ -20,12 +20,12 @@ export function CartDrawer() {
     <Sheet open={isOpen} onOpenChange={setCartOpen}>
       <SheetContent side="right" className="flex w-full flex-col sm:max-w-sm">
         <SheetHeader>
-          <SheetTitle>Giỏ hàng</SheetTitle>
+          <SheetTitle>Yêu cầu vật tư</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4">
           {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Giỏ hàng trống.</p>
+            <p className="text-sm text-muted-foreground">Yêu cầu vật tư trống.</p>
           ) : (
             <ul className="space-y-3">
               {items.map((i) => (

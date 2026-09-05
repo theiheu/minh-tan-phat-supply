@@ -39,7 +39,7 @@ export const MAIN_NAV: NavItem[] = [
 ];
 
 export const ADMIN_NAV: NavItem[] = [
-  { href: "/admin/products", label: "Sản phẩm", icon: Package, roles: ["manager"] },
+  { href: "/admin/products", label: "Vật tư", icon: Package, roles: ["manager"] },
   { href: "/admin/categories", label: "Danh mục", icon: Tags, roles: ["manager"] },
   { href: "/admin/zones", label: "Khu vực", icon: MapPin, roles: ["manager"] },
   { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse, roles: ["manager"] },
