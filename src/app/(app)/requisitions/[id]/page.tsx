@@ -15,7 +15,7 @@ import { RequisitionActions } from "@/features/requisitions/components/requisiti
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { DAMAGE_TYPE, REQUISITION_STATUS, REQUISITION_TYPE, SEVERITY_LEVEL, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -47,8 +47,6 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       productName: string | null;
       quantity: number;
       damageDetail: string | null;
-      damageType: string | null;
-      severity: string | null;
       images: string[];
     }[];
   } | null = null;
@@ -57,7 +55,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
       supabase
         .from("defect_note_items")
-        .select("id, quantity, damage_detail, damage_type, severity, images, variants(products(name))")
+        .select("id, quantity, damage_detail, images, variants(products(name))")
         .eq("defect_note_id", req.linked_defect_id),
     ]);
     if (dnote) {
@@ -68,8 +66,6 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
           productName: (it.variants as { products?: { name: string | null } | null } | null)?.products?.name ?? null,
           quantity: it.quantity,
           damageDetail: it.damage_detail,
-          damageType: it.damage_type,
-          severity: it.severity,
           images: it.images ?? [],
         })),
       };
@@ -226,8 +222,6 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                   <TableHead>Tên vật tư</TableHead>
                   <TableHead>Số lượng</TableHead>
                   <TableHead>Chi tiết hỏng</TableHead>
-                  <TableHead>Kiểu</TableHead>
-                  <TableHead>Mức độ</TableHead>
                   <TableHead>Ảnh</TableHead>
                 </TableRow>
               </TableHeader>
@@ -236,9 +230,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                   <TableRow key={it.id}>
                     <TableCell className="font-medium">{it.productName ?? "—"}</TableCell>
                     <TableCell className="tabular-nums">{it.quantity}</TableCell>
-                    <TableCell className="max-w-[260px] text-muted-foreground">{it.damageDetail ?? "—"}</TableCell>
-                    <TableCell>{it.damageType ? (DAMAGE_TYPE[it.damageType] ?? it.damageType) : "—"}</TableCell>
-                    <TableCell>{it.severity ? (SEVERITY_LEVEL[it.severity] ?? it.severity) : "—"}</TableCell>
+                    <TableCell className="max-w-[320px] text-muted-foreground">{it.damageDetail ?? "—"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {it.images.map((url) => (

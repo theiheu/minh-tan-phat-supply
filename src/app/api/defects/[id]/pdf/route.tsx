@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { requireManager } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { DAMAGE_TYPE, SEVERITY_LEVEL, variantLabel } from "@/lib/labels";
+import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("defect_note_items")
-    .select("quantity, damage_detail, damage_type, severity, variants(attributes, unit, products(name))")
+    .select("quantity, damage_detail, variants(attributes, unit, products(name))")
     .eq("defect_note_id", id);
 
   const buffer = await renderToBuffer(
@@ -38,17 +38,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Tên vật tư", flex: 1.6 },
         { label: "Biến thể", flex: 1.4 },
         { label: "Số lượng", flex: 0.8 },
-        { label: "Chi tiết hỏng", flex: 1.6 },
-        { label: "Kiểu hỏng", flex: 1.0 },
-        { label: "Mức độ", flex: 0.8 },
+        { label: "Chi tiết hỏng", flex: 2.6 },
       ]}
       rows={(items ?? []).map((i) => [
         i.variants?.products?.name ?? "—",
         variantLabel(i.variants?.attributes, i.variants?.unit),
         i.quantity,
         i.damage_detail ?? "",
-        i.damage_type ? DAMAGE_TYPE[i.damage_type] ?? i.damage_type : "",
-        i.severity ? SEVERITY_LEVEL[i.severity] ?? i.severity : "",
       ])}
       signers={["Người báo", "Người xác nhận"]}
     />,

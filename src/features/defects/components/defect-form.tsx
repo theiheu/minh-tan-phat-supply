@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DAMAGE_TYPE, SEVERITY_LEVEL } from "@/lib/labels";
 import { ImagePlus, X } from "lucide-react";
 import { recordDefect } from "../actions";
 import { uploadDefectImage } from "../upload";
@@ -23,8 +22,6 @@ interface ItemDraft {
   variantId: string;
   quantity: string;
   damageDetail: string;
-  damageType: string;
-  severity: string;
   images: string[];
   uploading: boolean;
 }
@@ -33,8 +30,6 @@ const EMPTY: ItemDraft = {
   variantId: "",
   quantity: "1",
   damageDetail: "",
-  damageType: "",
-  severity: "",
   images: [],
   uploading: false,
 };
@@ -79,16 +74,10 @@ export function DefectForm({
     e.preventDefault();
     if (!sourceLocationId) return toast.error("Chọn kho nguồn");
     const valid = items.filter(
-      (i) =>
-        i.variantId &&
-        i.damageDetail.trim() &&
-        i.damageType &&
-        i.severity &&
-        i.images.length >= 1 &&
-        Number(i.quantity) > 0,
+      (i) => i.variantId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.quantity) > 0,
     );
     if (valid.length === 0)
-      return toast.error("Mỗi dòng cần đủ: vật tư, số lượng, chi tiết, kiểu, mức độ và ≥1 ảnh");
+      return toast.error("Mỗi dòng cần đủ: vật tư, số lượng, chi tiết hỏng và ≥1 ảnh");
 
     startTransition(async () => {
       try {
@@ -98,8 +87,6 @@ export function DefectForm({
             variantId: i.variantId,
             quantity: Number(i.quantity),
             damageDetail: i.damageDetail.trim(),
-            damageType: i.damageType as "cracked" | "chipped" | "broken" | "worn" | "electrical" | "chemical" | "other",
-            severity: i.severity as "light" | "medium" | "severe",
             images: i.images,
           })),
         });
@@ -145,7 +132,7 @@ export function DefectForm({
         <CardContent className="space-y-2">
           {items.map((it, i) => (
             <div key={i} className="space-y-2 rounded-lg border p-3">
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-7">
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-6">
                 <div className="space-y-1 lg:col-span-2">
                   <Label className="text-xs">Vật tư</Label>
                   <Select value={it.variantId} onValueChange={(v) => setItem(i, { variantId: v })}>
@@ -166,32 +153,6 @@ export function DefectForm({
                 <div className="space-y-1 lg:col-span-2">
                   <Label className="text-xs">Chi tiết hỏng</Label>
                   <Input value={it.damageDetail} onChange={(e) => setItem(i, { damageDetail: e.target.value })} placeholder="VD: nứt, gãy…" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Kiểu hỏng</Label>
-                  <Select value={it.damageType} onValueChange={(v) => setItem(i, { damageType: v })}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="—" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(DAMAGE_TYPE).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Mức độ</Label>
-                  <Select value={it.severity} onValueChange={(v) => setItem(i, { severity: v })}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="—" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(SEVERITY_LEVEL).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>{label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="flex items-end">
                   <Button type="button" variant="ghost" size="icon-xs" onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))} aria-label="Xóa dòng">

@@ -13,7 +13,7 @@ export async function createReplacementRequest(noteId: string): Promise<string> 
   const { data: note, error: noteErr } = await supabase
     .from("defect_notes")
     .select(
-      "id, code, status, reported_by, defect_note_items(id, variant_id, quantity, damage_detail, damage_type, severity, images)",
+      "id, code, status, reported_by, defect_note_items(id, variant_id, quantity, damage_detail, images)",
     )
     .eq("id", noteId)
     .single();
@@ -28,7 +28,7 @@ export async function createReplacementRequest(noteId: string): Promise<string> 
   const items = note.defect_note_items ?? [];
   if (items.length === 0) throw new Error("Phiếu hỏng không có dòng vật tư");
   for (const it of items) {
-    if (!it.damage_detail || !it.damage_type || !it.severity || !it.images || it.images.length === 0) {
+    if (!it.damage_detail || !it.images || it.images.length === 0) {
       throw new Error("Phiếu hỏng chưa đủ thông tin/ảnh — cần bổ sung trước khi đổi mới");
     }
   }
