@@ -35,10 +35,12 @@ async function main() {
   await rc.rpc("submit_requisition", { p_id: rid });
   console.log("requisition pending:", rid);
 
-  // manager tạo + post phiếu nhập 50
+  // manager tạo + post phiếu nhập 50 (kèm ghi chú)
+  const NOTE = "Nhập bổ sung cho khu vực cấp phát — kiểm thử ghi chú";
   const receipt = await mc.rpc("create_receipt", {
     p_items: [{ variant_id: variant!.id, quantity: 50, unit_cost: 1000, batch_no: null, expiry_date: null }],
     p_supplier_id: null,
+    p_notes: NOTE,
     p_by: mgr.data.user!.id,
   });
   if (receipt.error) throw receipt.error;
@@ -46,6 +48,25 @@ async function main() {
   const posted = await mc.rpc("post_receipt", { p_id: receiptId, p_by: mgr.data.user!.id });
   if (posted.error) throw posted.error;
   console.log("receipt posted, linked requisitions:", JSON.stringify(posted.data));
+
+  // --- kiểm tra nội dung phục vụ trang chi tiết phiếu nhập ---
+  const detailRow = await mc
+    .from("receipts")
+    .select("status, notes, linked_requisition_ids")
+    .eq("id", receiptId)
+    .single();
+  const notesOk = (detailRow.data?.notes ?? null) === NOTE;
+  const linkedOk = (detailRow.data?.linked_requisition_ids ?? []).includes(rid);
+  const audit = await mc
+    .from("audit_logs")
+    .select("action")
+    .eq("entity_type", "receipt")
+    .eq("entity_id", receiptId)
+    .in("action", ["receipt.create", "receipt.post"]);
+  const auditOk = (audit.data ?? []).some((a) => a.action === "receipt.post");
+  console.log("receipt notes:", JSON.stringify(detailRow.data?.notes ?? null), "(expected saved:", NOTE, ")");
+  console.log("linked_requisition_ids:", JSON.stringify(detailRow.data?.linked_requisition_ids ?? []), "includes rid:", linkedOk);
+  console.log("audit receipt events:", JSON.stringify((audit.data ?? []).map((a) => a.action)), "has post:", auditOk);
 
   const stockAfter = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
   const reqRow = await rc.from("requisitions").select("status").eq("id", rid).single();
@@ -61,7 +82,10 @@ async function main() {
     stockBefore.data!.quantity + 40 === stockAfter.data!.quantity &&
     reqRow.data?.status === "issued" &&
     receiptRow.data?.status === "posted" &&
-    (led.data?.length ?? 0) >= 1;
+    (led.data?.length ?? 0) >= 1 &&
+    notesOk &&
+    linkedOk &&
+    auditOk;
   console.log(ok ? "PASS" : "FAIL");
 }
 
