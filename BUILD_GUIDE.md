@@ -821,7 +821,7 @@ export async function fulfillRequisition(id: string) {
 // lib/supabase/client.ts — browser
 export const supabase = createBrowserClient(url, anon);
 // lib/supabase/server.ts — server (cookies)
-// lib/supabase/admin.ts — service role (server-only, dùng cho seed/invite user)
+// lib/supabase/admin.ts — service role (server-only, dùng cho seed/quản lý tài khoản)
 ```
 
 ### 9.2 TanStack Query + server-side pagination
@@ -1031,7 +1031,7 @@ create trigger trg_profiles_no_escalation
 - **Khu vực:** CRUD.
 - **Kho/vị trí:** CRUD.
 - **Nhà cung cấp:** CRUD.
-- **Người dùng:** danh sách profile, invite (email + role + zone), đổi role, vô hiệu hóa.
+- **Người dùng:** danh sách profile, tạo tài khoản (username + mật khẩu do quản lý đặt, role + zone), đổi role/username/mật khẩu, vô hiệu hóa.
 
 ### 14.13 Báo cáo — mục 18
 
@@ -1342,7 +1342,7 @@ bunx supabase db push
 | Phase | Nội dung | Chấp nhận khi |
 |---|---|---|
 | 0 | Nền tảng + CI + layout shell | app chạy, CI xanh, route rỗng điều hướng được |
-| 1 | Auth + profiles + invite + role menu | login thật, invite tạo user, menu đúng role |
+| 1 | Auth + profiles + tạo tài khoản username + role menu | login thật bằng username + mật khẩu, menu đúng role |
 | 2 | Catalog + suppliers + stock_locations/balances | CRUD đủ, composite stock đúng |
 | 3 | Phiếu yêu cầu (full 7 trạng thái) | draft→pending→approved→issued→received chạy đúng |
 | 4 | Phiếu nhập + RPC + ledger | post cộng stock + auto fulfill + ledger đầy đủ |

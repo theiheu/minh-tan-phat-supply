@@ -30,7 +30,7 @@ Biến môi trường quan trọng của app:
 | `NEXT_PUBLIC_SUPABASE_URL` | URL API Supabase mà **trình duyệt** gọi được | `https://api.example.com` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key (public) | `eyJ...` |
 | `SUPABASE_SERVICE_ROLE_KEY` | service role key (server-only) | `eyJ...` |
-| `NEXT_PUBLIC_SITE_URL` | URL gốc của app (link mời user) | `https://app.example.com` |
+| `NEXT_PUBLIC_SITE_URL` | URL gốc của app | `https://app.example.com` |
 
 ---
 
@@ -99,13 +99,13 @@ bunx supabase db push --db-url "postgresql://postgres:POSTGRES_PASSWORD@localhos
 
 ---
 
-## 4. Cấu hình Auth (để mời user + đăng nhập hoạt động)
+## 4. Cấu hình Auth (đăng nhập bằng tên đăng nhập)
+
+Hệ thống dùng **tên đăng nhập (username) + mật khẩu do quản lý đặt** — không cần email thật, không gửi email mời nên **không cần cấu hình SMTP**. Supabase Auth chỉ dùng email nội bộ tự sinh (`username@mtp.local`) phía sau:
 
 - `SITE_URL` = `https://app.example.com` (URL app).
-- `ADDITIONAL_REDIRECT_URLS` = `https://app.example.com/**` (callback sau khi bấm link mời).
-- **Gửi email mời**: tự host GoTrue cần SMTP. Cấu hình `GOTRUE_SMTP_*` trong `.env`
-  (VD dùng SMTP của Google Workspace, Zoho, hoặc một dịch vụ SMTP). Nếu chưa có SMTP,
-  tạm thời có thể tạo user thủ công qua Studio (Authentication → Add user).
+- `ADDITIONAL_REDIRECT_URLS` = `https://app.example.com/**` (an toàn khi có luồng redirect sau này).
+- Không bắt buộc cấu hình `GOTRUE_SMTP_*`. Nếu cần đặt lại mật khẩu cho user, dùng màn hình Quản trị → Người dùng → Đổi mật khẩu (hoặc Studio Authentication khi chưa có manager).
 
 ---
 
@@ -155,7 +155,7 @@ Caddy tự xin chứng chỉ Let's Encrypt. (Hoặc dùng Nginx + certbot tươn
    ```bash
    bun run scripts/bootstrap.ts   # chỉ khi chưa có user; nhớ đổi mật khẩu mặc định ngay
    ```
-3. Tạo người dùng thật bằng màn hình **Quản trị → Người dùng → Mời** (gửi email qua SMTP đã cấu hình ở bước 4).
+3. Tạo người dùng thật bằng màn hình **Quản trị → Người dùng → Tạo tài khoản**: nhập Tên, **Tên đăng nhập** và **Mật khẩu** (quản lý tự đặt, tối thiểu 8 ký tự), rồi báo cho người dùng tên đăng nhập + mật khẩu đó. Không cần email/SMTP.
 
 ---
 

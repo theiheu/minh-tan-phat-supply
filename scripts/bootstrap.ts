@@ -1,6 +1,8 @@
 // scripts/bootstrap.ts — tạo tài khoản mẫu cho local dev (chỉ chạy local).
 // Chạy: bun run scripts/bootstrap.ts
+// Tài khoản đăng nhập bằng TÊN ĐĂNG NHẬP: manager / requester (mật khẩu password123).
 import { createClient } from "@supabase/supabase-js";
+import { internalEmailForUsername } from "../src/lib/username";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SERVICE_ROLE_KEY =
@@ -12,31 +14,35 @@ const admin = createClient(URL, SERVICE_ROLE_KEY, {
 });
 
 async function ensureUser(
-  email: string,
+  username: string,
   password: string,
   name: string,
   role: "requester" | "manager",
   zoneId: string | null,
 ) {
-  const { data } = await admin.auth.admin.listUsers();
-  if (data?.users?.some((u) => u.email === email)) {
-    console.log("đã tồn tại:", email);
+  const { data: dup } = await admin
+    .from("profiles")
+    .select("id")
+    .ilike("username", username)
+    .maybeSingle();
+  if (dup) {
+    console.log("đã tồn tại:", username);
     return;
   }
+  const email = internalEmailForUsername(username);
   const { error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { name, role, zone_id: zoneId },
+    user_metadata: { name, role, zone_id: zoneId, username },
   });
-  if (error) console.error("lỗi:", email, error.message);
-  else console.log("đã tạo:", email);
+  if (error) console.error("lỗi:", username, error.message);
+  else console.log("đã tạo:", username, `(${email})`);
 }
 
 const { data: zones } = await admin.from("zones").select("id").limit(1);
 const zoneId = zones?.[0]?.id ?? null;
 
-await ensureUser("manager@mtp.local", "password123", "Quản lý kho", "manager", null);
-await ensureUser("requester@mtp.local", "password123", "Người yêu cầu", "requester", zoneId);
-
-console.log("Xong. Đăng nhập: manager@mtp.local / password123 hoặc requester@mtp.local / password123");
+await ensureUser("manager", "password123", "Quản lý kho", "manager", null);
+await ensureUser("requester", "password123", "Người yêu cầu", "requester", zoneId);
+console.log("Xong. Đăng nhập: manager / password123 hoặc requester / password123");
