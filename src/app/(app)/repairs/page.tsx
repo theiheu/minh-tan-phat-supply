@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import {
   Table,
   TableBody,
@@ -16,19 +17,21 @@ import { createClient } from "@/lib/supabase/server";
 
 type RepairStatus = "in_repair" | "returned" | "cancelled";
 const STATUSES: RepairStatus[] = ["in_repair", "returned", "cancelled"];
+const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
 
 export default async function RepairsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; from?: string; to?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
   const q = sp.q?.trim() ?? "";
   const from = sp.from ?? null;
   const to = sp.to ?? null;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
 
@@ -36,16 +39,18 @@ export default async function RepairsPage({
     .from("repair_orders")
     .select(
       "id, code, vendor, sent_at, expected_return_at, status, total_cost, created_at, repair_order_items(id, quantity, variants(attributes, unit, products(name)))",
+      { count: "exact" },
     )
     .order("created_at", { ascending: false })
-    .limit(100);
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as RepairStatus)) query = query.eq("status", status as RepairStatus);
   if (q) query = query.or(`code.ilike.%${q}%,vendor.ilike.%${q}%`);
   const { gte, lte } = dayRange(from, to);
   if (gte) query = query.gte("created_at", gte);
   if (lte) query = query.lte("created_at", lte);
 
-  const { data } = await query;
+  const { data, count } = await query;
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: REPAIR_STATUS[s] }));
 
@@ -116,6 +121,13 @@ export default async function RepairsPage({
           </TableBody>
         </Table>
       </div>
+
+      <Pagination
+        basePath="/repairs"
+        page={page}
+        totalPages={totalPages}
+        params={{ q, status, from, to }}
+      />
     </div>
   );
 }

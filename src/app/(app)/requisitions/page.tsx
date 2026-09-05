@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { dayRange, formatDate } from "@/lib/format";
@@ -19,30 +20,6 @@ const STATUSES: ReqStatus[] = ["draft", "pending", "approved", "issued", "receiv
 const TYPES = ["new_supply", "replacement"] as const;
 
 export const dynamic = "force-dynamic";
-
-interface Filters {
-  status?: string | null;
-  type?: string | null;
-  zone?: string | null;
-  q?: string | null;
-  from?: string | null;
-  to?: string | null;
-  page?: number | null;
-}
-
-// Dựng URL giữ nguyên các filter đang chọn khi chuyển tab/phân trang.
-function buildHref({ status, type, zone, q, from, to, page }: Filters): string {
-  const sp = new URLSearchParams();
-  if (q) sp.set("q", q);
-  if (type) sp.set("type", type);
-  if (zone) sp.set("zone", zone);
-  if (status) sp.set("status", status);
-  if (from) sp.set("from", from);
-  if (to) sp.set("to", to);
-  if (page && page > 1) sp.set("page", String(page));
-  const s = sp.toString();
-  return s ? `/requisitions?${s}` : "/requisitions";
-}
 
 export default async function RequisitionsPage({
   searchParams,
@@ -146,25 +123,12 @@ export default async function RequisitionsPage({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <Link
-            href={buildHref({ status, type, zone, q, from, to, page: page - 1 })}
-            className="text-sm text-primary hover:underline"
-          >
-            ← Trước
-          </Link>
-          <span className="text-sm text-muted-foreground">
-            Trang {page} / {totalPages}
-          </span>
-          <Link
-            href={buildHref({ status, type, zone, q, from, to, page: page + 1 })}
-            className="text-sm text-primary hover:underline"
-          >
-            Sau →
-          </Link>
-        </div>
-      )}
+      <Pagination
+        basePath="/requisitions"
+        page={page}
+        totalPages={totalPages}
+        params={{ q, status, type, zone, from, to }}
+      />
     </div>
   );
 }

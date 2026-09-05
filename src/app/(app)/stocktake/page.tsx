@@ -1,4 +1,5 @@
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import { StocktakeManager } from "@/features/stocktake/components/stocktake-manager";
 import { dayRange } from "@/lib/format";
 import { STOCKTAKE_STATUS, variantLabel } from "@/lib/labels";
@@ -6,13 +7,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type StocktakeStatus = "draft" | "posted" | "cancelled";
 const STATUSES: StocktakeStatus[] = ["draft", "posted", "cancelled"];
+const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
 
 export default async function StocktakePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; location?: string; q?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ status?: string; location?: string; q?: string; from?: string; to?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
@@ -20,6 +22,7 @@ export default async function StocktakePage({
   const q = sp.q?.trim() ?? "";
   const from = sp.from ?? null;
   const to = sp.to ?? null;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
 
@@ -33,9 +36,10 @@ export default async function StocktakePage({
     .from("stocktake_sessions")
     .select(
       "id, code, status, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, system_qty, actual_qty, variants(attributes, unit, products(name)))",
+      { count: "exact" },
     )
     .order("created_at", { ascending: false })
-    .limit(50);
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as StocktakeStatus)) sessionQuery = sessionQuery.eq("status", status as StocktakeStatus);
   if (location) sessionQuery = sessionQuery.eq("location_id", location);
   if (q) sessionQuery = sessionQuery.ilike("code", `%${q}%`);
@@ -43,7 +47,8 @@ export default async function StocktakePage({
   if (gte) sessionQuery = sessionQuery.gte("created_at", gte);
   if (lte) sessionQuery = sessionQuery.lte("created_at", lte);
 
-  const { data: sessions } = await sessionQuery;
+  const { data: sessions, count } = await sessionQuery;
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const rows = (sessions ?? []).map((s) => ({
     id: s.id,
@@ -77,6 +82,13 @@ export default async function StocktakePage({
       />
 
       <StocktakeManager sessions={rows} locations={locations ?? []} />
+
+      <Pagination
+        basePath="/stocktake"
+        page={page}
+        totalPages={totalPages}
+        params={{ q, status, location, from, to }}
+      />
     </div>
   );
 }

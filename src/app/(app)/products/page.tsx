@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import { ProductCard } from "@/features/products/components/product-card";
 import type { VariantWithStock } from "@/features/products/types";
 import { createClient } from "@/lib/supabase/server";
@@ -109,23 +108,7 @@ export default async function ProductsPage({
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <Button asChild variant="outline" size="sm" disabled={page <= 1}>
-            <Link href={`?${q ? `q=${encodeURIComponent(q)}&` : ""}${categoryId ? `category=${categoryId}&` : ""}page=${page - 1}`}>
-              Trước
-            </Link>
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Trang {page} / {totalPages}
-          </span>
-          <Button asChild variant="outline" size="sm" disabled={page >= totalPages}>
-            <Link href={`?${q ? `q=${encodeURIComponent(q)}&` : ""}${categoryId ? `category=${categoryId}&` : ""}page=${page + 1}`}>
-              Sau
-            </Link>
-          </Button>
-        </div>
-      )}
+      <Pagination basePath="/products" page={page} totalPages={totalPages} params={{ q, category: categoryId }} />
     </div>
   );
 }

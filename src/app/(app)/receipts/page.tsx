@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import {
   Table,
   TableBody,
@@ -16,13 +17,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type ReceiptStatus = "draft" | "posted" | "cancelled";
 const STATUSES: ReceiptStatus[] = ["draft", "posted", "cancelled"];
+const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
 
 export default async function ReceiptsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; supplier?: string; q?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ status?: string; supplier?: string; q?: string; from?: string; to?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
@@ -30,6 +32,7 @@ export default async function ReceiptsPage({
   const q = sp.q?.trim() ?? "";
   const from = sp.from ?? null;
   const to = sp.to ?? null;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
 
@@ -41,9 +44,9 @@ export default async function ReceiptsPage({
 
   let query = supabase
     .from("receipts")
-    .select("id, code, status, created_at, supplier:suppliers(name), creator:profiles(name)")
+    .select("id, code, status, created_at, supplier:suppliers(name), creator:profiles(name)", { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(100);
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as ReceiptStatus)) query = query.eq("status", status as ReceiptStatus);
   if (supplier) query = query.eq("supplier_id", supplier);
   if (q) query = query.ilike("code", `%${q}%`);
@@ -51,7 +54,8 @@ export default async function ReceiptsPage({
   if (gte) query = query.gte("created_at", gte);
   if (lte) query = query.lte("created_at", lte);
 
-  const { data } = await query;
+  const { data, count } = await query;
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: RECEIPT_STATUS[s] }));
   const supplierOptions = (suppliers ?? []).map((s) => ({ value: s.id, label: s.name }));
@@ -114,6 +118,13 @@ export default async function ReceiptsPage({
           </TableBody>
         </Table>
       </div>
+
+      <Pagination
+        basePath="/receipts"
+        page={page}
+        totalPages={totalPages}
+        params={{ q, status, supplier, from, to }}
+      />
     </div>
   );
 }

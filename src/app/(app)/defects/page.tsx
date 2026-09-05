@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import {
   Table,
   TableBody,
@@ -16,13 +17,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type DefectStatus = "staging" | "in_repair" | "returned" | "liquidated" | "cancelled";
 const STATUSES: DefectStatus[] = ["staging", "in_repair", "returned", "liquidated", "cancelled"];
+const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
 
 export default async function DefectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; location?: string; q?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ status?: string; location?: string; q?: string; from?: string; to?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
@@ -30,6 +32,7 @@ export default async function DefectsPage({
   const q = sp.q?.trim() ?? "";
   const from = sp.from ?? null;
   const to = sp.to ?? null;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
 
@@ -43,9 +46,10 @@ export default async function DefectsPage({
     .from("defect_notes")
     .select(
       "id, code, status, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id)",
+      { count: "exact" },
     )
     .order("created_at", { ascending: false })
-    .limit(100);
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as DefectStatus)) query = query.eq("status", status as DefectStatus);
   if (location) query = query.eq("source_location_id", location);
   if (q) query = query.ilike("code", `%${q}%`);
@@ -53,7 +57,8 @@ export default async function DefectsPage({
   if (gte) query = query.gte("created_at", gte);
   if (lte) query = query.lte("created_at", lte);
 
-  const { data } = await query;
+  const { data, count } = await query;
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: DEFECT_STATUS[s] }));
   const locationOptions = (locations ?? []).map((l) => ({ value: l.id, label: l.name }));
@@ -119,6 +124,13 @@ export default async function DefectsPage({
           </TableBody>
         </Table>
       </div>
+
+      <Pagination
+        basePath="/defects"
+        page={page}
+        totalPages={totalPages}
+        params={{ q, status, location, from, to }}
+      />
     </div>
   );
 }
