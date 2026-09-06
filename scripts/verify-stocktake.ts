@@ -12,7 +12,7 @@ async function main() {
   const mc = createClient(URL, ANON, { global: { headers: { Authorization: `Bearer ${mgr.data.session!.access_token}` } } });
 
   const { data: main } = await mc.from("stock_locations").select("id").eq("code", "KHO_CHINH").single();
-  const created = await mc.rpc("create_stocktake", { p_location_id: main!.id, p_by: mgr.data.user!.id });
+  const created = await mc.rpc("create_stocktake", { p_location_id: main!.id, p_name: `Verify ${new Date().toISOString()}`, p_by: mgr.data.user!.id });
   if (created.error) throw created.error;
   const sessionId = created.data as string;
   const { data: items } = await mc.from("stocktake_items").select("id, variant_id, system_qty").eq("session_id", sessionId).limit(1);
@@ -20,7 +20,7 @@ async function main() {
 
   const before = await mc.from("variant_stock").select("quantity").eq("variant_id", item.variant_id).single();
 
-  await mc.from("stocktake_items").update({ actual_qty: item.system_qty + 5 }).eq("id", item.id);
+  await mc.from("stocktake_items").update({ checked: true, actual_qty: item.system_qty + 5 }).eq("id", item.id);
   const posted = await mc.rpc("post_stocktake", { p_session_id: sessionId, p_by: mgr.data.user!.id });
   if (posted.error) throw posted.error;
 

@@ -42,14 +42,14 @@ export default async function StocktakePage({
   let sessionQuery = supabase
     .from("stocktake_sessions")
     .select(
-      "id, code, status, created_at, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, checked, notes, system_qty, actual_qty, variants(attributes, unit, images, products(id, name, description, images, categories(name))))",
+      "id, code, name, status, created_at, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, checked, notes, system_qty, actual_qty, variants(attributes, unit, images, products(id, name, description, images, categories(name))))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as StocktakeStatus)) sessionQuery = sessionQuery.eq("status", status as StocktakeStatus);
   if (location) sessionQuery = sessionQuery.eq("location_id", location);
-  if (q) sessionQuery = sessionQuery.ilike("code", `%${q}%`);
+  if (q) sessionQuery = sessionQuery.or(`code.ilike.%${q}%,name.ilike.%${q}%`);
   const { gte, lte } = dayRange(from, to);
   if (gte) sessionQuery = sessionQuery.gte("created_at", gte);
   if (lte) sessionQuery = sessionQuery.lte("created_at", lte);
@@ -60,6 +60,7 @@ export default async function StocktakePage({
   const rows: StocktakeSessionView[] = (sessions ?? []).map((s) => ({
     id: s.id,
     code: s.code,
+    name: s.name ?? null,
     locationName: s.location?.name ?? "—",
     status: s.status,
     createdAt: s.created_at,
@@ -88,7 +89,7 @@ export default async function StocktakePage({
     <div className="space-y-4">
       <ListFilters
         basePath="/stocktake"
-        searchPlaceholder="Tìm mã phiếu kiểm kê…"
+        searchPlaceholder="Tìm tên / mã phiếu kiểm kê…"
         title="Lọc phiếu kiểm kê"
         showDateRange
         filters={[

@@ -1357,6 +1357,7 @@ export type Database = {
           created_by: string | null
           id: string
           location_id: string
+          name: string | null
           notes: string | null
           posted_at: string | null
           status: Database["public"]["Enums"]["stocktake_status"]
@@ -1367,6 +1368,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           location_id: string
+          name?: string | null
           notes?: string | null
           posted_at?: string | null
           status?: Database["public"]["Enums"]["stocktake_status"]
@@ -1377,6 +1379,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           location_id?: string
+          name?: string | null
           notes?: string | null
           posted_at?: string | null
           status?: Database["public"]["Enums"]["stocktake_status"]
@@ -1781,7 +1784,7 @@ export type Database = {
         Returns: string
       }
       create_stocktake: {
-        Args: { p_by: string; p_location_id: string }
+        Args: { p_by: string; p_location_id: string; p_name: string }
         Returns: string
       }
       delete_defect: {

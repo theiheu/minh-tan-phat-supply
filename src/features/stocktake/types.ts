@@ -24,6 +24,8 @@ export interface StocktakeItemView {
 export interface StocktakeSessionView {
   id: string;
   code: string;
+  /** Tên phiếu người dùng đặt khi tạo (null/"" với phiếu cũ → hiển thị fallback code). */
+  name: string | null;
   locationName: string;
   status: string;
   /** Ngày tạo phiếu (luôn có); postedAt null khi còn draft. */

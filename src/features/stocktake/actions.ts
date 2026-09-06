@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
-export async function createStocktake(locationId: string) {
+export async function createStocktake(locationId: string, name: string) {
   const profile = await requireProfile();
+  if (!name.trim()) throw new Error("Phải nhập tên phiếu kiểm kê");
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_stocktake", {
     p_location_id: locationId,
+    p_name: name.trim(),
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);
