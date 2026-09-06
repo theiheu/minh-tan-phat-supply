@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
-import { ExchangeManagerTab } from "@/features/exchanges/components/exchange-manager-tab";
+import { ExchangesList } from "@/features/exchanges/components/exchanges-list";
 import {
   DefectsList,
   type DefectItemRow,
@@ -51,7 +51,7 @@ export default async function DefectsPage({
     const { data: exRows, count: exCount } = await supabase
       .from("exchange_notes")
       .select(
-        "id, code, status, created_at, defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, reporter:profiles!defect_notes_reported_by_fkey(name))",
+        "id, code, status, rejection_reason, created_at, defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, reporter:profiles!defect_notes_reported_by_fkey(name)), note_items:exchange_note_items(id, quantity, variants(attributes, unit, products(name)))",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -60,10 +60,24 @@ export default async function DefectsPage({
       id: r.id,
       code: r.code,
       status: r.status,
-      created_at: r.created_at,
-      defect_code: (r.defect as { code?: string | null } | null)?.code ?? null,
-      reporter_name:
+      createdAt: r.created_at,
+      defectCode: (r.defect as { code?: string | null } | null)?.code ?? null,
+      reporterName:
         (r.defect as { reporter?: { name?: string | null } | null } | null)?.reporter?.name ?? null,
+      rejectionReason: r.rejection_reason ?? null,
+      items: (r.note_items ?? []).map((i) => {
+        const variants = i.variants as {
+          attributes?: unknown;
+          unit?: string | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        return {
+          id: i.id,
+          quantity: i.quantity,
+          productName: variants?.products?.name ?? null,
+          variantLabel: variantLabelFor(variants),
+        };
+      }),
     }));
     return (
       <div className="space-y-4">
@@ -92,7 +106,7 @@ export default async function DefectsPage({
         <p className="text-sm text-muted-foreground">
           Phiếu Đổi Mới: đổi vật tư hỏng (đã có ảnh/chứng cứ ở phiếu HONG) lấy vật tư mới.
         </p>
-        <ExchangeManagerTab rows={rows} />
+        <ExchangesList rows={rows} isManager={isManager} />
         <Pagination basePath="/defects" page={page} totalPages={Math.max(1, Math.ceil((exCount ?? 0) / PAGE_SIZE))} params={{ view }} />
       </div>
     );
