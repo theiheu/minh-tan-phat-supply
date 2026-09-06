@@ -94,11 +94,11 @@ export default async function ProductsPage({
 
   return (
     <div className="space-y-4">
-      {/* Ô tìm kiếm — giữ query param category khi tìm trong danh mục đang chọn. */}
-      <form method="get" className="flex gap-2">
-        <Input type="search" name="q" defaultValue={q} placeholder="Tìm vật tư…" className="max-w-sm" />
+      {/* Ô tìm kiếm — căn giữa, giữ query param category khi tìm trong danh mục đang chọn. */}
+      <form method="get" className="mx-auto flex w-full max-w-xl gap-2">
+        <Input type="search" name="q" defaultValue={q} placeholder="Tìm vật tư…" className="flex-1" />
         {categoryId ? <input type="hidden" name="category" value={categoryId} /> : null}
-        <Button type="submit" variant="outline">
+        <Button type="submit" variant="outline" className="shrink-0">
           Tìm
         </Button>
       </form>
