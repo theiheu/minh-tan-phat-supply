@@ -33,12 +33,15 @@ export function ComboboxInput({
   options,
   placeholder = "Chọn…",
   emptyText = "Không tìm thấy.",
+  inputClassName,
 }: {
   value: string; // id đang chọn; "" = chưa chọn
   onChange: (value: string) => void; // "" = xoá lựa chọn
   options: ComboboxInputOption[];
   placeholder?: string;
   emptyText?: string;
+  /** Class thêm vào ô nhập (vd h-12 để dễ bấm trên mobile). */
+  inputClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -120,7 +123,7 @@ export function ComboboxInput({
         onFocus={() => setOpen(true)}
         onBlur={revertQuery}
         onKeyDown={handleKeyDown}
-        className="pr-8"
+        className={cn("pr-8", inputClassName)}
       />
       <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
       {open && (

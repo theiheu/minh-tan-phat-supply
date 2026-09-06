@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImagePlus, Trash2, X } from "lucide-react";
+import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-input";
 import { recordDefect, requestRepair } from "../actions";
 import { createExchange } from "@/features/exchanges/actions";
@@ -33,10 +33,10 @@ const EMPTY: ItemDraft = {
   uploading: false,
 };
 
-const INTENTS: { key: Intent; label: string }[] = [
-  { key: "record", label: "Chỉ ghi nhận" },
-  { key: "exchange", label: "Đổi mới ngay" },
-  { key: "repair", label: "Gửi đi sửa" },
+const INTENTS: { key: Intent; label: string; hint: string }[] = [
+  { key: "record", label: "Chỉ ghi nhận", hint: "Đồ về Kho hỏng, xử lý sau" },
+  { key: "exchange", label: "Đổi mới ngay", hint: "Tạo phiếu Đổi Mới chờ duyệt" },
+  { key: "repair", label: "Gửi đi sửa", hint: "Chờ quản lý xác nhận" },
 ];
 
 export function DefectForm({
@@ -92,7 +92,7 @@ export function DefectForm({
       (i) => i.variantId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.quantity) > 0,
     );
     if (valid.length === 0)
-      return toast.error("Mỗi dòng cần đủ: vật tư, số lượng, chi tiết hỏng và ≥1 ảnh");
+      return toast.error("Nhập ít nhất 1 dòng đầy đủ: tên, số lượng, mô tả và 1 ảnh");
 
     startTransition(async () => {
       try {
@@ -124,7 +124,7 @@ export function DefectForm({
           router.refresh();
           return;
         }
-        toast.success("Đã ghi nhận vật tư hỏng");
+        toast.success("Đã ghi nhận hỏng");
         router.push("/defects");
         router.refresh();
       } catch (err) {
@@ -133,187 +133,206 @@ export function DefectForm({
     });
   }
 
+  const fieldClass = "h-12 text-base sm:h-11 sm:text-sm";
+
   return (
-    <form onSubmit={submit} className="space-y-4 sm:space-y-5">
+    <form onSubmit={submit} className="space-y-4">
+      {/* Bước 1 — cách xử lý */}
       <Card>
-        <CardHeader className="px-4 py-3.5 sm:px-6 sm:py-5">
-          <CardTitle className="text-sm font-semibold sm:text-base">
-            Báo hỏng — chọn cách xử lý
-          </CardTitle>
+        <CardHeader className="px-4 pt-4 sm:px-6 sm:pt-5">
+          <CardTitle className="text-lg font-bold">Chọn cách xử lý</CardTitle>
         </CardHeader>
-        <CardContent className="px-4 pb-4 sm:px-6 sm:pb-5">
-          {/* Mobile: 3 nút xếp dọc full-width (tránh cuộn ngang); ≥sm: 3 ô cạnh nhau. */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {INTENTS.map((it) => (
-              <button
-                key={it.key}
-                type="button"
-                onClick={() => setIntent(it.key)}
-                aria-pressed={intent === it.key}
+        <CardContent className="space-y-2 px-4 pb-4 sm:px-6 sm:pb-5">
+          {INTENTS.map((it) => (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => setIntent(it.key)}
+              aria-pressed={intent === it.key}
+              className={cn(
+                "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors",
+                intent === it.key
+                  ? "border-primary bg-primary/10 ring-1 ring-primary"
+                  : "hover:bg-accent",
+              )}
+            >
+              <span className="min-w-0">
+                <span className="block text-base font-semibold">{it.label}</span>
+                <span className="mt-0.5 block text-sm text-muted-foreground">{it.hint}</span>
+              </span>
+              <span
+                aria-hidden
                 className={cn(
-                  "flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-colors",
-                  intent === it.key
-                    ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
-                    : "text-muted-foreground hover:bg-accent",
+                  "flex size-6 shrink-0 items-center justify-center rounded-full border-2",
+                  intent === it.key ? "border-primary bg-primary text-white" : "border-muted-foreground/50",
                 )}
               >
-                <span
-                  className={cn(
-                    "size-2.5 rounded-full",
-                    intent === it.key ? "bg-primary" : "bg-muted-foreground/40",
-                  )}
-                />
-                {it.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Đồ hỏng chuyển về <span className="font-medium">Kho hỏng</span> · nguồn lấy từ Kho chính.
+                {intent === it.key ? <X className="size-3.5 rotate-45" /> : null}
+              </span>
+            </button>
+          ))}
+          <p className="pt-1 text-sm text-muted-foreground">
+            Đồ hỏng sẽ chuyển về <span className="font-medium text-foreground">Kho hỏng</span>.
           </p>
         </CardContent>
       </Card>
 
+      {/* Bước 2 — chi tiết các dòng hỏng */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 px-4 py-3.5 sm:px-6 sm:py-5">
-          <CardTitle className="text-sm font-semibold sm:text-base">Vật tư hỏng</CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])}>
-            + Thêm dòng
+        <CardHeader className="flex flex-row items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-5">
+          <div>
+            <CardTitle className="text-lg font-bold">Chi tiết các dòng hỏng</CardTitle>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Mỗi dòng: chọn tên, ghi số lượng + mô tả, thêm ít nhất 1 ảnh.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setItems((a) => [...a, EMPTY])}
+            className="h-12 shrink-0 gap-1.5 px-3 text-base sm:h-10 sm:text-sm"
+          >
+            <Plus className="size-4" aria-hidden />
+            Thêm
           </Button>
         </CardHeader>
-        <CardContent className="space-y-3 px-4 pb-4 sm:space-y-4 sm:px-6 sm:pb-5">
-          {items.map((it, i) => (
-            <fieldset
-              key={i}
-              className={cn(
-                "space-y-3.5 rounded-xl border p-3.5 sm:space-y-4 sm:p-5",
-                it.variantId && it.damageDetail.trim() && it.images.length >= 1
-                  ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/10"
-                  : "border-input",
-              )}
-            >
-              {/* Tiêu đề dòng: chỉ báo số thứ tự + có đủ thông tin chưa */}
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Vật tư {i + 1}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 gap-1.5 px-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
-                  disabled={items.length <= 1}
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                  Xóa
-                </Button>
-              </div>
-
-              {/* Chọn vật tư — gõ để tìm nhanh */}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium text-foreground">Vật tư bị hỏng</Label>
-                <ComboboxInput
-                  value={it.variantId}
-                  onChange={(v) => setItem(i, { variantId: v })}
-                  options={variantOptions}
-                  placeholder="Gõ tên để tìm, chọn vật tư…"
-                  emptyText="Không tìm thấy vật tư."
-                />
-              </div>
-
-              {/* Số lượng + mô tả cùng 1 hàng trên mobile */}
-              <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-foreground">Số lượng</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    value={it.quantity}
-                    onChange={(e) => setItem(i, { quantity: e.target.value })}
-                  />
-                </div>
-                <div className="min-w-0 space-y-1.5">
-                  <Label className="text-sm font-medium text-foreground">Chi tiết hỏng</Label>
-                  <Input
-                    value={it.damageDetail}
-                    onChange={(e) => setItem(i, { damageDetail: e.target.value })}
-                    placeholder="VD: nứt, gãy, thủng bao…"
-                  />
-                </div>
-              </div>
-
-              {/* Ảnh chứng cứ — vùng thêm ảnh to, bắt buộc ≥1 */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">
-                  Ảnh chứng cứ{" "}
-                  <span className={cn(it.images.length === 0 ? "font-semibold text-destructive" : "text-muted-foreground")}>
-                    (bắt buộc ≥1 ảnh)
-                  </span>
-                </Label>
-                {it.images.length > 0 && (
-                  <div className="flex flex-wrap gap-2.5">
-                    {it.images.map((url) => (
-                      <div key={url} className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={appAssetUrl(url)}
-                          alt="Ảnh vật tư hỏng"
-                          className="size-20 rounded-lg border object-cover sm:size-24"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setItems((a) =>
-                              a.map((r, idx) =>
-                                idx === i ? { ...r, images: r.images.filter((u) => u !== url) } : r,
-                              ),
-                            )
-                          }
-                          className="absolute -right-1.5 -top-1.5 rounded-full bg-destructive p-0.5 text-white"
-                          aria-label="Xóa ảnh"
-                        >
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-5">
+          {items.map((it, i) => {
+            const done = !!it.variantId && it.damageDetail.trim().length > 0 && it.images.length >= 1;
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "space-y-3 rounded-xl border-2 p-3.5 sm:p-5",
+                  done ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800/60 dark:bg-emerald-950/10" : "border-border",
                 )}
-                <label
-                  className={cn(
-                    "flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed p-4 text-center transition-colors hover:bg-accent",
-                    it.images.length === 0 ? "border-red-300 dark:border-red-800" : "border-muted-foreground/40",
-                  )}
-                >
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    disabled={it.uploading}
-                    onChange={(e) => uploadRowImages(i, e.target.files)}
-                  />
-                  <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
-                  <span className="text-sm font-medium">Chụp / chọn ảnh từ máy</span>
-                  <span className="text-xs text-muted-foreground">
-                    {it.uploading ? "Đang tải lên…" : "Mỗi dòng tối thiểu 1 ảnh — bấm để thêm nhiều"}
+              >
+                {/* Số thứ tự dòng */}
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-muted px-2 text-base font-bold tabular-nums">
+                    {i + 1}
                   </span>
-                </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
+                    disabled={items.length <= 1}
+                    className="h-10 gap-1.5 px-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-8"
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                    Xóa dòng
+                  </Button>
+                </div>
+
+                {/* Chọn tên */}
+                <div className="space-y-1.5">
+                  <Label className="text-base font-medium sm:text-sm">Tên</Label>
+                  <ComboboxInput
+                    value={it.variantId}
+                    onChange={(v) => setItem(i, { variantId: v })}
+                    options={variantOptions}
+                    placeholder="Gõ tên để tìm…"
+                    emptyText="Không tìm thấy."
+                    inputClassName={fieldClass}
+                  />
+                </div>
+
+                {/* Số lượng + mô tả */}
+                <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2.5 sm:grid-cols-[7rem_minmax(0,1fr)]">
+                  <div className="space-y-1.5">
+                    <Label className="text-base font-medium sm:text-sm">Số lượng</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      value={it.quantity}
+                      onChange={(e) => setItem(i, { quantity: e.target.value })}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div className="min-w-0 space-y-1.5">
+                    <Label className="text-base font-medium sm:text-sm">Mô tả</Label>
+                    <Input
+                      value={it.damageDetail}
+                      onChange={(e) => setItem(i, { damageDetail: e.target.value })}
+                      placeholder="Nứt, gãy, thủng…"
+                      className={fieldClass}
+                    />
+                  </div>
+                </div>
+
+                {/* Ảnh */}
+                <div className="space-y-2">
+                  <Label className="text-base font-medium sm:text-sm">
+                    Ảnh{" "}
+                    <span className={cn("text-sm", it.images.length === 0 ? "font-semibold text-red-600" : "text-muted-foreground")}>
+                      (bắt buộc ≥1)
+                    </span>
+                  </Label>
+                  {it.images.length > 0 && (
+                    <div className="flex flex-wrap gap-2.5">
+                      {it.images.map((url) => (
+                        <div key={url} className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={appAssetUrl(url)}
+                            alt="Ảnh hàng hỏng"
+                            className="size-24 rounded-lg border object-cover sm:size-28"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setItems((a) =>
+                                a.map((r, idx) =>
+                                  idx === i ? { ...r, images: r.images.filter((u) => u !== url) } : r,
+                                ),
+                              )
+                            }
+                            className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-red-600 text-white"
+                            aria-label="Bỏ ảnh này"
+                          >
+                            <X className="size-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <label
+                    className={cn(
+                      "flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors hover:bg-accent",
+                      it.images.length === 0 ? "border-red-300 dark:border-red-800" : "border-muted-foreground/40",
+                    )}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      disabled={it.uploading}
+                      onChange={(e) => uploadRowImages(i, e.target.files)}
+                    />
+                    <ImagePlus className="size-7 text-muted-foreground" aria-hidden />
+                    <span className="text-base font-semibold">
+                      {it.uploading ? "Đang tải lên…" : "Bấm để thêm ảnh"}
+                    </span>
+                    <span className="text-sm text-muted-foreground">Có thể chọn nhiều ảnh một lúc</span>
+                  </label>
+                </div>
               </div>
-            </fieldset>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-          {pending
-            ? "Đang xử lý…"
-            : intent === "exchange"
-              ? "Ghi nhận & tạo phiếu đổi mới"
-              : intent === "repair"
-                ? "Ghi nhận & đề nghị sửa"
-                : "Ghi nhận hỏng"}
-        </Button>
-      </div>
+      <Button type="submit" disabled={pending} className="h-14 w-full text-base sm:h-12 sm:w-auto">
+        {pending
+          ? "Đang xử lý…"
+          : intent === "exchange"
+            ? "Ghi nhận và tạo phiếu đổi mới"
+            : intent === "repair"
+              ? "Ghi nhận và đề nghị sửa"
+              : "Ghi nhận hỏng"}
+      </Button>
     </form>
   );
 }
