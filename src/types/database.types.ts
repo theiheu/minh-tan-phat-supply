@@ -1645,6 +1645,13 @@ export type Database = {
           variant_id: string
         }[]
       }
+      _expand_variant_demand: {
+        Args: { p_items: Json }
+        Returns: {
+          quantity: number
+          variant_id: string
+        }[]
+      }
       _move_stock: {
         Args: {
           p_by: string
@@ -1695,6 +1702,7 @@ export type Database = {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
+      cancel_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       cancel_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -1718,6 +1726,19 @@ export type Database = {
       complete_repair: {
         Args: { p_by: string; p_outcomes: Json; p_repair_id: string }
         Returns: undefined
+      }
+      create_issue: {
+        Args: {
+          p_by: string
+          p_customer_id: string
+          p_destination_type: string
+          p_driver_name: string
+          p_items: Json
+          p_notes: string
+          p_vehicle_plate: string
+          p_zone_id: string
+        }
+        Returns: string
       }
       create_liquidation: {
         Args: { p_by: string; p_items: Json; p_reason: string }
@@ -1774,6 +1795,7 @@ export type Database = {
         }[]
       }
       next_code: { Args: { prefix: string; seq: unknown }; Returns: string }
+      post_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       post_receipt: { Args: { p_by: string; p_id: string }; Returns: string[] }
       post_stocktake: {
         Args: { p_by: string; p_session_id: string }
