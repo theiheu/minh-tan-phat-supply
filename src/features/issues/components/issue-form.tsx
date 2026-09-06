@@ -74,16 +74,23 @@ export function IssueForm({
     setItems((arr) => arr.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
   }
 
-  // Khi bán cho khách: chọn biến thể → tự điền đơn giá theo giá bán (nếu đã đặt)
-  // và chỉ khi ô đơn giá còn trống (không đè lên giá người dùng đã nhập).
+  // Khi bán cho khách: tự điền đơn giá theo giá bán của biến thể được chọn.
+  // Luôn làm mới giá khi đổi sang biến thể KHÁC (tránh giữ giá cũ của biến thể trước)
+  // và xoá đơn giá khi xoá lựa chọn. Chỉ khi chọn lại ĐÚNG biến thể đang có trên dòng
+  // thì giữ nguyên giá người dùng đã nhập (không đè).
   function onPickVariant(i: number, v: string) {
     setItems((arr) =>
       arr.map((row, idx) => {
         if (idx !== i) return row;
         const next: ItemDraft = { ...row, variantId: v };
-        if (isSale && !next.unitPrice) {
+        if (!isSale) return next;
+        if (v === "") {
+          // Xoá lựa chọn biến thể → bỏ đơn giá còn sót lại.
+          next.unitPrice = "";
+        } else if (v !== row.variantId || !next.unitPrice) {
+          // Đổi biến thể khác, hoặc vừa chọn lần đầu còn ô giá trống → điền giá của biến thể mới.
           const price = variants.find((x) => x.id === v)?.price;
-          if (price != null) next.unitPrice = String(price);
+          next.unitPrice = price != null ? String(price) : "";
         }
         return next;
       }),
@@ -140,6 +147,10 @@ export function IssueForm({
                 setDestinationType(next);
                 if (next === "zone") setCustomerId("");
                 if (next === "customer") setZoneId("");
+                // Đổi kiểu đích = bắt đầu ngữ cảnh phiếu mới: không giữ text vận chuyển
+                // của kiểu cũ, để phiếu khu nội bộ không mang theo biển xe/tài xế.
+                setVehiclePlate("");
+                setDriverName("");
               }}
             >
               <SelectTrigger className="w-full">
