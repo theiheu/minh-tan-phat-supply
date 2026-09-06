@@ -20,8 +20,13 @@ export function ProductCard({
 }) {
   const [open, setOpen] = useState(false);
 
-  const totalQty = variants.reduce((n, v) => n + v.stock, 0);
-  const low = variants.some((v) => v.stock <= v.min_stock);
+  // Vật tư bộ (có dòng composite): tồn hiển thị = số bộ còn ráp được theo linh kiện,
+  // không cộng gộp linh kiện để tránh đếm trùng.
+  const kitVariant = variants.find((v) => v.isComposite);
+  const stockVariants = kitVariant ? [kitVariant] : variants;
+
+  const totalQty = stockVariants.reduce((n, v) => n + v.stock, 0);
+  const low = stockVariants.some((v) => v.stock <= v.min_stock);
 
   // Toàn bộ ảnh hiển thị trong gallery: biến thể mặc định → ảnh vật tư → biến thể khác.
   const defaultVariant = variants.find((v) => v.is_default);
@@ -32,8 +37,8 @@ export function ProductCard({
   ].filter((u): u is string => Boolean(u));
   const uniqueImages = [...new Set(imageList)];
 
-  // Đơn vị tính đại diện: ưu tiên biến thể mặc định, rồi biến thể đầu tiên có đơn vị.
-  const unit = defaultVariant?.unit ?? variants.find((v) => v.unit)?.unit ?? null;
+  // Đơn vị tính đại diện: ưu tiên dòng bộ, rồi biến thể mặc định, rồi dòng đầu có đơn vị.
+  const unit = kitVariant?.unit ?? defaultVariant?.unit ?? variants.find((v) => v.unit)?.unit ?? null;
 
   const badge =
     totalQty === 0

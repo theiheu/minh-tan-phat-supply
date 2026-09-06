@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,11 +15,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { kitLabel } from "@/lib/attributes";
 import { formatDate } from "@/lib/format";
 import { deleteProduct } from "../actions";
 import { ProductFormDialog } from "./product-form-dialog";
 import { ProductVariantsDialog } from "./product-variants-dialog";
 import type { AdminProductRow } from "../types";
+import { appAssetUrl } from "@/lib/images";
+
+/** Ảnh chính của vật tư: ưu tiên ảnh dòng mặc định → ảnh vật tư → dòng đầu có ảnh. */
+function productMainImage(p: AdminProductRow): string | null {
+  const def = p.variants.find((v) => v.isDefault);
+  if (def?.images?.[0]) return def.images[0];
+  if (p.images?.[0]) return p.images[0];
+  const any = p.variants.find((v) => v.images?.[0]);
+  return any?.images?.[0] ?? null;
+}
 
 export function ProductsManager({
   products,
@@ -87,14 +99,17 @@ export function ProductsManager({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10 pr-1">
+                <span className="sr-only">Ảnh chính</span>
+              </TableHead>
               <TableHead>
                 <Link href={sortHref("name")} className="inline-flex items-center gap-1 hover:text-foreground">
                   Tên {sortIndicator("name")}
                 </Link>
               </TableHead>
               <TableHead>Danh mục</TableHead>
-              <TableHead>Biến thể (tồn)</TableHead>
-              <TableHead>Tồn kho</TableHead>
+              <TableHead>Quy cách / Linh kiện (tồn)</TableHead>
+              <TableHead>Tồn</TableHead>
               <TableHead>
                 <Link href={sortHref("created_at")} className="inline-flex items-center gap-1 hover:text-foreground">
                   Ngày tạo {sortIndicator("created_at")}
@@ -106,57 +121,95 @@ export function ProductsManager({
           <TableBody>
             {products.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   Không có vật tư nào.
                 </TableCell>
               </TableRow>
             )}
-            {products.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>
-                  <button
-                    type="button"
-                    onClick={() => setVariantsProduct(p)}
-                    className="font-medium text-primary hover:underline"
-                  >
-                    {p.name}
-                  </button>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{p.categoryName ?? "—"}</TableCell>
-                <TableCell>
-                  {p.variants.length === 0 ? (
-                    <span className="text-muted-foreground">—</span>
-                  ) : (
-                    <div className="space-y-0.5">
-                      {p.variants.map((v) => (
-                        <div key={v.id} className="text-xs text-muted-foreground">
-                          {v.label} <span className="tabular-nums">· {v.quantity}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="tabular-nums font-medium">{p.totalStock}</TableCell>
-                <TableCell className="text-muted-foreground">{formatDate(p.createdAt)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditing(p);
-                        setFormOpen(true);
-                      }}
+            {products.map((p) => {
+              const kitRow = p.variants.find((v) => v.isComposite);
+              const mainImage = productMainImage(p);
+              return (
+                <TableRow key={p.id}>
+                  <TableCell className="w-10 py-2 pl-2 pr-1">
+                    <button
+                      type="button"
+                      onClick={() => setVariantsProduct(p)}
+                      title="Ảnh chính — bấm để xem/sửa ảnh dòng biến thể"
+                      className="block"
                     >
-                      Sửa
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => remove(p)} disabled={pending}>
-                      Xóa
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      {mainImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={appAssetUrl(mainImage)}
+                          alt=""
+                          className="size-10 rounded-md border object-cover"
+                        />
+                      ) : (
+                        <div className="size-10 rounded-md border bg-muted" />
+                      )}
+                    </button>
+                  </TableCell>
+                  <TableCell className="pl-1">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setVariantsProduct(p)}
+                        title="Xem / sửa quy cách, linh kiện và cấu tạo bộ"
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {p.name}
+                      </button>
+                      {p.isKit && (
+                        <Badge variant="info" className="shrink-0">
+                          Bộ
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{p.categoryName ?? "—"}</TableCell>
+                  <TableCell>
+                    {p.variants.length === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {p.variants.map((v) => (
+                          <div key={v.id} className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span className={v.isComposite ? "font-medium text-foreground" : ""}>
+                              {v.isComposite ? kitLabel(v.label, v.components) : v.label}
+                            </span>
+                            <span className="tabular-nums">· {v.quantity}</span>
+                            {v.isComposite && <span className="text-[10px] text-primary">(bộ còn ráp được)</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="tabular-nums font-medium">
+                    {p.totalStock}
+                    {kitRow?.unit ? <span className="ml-1 text-xs font-normal text-muted-foreground">{kitRow.unit}</span> : null}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(p.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditing(p);
+                          setFormOpen(true);
+                        }}
+                      >
+                        Sửa
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => remove(p)} disabled={pending}>
+                        Xóa
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

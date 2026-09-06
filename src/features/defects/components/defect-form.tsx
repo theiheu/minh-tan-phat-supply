@@ -17,6 +17,7 @@ import {
 import { ImagePlus, X } from "lucide-react";
 import { recordDefect } from "../actions";
 import { uploadDefectImage } from "../upload";
+import { appAssetUrl } from "@/lib/images";
 
 interface ItemDraft {
   variantId: string;
@@ -171,7 +172,7 @@ export function DefectForm({
                 {it.images.map((url) => (
                   <div key={url} className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="size-14 rounded-md border object-cover" />
+                    <img src={appAssetUrl(url)} alt="" className="size-14 rounded-md border object-cover" />
                     <button
                       type="button"
                       onClick={() =>

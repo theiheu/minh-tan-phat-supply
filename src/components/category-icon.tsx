@@ -1,5 +1,6 @@
 import { categoryIcon } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { appAssetUrl } from "@/lib/images";
 
 const IMAGE_ICON_PATTERN = /^(https?:\/\/|data:image\/|\/)/i;
 
@@ -29,7 +30,7 @@ export function CategoryIcon({
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={value ?? undefined}
+        src={appAssetUrl(value)}
         alt=""
         draggable={false}
         className={cn("shrink-0 object-contain", imgClassName ?? className)}

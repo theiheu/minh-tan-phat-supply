@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
+import { appAssetUrl } from "@/lib/images";
 
 export function CartDrawer() {
   const isOpen = useUIStore((s) => s.isCartOpen);
@@ -31,7 +32,7 @@ export function CartDrawer() {
                 <li key={i.variantId} className="flex items-center gap-3 border-b pb-3">
                   {i.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={i.image} alt="" className="size-11 shrink-0 rounded-md border object-cover" />
+                    <img src={appAssetUrl(i.image)} alt="" className="size-11 shrink-0 rounded-md border object-cover" />
                   ) : (
                     <div className="size-11 shrink-0 rounded-md border bg-muted" />
                   )}

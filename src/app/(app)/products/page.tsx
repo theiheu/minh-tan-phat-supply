@@ -6,6 +6,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { Pagination } from "@/components/pagination";
 import { ProductCard } from "@/features/products/components/product-card";
 import type { VariantWithStock } from "@/features/products/types";
+import { materialLabel } from "@/lib/attributes";
 import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -63,17 +64,34 @@ export default async function ProductsPage({
     const variantIds = (variantRows ?? []).map((v) => v.id);
     const [{ data: stockRows }, { data: compRows }] = await Promise.all([
       supabase.from("variant_stock").select("variant_id, quantity").in("variant_id", variantIds),
-      supabase.from("variant_components").select("parent_variant_id").in("parent_variant_id", variantIds),
+      supabase
+        .from("variant_components")
+        .select(
+          "parent_variant_id, child_variant_id, quantity, child:variants!variant_components_child_variant_id_fkey(attributes, unit)",
+        )
+        .in("parent_variant_id", variantIds),
     ]);
 
     const stockMap = new Map((stockRows ?? []).map((s) => [s.variant_id, s.quantity]));
-    const compositeIds = new Set((compRows ?? []).map((c) => c.parent_variant_id));
+    const compMap = new Map<string, NonNullable<VariantWithStock["components"]>>();
+    for (const c of compRows ?? []) {
+      const meta = c.child as { attributes: unknown; unit: string | null } | null;
+      const list = compMap.get(c.parent_variant_id) ?? [];
+      list.push({
+        variantId: c.child_variant_id,
+        label: materialLabel(meta?.attributes, meta?.unit),
+        unit: meta?.unit ?? null,
+        quantity: c.quantity,
+      });
+      compMap.set(c.parent_variant_id, list);
+    }
 
     for (const v of variantRows ?? []) {
       const enriched: VariantWithStock = {
         ...v,
         stock: stockMap.get(v.id) ?? 0,
-        isComposite: compositeIds.has(v.id),
+        isComposite: compMap.has(v.id),
+        components: compMap.get(v.id) ?? [],
       };
       const list = variantsByProduct.get(v.product_id) ?? [];
       list.push(enriched);

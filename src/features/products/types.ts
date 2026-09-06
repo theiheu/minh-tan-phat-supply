@@ -3,16 +3,41 @@ import type { Variant } from "@/lib/types";
 export interface VariantWithStock extends Variant {
   stock: number;
   isComposite: boolean;
+  /** Nếu là bộ: danh sách linh kiện (cùng vật tư) kèm định mức — dùng để hiển thị cấu tạo. */
+  components?: { variantId: string; label: string; unit: string | null; quantity: number }[];
 }
 
-// Biến thể kèm tồn kho, dùng trong bảng quản trị vật tư.
-export interface AdminProductVariant {
+/** Một dòng biến thể (kèm tồn kho + cấu tạo bộ) dùng chung cho bảng quản trị và dialog quản lý biến thể. */
+export interface AdminVariantRow {
   id: string;
+  productId: string;
+  /** Attributes dạng object đã parse từ jsonb. */
+  attributes: Record<string, string> | null;
+  /** Nhãn hiển thị (nối giá trị attributes; rơi về đơn vị). */
   label: string;
+  price: number | null;
+  images: string[];
+  unit: string | null;
+  minStock: number;
+  isTrackableLot: boolean;
+  isDefault: boolean;
+  /** Biến thể này có cấu tạo bộ (parent trong variant_components). */
+  isComposite: boolean;
+  /** Tồn Kho chính: bộ = số bộ còn ráp được (tự động theo linh kiện); thường = tồn thực. */
   quantity: number;
+  /** Cấu tạo bộ khi isComposite (rỗng nếu chưa khai). */
+  components: { variantId: string; label: string; unit: string | null; quantity: number }[];
 }
 
-// Dòng dữ liệu vật tư trong màn quản trị (đủ thông tin để mở modal sửa).
+export function isKitVariant(v: AdminVariantRow | VariantWithStock): boolean {
+  return v.isComposite;
+}
+
+export function hasKitVariant(rows: { isComposite: boolean }[]): boolean {
+  return rows.some((r) => r.isComposite);
+}
+
+/** Dòng dữ liệu vật tư trong màn quản trị (đủ thông tin để mở modal sửa + quản lý biến thể/bộ). */
 export interface AdminProductRow {
   id: string;
   name: string;
@@ -22,6 +47,14 @@ export interface AdminProductRow {
   categoryId: string | null;
   categoryName: string | null;
   createdAt: string;
-  variants: AdminProductVariant[];
+  variants: AdminVariantRow[];
+  /** Vật tư có dòng bộ (lắp ráp) — tồn vật tư = số bộ còn ráp được. */
+  isKit: boolean;
+  /** Số tồn hiển thị: bộ → số bộ còn ráp được; còn lại → tổng theo từng dòng. */
   totalStock: number;
+}
+
+/** Payload trả về cho dialog quản lý biến thể của 1 vật tư. */
+export interface ProductVariantsPayload {
+  variants: AdminVariantRow[];
 }

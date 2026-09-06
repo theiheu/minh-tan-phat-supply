@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { variantLabel } from "@/lib/labels";
 import { cn } from "cn";
+import { appAssetUrl } from "@/lib/images";
 
 /** Một dòng vật tư trong phiếu — đủ thông tin để quản kho đối chiếu & lấy đúng đồ. */
 export interface MaterialItemView {
@@ -49,7 +50,7 @@ function MaterialThumb({ images, className }: { images: string[]; className?: st
     );
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" className={cn("shrink-0 rounded-md border object-cover", className)} />;
+  return <img src={appAssetUrl(src)} alt="" className={cn("shrink-0 rounded-md border object-cover", className)} />;
 }
 
 export function MaterialItemsView({ items }: { items: MaterialItemView[] }) {
@@ -121,7 +122,7 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       key={i}
-                      src={src}
+                      src={appAssetUrl(src)}
                       alt={`${item.productName ?? "Vật tư"} — ảnh ${i + 1}`}
                       className="h-44 w-44 shrink-0 rounded-lg border object-cover"
                     />

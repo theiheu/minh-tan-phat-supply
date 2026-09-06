@@ -1,13 +1,15 @@
-"use client";
+// Upload ảnh vật tư qua route /api/upload (cùng nguồn app) → server đẩy lên Supabase
+// Storage. Tránh trình duyệt fetch thẳng tới Supabase (lỗi CORS/mạng "Failed to fetch").
+const BUCKET = "product-images";
 
-import { createClient } from "@/lib/supabase/client";
-
-// Upload ảnh lên bucket product-images, trả về public URL.
 export async function uploadProductImage(file: File): Promise<string> {
-  const supabase = createClient();
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from("product-images").upload(path, file);
-  if (error) throw new Error(error.message);
-  return supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+  const fd = new FormData();
+  fd.append("bucket", BUCKET);
+  fd.append("file", file);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error ?? "Tải ảnh thất bại");
+  }
+  return data?.url as string;
 }

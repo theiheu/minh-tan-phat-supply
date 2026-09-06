@@ -19,6 +19,7 @@ import { formatDate } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { appAssetUrl } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -261,7 +262,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                       <div className="flex flex-wrap gap-1">
                         {it.images.map((url) => (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img key={url} src={url} alt="" className="size-12 rounded-md border object-cover" />
+                          <img key={url} src={appAssetUrl(url)} alt="" className="size-12 rounded-md border object-cover" />
                         ))}
                         {it.images.length === 0 ? <span className="text-muted-foreground">—</span> : null}
                       </div>

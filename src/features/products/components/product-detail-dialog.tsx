@@ -12,10 +12,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { kitLabel } from "@/lib/attributes";
 import { variantLabel } from "@/lib/labels";
 import { useCartStore } from "@/stores/cart-store";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
+import { appAssetUrl } from "@/lib/images";
+
+/** Tên hiển thị cho 1 dòng: quy cách, hoặc bộ kèm "gồm linh kiện ×định mức". */
+function variantDisplayName(v: VariantWithStock): string {
+  const base = variantLabel(v.attributes, v.unit);
+  return v.isComposite ? kitLabel(base, v.components ?? []) : base;
+}
 
 export function ProductDetailDialog({
   open,
@@ -75,13 +83,13 @@ export function ProductDetailDialog({
               />
               {v.images?.[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={v.images[0]} alt="" className="size-10 shrink-0 rounded-md border object-cover" />
+                <img src={appAssetUrl(v.images[0])} alt="" className="size-10 shrink-0 rounded-md border object-cover" />
               ) : (
                 <div className="size-10 shrink-0 rounded-md border bg-muted" />
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <span className="truncate">{variantLabel(v.attributes, v.unit)}</span>
+                  <span className="truncate">{variantDisplayName(v)}</span>
                   {v.is_default && (
                     <Badge variant="warning" className="shrink-0">
                       Mặc định
@@ -89,13 +97,20 @@ export function ProductDetailDialog({
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {v.isComposite ? "Bộ linh kiện" : v.unit ?? ""}
+                  {v.isComposite
+                    ? v.components && v.components.length > 0
+                      ? "Bộ lắp ráp — tồn tự tính theo linh kiện"
+                      : "Bộ lắp ráp (chưa khai linh kiện)"
+                    : v.unit ?? ""}
                 </div>
               </div>
               <div className="shrink-0 text-right text-sm">
-                <div className={`text-xs ${v.stock === 0 ? "text-red-600" : "text-emerald-600"}`}>
-                  Tồn: {v.stock}
+                <div className={`text-xs font-medium ${v.stock === 0 ? "text-red-600" : "text-emerald-600"}`}>
+                  {v.isComposite ? `Tồn bộ: ${v.stock}` : `Tồn: ${v.stock}`}
                 </div>
+                {v.isComposite ? (
+                  <div className="text-[10px] text-muted-foreground">số bộ còn ráp được</div>
+                ) : null}
               </div>
             </label>
           ))}

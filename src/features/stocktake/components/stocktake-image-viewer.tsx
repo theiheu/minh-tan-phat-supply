@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { appAssetUrl } from "@/lib/images";
 
 /**
  * Ảnh vật tư có thể bấm phóng to — dùng cho ảnh thẻ vật tư chính & ảnh từng biến thể.
@@ -43,7 +44,7 @@ export function StocktakeImageViewer({
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        src={appAssetUrl(src)}
         alt={name}
         onClick={(e) => {
           e.stopPropagation();
@@ -76,7 +77,7 @@ export function StocktakeImageViewer({
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={src}
+              src={appAssetUrl(src)}
               alt={`${name} — ảnh ${idx + 1}`}
               className="max-h-[85vh] w-auto max-w-full rounded-md border object-contain"
             />

@@ -1,8 +1,9 @@
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { ProductsManager } from "@/features/products/components/products-manager";
+import { fetchProductVariantRows } from "@/features/products/data";
+import type { AdminProductRow } from "@/features/products/types";
 import { requireManager } from "@/lib/auth";
-import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -41,36 +42,16 @@ export default async function AdminProductsPage({
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
-  // Biến thể + tồn kho (theo view variant_stock) để hiển thị trong bảng.
+  // Biến thể + tồn + cấu tạo bộ (view variant_stock tính tồn bộ = min linh kiện ÷ định mức).
   const productIds = (products ?? []).map((p) => p.id);
-  const variantsByProduct = new Map<string, { id: string; label: string; quantity: number }[]>();
+  const variantsByProduct = await fetchProductVariantRows(supabase, productIds);
 
-  if (productIds.length > 0) {
-    const { data: variantRows } = await supabase
-      .from("variants")
-      .select("id, product_id, attributes, unit")
-      .in("product_id", productIds)
-      .order("is_default", { ascending: false })
-      .order("created_at", { ascending: true });
-
-    const variantIds = (variantRows ?? []).map((v) => v.id);
-    const { data: stockRows } = await supabase
-      .from("variant_stock")
-      .select("variant_id, quantity")
-      .in("variant_id", variantIds);
-
-    const stockMap = new Map((stockRows ?? []).map((s) => [s.variant_id, s.quantity]));
-
-    for (const v of variantRows ?? []) {
-      const item = { id: v.id, label: variantLabel(v.attributes, v.unit), quantity: stockMap.get(v.id) ?? 0 };
-      const list = variantsByProduct.get(v.product_id) ?? [];
-      list.push(item);
-      variantsByProduct.set(v.product_id, list);
-    }
-  }
-
-  const rows = (products ?? []).map((p) => {
-    const variants = variantsByProduct.get(p.id) ?? [];
+  const rows: AdminProductRow[] = (products ?? []).map((p) => {
+    const variantRows = variantsByProduct.get(p.id) ?? [];
+    const kitRow = variantRows.find((v) => v.isComposite);
+    const isKit = Boolean(kitRow);
+    // Vật tư bộ: tồn vật tư = số bộ còn ráp được (không cộng trùng linh kiện).
+    const totalStock = kitRow ? kitRow.quantity : variantRows.reduce((n, v) => n + v.quantity, 0);
     return {
       id: p.id,
       name: p.name,
@@ -80,8 +61,9 @@ export default async function AdminProductsPage({
       categoryId: p.category_id,
       categoryName: p.categories?.name ?? null,
       createdAt: p.created_at,
-      variants,
-      totalStock: variants.reduce((n, v) => n + v.quantity, 0),
+      variants: variantRows,
+      isKit,
+      totalStock,
     };
   });
 

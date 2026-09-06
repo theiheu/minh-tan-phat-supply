@@ -21,6 +21,7 @@ import type { Zone } from "@/lib/types";
 import { isPrivileged } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { createRequisition, submitRequisition } from "../actions";
+import { appAssetUrl } from "@/lib/images";
 
 export function RequisitionForm({
   zones,
@@ -253,7 +254,7 @@ export function RequisitionForm({
                 <li key={i.variantId} className="flex items-center gap-3 py-2.5">
                   {i.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={i.image} alt="" className="size-11 shrink-0 rounded-md border object-cover" />
+                    <img src={appAssetUrl(i.image)} alt="" className="size-11 shrink-0 rounded-md border object-cover" />
                   ) : (
                     <div className="size-11 shrink-0 rounded-md border bg-muted" />
                   )}

@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: supabaseStoragePatterns(),
   },
+  // Proxy ảnh storage qua server app (cùng nguồn) — trình duyệt không cần truy cập
+  // thẳng Supabase (127.0.0.1:54321), tránh lỗi ảnh không hiện khi ở máy/xa khác.
+  async rewrites() {
+    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
+    if (!supabaseUrl) return [];
+    return [{ source: "/storage/:path*", destination: `${supabaseUrl}/storage/:path*` }];
+  },
 };
 
 export default nextConfig;
