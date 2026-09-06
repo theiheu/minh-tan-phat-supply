@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto",
     fontSize: 10,
     color: "#000",
-    paddingTop: 26,
+    paddingTop: 16,
     paddingBottom: 52,
     paddingHorizontal: 32,
   },
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   footerRight: { right: 32 },
 
   // --- Header thương hiệu ---
-  brandRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10 },
+  brandRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   logo: { width: 76, height: 60, marginRight: 12, objectFit: "contain" },
   brandBlock: { flex: 1 },
   brandName: { fontSize: 13, fontWeight: "bold", marginBottom: 2 },
