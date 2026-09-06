@@ -134,14 +134,16 @@ export function DefectForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-4 sm:space-y-5">
       <Card>
-        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
-          <CardTitle className="text-sm sm:text-base">Báo hỏng — chọn cách xử lý</CardTitle>
+        <CardHeader className="px-4 py-3.5 sm:px-6 sm:py-5">
+          <CardTitle className="text-sm font-semibold sm:text-base">
+            Báo hỏng — chọn cách xử lý
+          </CardTitle>
         </CardHeader>
-        <CardContent className="px-3 pb-3 sm:px-6 sm:pb-4">
+        <CardContent className="px-4 pb-4 sm:px-6 sm:pb-5">
           {/* Mobile: 3 nút xếp dọc full-width (tránh cuộn ngang); ≥sm: 3 ô cạnh nhau. */}
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {INTENTS.map((it) => (
               <button
                 key={it.key}
@@ -149,7 +151,7 @@ export function DefectForm({
                 onClick={() => setIntent(it.key)}
                 aria-pressed={intent === it.key}
                 className={cn(
-                  "flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-colors",
+                  "flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-colors",
                   intent === it.key
                     ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                     : "text-muted-foreground hover:bg-accent",
@@ -157,7 +159,7 @@ export function DefectForm({
               >
                 <span
                   className={cn(
-                    "size-2 rounded-full",
+                    "size-2.5 rounded-full",
                     intent === it.key ? "bg-primary" : "bg-muted-foreground/40",
                   )}
                 />
@@ -165,25 +167,25 @@ export function DefectForm({
               </button>
             ))}
           </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
             Đồ hỏng chuyển về <span className="font-medium">Kho hỏng</span> · nguồn lấy từ Kho chính.
           </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 px-3 py-3 sm:px-6 sm:py-4">
-          <CardTitle className="text-sm sm:text-base">Vật tư hỏng</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 px-4 py-3.5 sm:px-6 sm:py-5">
+          <CardTitle className="text-sm font-semibold sm:text-base">Vật tư hỏng</CardTitle>
           <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])}>
             + Thêm dòng
           </Button>
         </CardHeader>
-        <CardContent className="space-y-2.5 px-3 pb-3 sm:px-6 sm:pb-4">
+        <CardContent className="space-y-3 px-4 pb-4 sm:space-y-4 sm:px-6 sm:pb-5">
           {items.map((it, i) => (
             <fieldset
               key={i}
               className={cn(
-                "space-y-2.5 rounded-xl border p-3 sm:p-4",
+                "space-y-3.5 rounded-xl border p-3.5 sm:space-y-4 sm:p-5",
                 it.variantId && it.damageDetail.trim() && it.images.length >= 1
                   ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/10"
                   : "border-input",
@@ -191,23 +193,23 @@ export function DefectForm({
             >
               {/* Tiêu đề dòng: chỉ báo số thứ tự + có đủ thông tin chưa */}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Vật tư {i + 1}</span>
+                <span className="text-sm font-medium text-muted-foreground">Vật tư {i + 1}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1 px-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  className="h-8 gap-1.5 px-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
                   disabled={items.length <= 1}
                 >
-                  <Trash2 className="size-3.5" aria-hidden />
+                  <Trash2 className="size-4" aria-hidden />
                   Xóa
                 </Button>
               </div>
 
               {/* Chọn vật tư — gõ để tìm nhanh */}
-              <div className="space-y-1">
-                <Label className="text-xs">Vật tư bị hỏng</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-foreground">Vật tư bị hỏng</Label>
                 <ComboboxInput
                   value={it.variantId}
                   onChange={(v) => setItem(i, { variantId: v })}
@@ -218,9 +220,9 @@ export function DefectForm({
               </div>
 
               {/* Số lượng + mô tả cùng 1 hàng trên mobile */}
-              <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Số lượng</Label>
+              <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium text-foreground">Số lượng</Label>
                   <Input
                     type="number"
                     inputMode="numeric"
@@ -229,8 +231,8 @@ export function DefectForm({
                     onChange={(e) => setItem(i, { quantity: e.target.value })}
                   />
                 </div>
-                <div className="min-w-0 space-y-1">
-                  <Label className="text-xs">Chi tiết hỏng</Label>
+                <div className="min-w-0 space-y-1.5">
+                  <Label className="text-sm font-medium text-foreground">Chi tiết hỏng</Label>
                   <Input
                     value={it.damageDetail}
                     onChange={(e) => setItem(i, { damageDetail: e.target.value })}
@@ -240,15 +242,15 @@ export function DefectForm({
               </div>
 
               {/* Ảnh chứng cứ — vùng thêm ảnh to, bắt buộc ≥1 */}
-              <div className="space-y-1.5">
-                <Label className="text-xs">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">
                   Ảnh chứng cứ{" "}
                   <span className={cn(it.images.length === 0 ? "font-semibold text-destructive" : "text-muted-foreground")}>
                     (bắt buộc ≥1 ảnh)
                   </span>
                 </Label>
                 {it.images.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {it.images.map((url) => (
                       <div key={url} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -277,7 +279,7 @@ export function DefectForm({
                 )}
                 <label
                   className={cn(
-                    "flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed p-3 text-center transition-colors hover:bg-accent",
+                    "flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed p-4 text-center transition-colors hover:bg-accent",
                     it.images.length === 0 ? "border-red-300 dark:border-red-800" : "border-muted-foreground/40",
                   )}
                 >
