@@ -2,12 +2,19 @@
 
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { SearchIcon } from "lucide-react";
+import { Plus, SearchIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CategoryIcon } from "@/components/category-icon";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -121,6 +128,7 @@ export function EntityCrud({
   search = "",
   searchPlaceholder,
   emptyText,
+  createMode = "inline",
 }: {
   title: string;
   items: CrudRow[];
@@ -139,12 +147,15 @@ export function EntityCrud({
   searchPlaceholder?: string;
   /** Thông báo khi danh sách rỗng (mặc định "Chưa có dữ liệu"). */
   emptyText?: string;
+  /** Cách tạo mới: "inline" = form trên đầu thẻ; "modal" = chỉ nút Tạo mới, bấm mở modal form. */
+  createMode?: "inline" | "modal";
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<Record<string, string>>({});
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [addOpen, setAddOpen] = useState(false);
   const [q, setQ] = useState(search ?? "");
 
   // Đồng bộ ô tìm kiếm khi URL thay đổi (tìm mới, xóa lọc, back/forward).
@@ -174,6 +185,7 @@ export function EntityCrud({
         toast.success(success);
         setForm({});
         setEditId(null);
+        setAddOpen(false);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Thao tác thất bại");
       }
@@ -189,38 +201,56 @@ export function EntityCrud({
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">{title}</CardTitle>
-          {searchPlaceholder && (
-            <form onSubmit={submitSearch} className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
-              <div className="relative w-full max-w-xs">
-                <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={searchPlaceholder}
-                  aria-label={searchPlaceholder}
-                  className="h-9 pl-8"
-                />
-              </div>
-              <Button type="submit" size="sm" variant="outline">
-                Tìm
-              </Button>
-              {search && (
-                <Button type="button" size="sm" variant="ghost" onClick={clearSearch}>
-                  Xóa
+          {(searchPlaceholder || createMode === "modal") && (
+            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-1.5">
+              {searchPlaceholder && (
+                <form onSubmit={submitSearch} className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
+                  <div className="relative w-full max-w-xs">
+                    <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder={searchPlaceholder}
+                      aria-label={searchPlaceholder}
+                      className="h-9 pl-8"
+                    />
+                  </div>
+                  <Button type="submit" size="sm" variant="outline">
+                    Tìm
+                  </Button>
+                  {search && (
+                    <Button type="button" size="sm" variant="ghost" onClick={clearSearch}>
+                      Xóa
+                    </Button>
+                  )}
+                </form>
+              )}
+              {createMode === "modal" && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setForm({});
+                    setAddOpen(true);
+                  }}
+                >
+                  <Plus className="size-4" />
+                  Tạo mới
                 </Button>
               )}
-            </form>
+            </div>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            run(() => save(null, fullData(columns, form)), "Đã thêm");
-          }}
-          className={hasIcon ? "space-y-3" : "grid grid-cols-2 gap-2 sm:grid-cols-4"}
-        >
+        {createMode === "inline" && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(() => save(null, fullData(columns, form)), "Đã thêm");
+            }}
+            className={hasIcon ? "space-y-3" : "grid grid-cols-2 gap-2 sm:grid-cols-4"}
+          >
           {hasIcon ? (
             <>
               <div className="flex flex-wrap items-end gap-2">
@@ -267,7 +297,8 @@ export function EntityCrud({
               </div>
             </>
           )}
-        </form>
+          </form>
+        )}
 
         <Table>
           <TableHeader>
@@ -339,6 +370,59 @@ export function EntityCrud({
 
         <Pagination basePath={basePath} page={page} totalPages={totalPages} params={search ? { q: search } : undefined} />
       </CardContent>
+
+      {createMode === "modal" && (
+        <Dialog
+          open={addOpen}
+          onOpenChange={(open) => {
+            setAddOpen(open);
+            if (!open) setForm({});
+          }}
+        >
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Thêm {title.toLowerCase()}</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                run(() => save(null, fullData(columns, form)), "Đã thêm");
+              }}
+            >
+              <div className={hasIcon ? "space-y-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+                {simpleCols.map((c) => (
+                  <label key={c.key} className={hasIcon ? "block min-w-40 flex-1 basis-52" : "block space-y-1.5"}>
+                    <span className="mb-1.5 block text-sm font-medium">{c.label}</span>
+                    <Field
+                      col={c}
+                      value={form[c.key] ?? ""}
+                      onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
+                    />
+                  </label>
+                ))}
+                {iconCols.map((c) => (
+                  <div key={c.key} className="space-y-1.5">
+                    <span className="block text-sm font-medium">{c.label}</span>
+                    <Field
+                      col={c}
+                      value={form[c.key] ?? ""}
+                      onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <DialogFooter className="mt-5">
+                <Button type="button" variant="outline" onClick={() => setAddOpen(false)} disabled={pending}>
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={pending}>
+                  Thêm
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 }

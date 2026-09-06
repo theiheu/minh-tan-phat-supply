@@ -61,6 +61,7 @@ export default async function AdminSuppliersPage({
       search={q}
       searchPlaceholder="Tìm tên, liên hệ, SĐT, email…"
       emptyText={q ? "Không tìm thấy nhà cung cấp phù hợp." : undefined}
+      createMode="modal"
     />
   );
 }
