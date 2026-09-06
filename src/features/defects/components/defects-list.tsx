@@ -69,12 +69,11 @@ export function DefectsList({
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[620px] text-sm">
+        <table className="w-full min-w-[520px] text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-left text-muted-foreground">
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Mã phiếu</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Người lập phiếu</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Kho nguồn</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Ngày lập</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Trạng thái</th>
             </tr>
@@ -82,7 +81,7 @@ export function DefectsList({
           <tbody className="divide-y">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
                   Chưa có phiếu hỏng nào.
                 </td>
               </tr>
@@ -104,9 +103,6 @@ export function DefectsList({
                 </td>
                 <td className="max-w-[180px] truncate px-3 py-2.5 text-muted-foreground">
                   {r.reporterName ?? "—"}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
-                  {r.sourceName ?? "—"}
                 </td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
                   {formatDate(r.createdAt)}
