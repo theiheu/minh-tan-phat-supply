@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Calendar, ClipboardList, MapPin, Package, PackageX, User } from "lucide-react";
+import { Calendar, ClipboardList, Milestone, Package, PackageX, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -226,7 +226,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
           <CardHeader>
             <div className="flex items-center gap-2.5">
               <span className="flex size-8 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
-                <MapPin className="size-4" aria-hidden />
+                <Milestone className="size-4" aria-hidden />
               </span>
               <CardTitle className="text-base">Tiến trình</CardTitle>
             </div>

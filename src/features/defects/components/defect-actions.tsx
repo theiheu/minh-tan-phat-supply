@@ -64,7 +64,7 @@ export function DefectActions({
           {repairRequested ? "Xác nhận sửa" : "Đưa đi sửa"}
         </Button>
       )}
-      {canAct && (
+      {canManage && (
         <Button size="sm" variant="destructive" onClick={() => run(() => cancelDefect(note.id), "Đã hủy")} disabled={pending}>
           Hủy
         </Button>
