@@ -39,10 +39,10 @@ const EMPTY: ItemDraft = {
   uploading: false,
 };
 
-const INTENTS: { key: Intent; label: string; hint: string }[] = [
-  { key: "record", label: "Chỉ ghi nhận hỏng", hint: "Đồ về Kho hỏng, xử lý sau" },
-  { key: "exchange", label: "Đổi lấy vật tư mới", hint: "Tạo phiếu Đổi Mới (DM) chờ duyệt" },
-  { key: "repair", label: "Gửi đi sửa", hint: "Đề nghị manager xác nhận đưa đi sửa" },
+const INTENTS: { key: Intent; label: string }[] = [
+  { key: "record", label: "Chỉ ghi nhận" },
+  { key: "exchange", label: "Đổi mới ngay" },
+  { key: "repair", label: "Gửi đi sửa" },
 ];
 
 export function DefectForm({
@@ -132,62 +132,59 @@ export function DefectForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-3">
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Hướng xử lý đồ hỏng</CardTitle>
+        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+          <CardTitle className="text-sm sm:text-base">Báo hỏng — chọn cách xử lý</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <CardContent className="px-3 pb-3 sm:px-6 sm:pb-4">
+          {/* Mobile: cuộn ngang 1 hàng gọn; ≥sm: đủ chỗ 3 ô cạnh nhau. */}
+          <div className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
             {INTENTS.map((it) => (
               <button
                 key={it.key}
                 type="button"
                 onClick={() => setIntent(it.key)}
+                aria-pressed={intent === it.key}
                 className={cn(
-                  "rounded-lg border p-3 text-left transition-colors",
+                  "flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-colors sm:w-full sm:justify-center",
                   intent === it.key
-                    ? "border-primary bg-primary/10 ring-1 ring-primary"
-                    : "hover:bg-accent",
+                    ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
+                    : "text-muted-foreground hover:bg-accent",
                 )}
               >
-                <div className="text-sm font-medium">{it.label}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{it.hint}</div>
+                <span
+                  className={cn(
+                    "size-2 rounded-full",
+                    intent === it.key ? "bg-primary" : "bg-muted-foreground/40",
+                  )}
+                />
+                {it.label}
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Đồ hỏng sẽ được chuyển về <span className="font-medium">Kho hỏng</span> — kho nguồn tự
-            động lấy từ Kho chính.
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Đồ hỏng chuyển về <span className="font-medium">Kho hỏng</span> · nguồn lấy từ Kho chính.
           </p>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Vật tư hỏng</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 px-3 py-3 sm:px-6 sm:py-4">
+          <CardTitle className="text-sm sm:text-base">Vật tư hỏng</CardTitle>
           <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])}>
             + Thêm dòng
           </Button>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 px-3 pb-3 sm:px-6 sm:pb-4">
           {items.map((it, i) => (
-            <div key={i} className="space-y-2 rounded-lg border p-3">
-              <div className="flex items-center justify-between gap-2 border-b pb-2">
-                <span className="text-xs font-medium text-muted-foreground">Vật tư {i + 1}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
-                  aria-label="Xóa dòng"
-                >
-                  ×
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
-                <div className="space-y-1 sm:col-span-2 lg:col-span-2">
-                  <Label className="text-xs">Vật tư</Label>
+            <div key={i} className="space-y-2 rounded-lg border p-2.5 sm:p-3">
+              {/* Dòng 1: nhãn + chọn vật tư + xoá */}
+              <div className="flex items-center gap-2">
+                <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground sm:w-20">
+                  Vật tư {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
                   <Select value={it.variantId} onValueChange={(v) => setItem(i, { variantId: v })}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Chọn vật tư" />
@@ -199,20 +196,46 @@ export function DefectForm({
                     </SelectContent>
                   </Select>
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
+                  aria-label={`Xóa vật tư ${i + 1}`}
+                  disabled={items.length <= 1}
+                >
+                  <X aria-hidden />
+                </Button>
+              </div>
+
+              {/* Dòng 2: số lượng (ngắn) + chi tiết hỏng (dài) — cùng hàng trên mobile */}
+              <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">Số lượng</Label>
-                  <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    value={it.quantity}
+                    onChange={(e) => setItem(i, { quantity: e.target.value })}
+                  />
                 </div>
-                <div className="space-y-1 lg:col-span-3">
+                <div className="min-w-0 space-y-1">
                   <Label className="text-xs">Chi tiết hỏng</Label>
-                  <Input value={it.damageDetail} onChange={(e) => setItem(i, { damageDetail: e.target.value })} placeholder="VD: nứt, gãy…" />
+                  <Input
+                    value={it.damageDetail}
+                    onChange={(e) => setItem(i, { damageDetail: e.target.value })}
+                    placeholder="VD: nứt, gãy…"
+                  />
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 border-t pt-2">
+
+              {/* Ảnh: gọn, cuộn ngang khi nhiều */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5">
                 {it.images.map((url) => (
-                  <div key={url} className="relative">
+                  <div key={url} className="relative shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={appAssetUrl(url)} alt="" className="size-14 rounded-md border object-cover" />
+                    <img src={appAssetUrl(url)} alt="" className="size-12 rounded-md border object-cover sm:size-14" />
                     <button
                       type="button"
                       onClick={() =>
@@ -228,7 +251,10 @@ export function DefectForm({
                   </div>
                 ))}
                 <label
-                  className={`flex h-14 w-14 cursor-pointer items-center justify-center rounded-md border border-dashed text-muted-foreground hover:bg-accent ${it.images.length === 0 ? "border-red-400" : ""}`}
+                  className={cn(
+                    "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-md border border-dashed text-muted-foreground hover:bg-accent sm:size-14",
+                    it.images.length === 0 ? "border-red-400" : "",
+                  )}
                 >
                   <input
                     type="file"
@@ -240,15 +266,15 @@ export function DefectForm({
                   />
                   <ImagePlus className="size-5" />
                 </label>
-                {it.uploading ? <span className="text-xs text-muted-foreground">Đang tải…</span> : null}
+                {it.uploading ? <span className="shrink-0 text-xs text-muted-foreground">Đang tải…</span> : null}
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={pending}>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <Button type="submit" disabled={pending} className="w-full sm:w-auto">
           {pending
             ? "Đang xử lý…"
             : intent === "exchange"
