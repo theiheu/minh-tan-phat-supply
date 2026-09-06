@@ -149,79 +149,106 @@ export function StocktakeManager({
                 isOpen && "ring-2 ring-primary/15",
               )}
             >
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Tên phiếu là nội dung chính; mã phiếu chỉ là dòng phụ bên dưới. */}
-                    <h3 className="truncate text-base font-semibold">{sessionTitle(s)}</h3>
-                    <Badge variant={statusBadgeVariant(s.status)}>
-                      {STOCKTAKE_STATUS[s.status] ?? s.status}
-                    </Badge>
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    <span className="font-mono">{s.code}</span> · {s.locationName} ·{" "}
-                    {formatDate(s.postedAt ?? s.createdAt)}
-                    {canOpen && (
-                      <span className="ml-1.5">
-                        {isDraft ? `· đã kiểm ${checkedCount}/${s.items.length} dòng` : `· ${checkedCount} dòng đã kiểm`}
-                      </span>
+              <CardHeader className="space-y-2">
+                {/* Dòng 1: tên phiếu — bấm vào để mở/đóng chi tiết; tag trạng thái góc trên phải. */}
+                <div className="flex items-start justify-between gap-x-3">
+                  <button
+                    type="button"
+                    disabled={!canOpen}
+                    onClick={() => setOpenId(isOpen ? null : s.id)}
+                    title={
+                      canOpen
+                        ? isOpen
+                          ? "Đóng bảng"
+                          : isDraft
+                            ? "Mở bảng nhập kiểm"
+                            : "Xem chi tiết phiếu"
+                        : undefined
+                    }
+                    className={cn(
+                      "group min-w-0 flex-1 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                      canOpen ? "cursor-pointer" : "cursor-default",
                     )}
-                  </p>
+                  >
+                    <h3
+                      className={cn(
+                        "text-base leading-snug font-semibold break-words",
+                        canOpen && "underline-offset-4 group-hover:underline group-hover:decoration-primary/50",
+                      )}
+                    >
+                      {sessionTitle(s)}
+                    </h3>
+                  </button>
+                  <Badge variant={statusBadgeVariant(s.status)} className="shrink-0">
+                    {STOCKTAKE_STATUS[s.status] ?? s.status}
+                  </Badge>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                <p className="truncate text-xs text-muted-foreground">
+                  <span className="font-mono">{s.code}</span> · {s.locationName} ·{" "}
+                  {formatDate(s.postedAt ?? s.createdAt)}
                   {canOpen && (
-                    <Button
-                      size="sm"
-                      variant={isOpen ? "outline" : "default"}
-                      onClick={() => setOpenId(isOpen ? null : s.id)}
-                    >
-                      {isOpen ? "Đóng" : isDraft ? "Nhập số thực tế" : "Xem chi tiết"}
-                    </Button>
+                    <span className="ml-1.5">
+                      {isDraft ? `· đã kiểm ${checkedCount}/${s.items.length} dòng` : `· ${checkedCount} dòng đã kiểm`}
+                    </span>
                   )}
-                  {s.items.length > 0 && (
-                    <Link
-                      href={`/api/stocktake/${s.id}/pdf`}
-                      target="_blank"
-                      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
-                    >
-                      <Printer className="size-3.5" aria-hidden />
-                      In
-                    </Link>
-                  )}
+                </p>
 
-                  {/* Công cụ dev — tách riêng khỏi nút nghiệp vụ để khỏi lẫn */}
-                  {isDev && (
-                    <span
-                      className="ml-1 flex items-center gap-0.5 rounded-md border border-destructive/30 px-0.5 py-0.5"
-                      title="Công cụ dev (superuser)"
-                    >
-                      {s.status === "posted" && (
+                {(isDraft || s.items.length > 0 || isDev) && (
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    {isDraft && canOpen && (
+                      <Button
+                        size="sm"
+                        variant={isOpen ? "outline" : "default"}
+                        onClick={() => setOpenId(isOpen ? null : s.id)}
+                      >
+                        {isOpen ? "Đóng" : "Nhập số thực tế"}
+                      </Button>
+                    )}
+                    {s.items.length > 0 && (
+                      <Link
+                        href={`/api/stocktake/${s.id}/pdf`}
+                        target="_blank"
+                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
+                      >
+                        <Printer className="size-3.5" aria-hidden />
+                        In
+                      </Link>
+                    )}
+
+                    {/* Công cụ dev — tách riêng khỏi nút nghiệp vụ để khỏi lẫn */}
+                    {isDev && (
+                      <span
+                        className="flex items-center gap-0.5 rounded-md border border-destructive/30 px-0.5 py-0.5"
+                        title="Công cụ dev (superuser)"
+                      >
+                        {s.status === "posted" && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={pending}
+                            onClick={() => reopen(s)}
+                            title="Dev: đảo bút toán và mở lại về nháp để sửa số liệu"
+                          >
+                            <Pencil className="size-3.5" aria-hidden />
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon-sm"
+                          className="text-destructive hover:text-destructive"
                           disabled={pending}
-                          onClick={() => reopen(s)}
-                          title="Dev: đảo bút toán và mở lại về nháp để sửa số liệu"
+                          onClick={() => remove(s)}
+                          title="Dev: xoá phiếu (đã chốt sẽ đảo bút toán trước khi xoá)"
                         >
-                          <Pencil className="size-3.5" aria-hidden />
+                          <Trash2 className="size-3.5" aria-hidden />
                         </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-destructive hover:text-destructive"
-                        disabled={pending}
-                        onClick={() => remove(s)}
-                        title="Dev: xoá phiếu (đã chốt sẽ đảo bút toán trước khi xoá)"
-                      >
-                        <Trash2 className="size-3.5" aria-hidden />
-                      </Button>
-                    </span>
-                  )}
-                </div>
+                      </span>
+                    )}
+                  </div>
+                )}
               </CardHeader>
 
               {isOpen && canOpen && (

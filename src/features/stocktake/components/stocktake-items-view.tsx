@@ -312,8 +312,8 @@ export function StocktakeItemsView({
                             : "text-red-600";
                       return (
                         <div key={item.id} className={cn("px-3 py-2", !item.checked && isEntry && "bg-muted/20")}>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                            {/* Đã kiểm */}
+                          {/* Hàng 1 — đã kiểm + ảnh + tên biến thể (tên được ưu tiên hiện đủ trên điện thoại). */}
+                          <div className="flex items-center gap-2">
                             {isEntry ? (
                               <button
                                 type="button"
@@ -331,46 +331,42 @@ export function StocktakeItemsView({
                                 <Check className="size-4" aria-hidden />
                               </button>
                             ) : null}
-
-                            {/* Biến thể */}
                             <StocktakeImageViewer
                               images={item.variantImages.length > 0 ? item.variantImages : item.productImages}
                               name={`${item.productName} — ${variantLabelText(item)}`}
-                              className="size-10"
+                              className="size-10 shrink-0"
                             />
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-medium">{variantLabelText(item)}</div>
+                              <div className="text-sm leading-snug font-medium break-words">{variantLabelText(item)}</div>
                               {item.unit && <div className="text-xs text-muted-foreground">ĐVT: {item.unit}</div>}
                             </div>
+                          </div>
 
-                            <div className="flex shrink-0 flex-col items-end text-sm">
-                              <span className="text-muted-foreground">Hệ thống</span>
-                              <span className="tabular-nums">{item.systemQty}</span>
+                          {/* Hàng 2 — 3 cột số liệu tách riêng (Hệ thống / Thực tế / Lệch), đủ rộng trên mobile. */}
+                          <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 sm:max-w-md">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-muted-foreground">Hệ thống</span>
+                              <span className="text-sm tabular-nums">{item.systemQty}</span>
                             </div>
-
-                            {isEntry ? (
-                              <div className="flex shrink-0 flex-col items-end">
-                                <span className="text-xs text-muted-foreground">Thực tế</span>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-muted-foreground">Thực tế</span>
+                              {isEntry ? (
                                 <Input
                                   type="number"
                                   min="0"
-                                  className="h-8 w-24"
+                                  className="h-8 w-full"
                                   value={val}
                                   onChange={(e) =>
                                     setQuantities((prev) => ({ ...prev, [item.id]: e.target.value }))
                                   }
                                 />
-                              </div>
-                            ) : (
-                              <div className="flex shrink-0 flex-col items-end text-sm">
-                                <span className="text-muted-foreground">Thực tế</span>
-                                <span className="font-medium tabular-nums">{item.actualQty}</span>
-                              </div>
-                            )}
-
-                            <div className="flex shrink-0 flex-col items-end text-sm">
-                              <span className="text-muted-foreground">Lệch</span>
-                              <span className={cn("font-medium tabular-nums", diffCls)}>
+                              ) : (
+                                <span className="text-sm font-medium tabular-nums">{item.actualQty}</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-muted-foreground">Lệch</span>
+                              <span className={cn("text-sm font-medium tabular-nums", diffCls)}>
                                 {diff > 0 ? `+${diff}` : diff}
                               </span>
                             </div>
@@ -378,15 +374,15 @@ export function StocktakeItemsView({
 
                           {/* Ghi chú */}
                           {isEntry ? (
-                            <div className="mt-2 flex items-center gap-2">
-                              <span className="w-16 shrink-0 text-xs text-muted-foreground">Ghi chú</span>
+                            <div className="mt-2 space-y-1">
+                              <span className="text-[11px] font-medium text-muted-foreground">Ghi chú</span>
                               <Input
                                 value={noteDrafts[item.id] ?? item.notes ?? ""}
                                 placeholder="Ghi chú dòng này (nếu có)…"
                                 onChange={(e) =>
                                   setNoteDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))
                                 }
-                                className="h-8 flex-1"
+                                className="h-8 w-full"
                               />
                             </div>
                           ) : item.notes ? (
