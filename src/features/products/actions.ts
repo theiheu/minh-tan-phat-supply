@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { materialLabel } from "@/lib/attributes";
-import { requireManager } from "@/lib/auth";
+import { requireManager, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { fetchProductVariantRows } from "./data";
 import {
@@ -13,7 +13,7 @@ import {
   type ProductUpdateInput,
   type VariantInput,
 } from "./schema";
-import type { ProductVariantsPayload } from "./types";
+import type { ProductHistoryRow, ProductVariantsPayload } from "./types";
 
 function parseOptions(options: string): string[] {
   return options
@@ -37,6 +37,68 @@ export async function getProductVariants(productId: string): Promise<ProductVari
   const supabase = await createClient();
   const map = await fetchProductVariantRows(supabase, [productId]);
   return { variants: map.get(productId) ?? [] };
+}
+
+/**
+ * Lịch sử yêu cầu/cấp của 1 vật tư: mọi dòng requisition_items thuộc biến thể
+ * của vật tư (trừ phiếu nháp chưa gửi), sắp mới nhất trước, tối đa 100 dòng.
+ * Tuân theo RLS: nhân viên thường chỉ thấy phiếu của mình, quản lý kho thấy tất cả.
+ */
+export async function getProductHistory(productId: string): Promise<ProductHistoryRow[]> {
+  await requireProfile();
+  const supabase = await createClient();
+
+  const { data: variantRows } = await supabase.from("variants").select("id").eq("product_id", productId);
+  const variantIds = (variantRows ?? []).map((v) => v.id);
+  if (variantIds.length === 0) return [];
+
+  // Dạng dòng phẳng: 1 requisition_items + phiếu chứa nó (inner join — requisition_id not null).
+  type HistoryQueryRow = {
+    id: string;
+    variant_id: string;
+    quantity: number;
+    requisition: {
+      id: string;
+      code: string;
+      status: string;
+      fulfilled_at: string | null;
+      requester: { name: string | null } | null;
+      fulfiller: { name: string | null } | null;
+      zone: { name: string | null } | null;
+    } | null;
+  };
+
+  const { data, error } = await supabase
+    .from("requisition_items")
+    .select(
+      "id, variant_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(id, code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name))",
+    )
+    .in("variant_id", variantIds)
+    // Lọc cột của quan hệ to-one đã inner join → bỏ phiếu nháp chưa gửi yêu cầu.
+    .neq("requisition.status", "draft")
+    // Ngày tạo dòng ≈ ngày tạo phiếu (ghi cùng lúc khi tạo) → đủ để sắp lịch sử.
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+
+  const rows: ProductHistoryRow[] = [];
+  for (const raw of (data ?? []) as unknown as HistoryQueryRow[]) {
+    const req = raw.requisition;
+    if (!req) continue;
+    rows.push({
+      itemId: raw.id,
+      requisitionId: req.id,
+      code: req.code,
+      status: req.status,
+      fulfilledAt: req.fulfilled_at,
+      requesterName: req.requester?.name ?? null,
+      fulfillerName: req.fulfiller?.name ?? null,
+      zoneName: req.zone?.name ?? null,
+      variantId: raw.variant_id,
+      quantity: raw.quantity,
+    });
+  }
+  return rows;
 }
 
 export async function createProduct(input: ProductInput) {

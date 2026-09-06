@@ -58,3 +58,23 @@ export interface AdminProductRow {
 export interface ProductVariantsPayload {
   variants: AdminVariantRow[];
 }
+
+/**
+ * Một dòng lịch sử yêu cầu/cấp của vật tư: 1 dòng vật tư (theo quy cách)
+ * trên 1 phiếu yêu cầu (requisition). Số lượng không đổi giữa các bước
+ * duyệt → cấp, nên quantity là cả số yêu cầu lẫn số cấp khi phiếu đã cấp.
+ */
+export interface ProductHistoryRow {
+  /** Id dòng requisition_items — dùng làm key khi render. */
+  itemId: string;
+  requisitionId: string;
+  code: string;
+  status: string;
+  /** Ngày cấp phát thực tế (fulfilled_at); null khi phiếu chưa cấp. */
+  fulfilledAt: string | null;
+  requesterName: string | null;
+  fulfillerName: string | null;
+  zoneName: string | null;
+  variantId: string;
+  quantity: number;
+}

@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { History } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CategoryIcon } from "@/components/category-icon";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import { ProductDetailDialog } from "./product-detail-dialog";
+import { ProductHistoryDialog } from "./product-history-dialog";
 import { ProductImageGallery } from "./product-image-gallery";
 
 export function ProductCard({
@@ -19,6 +22,7 @@ export function ProductCard({
   categoryIconKey?: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Vật tư bộ (có dòng composite): tồn hiển thị = số bộ còn ráp được theo linh kiện,
   // không cộng gộp linh kiện để tránh đếm trùng.
@@ -64,6 +68,21 @@ export function ProductCard({
           <Badge variant={badge.variant} className="absolute top-2 left-2">
             {badge.label}
           </Badge>
+          {/* Nút lịch sử yêu cầu/cấp — không mở dialog chi tiết khi bấm. */}
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon-xs"
+            aria-label="Xem lịch sử yêu cầu/cấp"
+            title="Lịch sử yêu cầu/cấp"
+            className="absolute top-2 right-2 size-7 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background"
+            onClick={(e) => {
+              e.stopPropagation();
+              setHistoryOpen(true);
+            }}
+          >
+            <History aria-hidden />
+          </Button>
         </div>
         <CardContent className="space-y-1 p-3">
           <div className="line-clamp-2 min-h-10 text-sm font-medium leading-snug">{product.name}</div>
@@ -75,6 +94,17 @@ export function ProductCard({
         </CardContent>
       </Card>
       <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} />
+      {historyOpen && (
+        <ProductHistoryDialog
+          open
+          onOpenChange={(v) => {
+            if (!v) setHistoryOpen(false);
+          }}
+          productName={product.name}
+          productId={product.id}
+          variants={variants}
+        />
+      )}
     </>
   );
 }
