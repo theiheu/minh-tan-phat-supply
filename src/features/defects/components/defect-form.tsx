@@ -136,13 +136,13 @@ export function DefectForm({
   const fieldClass = "h-12 text-base sm:h-11 sm:text-sm";
 
   return (
-    <form onSubmit={submit} className="space-y-5 sm:space-y-6">
+    <form onSubmit={submit} className="space-y-6 sm:space-y-8">
       {/* Bước 1 — cách xử lý */}
       <Card>
-        <CardHeader className="px-5 pt-5 sm:px-7 sm:pt-6">
+        <CardHeader className="px-6 pt-6 sm:px-8 sm:pt-8">
           <CardTitle className="text-lg font-bold">Chọn cách xử lý</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 px-5 pb-5 sm:px-7 sm:pb-6">
+        <CardContent className="space-y-3.5 px-6 pb-6 sm:space-y-4 sm:px-8 sm:pb-8">
           {INTENTS.map((it) => (
             <button
               key={it.key}
@@ -150,7 +150,7 @@ export function DefectForm({
               onClick={() => setIntent(it.key)}
               aria-pressed={intent === it.key}
               className={cn(
-                "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-4 text-left transition-colors sm:py-3.5",
+                "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-4 text-left transition-colors sm:px-5 sm:py-4",
                 intent === it.key
                   ? "border-primary bg-primary/10 ring-1 ring-primary"
                   : "hover:bg-accent",
@@ -179,7 +179,7 @@ export function DefectForm({
 
       {/* Bước 2 — chi tiết các dòng hỏng */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 px-5 pt-5 sm:px-7 sm:pt-6">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 px-6 pt-6 sm:px-8 sm:pt-8">
           <div>
             <CardTitle className="text-lg font-bold">Chi tiết các dòng hỏng</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -196,14 +196,14 @@ export function DefectForm({
             Thêm
           </Button>
         </CardHeader>
-        <CardContent className="space-y-4 px-5 pb-5 sm:space-y-5 sm:px-7 sm:pb-6">
+        <CardContent className="space-y-5 px-6 pb-6 sm:space-y-6 sm:px-8 sm:pb-8">
           {items.map((it, i) => {
             const done = !!it.variantId && it.damageDetail.trim().length > 0 && it.images.length >= 1;
             return (
               <div
                 key={i}
                 className={cn(
-                  "space-y-4 rounded-xl border-2 p-5 sm:space-y-5 sm:p-6",
+                  "space-y-5 rounded-2xl border-2 p-5 sm:space-y-6 sm:p-7",
                   done ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800/60 dark:bg-emerald-950/10" : "border-border",
                 )}
               >
