@@ -83,6 +83,22 @@ async function main() {
   const item = await mc.from("issue_items").select("variant_id, quantity, unit_price").eq("issue_id", issueId).single();
   check("issue_items ghi đúng item + unit_price 15000", item.data?.variant_id === variantId && item.data?.quantity === ISSUE_QTY && Number(item.data?.unit_price) === 15000, JSON.stringify(item.data));
 
+  // 2b) 0038: create_issue customer với unit_price null → phải fail (giá bán > 0)
+  const noPrice = await mc.rpc("create_issue", {
+    p_items: [{ variant_id: variantId, quantity: 1, unit_price: null }],
+    p_destination_type: "customer",
+    p_zone_id: null,
+    p_customer_id: customerId,
+    p_vehicle_plate: null,
+    p_driver_name: null,
+    p_notes: "verify thiếu đơn giá",
+    p_by: mgrId,
+  });
+  check("create_issue khách thiếu đơn giá fail", !!noPrice.error, noPrice.error?.message ?? "no error");
+  check("lỗi đúng 'Xuất bán cho khách phải có đơn giá lớn hơn 0'", /Xuất bán cho khách phải có đơn giá lớn hơn 0/.test(noPrice.error?.message ?? ""), noPrice.error?.message ?? "no error");
+  const noPriceRow = await mc.from("issues").select("code").eq("notes", "verify thiếu đơn giá");
+  check("không tạo phiếu mới khi thiếu đơn giá", (noPriceRow.data ?? []).length === 0, JSON.stringify(noPriceRow.data));
+
   // 3) post_issue → trừ tồn đúng qty + ledger issue_out + status posted
   const beforePost = await balanceAt();
   const posted = await mc.rpc("post_issue", { p_id: issueId, p_by: mgrId });
