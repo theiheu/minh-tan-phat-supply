@@ -15,9 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImagePlus, X } from "lucide-react";
-import { recordDefect } from "../actions";
+import { recordDefect, requestRepair } from "../actions";
+import { createExchange } from "@/features/exchanges/actions";
 import { uploadDefectImage } from "../upload";
 import { appAssetUrl } from "@/lib/images";
+import { cn } from "cn";
+
+type Intent = "record" | "exchange" | "repair";
 
 interface ItemDraft {
   variantId: string;
@@ -35,15 +39,24 @@ const EMPTY: ItemDraft = {
   uploading: false,
 };
 
+const INTENTS: { key: Intent; label: string; hint: string }[] = [
+  { key: "record", label: "Chỉ ghi nhận hỏng", hint: "Đồ về Kho hỏng, xử lý sau" },
+  { key: "exchange", label: "Đổi lấy vật tư mới", hint: "Tạo phiếu Đổi Mới (DM) chờ duyệt" },
+  { key: "repair", label: "Gửi đi sửa", hint: "Đề nghị manager xác nhận đưa đi sửa" },
+];
+
 export function DefectForm({
-  locations,
+  sourceLocationId,
+  isManager = false,
   variants,
 }: {
-  locations: { id: string; name: string }[];
+  /** Kho nguồn mặc định — server đã resolve = Kho chính. */
+  sourceLocationId: string;
+  isManager?: boolean;
   variants: { id: string; label: string }[];
 }) {
   const router = useRouter();
-  const [sourceLocationId, setSourceLocationId] = useState("");
+  const [intent, setIntent] = useState<Intent>("record");
   const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
   const [pending, startTransition] = useTransition();
 
@@ -73,7 +86,6 @@ export function DefectForm({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!sourceLocationId) return toast.error("Chọn kho nguồn");
     const valid = items.filter(
       (i) => i.variantId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.quantity) > 0,
     );
@@ -82,7 +94,7 @@ export function DefectForm({
 
     startTransition(async () => {
       try {
-        await recordDefect({
+        const noteId = await recordDefect({
           sourceLocationId,
           items: valid.map((i) => ({
             variantId: i.variantId,
@@ -91,6 +103,25 @@ export function DefectForm({
             images: i.images,
           })),
         });
+
+        if (intent === "exchange") {
+          const { id, code } = await createExchange(noteId);
+          toast.success(`Đã ghi nhận hỏng + tạo phiếu Đổi Mới ${code}`);
+          if (isManager) {
+            router.push(`/defects/exchange/${id}`);
+          } else {
+            router.push("/defects");
+          }
+          router.refresh();
+          return;
+        }
+        if (intent === "repair") {
+          await requestRepair(noteId);
+          toast.success("Đã ghi nhận hỏng + đề nghị gửi đi sửa — chờ manager xác nhận");
+          router.push("/defects");
+          router.refresh();
+          return;
+        }
         toast.success("Đã ghi nhận vật tư hỏng");
         router.push("/defects");
         router.refresh();
@@ -104,22 +135,31 @@ export function DefectForm({
     <form onSubmit={submit} className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Kho nguồn</CardTitle>
+          <CardTitle className="text-base">Hướng xử lý đồ hỏng</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-w-sm space-y-1.5">
-            <Label>Kho nguồn (kho chính)</Label>
-            <Select value={sourceLocationId} onValueChange={setSourceLocationId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn kho nguồn" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {INTENTS.map((it) => (
+              <button
+                key={it.key}
+                type="button"
+                onClick={() => setIntent(it.key)}
+                className={cn(
+                  "rounded-lg border p-3 text-left transition-colors",
+                  intent === it.key
+                    ? "border-primary bg-primary/10 ring-1 ring-primary"
+                    : "hover:bg-accent",
+                )}
+              >
+                <div className="text-sm font-medium">{it.label}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{it.hint}</div>
+              </button>
+            ))}
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Đồ hỏng sẽ được chuyển về <span className="font-medium">Kho hỏng</span> — kho nguồn tự
+            động lấy từ Kho chính.
+          </p>
         </CardContent>
       </Card>
 
@@ -209,7 +249,13 @@ export function DefectForm({
 
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>
-          {pending ? "Đang lưu…" : "Ghi nhận hỏng"}
+          {pending
+            ? "Đang xử lý…"
+            : intent === "exchange"
+              ? "Ghi nhận & tạo phiếu đổi mới"
+              : intent === "repair"
+                ? "Ghi nhận & đề nghị sửa"
+                : "Ghi nhận hỏng"}
         </Button>
       </div>
     </form>
