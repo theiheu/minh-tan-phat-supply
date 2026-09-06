@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ImagePlus, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Trash2, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { CategoryIcon, isImageIcon } from "@/components/category-icon";
 import { cn } from "@/lib/utils";
 import { uploadCategoryIcon } from "../upload";
@@ -13,9 +14,9 @@ export interface IconOption {
 
 /**
  * Ô chọn icon danh mục (client):
- * - Hàng ô preset (icon lucide theo key) để bấm chọn nhanh.
- * - Nút "Tải ảnh lên" upload file ảnh lên bucket category-icons, lưu URL.
- * - Hiển thị preview icon hiện tại (ảnh hoặc lucide).
+ * - Nút chính "Tải icon từ máy" — chọn file ảnh từ máy, upload lên bucket
+ *   category-icons, xem trước; khi đã có ảnh cho phép xoá để quay về mặc định.
+ * - Hàng phụ "Chọn icon mẫu" — các icon lucide có sẵn để chọn nhanh.
  */
 export function CategoryIconPicker({
   value,
@@ -26,7 +27,6 @@ export function CategoryIconPicker({
   onChange: (value: string) => void;
   options: IconOption[];
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -46,9 +46,54 @@ export function CategoryIconPicker({
     }
   }
 
+  const isImage = isImageIcon(value);
+
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1">
+    <div className="space-y-3">
+      {/* Khối chính: preview + tải ảnh từ máy */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted/40">
+          <CategoryIcon value={value} className="size-9" />
+        </span>
+
+        <label
+          className={cn(
+            "inline-flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm font-medium transition-colors",
+            "border-input text-foreground hover:border-primary hover:bg-accent",
+            uploading && "pointer-events-none opacity-60",
+          )}
+        >
+          {uploading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Upload className="size-4" />
+          )}
+          {uploading ? "Đang tải…" : isImage ? "Đổi icon (tải ảnh khác)" : "Tải icon từ máy"}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="hidden"
+            onChange={onFile}
+          />
+        </label>
+
+        {isImage && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange("other")}
+            title="Bỏ ảnh đã tải, dùng icon mặc định"
+          >
+            <Trash2 className="size-4" />
+            Bỏ ảnh
+          </Button>
+        )}
+      </div>
+
+      {/* Lựa chọn phụ: icon mẫu có sẵn */}
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="mr-1 text-xs text-muted-foreground">Hoặc chọn icon mẫu:</span>
         {options.map((o) => {
           const active = value === o.value;
           return (
@@ -69,39 +114,6 @@ export function CategoryIconPicker({
             </button>
           );
         })}
-        <label
-          title="Tải ảnh icon lên"
-          className={cn(
-            "flex size-9 cursor-pointer items-center justify-center rounded-md border border-dashed text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-            isImageIcon(value) && "border-primary bg-primary/10 text-primary",
-          )}
-        >
-          {uploading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <ImagePlus className="size-4" />
-          )}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-            className="hidden"
-            onChange={onFile}
-          />
-        </label>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="flex size-10 items-center justify-center rounded-md border bg-muted/40">
-          <CategoryIcon value={value} className="size-6" />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-          {value
-            ? isImageIcon(value)
-              ? "Icon đã tải lên"
-              : options.find((o) => o.value === value)?.label ?? "Icon tùy chỉnh"
-            : "Chọn icon hoặc tải ảnh lên"}
-        </span>
       </div>
     </div>
   );

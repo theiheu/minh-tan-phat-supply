@@ -147,6 +147,10 @@ export function EntityCrud({
     });
   }
 
+  const iconCols = columns.filter((c) => c.kind === "icon");
+  const simpleCols = columns.filter((c) => c.kind !== "icon");
+  const hasIcon = iconCols.length > 0;
+
   return (
     <Card>
       <CardHeader>
@@ -158,22 +162,54 @@ export function EntityCrud({
             e.preventDefault();
             run(() => save(null, fullData(columns, form)), "Đã thêm");
           }}
-          className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+          className={hasIcon ? "space-y-3" : "grid grid-cols-2 gap-2 sm:grid-cols-4"}
         >
-          {columns.map((c) => (
-            <div key={c.key} className={c.kind === "icon" ? "col-span-2 sm:col-span-4" : ""}>
-              <Field
-                col={c}
-                value={form[c.key] ?? ""}
-                onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
-              />
-            </div>
-          ))}
-          <div className="flex items-end">
-            <Button type="submit" disabled={pending}>
-              Thêm
-            </Button>
-          </div>
+          {hasIcon ? (
+            <>
+              <div className="flex flex-wrap items-end gap-2">
+                {simpleCols.map((c) => (
+                  <div key={c.key} className="min-w-40 flex-1 basis-52">
+                    <Field
+                      col={c}
+                      value={form[c.key] ?? ""}
+                      onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
+                    />
+                  </div>
+                ))}
+                <div className="flex items-end">
+                  <Button type="submit" disabled={pending}>
+                    Thêm
+                  </Button>
+                </div>
+              </div>
+              {iconCols.map((c) => (
+                <div key={c.key} className="rounded-lg border bg-muted/20 p-3">
+                  <p className="mb-2 text-sm font-medium">{c.label}</p>
+                  <Field
+                    col={c}
+                    value={form[c.key] ?? ""}
+                    onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
+                  />
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              {columns.map((c) => (
+                <Field
+                  key={c.key}
+                  col={c}
+                  value={form[c.key] ?? ""}
+                  onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
+                />
+              ))}
+              <div className="flex items-end">
+                <Button type="submit" disabled={pending}>
+                  Thêm
+                </Button>
+              </div>
+            </>
+          )}
         </form>
 
         <Table>

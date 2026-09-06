@@ -103,16 +103,19 @@ export default async function ProductsPage({
         </Button>
       </form>
 
-      {/* Danh mục dạng ô vuông, 2 hàng — dài quá thì cuộn ngang (responsive). */}
-      <div className="grid auto-cols-[4.5rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 sm:auto-cols-[5rem] sm:gap-3">
-        <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả">
-          <LayoutGrid className="size-6 shrink-0" aria-hidden />
-        </CategoryTile>
-        {(categories ?? []).map((c) => (
-          <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name}>
-            <CategoryIcon value={c.icon} className="size-6 shrink-0" />
+      {/* Danh mục dạng ô vuông, 2 hàng — dài quá thì cuộn ngang (responsive).
+          Desktop (đủ chỗ): dãy được căn giữa và ô to hơn thay vì dồn sát mép trái. */}
+      <div className="overflow-x-auto pb-1">
+        <div className="mx-auto grid w-max auto-cols-[4.5rem] grid-flow-col grid-rows-2 gap-2 sm:auto-cols-[5rem] sm:gap-3 md:auto-cols-[5.5rem] lg:auto-cols-[6.5rem] lg:gap-4">
+          <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả">
+            <LayoutGrid className="size-6 shrink-0 md:size-7" aria-hidden />
           </CategoryTile>
-        ))}
+          {(categories ?? []).map((c) => (
+            <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name}>
+              <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-7" />
+            </CategoryTile>
+          ))}
+        </div>
       </div>
 
       <p className="text-sm text-muted-foreground">{count ?? 0} vật tư</p>
