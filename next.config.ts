@@ -31,6 +31,8 @@ function supabaseStoragePatterns(): NonNullable<NonNullable<NextConfig["images"]
 }
 
 const nextConfig: NextConfig = {
+  // Cho phép build ra thư mục riêng (deploy.sh build .next-new, không đụng .next đang chạy).
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   images: {
     remotePatterns: supabaseStoragePatterns(),
   },
