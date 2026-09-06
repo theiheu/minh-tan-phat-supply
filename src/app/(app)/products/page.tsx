@@ -1,9 +1,14 @@
-import { ListFilters } from "@/components/list-filters";
+import { LayoutGrid } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { CategoryIcon } from "@/components/category-icon";
 import { Pagination } from "@/components/pagination";
 import { ProductCard } from "@/features/products/components/product-card";
 import type { VariantWithStock } from "@/features/products/types";
 import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 12;
 const EMPTY_UUID = "00000000-0000-0000-0000-000000000000";
@@ -77,22 +82,40 @@ export default async function ProductsPage({
   }
 
   const categoryIconMap = new Map((categories ?? []).map((c) => [c.id, c.icon]));
-  const categoryOptions = (categories ?? []).map((c) => ({ value: c.id, label: c.name }));
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
+
+  function categoryHref(id: string | null): string {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (id) params.set("category", id);
+    const s = params.toString();
+    return s ? `?${s}` : "?";
+  }
 
   return (
     <div className="space-y-4">
-      <ListFilters
-        basePath="/products"
-        searchPlaceholder="Tìm vật tư…"
-        title="Lọc vật tư"
-        filters={[{ param: "category", label: "Danh mục", options: categoryOptions }]}
-        initial={{ q, category: categoryId ?? "" }}
-      />
+      {/* Ô tìm kiếm — giữ query param category khi tìm trong danh mục đang chọn. */}
+      <form method="get" className="flex gap-2">
+        <Input type="search" name="q" defaultValue={q} placeholder="Tìm vật tư…" className="max-w-sm" />
+        {categoryId ? <input type="hidden" name="category" value={categoryId} /> : null}
+        <Button type="submit" variant="outline">
+          Tìm
+        </Button>
+      </form>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{count ?? 0} vật tư</p>
+      {/* Danh mục dạng ô vuông, 2 hàng — dài quá thì cuộn ngang (responsive). */}
+      <div className="grid auto-cols-[4.5rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 sm:auto-cols-[5rem] sm:gap-3">
+        <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả">
+          <LayoutGrid className="size-6 shrink-0" aria-hidden />
+        </CategoryTile>
+        {(categories ?? []).map((c) => (
+          <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name}>
+            <CategoryIcon value={c.icon} className="size-6 shrink-0" />
+          </CategoryTile>
+        ))}
       </div>
+
+      <p className="text-sm text-muted-foreground">{count ?? 0} vật tư</p>
 
       {(products ?? []).length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Không tìm thấy vật tư nào.</p>
@@ -111,5 +134,33 @@ export default async function ProductsPage({
 
       <Pagination basePath="/products" page={page} totalPages={totalPages} params={{ q, category: categoryId }} />
     </div>
+  );
+}
+
+function CategoryTile({
+  active,
+  href,
+  label,
+  children,
+}: {
+  active: boolean;
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border p-1 text-center transition-colors",
+        active
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
+      )}
+    >
+      {children}
+      <span className="line-clamp-2 text-[11px] leading-tight">{label}</span>
+    </Link>
   );
 }

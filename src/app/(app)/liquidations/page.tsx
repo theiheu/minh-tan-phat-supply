@@ -4,16 +4,27 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function LiquidationsPage() {
+const PAGE_SIZE = 20;
+
+export default async function LiquidationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
   const supabase = await createClient();
   const { data: hong } = await supabase.from("stock_locations").select("id").eq("code", "KHO_HONG").single();
 
-  const [{ data: notes }, { data: balances }] = await Promise.all([
+  const [{ data: notes, count }, { data: balances }] = await Promise.all([
     supabase
       .from("liquidation_notes")
-      .select("id, code, status, reason, liquidation_items(id, quantity, method, variants(attributes, unit, products(name)))")
+      .select("id, code, status, reason, liquidation_items(id, quantity, method, variants(attributes, unit, products(name)))", {
+        count: "exact",
+      })
       .order("created_at", { ascending: false })
-      .limit(100),
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1),
     hong
       ? supabase
           .from("stock_balances")
@@ -22,6 +33,8 @@ export default async function LiquidationsPage() {
           .gt("quantity", 0)
       : Promise.resolve({ data: [] }),
   ]);
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const variants = (balances ?? []).map((b) => ({
     id: b.variants!.id,
@@ -42,5 +55,5 @@ export default async function LiquidationsPage() {
     })),
   }));
 
-  return <LiquidationManager notes={noteRows} variants={variants} />;
+  return <LiquidationManager notes={noteRows} variants={variants} page={page} totalPages={totalPages} />;
 }

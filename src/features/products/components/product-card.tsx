@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { categoryIcon } from "@/lib/labels";
+import { CategoryIcon } from "@/components/category-icon";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import { ProductDetailDialog } from "./product-detail-dialog";
@@ -19,7 +19,6 @@ export function ProductCard({
   categoryIconKey?: string | null;
 }) {
   const [open, setOpen] = useState(false);
-  const Icon = categoryIcon(categoryIconKey);
 
   const totalQty = variants.reduce((n, v) => n + v.stock, 0);
   const low = variants.some((v) => v.stock <= v.min_stock);
@@ -52,7 +51,7 @@ export function ProductCard({
         <div className="relative">
           {uniqueImages.length === 0 ? (
             <div className="flex aspect-square w-full items-center justify-center bg-muted text-muted-foreground">
-              <Icon className="size-14" />
+              <CategoryIcon value={categoryIconKey} className="size-14" />
             </div>
           ) : (
             <ProductImageGallery images={uniqueImages} alt={product.name} />

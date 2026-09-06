@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -300,10 +301,16 @@ export function UsersManager({
   profiles,
   zones,
   currentRole,
+  page = 1,
+  totalPages = 1,
 }: {
   profiles: Profile[];
   zones: ZoneOption[];
   currentRole: string;
+  /** Trang hiện tại (searchParams.page) — mặc định 1. */
+  page?: number;
+  /** Tổng số trang — mặc định 1 (ẩn phân trang). */
+  totalPages?: number;
 }) {
   return (
     <div className="space-y-4">
@@ -330,6 +337,7 @@ export function UsersManager({
               ))}
             </TableBody>
           </Table>
+          <Pagination basePath="/admin/users" page={page} totalPages={totalPages} className="mt-4" />
         </CardContent>
       </Card>
     </div>

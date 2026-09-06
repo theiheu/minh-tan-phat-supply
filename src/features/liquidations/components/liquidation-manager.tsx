@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,9 +46,15 @@ interface AvailableVariant { id: string; label: string; stock: number; }
 export function LiquidationManager({
   notes,
   variants,
+  page = 1,
+  totalPages = 1,
 }: {
   notes: { id: string; code: string; status: string; reason: string | null; items: { id: string; label: string; quantity: number; method: string }[] }[];
   variants: AvailableVariant[];
+  /** Trang hiện tại (searchParams.page) — mặc định 1. */
+  page?: number;
+  /** Tổng số trang — mặc định 1 (ẩn phân trang). */
+  totalPages?: number;
 }) {
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -166,6 +173,7 @@ export function LiquidationManager({
               ))}
             </TableBody>
           </Table>
+          <Pagination basePath="/liquidations" page={page} totalPages={totalPages} className="mt-4" />
         </CardContent>
       </Card>
 

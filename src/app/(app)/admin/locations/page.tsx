@@ -12,10 +12,26 @@ const TYPE_OPTIONS = [
   { value: "other", label: "Khác" },
 ];
 
-export default async function AdminLocationsPage() {
+const PAGE_SIZE = 20;
+
+export default async function AdminLocationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireManager();
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
   const supabase = await createClient();
-  const { data } = await supabase.from("stock_locations").select("id, code, name, type").eq("is_active", true).order("code");
+  const { data, count } = await supabase
+    .from("stock_locations")
+    .select("id, code, name, type", { count: "exact" })
+    .eq("is_active", true)
+    .order("code")
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const rows: CrudRow[] = (data ?? []).map((l) => ({
     id: l.id,
@@ -35,6 +51,9 @@ export default async function AdminLocationsPage() {
       ]}
       save={saveLocation}
       remove={deactivateLocation}
+      page={page}
+      totalPages={totalPages}
+      basePath="/admin/locations"
     />
   );
 }

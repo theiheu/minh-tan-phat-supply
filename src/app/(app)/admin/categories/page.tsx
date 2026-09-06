@@ -16,14 +16,26 @@ const ICON_OPTIONS = [
   { value: "other", label: "Khác" },
 ];
 
-export default async function AdminCategoriesPage() {
+const PAGE_SIZE = 20;
+
+export default async function AdminCategoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireManager();
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, count } = await supabase
     .from("categories")
-    .select("id, name, icon, display_order")
+    .select("id, name, icon, display_order", { count: "exact" })
     .is("deleted_at", null)
-    .order("display_order");
+    .order("display_order")
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const rows: CrudRow[] = (data ?? []).map((c) => ({
     id: c.id,
@@ -38,11 +50,14 @@ export default async function AdminCategoriesPage() {
       items={rows}
       columns={[
         { key: "name", label: "Tên" },
-        { key: "icon", label: "Icon", kind: "select", options: ICON_OPTIONS },
+        { key: "icon", label: "Icon", kind: "icon", options: ICON_OPTIONS },
         { key: "display_order", label: "Thứ tự" },
       ]}
       save={saveCategory}
       remove={deleteCategory}
+      page={page}
+      totalPages={totalPages}
+      basePath="/admin/categories"
     />
   );
 }

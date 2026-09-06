@@ -1,4 +1,5 @@
 import { ListFilters } from "@/components/list-filters";
+import { Pagination } from "@/components/pagination";
 import { ProductsManager } from "@/features/products/components/products-manager";
 import { requireManager } from "@/lib/auth";
 import { variantLabel } from "@/lib/labels";
@@ -6,10 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 20;
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; sort?: string; order?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; sort?: string; order?: string; page?: string }>;
 }) {
   await requireManager();
   const sp = await searchParams;
@@ -17,21 +20,26 @@ export default async function AdminProductsPage({
   const category = sp.category ?? null;
   const sort = sp.sort === "created_at" ? "created_at" : "name";
   const order = sp.order === "desc" ? "desc" : "asc";
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
 
-  const [{ data: products }, { data: categories }] = await Promise.all([
+  const [{ data: products, count }, { data: categories }] = await Promise.all([
     (async () => {
       let query = supabase
         .from("products")
-        .select("id, name, description, images, options, category_id, created_at, categories(name)")
+        .select("id, name, description, images, options, category_id, created_at, categories(name)", { count: "exact" })
         .is("deleted_at", null);
       if (q) query = query.ilike("name", `%${q}%`);
       if (category) query = query.eq("category_id", category);
-      return query.order(sort, { ascending: order === "asc" });
+      return query
+        .order(sort, { ascending: order === "asc" })
+        .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
     })(),
     supabase.from("categories").select("id, name").is("deleted_at", null).order("display_order"),
   ]);
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   // Biến thể + tồn kho (theo view variant_stock) để hiển thị trong bảng.
   const productIds = (products ?? []).map((p) => p.id);
@@ -96,6 +104,13 @@ export default async function AdminProductsPage({
         category={category ?? ""}
         sort={sort}
         order={order}
+      />
+
+      <Pagination
+        basePath="/admin/products"
+        page={page}
+        totalPages={totalPages}
+        params={{ q, category, sort, order }}
       />
     </div>
   );

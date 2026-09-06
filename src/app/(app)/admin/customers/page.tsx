@@ -5,14 +5,26 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCustomersPage() {
+const PAGE_SIZE = 20;
+
+export default async function AdminCustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireManager();
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, count } = await supabase
     .from("customers")
-    .select("id, name, phone, address, notes")
+    .select("id, name, phone, address, notes", { count: "exact" })
     .is("deleted_at", null)
-    .order("name");
+    .order("name")
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const rows: CrudRow[] = (data ?? []).map((c) => ({
     id: c.id,
@@ -34,6 +46,9 @@ export default async function AdminCustomersPage() {
       ]}
       save={saveCustomer}
       remove={deleteCustomer}
+      page={page}
+      totalPages={totalPages}
+      basePath="/admin/customers"
     />
   );
 }

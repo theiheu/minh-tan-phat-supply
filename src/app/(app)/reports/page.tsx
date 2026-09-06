@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Pagination } from "@/components/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -15,23 +16,73 @@ import { StockPdfButton } from "@/features/reports/components/stock-pdf-button";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReportsPage() {
+const PAGE_SIZE = 20;
+
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    stock_page?: string;
+    expiring_page?: string;
+    movement_page?: string;
+    audit_page?: string;
+  }>;
+}) {
   const supabase = await createClient();
-  const [{ data: variants }, { data: profiles }, { data: stock }, { data: movements }, { data: expiring }, { data: audits }, { data: locations }] =
-    await Promise.all([
-      supabase.from("variants").select("id, attributes, unit, price, products(name)"),
-      supabase.from("profiles").select("id, name"),
-      supabase.from("variant_stock").select("variant_id, quantity, min_stock").order("quantity", { ascending: true }).limit(200),
-      supabase.from("stock_movements").select("variant_id, movement_type, quantity, created_at").order("created_at", { ascending: false }).limit(100),
-      supabase
-        .from("receipt_items")
-        .select("variant_id, quantity, batch_no, expiry_date")
-        .lte("expiry_date", new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10))
-        .order("expiry_date", { ascending: true })
-        .limit(100),
-      supabase.from("audit_logs").select("actor_id, action, entity_type, created_at").order("created_at", { ascending: false }).limit(50),
-      supabase.from("stock_locations").select("id, code, name").order("code", { ascending: true }),
-    ]);
+  const sp = await searchParams;
+  const pageOf = (v: string | undefined) => Math.max(1, Number(v ?? "1") || 1);
+  const stockPage = pageOf(sp.stock_page);
+  const expiringPage = pageOf(sp.expiring_page);
+  const movementPage = pageOf(sp.movement_page);
+  const auditPage = pageOf(sp.audit_page);
+  const rng = (p: number) => ((p - 1) * PAGE_SIZE);
+
+  const [
+    { data: variants },
+    { data: profiles },
+    { data: stock, count: stockCount },
+    { data: expiring, count: expiringCount },
+    { data: movements, count: movementCount },
+    { data: audits, count: auditCount },
+    { data: locations },
+  ] = await Promise.all([
+    supabase.from("variants").select("id, attributes, unit, price, products(name)"),
+    supabase.from("profiles").select("id, name"),
+    supabase
+      .from("variant_stock")
+      .select("variant_id, quantity, min_stock", { count: "exact" })
+      .order("quantity", { ascending: true })
+      .range(rng(stockPage), rng(stockPage) + PAGE_SIZE - 1),
+    supabase
+      .from("receipt_items")
+      .select("variant_id, quantity, batch_no, expiry_date", { count: "exact" })
+      .lte("expiry_date", new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10))
+      .order("expiry_date", { ascending: true })
+      .range(rng(expiringPage), rng(expiringPage) + PAGE_SIZE - 1),
+    supabase
+      .from("stock_movements")
+      .select("variant_id, movement_type, quantity, created_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(rng(movementPage), rng(movementPage) + PAGE_SIZE - 1),
+    supabase
+      .from("audit_logs")
+      .select("actor_id, action, entity_type, created_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(rng(auditPage), rng(auditPage) + PAGE_SIZE - 1),
+    supabase.from("stock_locations").select("id, code, name").order("code", { ascending: true }),
+  ]);
+
+  const stockTotalPages = Math.max(1, Math.ceil((stockCount ?? 0) / PAGE_SIZE));
+  const expiringTotalPages = Math.max(1, Math.ceil((expiringCount ?? 0) / PAGE_SIZE));
+  const movementTotalPages = Math.max(1, Math.ceil((movementCount ?? 0) / PAGE_SIZE));
+  const auditTotalPages = Math.max(1, Math.ceil((auditCount ?? 0) / PAGE_SIZE));
+
+  // Giữ số trang của các bảng còn lại khi chuyển trang trong một bảng.
+  const keep = (others: Record<string, number>) => {
+    const out: Record<string, string | null> = {};
+    for (const [k, v] of Object.entries(others)) out[k] = v > 1 ? String(v) : null;
+    return out;
+  };
 
   const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
@@ -61,6 +112,7 @@ export default async function ReportsPage() {
               <TableHead>Vật tư</TableHead><TableHead>Biến thể</TableHead><TableHead>Tồn</TableHead><TableHead>Tối thiểu</TableHead><TableHead>Đơn giá</TableHead><TableHead>Giá trị tồn</TableHead>
             </TableRow></TableHeader>
             <TableBody>
+              {(stock ?? []).length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Chưa có dữ liệu tồn kho.</TableCell></TableRow>}
               {(stock ?? []).map((s, i) => {
                 const price = s.variant_id ? variantMap.get(s.variant_id)?.price ?? null : null;
                 return (
@@ -76,6 +128,14 @@ export default async function ReportsPage() {
               })}
             </TableBody>
           </Table>
+          <Pagination
+            basePath="/reports"
+            page={stockPage}
+            totalPages={stockTotalPages}
+            param="stock_page"
+            params={keep({ expiring_page: expiringPage, movement_page: movementPage, audit_page: auditPage })}
+            className="mt-4"
+          />
         </CardContent>
       </Card>
 
@@ -98,6 +158,14 @@ export default async function ReportsPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination
+            basePath="/reports"
+            page={expiringPage}
+            totalPages={expiringTotalPages}
+            param="expiring_page"
+            params={keep({ stock_page: stockPage, movement_page: movementPage, audit_page: auditPage })}
+            className="mt-4"
+          />
         </CardContent>
       </Card>
 
@@ -109,6 +177,7 @@ export default async function ReportsPage() {
               <TableHead>Vật tư</TableHead><TableHead>Loại</TableHead><TableHead>SL</TableHead><TableHead>Thời gian</TableHead>
             </TableRow></TableHeader>
             <TableBody>
+              {(movements ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Chưa có biến động kho.</TableCell></TableRow>}
               {(movements ?? []).map((m, i) => (
                 <TableRow key={i}>
                   <TableCell>{nameOf(m.variant_id)}</TableCell>
@@ -119,6 +188,14 @@ export default async function ReportsPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination
+            basePath="/reports"
+            page={movementPage}
+            totalPages={movementTotalPages}
+            param="movement_page"
+            params={keep({ stock_page: stockPage, expiring_page: expiringPage, audit_page: auditPage })}
+            className="mt-4"
+          />
         </CardContent>
       </Card>
 
@@ -130,6 +207,7 @@ export default async function ReportsPage() {
               <TableHead>Hành động</TableHead><TableHead>Đối tượng</TableHead><TableHead>Người thực hiện</TableHead><TableHead>Thời gian</TableHead>
             </TableRow></TableHeader>
             <TableBody>
+              {(audits ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Chưa có nhật ký hoạt động.</TableCell></TableRow>}
               {(audits ?? []).map((a, i) => (
                 <TableRow key={i}>
                   <TableCell className="font-mono text-xs">{a.action}</TableCell>
@@ -140,6 +218,14 @@ export default async function ReportsPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination
+            basePath="/reports"
+            page={auditPage}
+            totalPages={auditTotalPages}
+            param="audit_page"
+            params={keep({ stock_page: stockPage, expiring_page: expiringPage, movement_page: movementPage })}
+            className="mt-4"
+          />
         </CardContent>
       </Card>
     </div>

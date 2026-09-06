@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CategoryIcon } from "@/components/category-icon";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,11 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CategoryIconPicker } from "./category-icon-picker";
 
 export interface CrudColumn {
   key: string;
   label: string;
-  kind?: "text" | "select";
+  kind?: "text" | "select" | "icon";
   options?: { value: string; label: string }[];
 }
 
@@ -44,11 +47,9 @@ function fullData(
   const out: Record<string, string> = {};
   for (const c of columns) {
     const base = touched[c.key] ?? fallback?.[c.key] ?? "";
-    if (c.kind === "select") {
-      if (base !== "") out[c.key] = base;
-    } else {
-      out[c.key] = base;
-    }
+    // Select/icon bỏ qua khi chưa chọn (để zod dùng default, vd icon = 'other').
+    if ((c.kind === "select" || c.kind === "icon") && base === "") continue;
+    out[c.key] = base;
   }
   return out;
 }
@@ -62,6 +63,9 @@ function Field({
   value: string;
   onChange: (v: string) => void;
 }) {
+  if (col.kind === "icon") {
+    return <CategoryIconPicker value={value} onChange={onChange} options={col.options ?? []} />;
+  }
   if (col.kind === "select" && col.options) {
     return (
       <Select value={value || ""} onValueChange={onChange}>
@@ -89,18 +93,41 @@ function displayValue(col: CrudColumn, value: string | null): string {
   return value;
 }
 
+/** Nội dung ô trong bảng — cột icon hiện trực tiếp ảnh/icon, cột khác hiện text. */
+function cellContent(col: CrudColumn, value: string | null) {
+  if (col.kind === "icon") {
+    return value ? (
+      <span className="inline-flex items-center justify-center rounded-md border bg-muted/40 px-1.5 py-1">
+        <CategoryIcon value={value} className="size-5" />
+      </span>
+    ) : (
+      "—"
+    );
+  }
+  return displayValue(col, value);
+}
+
 export function EntityCrud({
   title,
   items,
   columns,
   save,
   remove,
+  page = 1,
+  totalPages = 1,
+  basePath,
 }: {
   title: string;
   items: CrudRow[];
   columns: CrudColumn[];
   save: (id: string | null, data: Record<string, string>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  /** Trang hiện tại (searchParams.page) — mặc định 1. */
+  page?: number;
+  /** Tổng số trang — mặc định 1 (ẩn phân trang). */
+  totalPages?: number;
+  /** Đường dẫn gốc cho phân trang (VD "/admin/categories"). */
+  basePath: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<Record<string, string>>({});
@@ -134,7 +161,13 @@ export function EntityCrud({
           className="grid grid-cols-2 gap-2 sm:grid-cols-4"
         >
           {columns.map((c) => (
-            <Field key={c.key} col={c} value={form[c.key] ?? ""} onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))} />
+            <div key={c.key} className={c.kind === "icon" ? "col-span-2 sm:col-span-4" : ""}>
+              <Field
+                col={c}
+                value={form[c.key] ?? ""}
+                onChange={(v) => setForm((f) => ({ ...f, [c.key]: v }))}
+              />
+            </div>
           ))}
           <div className="flex items-end">
             <Button type="submit" disabled={pending}>
@@ -186,7 +219,7 @@ export function EntityCrud({
               ) : (
                 <TableRow key={row.id}>
                   {columns.map((c) => (
-                    <TableCell key={c.key}>{displayValue(c, row[c.key])}</TableCell>
+                    <TableCell key={c.key}>{cellContent(c, row[c.key])}</TableCell>
                   ))}
                   <TableCell>
                     <div className="flex gap-1">
@@ -210,6 +243,8 @@ export function EntityCrud({
             )}
           </TableBody>
         </Table>
+
+        <Pagination basePath={basePath} page={page} totalPages={totalPages} />
       </CardContent>
     </Card>
   );

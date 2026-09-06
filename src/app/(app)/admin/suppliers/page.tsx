@@ -5,10 +5,26 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminSuppliersPage() {
+const PAGE_SIZE = 20;
+
+export default async function AdminSuppliersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireManager();
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
   const supabase = await createClient();
-  const { data } = await supabase.from("suppliers").select("id, name, contact_name, phone, email, address").is("deleted_at", null).order("name");
+  const { data, count } = await supabase
+    .from("suppliers")
+    .select("id, name, contact_name, phone, email, address", { count: "exact" })
+    .is("deleted_at", null)
+    .order("name")
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const rows: CrudRow[] = (data ?? []).map((s) => ({
     id: s.id,
@@ -32,6 +48,9 @@ export default async function AdminSuppliersPage() {
       ]}
       save={saveSupplier}
       remove={deleteSupplier}
+      page={page}
+      totalPages={totalPages}
+      basePath="/admin/suppliers"
     />
   );
 }
