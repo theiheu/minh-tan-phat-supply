@@ -1,10 +1,10 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
-import { RequisitionPDF } from "@/features/requisitions/components/requisition-pdf";
+import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
-import { variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS, REQUISITION_TYPE, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -33,20 +33,30 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .eq("requisition_id", id);
 
   const buffer = await renderToBuffer(
-    <RequisitionPDF
+    <SlipDocument
+      title="PHIẾU YÊU CẦU VẬT TƯ"
       code={req.code}
-      status={req.status}
-      type={req.requisition_type}
-      requester={req.requester?.name ?? "—"}
-      zone={req.zone?.name ?? "—"}
-      purpose={req.purpose}
       createdAt={req.created_at}
-      items={(items ?? []).map((i) => ({
-        name: i.variants?.products?.name ?? "—",
-        label: variantLabel(i.variants?.attributes, i.variants?.unit),
-        unit: i.variants?.unit,
-        quantity: i.quantity,
-      }))}
+      fields={[
+        { label: "Người yêu cầu", value: req.requester?.name },
+        { label: "Khu vực", value: req.zone?.name },
+        { label: "Loại", value: REQUISITION_TYPE[req.requisition_type] ?? req.requisition_type },
+        { label: "Trạng thái", value: REQUISITION_STATUS[req.status] ?? req.status },
+        { label: "Mục đích", value: req.purpose },
+      ]}
+      columns={[
+        { label: "Tên vật tư", flex: 1.6 },
+        { label: "Biến thể", flex: 1.4 },
+        { label: "Đơn vị", flex: 0.8 },
+        { label: "Số lượng", flex: 0.8, align: "right" },
+      ]}
+      rows={(items ?? []).map((i) => [
+        i.variants?.products?.name ?? "—",
+        variantLabel(i.variants?.attributes, i.variants?.unit),
+        i.variants?.unit ?? "—",
+        i.quantity,
+      ])}
+      signers={["Người yêu cầu", "Người duyệt", "Người cấp phát", "Người nhận"]}
     />,
   );
 

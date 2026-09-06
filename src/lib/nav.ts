@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   MapPin,
   Package,
+  PackageMinus,
   PackageOpen,
   Settings,
   Tags,
@@ -31,6 +32,7 @@ export const MAIN_NAV: NavItem[] = [
   { href: "/requisitions", label: "Phiếu yêu cầu", icon: ClipboardList },
   { href: "/defects", label: "Vật tư hỏng", icon: Trash2 },
   { href: "/receipts", label: "Phiếu nhập", icon: Package, roles: ["manager"] },
+  { href: "/issues", label: "Phiếu xuất", icon: PackageMinus, roles: ["manager"] },
   { href: "/repairs", label: "Sửa chữa", icon: Wrench, roles: ["manager"] },
   { href: "/liquidations", label: "Thanh lý", icon: Trash2, roles: ["manager"] },
   { href: "/stocktake", label: "Kiểm kê", icon: ClipboardCheck, roles: ["manager"] },
@@ -44,6 +46,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/zones", label: "Khu vực", icon: MapPin, roles: ["manager"] },
   { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse, roles: ["manager"] },
   { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ["manager"] },
+  { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ["manager"] },
   { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["manager"] },
 ];
 

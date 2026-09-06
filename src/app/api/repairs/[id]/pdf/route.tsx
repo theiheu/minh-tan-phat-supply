@@ -31,19 +31,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     <SlipDocument
       title="PHIẾU SỬA CHỮA"
       code={r.code}
-      date={formatDate(r.created_at)}
-      info={[
-        ["Đơn vị sửa", r.vendor],
-        ["Ngày gửi", formatDate(r.sent_at)],
-        ["Dự kiến về", formatDate(r.expected_return_at)],
-        ["Tổng chi phí", r.total_cost != null ? formatVnd(r.total_cost) : "—"],
+      createdAt={r.created_at}
+      fields={[
+        { label: "Đơn vị sửa", value: r.vendor },
+        { label: "Ngày gửi", value: formatDate(r.sent_at) },
+        { label: "Dự kiến về", value: formatDate(r.expected_return_at) },
+        { label: "Tổng chi phí", value: r.total_cost != null ? formatVnd(r.total_cost) : "—" },
       ]}
       columns={[
         { label: "Tên vật tư", flex: 1.6 },
         { label: "Biến thể", flex: 1.4 },
         { label: "Số lượng", flex: 0.8 },
         { label: "Chi tiết sửa", flex: 1.5 },
-        { label: "Chi phí", flex: 1.0 },
+        { label: "Chi phí", flex: 1.0, align: "right" },
         { label: "Kết quả", flex: 1.2 },
       ]}
       rows={(items ?? []).map((i) => [

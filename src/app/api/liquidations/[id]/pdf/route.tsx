@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { requireManager } from "@/lib/auth";
-import { formatDate, formatVnd } from "@/lib/format";
+import { formatVnd } from "@/lib/format";
 import { LIQUIDATION_METHOD, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,19 +33,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     <SlipDocument
       title="PHIẾU THANH LÝ"
       code={l.code}
-      date={formatDate(l.created_at)}
-      info={[
-        ["Lý do", l.reason ?? ""],
-        ["Người lập", l.creator?.name ?? ""],
-        ["Người duyệt", l.approver?.name ?? ""],
+      createdAt={l.created_at}
+      fields={[
+        { label: "Lý do", value: l.reason },
+        { label: "Người lập", value: l.creator?.name },
+        { label: "Người duyệt", value: l.approver?.name },
       ]}
       columns={[
         { label: "Tên vật tư", flex: 1.6 },
         { label: "Biến thể", flex: 1.4 },
         { label: "Số lượng", flex: 0.8 },
         { label: "Phương thức", flex: 1.0 },
-        { label: "Giá trị", flex: 1.0 },
-        { label: "Tiền thu", flex: 1.0 },
+        { label: "Giá trị", flex: 1.0, align: "right" },
+        { label: "Tiền thu", flex: 1.0, align: "right" },
       ]}
       rows={(items ?? []).map((i) => [
         i.variants?.products?.name ?? "—",

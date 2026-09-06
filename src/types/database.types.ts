@@ -105,6 +105,42 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       defect_note_items: {
         Row: {
           created_at: string
@@ -152,6 +188,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "defect_notes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "defect_note_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "defect_note_items_variant_id_fkey"
@@ -217,6 +260,129 @@ export type Database = {
           },
         ]
       }
+      issue_items: {
+        Row: {
+          created_at: string
+          id: string
+          issue_id: string
+          quantity: number
+          unit_price: number | null
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issue_id: string
+          quantity: number
+          unit_price?: number | null
+          variant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issue_id?: string
+          quantity?: number
+          unit_price?: number | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_items_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issue_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "issue_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "issue_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          code: string
+          created_at: string
+          creator_id: string
+          customer_id: string | null
+          destination_type: string
+          driver_name: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          vehicle_plate: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          creator_id: string
+          customer_id?: string | null
+          destination_type: string
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_plate?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          creator_id?: string
+          customer_id?: string | null
+          destination_type?: string
+          driver_name?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          vehicle_plate?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       liquidation_items: {
         Row: {
           created_at: string
@@ -261,6 +427,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "liquidation_notes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidation_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "liquidation_items_variant_id_fkey"
@@ -507,6 +680,13 @@ export type Database = {
             foreignKeyName: "receipt_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "receipt_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variant_stock"
             referencedColumns: ["variant_id"]
           },
@@ -623,6 +803,13 @@ export type Database = {
             foreignKeyName: "repair_order_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "repair_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variant_stock"
             referencedColumns: ["variant_id"]
           },
@@ -722,6 +909,13 @@ export type Database = {
             foreignKeyName: "requisition_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "requisition_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variant_stock"
             referencedColumns: ["variant_id"]
           },
@@ -760,6 +954,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "requisition_returns"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisition_return_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "requisition_return_items_variant_id_fkey"
@@ -953,6 +1154,13 @@ export type Database = {
             foreignKeyName: "stock_balances_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "stock_balances_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variant_stock"
             referencedColumns: ["variant_id"]
           },
@@ -1061,6 +1269,13 @@ export type Database = {
             foreignKeyName: "stock_movements_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
             referencedRelation: "variant_stock"
             referencedColumns: ["variant_id"]
           },
@@ -1105,6 +1320,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stocktake_sessions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "stocktake_items_variant_id_fkey"
@@ -1239,6 +1461,13 @@ export type Database = {
             foreignKeyName: "variant_components_child_variant_id_fkey"
             columns: ["child_variant_id"]
             isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "variant_components_child_variant_id_fkey"
+            columns: ["child_variant_id"]
+            isOneToOne: false
             referencedRelation: "variant_stock"
             referencedColumns: ["variant_id"]
           },
@@ -1248,6 +1477,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "variants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_components_parent_variant_id_fkey"
+            columns: ["parent_variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
           },
           {
             foreignKeyName: "variant_components_parent_variant_id_fkey"
@@ -1344,6 +1580,30 @@ export type Database = {
       }
     }
     Views: {
+      location_stock: {
+        Row: {
+          location_id: string | null
+          product_id: string | null
+          quantity: number | null
+          variant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_balances_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       variant_stock: {
         Row: {
           min_stock: number | null
@@ -1380,6 +1640,13 @@ export type Database = {
     Functions: {
       _effective_demand: {
         Args: { p_requisition: string }
+        Returns: {
+          quantity: number
+          variant_id: string
+        }[]
+      }
+      _expand_variant_demand: {
+        Args: { p_items: Json }
         Returns: {
           quantity: number
           variant_id: string
@@ -1435,6 +1702,7 @@ export type Database = {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
+      cancel_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       cancel_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -1459,6 +1727,19 @@ export type Database = {
         Args: { p_by: string; p_outcomes: Json; p_repair_id: string }
         Returns: undefined
       }
+      create_issue: {
+        Args: {
+          p_by: string
+          p_customer_id: string
+          p_destination_type: string
+          p_driver_name: string
+          p_items: Json
+          p_notes: string
+          p_vehicle_plate: string
+          p_zone_id: string
+        }
+        Returns: string
+      }
       create_liquidation: {
         Args: { p_by: string; p_items: Json; p_reason: string }
         Returns: string
@@ -1474,7 +1755,12 @@ export type Database = {
         Returns: undefined
       }
       create_receipt: {
-        Args: { p_by: string; p_items: Json; p_notes?: string; p_supplier_id: string }
+        Args: {
+          p_by: string
+          p_items: Json
+          p_notes?: string
+          p_supplier_id: string
+        }
         Returns: string
       }
       create_requisition: {
@@ -1509,6 +1795,7 @@ export type Database = {
         }[]
       }
       next_code: { Args: { prefix: string; seq: unknown }; Returns: string }
+      post_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       post_receipt: { Args: { p_by: string; p_id: string }; Returns: string[] }
       post_stocktake: {
         Args: { p_by: string; p_session_id: string }
@@ -1596,6 +1883,7 @@ export type Database = {
         | "adjustment_in"
         | "adjustment_out"
         | "transfer"
+        | "issue_out"
       receipt_status: "draft" | "posted" | "cancelled"
       repair_outcome: "returned_to_stock" | "liquidation"
       repair_status: "in_repair" | "returned" | "cancelled"
@@ -1777,6 +2065,7 @@ export const Constants = {
         "adjustment_in",
         "adjustment_out",
         "transfer",
+        "issue_out",
       ],
       receipt_status: ["draft", "posted", "cancelled"],
       repair_outcome: ["returned_to_stock", "liquidation"],

@@ -11,12 +11,13 @@ import {
 import { formatDate, formatVnd } from "@/lib/format";
 import { MOVEMENT_TYPE, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
+import { StockPdfButton } from "@/features/reports/components/stock-pdf-button";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
   const supabase = await createClient();
-  const [{ data: variants }, { data: profiles }, { data: stock }, { data: movements }, { data: expiring }, { data: audits }] =
+  const [{ data: variants }, { data: profiles }, { data: stock }, { data: movements }, { data: expiring }, { data: audits }, { data: locations }] =
     await Promise.all([
       supabase.from("variants").select("id, attributes, unit, price, products(name)"),
       supabase.from("profiles").select("id, name"),
@@ -29,6 +30,7 @@ export default async function ReportsPage() {
         .order("expiry_date", { ascending: true })
         .limit(100),
       supabase.from("audit_logs").select("actor_id, action, entity_type, created_at").order("created_at", { ascending: false }).limit(50),
+      supabase.from("stock_locations").select("id, code, name").order("code", { ascending: true }),
     ]);
 
   const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
@@ -48,6 +50,7 @@ export default async function ReportsPage() {
         <Link href="/api/export?report=movements" className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
           Xuất CSV · Biến động
         </Link>
+        <StockPdfButton locations={locations ?? []} />
       </div>
 
       <Card>

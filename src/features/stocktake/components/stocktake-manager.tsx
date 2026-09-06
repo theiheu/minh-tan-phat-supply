@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +85,18 @@ export function StocktakeManager({ sessions, locations }: { sessions: Session[];
                 <span className="font-mono text-sm font-semibold">{s.code}</span>
                 <Badge variant="outline" className={statusBadgeClass(s.status)}>{STOCKTAKE_STATUS[s.status] ?? s.status}</Badge>
               </div>
-              <span className="text-sm text-muted-foreground">{s.locationName} · {s.postedAt ? formatDate(s.postedAt) : formatDate(null)}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">{s.locationName} · {s.postedAt ? formatDate(s.postedAt) : formatDate(null)}</span>
+                {s.items.length > 0 && (
+                  <Link
+                    href={`/api/stocktake/${s.id}/pdf`}
+                    target="_blank"
+                    className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent"
+                  >
+                    In
+                  </Link>
+                )}
+              </div>
             </CardHeader>
             {s.status === "draft" && (
               <CardContent>
