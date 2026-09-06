@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { requireManager } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
 import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,10 +30,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     <SlipDocument
       title="PHIẾU GHI NHẬN VẬT TƯ HỎNG"
       code={d.code}
-      date={formatDate(d.created_at)}
-      info={[
-        ["Người báo", d.reporter?.name ?? ""],
-        ["Kho nguồn", d.source?.name ?? ""],
+      createdAt={d.created_at}
+      fields={[
+        { label: "Người báo", value: d.reporter?.name },
+        { label: "Kho nguồn", value: d.source?.name },
       ]}
       columns={[
         { label: "Tên vật tư", flex: 1.6 },
