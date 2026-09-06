@@ -37,3 +37,19 @@ export async function cancelDefect(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/defects");
 }
+
+export async function requestRepair(id: string) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("request_repair", { p_id: id, p_by: profile.id });
+  if (error) throw new Error(error.message);
+  revalidatePath("/defects");
+}
+
+export async function cancelRepairRequest(id: string) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancel_repair_request", { p_id: id, p_by: profile.id });
+  if (error) throw new Error(error.message);
+  revalidatePath("/defects");
+}

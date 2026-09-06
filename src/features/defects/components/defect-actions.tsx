@@ -12,10 +12,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cancelDefect } from "../actions";
+import { cancelDefect, cancelRepairRequest, requestRepair } from "../actions";
 import { sendToRepair } from "@/features/repairs/actions";
 
-export function DefectActions({ note }: { note: { id: string; status: string; itemIds: string[] } }) {
+export function DefectActions({
+  note,
+  isOwner = false,
+  repairRequested = false,
+  canManage = false,
+}: {
+  note: { id: string; status: string; itemIds: string[] };
+  isOwner?: boolean;
+  repairRequested?: boolean;
+  canManage?: boolean;
+}) {
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [vendor, setVendor] = useState("");
@@ -35,15 +45,30 @@ export function DefectActions({ note }: { note: { id: string; status: string; it
   }
 
   if (note.status !== "staging") return null;
+  const canAct = isOwner || canManage;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <Button size="sm" onClick={() => setOpen(true)} disabled={note.itemIds.length === 0}>
-        Đưa đi sửa
-      </Button>
-      <Button size="sm" variant="destructive" onClick={() => run(() => cancelDefect(note.id), "Đã hủy")} disabled={pending}>
-        Hủy
-      </Button>
+      {canAct && !repairRequested && (
+        <Button size="sm" variant="outline" onClick={() => run(() => requestRepair(note.id), "Đã đề nghị gửi đi sửa")} disabled={pending || note.itemIds.length === 0}>
+          Đề nghị sửa
+        </Button>
+      )}
+      {canAct && repairRequested && (
+        <Button size="sm" variant="outline" onClick={() => run(() => cancelRepairRequest(note.id), "Đã hủy đề nghị sửa")} disabled={pending}>
+          Hủy đề nghị sửa
+        </Button>
+      )}
+      {canManage && (
+        <Button size="sm" onClick={() => setOpen(true)} disabled={note.itemIds.length === 0}>
+          {repairRequested ? "Xác nhận sửa" : "Đưa đi sửa"}
+        </Button>
+      )}
+      {canAct && (
+        <Button size="sm" variant="destructive" onClick={() => run(() => cancelDefect(note.id), "Đã hủy")} disabled={pending}>
+          Hủy
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
