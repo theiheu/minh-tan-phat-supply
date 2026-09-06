@@ -21,6 +21,12 @@ const supplierSchema = z.object({
   email: z.string().optional().default(""),
   address: z.string().optional().default(""),
 });
+const customerSchema = z.object({
+  name: z.string().min(1, "Tên không được trống"),
+  phone: z.string().optional().default(""),
+  address: z.string().optional().default(""),
+  notes: z.string().optional().default(""),
+});
 const locationSchema = z.object({
   code: z.string().min(1, "Mã không được trống"),
   name: z.string().min(1, "Tên không được trống"),
@@ -39,7 +45,7 @@ function requireValid<T>(
   return r.data;
 }
 
-async function softDelete(table: "categories" | "zones" | "suppliers", id: string, path: string) {
+async function softDelete(table: "categories" | "zones" | "suppliers" | "customers", id: string, path: string) {
   await requireManager();
   const supabase = await createClient();
   const { error } = await supabase
@@ -101,6 +107,27 @@ export async function saveSupplier(id: string | null, data: Record<string, strin
 }
 export async function deleteSupplier(id: string) {
   await softDelete("suppliers", id, "/admin/suppliers");
+}
+
+// ---- Customers ----
+export async function saveCustomer(id: string | null, data: Record<string, string>) {
+  await requireManager();
+  const parsed = requireValid(customerSchema, data);
+  const supabase = await createClient();
+  const payload = {
+    name: parsed.name,
+    phone: parsed.phone || null,
+    address: parsed.address || null,
+    notes: parsed.notes || null,
+  };
+  const { error } = id
+    ? await supabase.from("customers").update(payload).eq("id", id)
+    : await supabase.from("customers").insert(payload);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/customers");
+}
+export async function deleteCustomer(id: string) {
+  await softDelete("customers", id, "/admin/customers");
 }
 
 // ---- Stock locations ----

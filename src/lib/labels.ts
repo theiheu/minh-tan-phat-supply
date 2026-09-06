@@ -19,6 +19,17 @@ export const RECEIPT_STATUS: Record<string, string> = {
   cancelled: "Đã hủy",
 };
 
+export const ISSUE_DESTINATION: Record<string, string> = {
+  zone: "Nội bộ khu",
+  customer: "Bán cho khách",
+};
+
+export const ISSUE_STATUS: Record<string, string> = {
+  draft: "Nháp",
+  posted: "Đã xuất",
+  cancelled: "Đã hủy",
+};
+
 export const DEFECT_STATUS: Record<string, string> = {
   staging: "Đang tập kết",
   in_repair: "Đang sửa",
