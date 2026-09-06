@@ -103,19 +103,18 @@ export default async function ProductsPage({
         </Button>
       </form>
 
-      {/* Danh mục dạng ô vuông, 2 hàng — dài quá thì cuộn ngang (responsive).
-          Desktop (đủ chỗ): dãy được căn giữa và ô to hơn thay vì dồn sát mép trái. */}
-      <div className="overflow-x-auto pb-1">
-        <div className="mx-auto grid w-max auto-cols-[4.5rem] grid-flow-col grid-rows-2 gap-2 sm:auto-cols-[5rem] sm:gap-3 md:auto-cols-[5.5rem] lg:auto-cols-[6.5rem] lg:gap-4">
-          <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả">
-            <LayoutGrid className="size-6 shrink-0 md:size-7" aria-hidden />
+      {/* Danh mục dạng ô vuông:
+          - Mobile (<lg): 2 hàng, dài quá thì cuộn ngang.
+          - Desktop (lg+): xếp 1 hàng ngang, căn giữa, wrap nếu quá nhiều. */}
+      <div className="mx-auto grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-center lg:gap-x-4 lg:gap-y-2 lg:overflow-visible lg:pb-0 xl:gap-x-5">
+        <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả" className="lg:w-24 xl:w-28">
+          <LayoutGrid className="size-6 shrink-0 md:size-7" aria-hidden />
+        </CategoryTile>
+        {(categories ?? []).map((c) => (
+          <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name} className="lg:w-24 xl:w-28">
+            <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-7" />
           </CategoryTile>
-          {(categories ?? []).map((c) => (
-            <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name}>
-              <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-7" />
-            </CategoryTile>
-          ))}
-        </div>
+        ))}
       </div>
 
       <p className="text-sm text-muted-foreground">{count ?? 0} vật tư</p>
@@ -145,11 +144,14 @@ function CategoryTile({
   href,
   label,
   children,
+  className,
 }: {
   active: boolean;
   href: string;
   label: string;
   children: React.ReactNode;
+  /** Class thêm cho ô (VD đổi bề rộng ở breakpoint). */
+  className?: string;
 }) {
   return (
     <Link
@@ -157,13 +159,14 @@ function CategoryTile({
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border p-1 text-center transition-colors",
+        className,
         active
           ? "border-primary bg-primary/10 text-primary"
           : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       {children}
-      <span className="line-clamp-2 text-[11px] leading-tight">{label}</span>
+      <span className="line-clamp-2 text-[11px] leading-tight md:text-xs">{label}</span>
     </Link>
   );
 }
