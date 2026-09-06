@@ -1,8 +1,11 @@
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { StocktakeManager } from "@/features/stocktake/components/stocktake-manager";
+import type { StocktakeSessionView } from "@/features/stocktake/types";
+import { requireProfile } from "@/lib/auth";
 import { dayRange } from "@/lib/format";
-import { STOCKTAKE_STATUS, variantLabel } from "@/lib/labels";
+import { STOCKTAKE_STATUS } from "@/lib/labels";
+import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 type StocktakeStatus = "draft" | "posted" | "cancelled";
@@ -24,6 +27,10 @@ export default async function StocktakePage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
+  // Chỉ superuser (dev) mới thấy nút Mở lại sửa / Xoá phiếu.
+  const profile = await requireProfile();
+  const isDev = isSuperuser(profile.role);
+
   const supabase = await createClient();
 
   const { data: locations } = await supabase
@@ -35,7 +42,7 @@ export default async function StocktakePage({
   let sessionQuery = supabase
     .from("stocktake_sessions")
     .select(
-      "id, code, status, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, system_qty, actual_qty, variants(attributes, unit, products(name)))",
+      "id, code, status, created_at, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, checked, notes, system_qty, actual_qty, variants(attributes, unit, images, products(id, name, description, images, categories(name))))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -50,15 +57,25 @@ export default async function StocktakePage({
   const { data: sessions, count } = await sessionQuery;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
-  const rows = (sessions ?? []).map((s) => ({
+  const rows: StocktakeSessionView[] = (sessions ?? []).map((s) => ({
     id: s.id,
     code: s.code,
     locationName: s.location?.name ?? "—",
     status: s.status,
+    createdAt: s.created_at,
     postedAt: s.posted_at,
     items: (s.stocktake_items ?? []).map((i) => ({
       id: i.id,
-      label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
+      checked: i.checked,
+      notes: i.notes ?? "",
+      productId: i.variants?.products?.id ?? "",
+      productName: i.variants?.products?.name ?? "Vật tư",
+      description: i.variants?.products?.description ?? null,
+      categoryName: i.variants?.products?.categories?.name ?? null,
+      productImages: i.variants?.products?.images ?? [],
+      attributes: i.variants?.attributes ?? null,
+      unit: i.variants?.unit ?? null,
+      variantImages: i.variants?.images ?? [],
       systemQty: i.system_qty,
       actualQty: i.actual_qty,
     })),
@@ -81,7 +98,7 @@ export default async function StocktakePage({
         initial={{ q, status: status ?? "", location: location ?? "", from: from ?? "", to: to ?? "" }}
       />
 
-      <StocktakeManager sessions={rows} locations={locations ?? []} />
+      <StocktakeManager sessions={rows} locations={locations ?? []} isDev={isDev} />
 
       <Pagination
         basePath="/stocktake"

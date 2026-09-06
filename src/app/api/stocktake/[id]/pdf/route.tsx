@@ -24,9 +24,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("stocktake_items")
-    .select("system_qty, actual_qty, variants(attributes, unit, products(name))")
+    .select("system_qty, actual_qty, checked, notes, variants(attributes, unit, products(name))")
     .eq("session_id", id)
     .order("variant_id", { ascending: true });
+
+  // Phiếu đã chốt chỉ in các dòng đã kiểm (khớp màn hình); phiếu draft in đủ để cầm đi kiểm.
+  const isPosted = session.status === "posted";
+  const rows = (items ?? []).filter((i) => !isPosted || i.checked);
 
   const buffer = await renderToBuffer(
     <SlipDocument
@@ -38,20 +42,22 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Ngày kiểm", value: formatDate(session.created_at) },
       ]}
       columns={[
-        { label: "TÊN HÀNG HOÁ", flex: 2.2 },
-        { label: "BIẾN THỂ", flex: 1.6 },
-        { label: "ĐVT", flex: 0.6, align: "center" },
-        { label: "TỒN SỔ SÁCH", flex: 0.9, align: "right" },
-        { label: "TỒN THỰC TẾ", flex: 0.9, align: "right" },
+        { label: "TÊN HÀNG HOÁ", flex: 2.0 },
+        { label: "BIẾN THỂ", flex: 1.5 },
+        { label: "ĐVT", flex: 0.55, align: "center" },
+        { label: "TỒN SỔ SÁCH", flex: 0.85, align: "right" },
+        { label: "TỒN THỰC TẾ", flex: 0.85, align: "right" },
         { label: "CHÊNH LỆCH", flex: 0.8, align: "right" },
+        { label: "GHI CHÚ", flex: 1.4 },
       ]}
-      rows={(items ?? []).map((i) => [
+      rows={rows.map((i) => [
         i.variants?.products?.name ?? "—",
         variantLabel(i.variants?.attributes, i.variants?.unit),
         i.variants?.unit ?? "—",
         i.system_qty,
         i.actual_qty,
         i.actual_qty - i.system_qty,
+        i.notes ?? "",
       ])}
       signers={["Người kiểm kê", "Thủ kho", "Người duyệt"]}
     />,

@@ -1291,24 +1291,30 @@ export type Database = {
       stocktake_items: {
         Row: {
           actual_qty: number
+          checked: boolean
           created_at: string
           id: string
+          notes: string
           session_id: string
           system_qty: number
           variant_id: string
         }
         Insert: {
           actual_qty?: number
+          checked?: boolean
           created_at?: string
           id?: string
+          notes?: string
           session_id: string
           system_qty?: number
           variant_id: string
         }
         Update: {
           actual_qty?: number
+          checked?: boolean
           created_at?: string
           id?: string
+          notes?: string
           session_id?: string
           system_qty?: number
           variant_id?: string
@@ -1778,6 +1784,34 @@ export type Database = {
         Args: { p_by: string; p_location_id: string }
         Returns: string
       }
+      delete_defect: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      delete_issue: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      delete_liquidation: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      delete_repair: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      delete_receipt: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      delete_requisition: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      delete_stocktake: {
+        Args: { p_by: string; p_session_id: string }
+        Returns: undefined
+      }
       fulfill_requisition: {
         Args: { p_by: string; p_id: string; p_notes: string }
         Returns: undefined
@@ -1819,6 +1853,30 @@ export type Database = {
       }
       return_requisition_items: {
         Args: { p_by: string; p_items: Json; p_requisition_id: string }
+        Returns: undefined
+      }
+      revert_issue: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      revert_liquidation: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      revert_repair: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      revert_receipt: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      revert_requisition: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      revert_stocktake: {
+        Args: { p_by: string; p_session_id: string }
         Returns: undefined
       }
       search_catalog: {
