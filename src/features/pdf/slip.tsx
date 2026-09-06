@@ -4,7 +4,8 @@
 // tự vẽ từ createdAt; cột trái fields + ô phải rightPanel (tuỳ chọn); bảng
 // dữ liệu viền đủ kèm STT tự đánh, header cột lặp lại qua <View fixed>;
 // các dòng totals/amountInWords nằm trong cùng khung viền bao bảng (react-pdf
-// không hỗ trợ colspan); footer mỗi trang "Số phiếu … / Trang x/y".
+// không hỗ trợ colspan); footer mỗi trang luôn "Trang x/y", kèm "Số phiếu: …"
+// phía trái chỉ khi có truyền prop code (mẫu phiếu — bảng tồn kho không truyền).
 //
 // Font: mọi Text thừa kế "Roboto" từ Page; các route phải gọi ensurePdfFonts()
 // trước renderToBuffer như hiện tại.
@@ -116,9 +117,6 @@ const styles = StyleSheet.create({
   amountRow: { paddingVertical: 4, paddingHorizontal: 5 },
   amountText: { fontSize: 9.5 },
 
-  notesBlock: { marginTop: 10 },
-  notesText: { fontSize: 9.5 },
-
   // --- Chữ ký ---
   signBlock: { marginTop: 24 },
   signSpace: { height: 70 },
@@ -149,7 +147,6 @@ export function SlipDocument(props: {
   signers?: string[];
   totals?: SlipTotals[]; // dòng "TỔNG CỘNG" cuối bảng (có viền trên)
   amountInWords?: string; // "Thành tiền bằng chữ: …" (có money-words cung cấp)
-  notes?: string; // "Ghi chú" tự do cuối phiếu
 }): JSX.Element {
   const {
     title,
@@ -162,7 +159,6 @@ export function SlipDocument(props: {
     signers = [],
     totals = [],
     amountInWords,
-    notes,
   } = props;
 
   const logo = brandLogoDataUri();
@@ -289,12 +285,6 @@ export function SlipDocument(props: {
             </View>
           ) : null}
         </View>
-
-        {notes ? (
-          <View style={styles.notesBlock}>
-            <Text style={styles.notesText}>{notes}</Text>
-          </View>
-        ) : null}
 
         {/* Chữ ký */}
         {signersList ? (

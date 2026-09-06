@@ -31,6 +31,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const total = (items ?? []).reduce((n, i) => n + i.quantity * (i.unit_price ?? 0), 0);
   const totalQty = (items ?? []).reduce((n, i) => n + i.quantity, 0);
 
+  const destFields: { label: string; value?: string | null }[] =
+    doc.destination_type === "customer"
+      ? [
+          { label: "Bên nhận hàng", value: doc.customer?.name },
+          { label: "Địa chỉ", value: doc.customer?.address },
+          { label: "Số điện thoại", value: doc.customer?.phone },
+        ]
+      : [
+          { label: "Nhận tại khu", value: doc.zone?.name },
+          { label: "Người lập phiếu", value: doc.creator?.name },
+        ];
+  // Ghi chú phiếu (issues.notes) — chỉ in khi có nội dung; cột GHI CHÚ trong bảng
+  // vẫn giữ (theo mẫu giấy) nhưng để trống cho người ký tay.
+  if (doc.notes) destFields.push({ label: "Ghi chú", value: doc.notes });
+
   const rightFields: { label: string; value?: string | null }[] = [];
   if (doc.vehicle_plate) rightFields.push({ label: "Biển số xe", value: doc.vehicle_plate });
   if (doc.driver_name) rightFields.push({ label: "Người vận chuyển", value: doc.driver_name });
@@ -40,18 +55,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       title="PHIẾU XUẤT KHO"
       code={doc.code}
       createdAt={doc.created_at}
-      fields={
-        doc.destination_type === "customer"
-          ? [
-              { label: "Bên nhận hàng", value: doc.customer?.name },
-              { label: "Địa chỉ", value: doc.customer?.address },
-              { label: "Số điện thoại", value: doc.customer?.phone },
-            ]
-          : [
-              { label: "Nhận tại khu", value: doc.zone?.name },
-              { label: "Người lập phiếu", value: doc.creator?.name },
-            ]
-      }
+      fields={destFields}
       rightPanel={rightFields.length > 0 ? { heading: "Thông tin xe vận chuyển", fields: rightFields } : undefined}
       columns={
         isSale
