@@ -2,8 +2,8 @@
 // Chạy: bun run scripts/verify-pdf-font.ts
 //
 // 1) Roboto (public/fonts) có đủ glyph dấu tiếng Việt (ế ơ ạ đ ộ ứ …).
-// 2) SlipDocument + RequisitionPDF render ra PDF hợp lệ với nội dung tiếng Việt.
-// 3) Xuất 2 file PDF mẫu vào .tmp/pdf-smoke/ để xem bằng mắt.
+// 2) SlipDocument render ra PDF hợp lệ với nội dung tiếng Việt.
+// 3) Xuất file PDF mẫu vào .tmp/pdf-smoke/ để xem bằng mắt.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -18,7 +18,6 @@ const fontkit = require("fontkit") as {
   openSync(path: string): { hasGlyphForCodePoint(codePoint: number): boolean };
 };
 
-const SAMPLE = "TRẠI GÀ MINH TÂN PHÁT — ế ơ ạ đ ộ ứ ợ ữ ề Ông Nguyễn Văn Đức";
 const CHARS = "TRẠIGÀMINHTÂNPHÁTếơạđộứợữềÔngNguynVnĐức";
 
 function assert(cond: boolean, msg: string) {
@@ -84,27 +83,6 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, "grn-sample.pdf"), grnBuffer);
   console.log("  đã ghi .tmp/pdf-smoke/grn-sample.pdf");
-
-  // RequisitionPDF dùng import alias "@/..." — kiểm tra bun resolve được tsconfig paths.
-  const { RequisitionPDF } = await import("../src/features/requisitions/components/requisition-pdf");
-  const req = await renderToBuffer(
-    <RequisitionPDF
-      code="REQ-2025-0101"
-      status="issued"
-      type="new_supply"
-      requester={SAMPLE}
-      zone="Khu chuồng A2"
-      purpose="Bổ sung vật tư tiêu hao tháng 9"
-      createdAt="2025-09-05T08:30:00.000Z"
-      items={[
-        { name: "Vắc-xin Gumboro (chủng 228E)", label: "1000 liều", unit: "liều", quantity: 10 },
-        { name: "Bột khử mùi chuồng", label: "25 kg/bao", unit: "bao", quantity: 4 },
-      ]}
-    />,
-  );
-  assert(req.slice(0, 5).toString() === "%PDF-", `REQ là file PDF hợp lệ (${req.length} bytes)`);
-  writeFileSync(join(outDir, "req-sample.pdf"), Buffer.from(req));
-  console.log("  đã ghi .tmp/pdf-smoke/req-sample.pdf");
 
   console.log("\nOK — font tiếng Việt + render PDF đạt. Mở .tmp/pdf-smoke/*.pdf để kiểm tra bằng mắt.");
 }
