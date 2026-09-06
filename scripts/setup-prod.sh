@@ -17,12 +17,16 @@ else
   git -C "$PROD_DIR" pull --ff-only origin main
 fi
 
-echo "==> Tạo .env.production (copy từ .env.local của repo dev)..."
-if [ ! -f "$DEV_ENV" ]; then
-  echo "LỖI: không thấy $DEV_ENV — cần .env.local ở repo dev trước." >&2
-  exit 1
+if [ -f "$PROD_DIR/.env.production" ]; then
+  echo "==> .env.production đã tồn tại — giữ nguyên (không ghi đè)."
+else
+  echo "==> Tạo .env.production (copy từ .env.local của repo dev)..."
+  if [ ! -f "$DEV_ENV" ]; then
+    echo "LỖI: không thấy $DEV_ENV — cần .env.local ở repo dev trước." >&2
+    exit 1
+  fi
+  cp "$DEV_ENV" "$PROD_DIR/.env.production"
 fi
-cp "$DEV_ENV" "$PROD_DIR/.env.production"
 
 echo "==> bun install..."
 (cd "$PROD_DIR" && bun install --frozen-lockfile)

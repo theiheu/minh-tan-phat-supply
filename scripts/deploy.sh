@@ -31,22 +31,28 @@ rm -rf .next.old
 [ -d .next ] && mv .next .next.old
 mv .next-new .next
 
-echo "==> [5/6] Restart service $SERVICE..."
-sudo systemctl restart "$SERVICE"
-
-echo "==> [6/6] Health check (tối đa 60s)..."
-for i in $(seq 1 60); do
-  if curl -fsS -o /dev/null "$URL" 2>/dev/null; then
-    rm -rf .next.old
-    echo "DEPLOY OK — web 3000 đang chạy bản mới (restart ~vài giây)."
-    exit 0
+restart_or_rollback() {
+  echo "==> Restart service $SERVICE..."
+  if sudo systemctl restart "$SERVICE"; then
+    echo "==> Health check (tối đa 60s)..."
+    for i in $(seq 1 60); do
+      if curl -fsS -o /dev/null "$URL" 2>/dev/null; then
+        rm -rf .next.old
+        echo "DEPLOY OK — web 3000 đang chạy bản mới (restart ~vài giây)."
+        exit 0
+      fi
+      sleep 1
+    done
+  else
+    echo "WARN: restart lệnh thất bại — chuyển sang rollback." >&2
   fi
-  sleep 1
-done
 
-echo "==> Health check thất bại — ROLLBACK bản cũ..."
-rm -rf .next
-[ -d .next.old ] && mv .next.old .next
-sudo systemctl restart "$SERVICE"
-echo "ROLLBACK XONG — web chạy bản trước. Kiểm tra log: journalctl -u mtp-web -n 50" >&2
-exit 1
+  echo "==> Health check thất bại / restart lỗi — ROLLBACK bản cũ..."
+  rm -rf .next
+  [ -d .next.old ] && mv .next.old .next
+  sudo systemctl restart "$SERVICE"
+  echo "ROLLBACK XONG — web chạy bản trước. Kiểm tra log: journalctl -u mtp-web -n 50" >&2
+  exit 1
+}
+
+restart_or_rollback

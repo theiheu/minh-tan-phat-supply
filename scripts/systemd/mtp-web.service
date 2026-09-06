@@ -11,6 +11,8 @@ Environment=NODE_ENV=production
 Environment=NEXT_TELEMETRY_DISABLED=1
 # Systemd PATH tối thiểu → mặc định dùng /usr/bin/node (v12) không chạy được next 15.
 # Ưu tiên node v22 (nvm) để `bun run start` spawn đúng runtime.
+# CẢNH BÁO: nếu upgrade nvm node lên bản mới phải cập nhật đường dẫn trong file này
+# (cả bản trong repo lẫn /etc/systemd/system) rồi `sudo systemctl daemon-reload && sudo systemctl restart mtp-web`.
 Environment=PATH=/home/thehi/.nvm/versions/node/v22.19.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/home/thehi/.bun/bin/bun run start
 Restart=always

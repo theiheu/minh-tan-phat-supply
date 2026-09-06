@@ -45,8 +45,13 @@ bash scripts/deploy.sh
 
 ### Rollback theo commit
 
+Rollback theo commit (khi cần lùi code hẳn — dùng cùng cơ chế build an toàn như `deploy.sh`, không build đè lên `.next` đang chạy):
+
 ```bash
-cd ~/apps/mtp-prod && git reset --hard <sha> && bun run build && sudo systemctl restart mtp-web
+cd ~/apps/mtp-prod && git reset --hard <sha cũ> && bun install --frozen-lockfile && \
+rm -rf .next-new && NEXT_DIST_DIR=.next-new bun run build && \
+rm -rf .next.old && mv .next .next.old && mv .next-new .next && \
+sudo systemctl restart mtp-web
 ```
 
 ### Log & quản lý service
