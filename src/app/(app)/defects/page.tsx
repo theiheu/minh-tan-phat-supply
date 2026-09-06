@@ -12,8 +12,11 @@ import {
 } from "@/components/ui/table";
 import { DefectActions } from "@/features/defects/components/defect-actions";
 import { ExchangeRequestButton } from "@/features/defects/components/exchange-request-button";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
+import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate } from "@/lib/format";
 import { DEFECT_STATUS, statusBadgeClass } from "@/lib/labels";
+import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 type DefectStatus = "staging" | "in_repair" | "returned" | "liquidated" | "cancelled";
@@ -34,6 +37,9 @@ export default async function DefectsPage({
   const from = sp.from ?? null;
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
+  const profile = await getCurrentProfile();
+  const isDev = isSuperuser(profile?.role);
 
   const supabase = await createClient();
 
@@ -134,6 +140,7 @@ export default async function DefectsPage({
                   <div className="flex flex-wrap items-center justify-end gap-1.5">
                     <DefectActions note={{ id: d.id, status: d.status, itemIds: (d.defect_note_items ?? []).map((i) => i.id) }} />
                     <ExchangeRequestButton noteId={d.id} disabled={d.status !== "staging" || activeNoteIds.has(d.id)} />
+                    <DevDocTools kind="defect" id={d.id} code={d.code} docName="phiếu hỏng" canReopen={false} isDev={isDev} compact />
                     <Link href={`/api/defects/${d.id}/pdf`} target="_blank" className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent">
                       PDF
                     </Link>

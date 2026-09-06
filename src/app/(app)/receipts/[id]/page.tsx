@@ -11,8 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
+import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
 import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +27,8 @@ const AUDIT_LABELS: Record<string, string> = {
 };
 
 export default async function ReceiptDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const profile = await getCurrentProfile();
+  const isDev = isSuperuser(profile?.role);
   const { id } = await params;
   const supabase = await createClient();
 
@@ -92,6 +97,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex items-center gap-2">
           <ReceiptActions id={receipt.id} status={receipt.status} />
+          <DevDocTools kind="receipt" id={receipt.id} code={receipt.code} docName="phiếu nhập" canReopen={receipt.status === "posted"} isDev={isDev} compact />
           <Link
             href={`/api/receipts/${receipt.id}/pdf`}
             className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"

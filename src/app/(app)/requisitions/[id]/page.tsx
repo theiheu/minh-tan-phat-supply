@@ -13,10 +13,11 @@ import {
 import { MaterialItemsView, type MaterialItemView } from "@/features/requisitions/components/material-items-view";
 import { RequisitionActions } from "@/features/requisitions/components/requisition-actions";
 import { ReturnItems } from "@/features/requisitions/components/return-items";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass, variantLabel } from "@/lib/labels";
-import { isPrivileged } from "@/lib/types";
+import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -188,6 +189,17 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               requesterId={req.requester_id}
               currentUserId={profile.id}
               role={profile.role}
+            />
+          )}
+          {profile && (
+            <DevDocTools
+              kind="requisition"
+              id={req.id}
+              code={req.code}
+              docName="phiếu yêu cầu"
+              canReopen={req.status === "issued" || req.status === "received"}
+              isDev={isSuperuser(profile.role)}
+              compact
             />
           )}
           <Link

@@ -11,15 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IssueActions } from "@/features/issues/components/issue-actions";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
 import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function IssueDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireManager();
+  const profile = await requireManager();
+  const isDev = isSuperuser(profile.role);
   const { id } = await params;
   const supabase = await createClient();
 
@@ -68,6 +71,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
         </div>
         <div className="flex items-center gap-2">
           <IssueActions id={issue.id} status={issue.status} />
+          <DevDocTools kind="issue" id={issue.id} code={issue.code} docName="phiếu xuất" canReopen={issue.status === "posted"} isDev={isDev} compact />
           <Link
             href={`/api/issues/${issue.id}/pdf`}
             className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"

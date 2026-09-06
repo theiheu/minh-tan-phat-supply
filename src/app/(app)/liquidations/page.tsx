@@ -1,5 +1,7 @@
 import { LiquidationManager } from "@/features/liquidations/components/liquidation-manager";
+import { getCurrentProfile } from "@/lib/auth";
 import { variantLabel } from "@/lib/labels";
+import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +15,9 @@ export default async function LiquidationsPage({
 }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
+  const profile = await getCurrentProfile();
+  const isDev = isSuperuser(profile?.role);
 
   const supabase = await createClient();
   const { data: hong } = await supabase.from("stock_locations").select("id").eq("code", "KHO_HONG").single();
@@ -55,5 +60,13 @@ export default async function LiquidationsPage({
     })),
   }));
 
-  return <LiquidationManager notes={noteRows} variants={variants} page={page} totalPages={totalPages} />;
+  return (
+    <LiquidationManager
+      notes={noteRows}
+      variants={variants}
+      page={page}
+      totalPages={totalPages}
+      isDev={isDev}
+    />
+  );
 }

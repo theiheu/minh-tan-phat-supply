@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { LIQUIDATION_METHOD, LIQUIDATION_STATUS, statusBadgeClass } from "@/lib/labels";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import {
   approveLiquidation,
   cancelLiquidation,
@@ -48,6 +49,7 @@ export function LiquidationManager({
   variants,
   page = 1,
   totalPages = 1,
+  isDev = false,
 }: {
   notes: { id: string; code: string; status: string; reason: string | null; items: { id: string; label: string; quantity: number; method: string }[] }[];
   variants: AvailableVariant[];
@@ -55,6 +57,8 @@ export function LiquidationManager({
   page?: number;
   /** Tổng số trang — mặc định 1 (ẩn phân trang). */
   totalPages?: number;
+  /** Chỉ superuser (dev) thấy nút Mở lại sửa / Xoá. */
+  isDev?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -164,6 +168,7 @@ export function LiquidationManager({
                       {n.status === "approved" && (
                         <Button size="sm" onClick={() => { setCompleting(n.id); setProceeds({}); }} disabled={pending}>Hoàn tất</Button>
                       )}
+                      <DevDocTools kind="liquidation" id={n.id} code={n.code} docName="phiếu thanh lý" canReopen={n.status === "completed"} isDev={isDev} compact />
                       <Link href={`/api/liquidations/${n.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                         PDF
                       </Link>

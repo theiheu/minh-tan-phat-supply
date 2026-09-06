@@ -11,8 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { RepairActions } from "@/features/repairs/components/repair-actions";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
+import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
 import { REPAIR_STATUS, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 type RepairStatus = "in_repair" | "returned" | "cancelled";
@@ -32,6 +35,9 @@ export default async function RepairsPage({
   const from = sp.from ?? null;
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
+  const profile = await getCurrentProfile();
+  const isDev = isSuperuser(profile?.role);
 
   const supabase = await createClient();
 
@@ -111,6 +117,7 @@ export default async function RepairsPage({
                         })),
                       }}
                     />
+                    <DevDocTools kind="repair" id={r.id} code={r.code} docName="phiếu sửa" canReopen={r.status === "returned"} isDev={isDev} compact />
                     <Link href={`/api/repairs/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                       PDF
                     </Link>
