@@ -1063,9 +1063,14 @@ stock(variant) = có components ? min(floor(stock(child)/qty)) : sum(stock_balan
 ### 15.5 Thanh lý
 - Tạo (pending) → duyệt (approved) → hoàn tất (completed): trừ stock location tương ứng (`liquidation_out`), ghi `proceeds`.
 
-### 15.6 Đổi mới
-- Phiếu yêu cầu `replacement` + `linked_defect_id` → manager cấp phát cái mới → `issued` → `received`.
-- **1 defect chỉ được tạo 1 phiếu đổi mới** (partial unique index ở mục 5.15 chặn trùng `linked_defect_id`).
+### 15.6 Đổi mới (Phiếu Đổi Mới DM — tách khỏi phiếu yêu cầu)
+- Từ phiếu HONG `staging` đủ chứng cứ (mô tả + ≥1 ảnh/dòng) tạo **phiếu Đổi Mới** (`exchange_notes`, mã `DM-xxxx`, code `0046`+`0047`) — **không còn là phiếu yêu cầu**.
+- Vòng đời: `pending` (tạo thẳng) → manager `approved` → `issued` (trừ Kho chính, ledger `exchange_out`) → `received` (manager xác nhận). Có `rejected` (kèm lý do) / `cancelled`.
+- **1 HONG = 1 hướng tại 1 thời điểm**: unique index chặn DM sống trùng; HONG có DM sống hoặc cờ đề nghị sửa thì chặn hướng kia.
+- Đồ hỏng **giữ nguyên Kho hỏng** khi đổi mới (manager tự quyết sau).
+- Quản lý: toggle manager [Phiếu hỏng | Phiếu đổi mới] tại `/defects`; chi tiết `/defects/exchange/[id]` (manager).
+- Legacy: phiếu yêu cầu `replacement` cũ vẫn hiển thị như lịch sử (không migrate, không tạo mới được).
+- Đề nghị sửa: người lập HONG bấm "Đề nghị sửa" (cờ `repair_requested_*`, code `0048`) → manager "Đưa đi sửa / Xác nhận sửa" → `send_to_repair` xoá cờ + tạo SC như luồng sửa cũ.
 
 ### 15.7 Kiểm kê
 - `post_stocktake`: mỗi lệch `actual - system` tạo `adjustment_in`/`adjustment_out` + ledger.
