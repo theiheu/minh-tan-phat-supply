@@ -32,10 +32,12 @@ export default async function NewDefectPage() {
     }));
 
   return (
-    <DefectForm
-      sourceLocationId={sourceLocationId}
-      isManager={isPrivileged(profile?.role)}
-      variants={variantOptions}
-    />
+    <div className="mx-auto w-full max-w-3xl space-y-1">
+      <DefectForm
+        sourceLocationId={sourceLocationId}
+        isManager={isPrivileged(profile?.role)}
+        variants={variantOptions}
+      />
+    </div>
   );
 }

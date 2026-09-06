@@ -136,13 +136,13 @@ export function DefectForm({
   const fieldClass = "h-12 text-base sm:h-11 sm:text-sm";
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-5 sm:space-y-6">
       {/* Bước 1 — cách xử lý */}
       <Card>
-        <CardHeader className="px-4 pt-4 sm:px-6 sm:pt-5">
+        <CardHeader className="px-5 pt-5 sm:px-7 sm:pt-6">
           <CardTitle className="text-lg font-bold">Chọn cách xử lý</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 px-4 pb-4 sm:px-6 sm:pb-5">
+        <CardContent className="space-y-3 px-5 pb-5 sm:px-7 sm:pb-6">
           {INTENTS.map((it) => (
             <button
               key={it.key}
@@ -150,7 +150,7 @@ export function DefectForm({
               onClick={() => setIntent(it.key)}
               aria-pressed={intent === it.key}
               className={cn(
-                "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors",
+                "flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-4 text-left transition-colors sm:py-3.5",
                 intent === it.key
                   ? "border-primary bg-primary/10 ring-1 ring-primary"
                   : "hover:bg-accent",
@@ -158,7 +158,7 @@ export function DefectForm({
             >
               <span className="min-w-0">
                 <span className="block text-base font-semibold">{it.label}</span>
-                <span className="mt-0.5 block text-sm text-muted-foreground">{it.hint}</span>
+                <span className="mt-1 block text-sm text-muted-foreground">{it.hint}</span>
               </span>
               <span
                 aria-hidden
@@ -171,7 +171,7 @@ export function DefectForm({
               </span>
             </button>
           ))}
-          <p className="pt-1 text-sm text-muted-foreground">
+          <p className="pt-2 text-sm text-muted-foreground">
             Đồ hỏng sẽ chuyển về <span className="font-medium text-foreground">Kho hỏng</span>.
           </p>
         </CardContent>
@@ -179,10 +179,10 @@ export function DefectForm({
 
       {/* Bước 2 — chi tiết các dòng hỏng */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-5">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 px-5 pt-5 sm:px-7 sm:pt-6">
           <div>
             <CardTitle className="text-lg font-bold">Chi tiết các dòng hỏng</CardTitle>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Mỗi dòng: chọn tên, ghi số lượng + mô tả, thêm ít nhất 1 ảnh.
             </p>
           </div>
@@ -190,20 +190,20 @@ export function DefectForm({
             type="button"
             variant="outline"
             onClick={() => setItems((a) => [...a, EMPTY])}
-            className="h-12 shrink-0 gap-1.5 px-3 text-base sm:h-10 sm:text-sm"
+            className="h-12 shrink-0 gap-1.5 px-4 text-base sm:h-10 sm:text-sm"
           >
             <Plus className="size-4" aria-hidden />
             Thêm
           </Button>
         </CardHeader>
-        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-5">
+        <CardContent className="space-y-4 px-5 pb-5 sm:space-y-5 sm:px-7 sm:pb-6">
           {items.map((it, i) => {
             const done = !!it.variantId && it.damageDetail.trim().length > 0 && it.images.length >= 1;
             return (
               <div
                 key={i}
                 className={cn(
-                  "space-y-3 rounded-xl border-2 p-3.5 sm:p-5",
+                  "space-y-4 rounded-xl border-2 p-5 sm:space-y-5 sm:p-6",
                   done ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800/60 dark:bg-emerald-950/10" : "border-border",
                 )}
               >
@@ -217,7 +217,7 @@ export function DefectForm({
                     variant="ghost"
                     onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
                     disabled={items.length <= 1}
-                    className="h-10 gap-1.5 px-2.5 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-8"
+                    className="h-10 gap-1.5 px-3 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:h-8"
                   >
                     <Trash2 className="size-4" aria-hidden />
                     Xóa dòng
@@ -225,7 +225,7 @@ export function DefectForm({
                 </div>
 
                 {/* Chọn tên */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label className="text-base font-medium sm:text-sm">Tên</Label>
                   <ComboboxInput
                     value={it.variantId}
@@ -238,8 +238,8 @@ export function DefectForm({
                 </div>
 
                 {/* Số lượng + mô tả */}
-                <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-2.5 sm:grid-cols-[7rem_minmax(0,1fr)]">
-                  <div className="space-y-1.5">
+                <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-4">
+                  <div className="space-y-2">
                     <Label className="text-base font-medium sm:text-sm">Số lượng</Label>
                     <Input
                       type="number"
@@ -250,7 +250,7 @@ export function DefectForm({
                       className={fieldClass}
                     />
                   </div>
-                  <div className="min-w-0 space-y-1.5">
+                  <div className="min-w-0 space-y-2">
                     <Label className="text-base font-medium sm:text-sm">Mô tả</Label>
                     <Input
                       value={it.damageDetail}
@@ -262,7 +262,7 @@ export function DefectForm({
                 </div>
 
                 {/* Ảnh */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <Label className="text-base font-medium sm:text-sm">
                     Ảnh{" "}
                     <span className={cn("text-sm", it.images.length === 0 ? "font-semibold text-red-600" : "text-muted-foreground")}>
@@ -270,7 +270,7 @@ export function DefectForm({
                     </span>
                   </Label>
                   {it.images.length > 0 && (
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex flex-wrap gap-3">
                       {it.images.map((url) => (
                         <div key={url} className="relative">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -288,7 +288,7 @@ export function DefectForm({
                                 ),
                               )
                             }
-                            className="absolute -right-2 -top-2 flex size-7 items-center justify-center rounded-full bg-red-600 text-white"
+                            className="absolute -right-2 -top-2 flex size-8 items-center justify-center rounded-full bg-red-600 text-white"
                             aria-label="Bỏ ảnh này"
                           >
                             <X className="size-4" />
@@ -299,7 +299,7 @@ export function DefectForm({
                   )}
                   <label
                     className={cn(
-                      "flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-center transition-colors hover:bg-accent",
+                      "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-5 py-6 text-center transition-colors hover:bg-accent",
                       it.images.length === 0 ? "border-red-300 dark:border-red-800" : "border-muted-foreground/40",
                     )}
                   >
@@ -311,7 +311,7 @@ export function DefectForm({
                       disabled={it.uploading}
                       onChange={(e) => uploadRowImages(i, e.target.files)}
                     />
-                    <ImagePlus className="size-7 text-muted-foreground" aria-hidden />
+                    <ImagePlus className="size-8 text-muted-foreground" aria-hidden />
                     <span className="text-base font-semibold">
                       {it.uploading ? "Đang tải lên…" : "Bấm để thêm ảnh"}
                     </span>
