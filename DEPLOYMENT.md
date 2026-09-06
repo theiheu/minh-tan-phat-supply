@@ -12,6 +12,58 @@ trại), chạy toàn bộ bằng Docker:
 
 ---
 
+## 0a. Giai đoạn 1 — chạy production ngay trên máy dev
+
+> **Trạng thái hiện tại (tạm thời):** web production đang chạy **ngay trên máy dev** (WSL), chưa dùng Docker — chạy được thật để dùng/test hằng ngày cho tới khi lên VPS theo các mục 1–8 bên dưới. Git flow (`main` = production) giữ nguyên xuyên suốt.
+
+Có **2 thư mục repo riêng biệt** trên máy dev:
+
+| Thư mục | Vai trò | Cổng |
+|---|---|---|
+| `~/minh-tan-phat-supply` (repo này) | phát triển — sửa code, reload nóng | dev `bun run dev` → **3001** |
+| `~/apps/mtp-prod` (clone nhánh `main`) | web chính production — systemd `mtp-web` quản lý | **3000** |
+
+Sửa code ở repo dev **không ảnh hưởng** web chính đang chạy. Muốn đưa code mới lên web chính thì chạy deploy (dưới đây).
+
+### Setup lần đầu (chỉ chạy 1 lần)
+
+```bash
+bash scripts/setup-prod.sh          # clone/pull ~/apps/mtp-prod + tạo .env.production + build lần đầu
+# Cài systemd unit (template có sẵn: scripts/systemd/mtp-web.service):
+sudo cp scripts/systemd/mtp-web.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now mtp-web
+```
+
+### Deploy code mới lên web chính
+
+```bash
+bash scripts/deploy.sh
+```
+
+`deploy.sh` chạy từ repo dev: pull `main` về `~/apps/mtp-prod` → build ra `.next-new` (không đụng bản đang chạy) → swap sang `.next` → `sudo systemctl restart mtp-web` → health check `http://127.0.0.1:3000/login` (tối đa 60s). Build lỗi hoặc health check fail → **tự động giữ/khôi phục bản cũ**, web không bị chết.
+
+### Rollback theo commit
+
+```bash
+cd ~/apps/mtp-prod && git reset --hard <sha> && bun run build && sudo systemctl restart mtp-web
+```
+
+### Log & quản lý service
+
+```bash
+journalctl -u mtp-web -f        # xem log web chính (Ctrl+C để thoát)
+sudo systemctl restart mtp-web  # restart
+sudo systemctl stop mtp-web     # dừng hẳn
+```
+
+### Lưu ý
+
+- Dev và prod đang **dùng chung Supabase local** (dữ liệu test) — không chạy migration phá dữ liệu khi web đang chạy. Sau khi WSL reboot, nếu web báo lỗi DB thì chạy `bash scripts/dev-up.sh` để đưa Supabase local lên lại.
+- **Khi lên VPS:** phần Giai đoạn 1 này được **thay bằng deploy Docker** ở các mục 1–8 phía dưới; Git flow giữ nguyên.
+
+---
+
 ## 0. Kiến trúc tổng quan
 
 ```

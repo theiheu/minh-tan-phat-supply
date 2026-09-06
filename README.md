@@ -12,7 +12,7 @@ Next.js 15 (App Router) · TypeScript (strict) · Tailwind CSS 4 · shadcn/ui ·
 
 ```bash
 bun install
-bun run dev        # http://localhost:3000
+bun run dev        # http://localhost:3001
 bun run lint       # eslint
 bun run build      # production build
 ```
@@ -20,6 +20,18 @@ bun run build      # production build
 Môi trường: copy `.env.example` → `.env.local` và điền URL/key Supabase.
 
 Tài khoản test (local): `bun run scripts/bootstrap.ts` tạo tài khoản `manager` và `requester` (mật khẩu `password123`) — đăng nhập bằng **tên đăng nhập** (không cần email). Quản lý tạo tài khoản + mật khẩu cho người dùng tại màn hình Quản trị → Người dùng.
+
+## Phát triển & vận hành (tách web chính khỏi code)
+
+| Việc | Lệnh |
+|---|---|
+| Chạy dev (sửa code, reload nóng) | `bun run dev` → http://localhost:**3001** |
+| Web chính (production) | http://localhost:**3000** — do systemd `mtp-web` quản lý |
+| Update web chính từ code mới | `bash scripts/deploy.sh` (build lỗi/health fail tự giữ bản cũ) |
+| Xem log web chính | `journalctl -u mtp-web -f` |
+| Restart / dừng web chính | `sudo systemctl restart mtp-web` / `sudo systemctl stop mtp-web` |
+
+Web chính chạy bản build trong `~/apps/mtp-prod` — **sửa code ở repo này không ảnh hưởng web đang chạy**. Sau khi WSL reboot, nếu web báo lỗi DB thì chạy `bash scripts/dev-up.sh` (chỉ để Supabase local lên; phần dev 3001 chạy không bắt buộc). Dev và prod đang **dùng chung DB** (dữ liệu test) — không chạy migration phá dữ liệu khi web đang chạy.
 
 ## Cấu trúc (theo mục 4 BUILD_GUIDE.md)
 
