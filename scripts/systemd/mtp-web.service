@@ -9,6 +9,9 @@ User=thehi
 WorkingDirectory=/home/thehi/apps/mtp-prod
 Environment=NODE_ENV=production
 Environment=NEXT_TELEMETRY_DISABLED=1
+# Systemd PATH tối thiểu → mặc định dùng /usr/bin/node (v12) không chạy được next 15.
+# Ưu tiên node v22 (nvm) để `bun run start` spawn đúng runtime.
+Environment=PATH=/home/thehi/.nvm/versions/node/v22.19.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/home/thehi/.bun/bin/bun run start
 Restart=always
 RestartSec=5
