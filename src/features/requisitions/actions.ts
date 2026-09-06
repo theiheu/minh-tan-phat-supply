@@ -67,8 +67,8 @@ export async function createRequisition(input: RequisitionInput) {
     p_items: items,
     p_zone_id: parsed.zoneId,
     p_purpose: parsed.purpose,
-    p_type: parsed.requisitionType,
-    p_linked_defect_id: parsed.linkedDefectId ?? (null as unknown as string),
+    p_type: "new_supply",
+    p_linked_defect_id: null as unknown as string,
     p_requester_id: requesterId,
   });
 

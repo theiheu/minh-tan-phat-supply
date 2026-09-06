@@ -17,18 +17,16 @@ import { dayRange, formatDate } from "@/lib/format";
 const PAGE_SIZE = 20;
 type ReqStatus = "draft" | "pending" | "approved" | "issued" | "received" | "rejected" | "cancelled";
 const STATUSES: ReqStatus[] = ["draft", "pending", "approved", "issued", "received", "rejected", "cancelled"];
-const TYPES = ["new_supply", "replacement"] as const;
 
 export const dynamic = "force-dynamic";
 
 export default async function RequisitionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; type?: string; zone?: string; q?: string; from?: string; to?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; zone?: string; q?: string; from?: string; to?: string; page?: string }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
-  const type = sp.type ?? null;
   const zone = sp.zone ?? null;
   const q = sp.q?.trim() ?? "";
   const from = sp.from ?? null;
@@ -48,7 +46,6 @@ export default async function RequisitionsPage({
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as ReqStatus)) query = query.eq("status", status as ReqStatus);
-  if (type && (TYPES as readonly string[]).includes(type)) query = query.eq("requisition_type", type as (typeof TYPES)[number]);
   if (zone) query = query.eq("zone_id", zone);
   if (q) query = query.or(`code.ilike.%${q}%,purpose.ilike.%${q}%`);
   const { gte, lte } = dayRange(from, to);
@@ -59,7 +56,6 @@ export default async function RequisitionsPage({
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: REQUISITION_STATUS[s] }));
-  const typeOptions = TYPES.map((k) => ({ value: k, label: REQUISITION_TYPE[k] }));
   const zoneOptions = (zones ?? []).map((z) => ({ value: z.id, label: z.name }));
 
   return (
@@ -71,10 +67,9 @@ export default async function RequisitionsPage({
         showDateRange
         filters={[
           { param: "status", label: "Trạng thái", options: statusOptions },
-          { param: "type", label: "Loại phiếu", options: typeOptions },
           { param: "zone", label: "Khu vực", options: zoneOptions },
         ]}
-        initial={{ q, status: status ?? "", type: type ?? "", zone: zone ?? "", from: from ?? "", to: to ?? "" }}
+        initial={{ q, status: status ?? "", zone: zone ?? "", from: from ?? "", to: to ?? "" }}
       />
 
       <div className="rounded-lg border">
@@ -127,7 +122,7 @@ export default async function RequisitionsPage({
         basePath="/requisitions"
         page={page}
         totalPages={totalPages}
-        params={{ q, status, type, zone, from, to }}
+        params={{ q, status, zone, from, to }}
       />
     </div>
   );
