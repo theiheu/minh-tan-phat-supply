@@ -21,6 +21,18 @@ export function formatDate(value: string | null | undefined): string {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
+// Ngày + giờ "dd/mm/yyyy HH:mm" — dùng cho timeline/lịch sử cần phân biệt nhiều mốc cùng ngày.
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()} ${hh}:${min}`;
+}
+
 // in theo múi giờ máy chủ (mặc định +07, như formatDate)
 export function formatDateLong(value: string | null | undefined): string {
   if (!value) return "";

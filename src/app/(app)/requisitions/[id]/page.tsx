@@ -1,6 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import {
+  AlertTriangle,
+  Calendar,
+  ClipboardList,
+  MapPin,
+  Milestone,
+  NotebookPen,
+  Package,
+  PackageX,
+  Printer,
+  Undo2,
+  User,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -15,13 +32,95 @@ import { RequisitionActions } from "@/features/requisitions/components/requisiti
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { appAssetUrl } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
+
+// ---- Kiểu hiển thị (trình bày) ----
+
+/** Màu chip icon đầu mỗi thẻ — nền nhạt + chữ đậm (giống chip StatCard). */
+const CHIP_CLASS: Record<string, string> = {
+  orange: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+  emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  sky: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+  violet: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
+  red: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
+};
+
+/** Màu chấm trên timeline Tiến trình — khớp ý nghĩa trạng thái của phiếu. */
+const EVENT_DOT_CLASS: Record<string, string> = {
+  create: "bg-gray-400 dark:bg-gray-500",
+  submit: "bg-amber-400 dark:bg-amber-500",
+  approve: "bg-sky-500",
+  fulfill: "bg-emerald-500",
+  receive: "bg-emerald-500",
+  reject: "bg-red-500",
+  cancel: "bg-gray-400 dark:bg-gray-500",
+  return: "bg-violet-500",
+  other: "bg-gray-400 dark:bg-gray-500",
+};
+
+/** Màu chữ nhãn mốc — tô theo trạng thái tương ứng. */
+const EVENT_LABEL_CLASS: Record<string, string> = {
+  create: "text-gray-700 dark:text-gray-300",
+  submit: "text-amber-700 dark:text-amber-300",
+  approve: "text-sky-700 dark:text-sky-300",
+  fulfill: "text-emerald-700 dark:text-emerald-300",
+  receive: "text-emerald-700 dark:text-emerald-300",
+  reject: "text-red-700 dark:text-red-300",
+  cancel: "text-gray-700 dark:text-gray-300",
+  return: "text-violet-700 dark:text-violet-300",
+  other: "text-gray-700 dark:text-gray-300",
+};
+
+/** Audit action → khóa màu tương ứng (để timeline màu đồng nhất 2 chế độ xem). */
+const AUDIT_EVENT_KEY: Record<string, string> = {
+  "requisition.create": "create",
+  "requisition.submit": "submit",
+  "requisition.approve": "approve",
+  "requisition.reject": "reject",
+  "requisition.cancel": "cancel",
+  "requisition.fulfill": "fulfill",
+  "requisition.receive": "receive",
+  "requisition.return": "return",
+};
+
+/** Tiêu đề thẻ nội dung: chip icon màu + tiêu đề (right có thể là số đếm…). */
+function SectionHeader({
+  icon: Icon,
+  tone,
+  title,
+  right,
+}: {
+  icon: LucideIcon;
+  tone: string;
+  title: ReactNode;
+  right?: ReactNode;
+}) {
+  return (
+    <CardHeader>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-lg",
+              CHIP_CLASS[tone] ?? CHIP_CLASS.orange,
+            )}
+          >
+            <Icon className="size-4" aria-hidden />
+          </span>
+          <CardTitle className="text-base">{title}</CardTitle>
+        </div>
+        {right}
+      </div>
+    </CardHeader>
+  );
+}
 
 export default async function RequisitionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -127,10 +226,15 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   // Manager đọc được audit_logs (RLS) → timeline đầy đủ cả các bước bị từ chối/hủy/trả lại.
   // Requester chỉ thấy các mốc cơ bản lấy từ chính phiếu.
   interface TimelineEvent {
+    /** Khóa màu trạng thái của mốc (create/submit/approve/…). */
+    key: string;
     label: string;
     at: string | null;
     by?: string | null;
+    /** Ghi chú cảnh báo (đỏ) — hiện dùng cho lý do từ chối. */
     note?: string | null;
+    /** Chi tiết thường (xám) — ví dụ danh sách món đã trả lại. */
+    detail?: string | null;
   }
 
   let events: TimelineEvent[] = [];
@@ -152,37 +256,87 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       .eq("entity_type", "requisition")
       .eq("entity_id", req.id)
       .order("created_at", { ascending: true });
-    events = (audit ?? []).map((a) => ({
-      label: AUDIT_LABELS[a.action] ?? a.action,
-      at: a.created_at,
-      by: a.actor?.name,
-      note: a.action === "requisition.reject" ? req.rejection_reason : null,
-    }));
+    events = (audit ?? [])
+      .filter((a) => a.action !== "requisition.return") // tránh trùng — mốc trả lấy từ requisition_returns bên dưới
+      .map((a) => ({
+        key: AUDIT_EVENT_KEY[a.action] ?? "other",
+        label: AUDIT_LABELS[a.action] ?? a.action,
+        at: a.created_at,
+        by: a.actor?.name,
+        note: a.action === "requisition.reject" ? req.rejection_reason : null,
+      }));
   } else {
     events = [
-      { label: "Tạo phiếu", at: req.created_at, by: req.requester?.name },
-      { label: "Duyệt", at: req.approved_at, by: req.approver?.name },
-      { label: "Cấp phát", at: req.fulfilled_at, by: req.fulfiller?.name },
-      { label: "Nhận hàng", at: req.received_at, by: req.receiver?.name },
+      { key: "create", label: "Tạo phiếu", at: req.created_at, by: req.requester?.name },
+      { key: "approve", label: "Duyệt", at: req.approved_at, by: req.approver?.name },
+      { key: "fulfill", label: "Cấp phát", at: req.fulfilled_at, by: req.fulfiller?.name },
+      { key: "receive", label: "Nhận hàng", at: req.received_at, by: req.receiver?.name },
     ].filter((t) => t.at);
   }
 
+  // Mốc trả lại vật tư — gộp từ lịch sử trả (quản kho & người yêu cầu đều thấy,
+  // kèm ngày giờ + ai trả + chi tiết món). Bên trên đã lọc bỏ audit.return để khỏi trùng.
+  const returnMilestones: TimelineEvent[] = (returnEvents ?? []).map((ev) => {
+    const typed = ev as {
+      created_at: string;
+      returnedBy?: { name?: string | null } | null;
+      items?: {
+        quantity: number;
+        variants?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+      }[];
+    };
+    const lines = (typed.items ?? []).map((it) => {
+      const name = it.variants?.products?.name ?? "Vật tư";
+      const label = variantLabel(it.variants?.attributes, it.variants?.unit);
+      return label && label !== "—" ? `${name} — ${label} × ${it.quantity}` : `${name} × ${it.quantity}`;
+    });
+    return {
+      key: "return",
+      label: "Trả lại vật tư",
+      at: typed.created_at,
+      by: typed.returnedBy?.name,
+      detail: lines.length > 0 ? lines.join("\n") : null,
+    };
+  });
+  events = [...events, ...returnMilestones].sort((a, b) => (a.at ?? "").localeCompare(b.at ?? ""));
+
+  // Được trả lại hay không: phiếu đã cấp phát/nhận, đúng vai trò, và còn món chưa trả hết.
+  const canReturn =
+    !!profile &&
+    (req.status === "issued" || req.status === "received") &&
+    (isPrivileged(profile.role) || profile.id === req.requester_id) &&
+    (items ?? []).some((i) => (i.quantity ?? 0) - (returnedByVariant.get(i.variant_id ?? "") ?? 0) > 0);
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-mono text-lg font-semibold">{req.code}</h2>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-mono text-xl font-semibold tracking-tight">{req.code}</h2>
             <Badge variant={statusBadgeVariant(req.status)}>
               {REQUISITION_STATUS[req.status] ?? req.status}
             </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {REQUISITION_TYPE[req.requisition_type] ?? req.requisition_type} · {req.zone?.name ?? "—"} ·{" "}
-            {req.requester?.name ?? "—"}
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <ClipboardList className="size-4" aria-hidden />
+              {REQUISITION_TYPE[req.requisition_type] ?? req.requisition_type}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="size-4" aria-hidden />
+              {req.zone?.name ?? "—"}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <User className="size-4" aria-hidden />
+              {req.requester?.name ?? "—"}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="size-4" aria-hidden />
+              {formatDate(req.created_at)}
+            </span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {profile && (
             <RequisitionActions
               requisitionId={req.id}
@@ -203,45 +357,74 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               compact
             />
           )}
-          <Link
-            href={`/api/requisitions/${req.id}/pdf`}
-            className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
-            target="_blank"
-          >
-            In PDF
-          </Link>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/api/requisitions/${req.id}/pdf`} target="_blank">
+              <Printer aria-hidden />
+              In PDF
+            </Link>
+          </Button>
         </div>
       </div>
 
       {req.rejection_reason && (
-        <Card className="border-red-200">
-          <CardContent className="py-3 text-sm text-red-700">Lý do từ chối: {req.rejection_reason}</CardContent>
+        <Card className="border-red-200 bg-red-50/70 dark:border-red-900/60 dark:bg-red-950/20">
+          <CardContent className="flex items-start gap-2.5 py-3.5">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden />
+            <p className="whitespace-pre-wrap text-sm text-red-700 dark:text-red-300">
+              <span className="font-semibold">Lý do từ chối: </span>
+              {req.rejection_reason}
+            </p>
+          </CardContent>
         </Card>
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Mục đích</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm">{req.purpose}</CardContent>
+        <SectionHeader icon={Package} tone="emerald" title="Vật tư" />
+        <CardContent>
+          <MaterialItemsView items={materialItems} />
+
+          {canReturn && (
+            <div className="mt-5 border-t pt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                  <Undo2 className="size-4" aria-hidden />
+                </span>
+                <h3 className="text-sm font-semibold">Trả lại vật tư không dùng hết</h3>
+              </div>
+              <ReturnItems
+                requisitionId={req.id}
+                items={(items ?? []).map((i) => ({
+                  id: i.id,
+                  variantId: i.variant_id,
+                  label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
+                  quantity: i.quantity,
+                  returned: returnedByVariant.get(i.variant_id ?? "") ?? 0,
+                }))}
+              />
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Vật tư</CardTitle>
-        </CardHeader>
+        <SectionHeader icon={NotebookPen} tone="orange" title="Mục đích" />
         <CardContent>
-          <MaterialItemsView items={materialItems} />
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">{req.purpose}</p>
         </CardContent>
       </Card>
 
       {defectEvidence && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Vật tư hỏng liên quan · <span className="font-mono">{defectEvidence.code}</span>
-            </CardTitle>
-          </CardHeader>
+          <SectionHeader
+            icon={PackageX}
+            tone="red"
+            title={
+              <>
+                Vật tư hỏng liên quan{" "}
+                <span className="ml-1 font-mono text-sm font-normal text-muted-foreground">· {defectEvidence.code}</span>
+              </>
+            }
+          />
           <CardContent>
             <Table>
               <TableHeader>
@@ -275,87 +458,54 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
         </Card>
       )}
 
-      {profile &&
-        (req.status === "issued" || req.status === "received") &&
-        (isPrivileged(profile.role) || profile.id === req.requester_id) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Trả lại vật tư không dùng hết</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ReturnItems
-                requisitionId={req.id}
-                items={(items ?? []).map((i) => ({
-                  id: i.id,
-                  variantId: i.variant_id,
-                  label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
-                  quantity: i.quantity,
-                  returned: returnedByVariant.get(i.variant_id) ?? 0,
-                }))}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-      {returnEvents && returnEvents.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Lịch sử trả lại</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {returnEvents.map((ev) => {
-              const evItems =
-                (ev as {
-                  items?: {
-                    variant_id: string;
-                    quantity: number;
-                    variants?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
-                  }[];
-                }).items ?? [];
-              return (
-                <div key={ev.id} className="rounded-lg border p-3">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                    <span className="font-medium">{(ev as { returnedBy?: { name?: string | null } | null }).returnedBy?.name ?? "—"}</span>
-                    <span className="text-xs text-muted-foreground">{formatDate(ev.created_at)}</span>
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    {evItems.map((it, idx) => (
-                      <div key={idx} className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate">
-                          {it.variants?.products?.name ?? "Vật tư"}
-                          <span className="text-muted-foreground">
-                            {" "}· {variantLabel(it.variants?.attributes, it.variants?.unit)}
-                          </span>
-                        </span>
-                        <span className="shrink-0 font-medium tabular-nums">× {it.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
       {events.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Tiến trình</CardTitle>
-          </CardHeader>
+          <SectionHeader icon={Milestone} tone="sky" title="Tiến trình" />
           <CardContent>
-            <ol className="space-y-2">
-              {events.map((t, i) => (
-                <li key={i} className="text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="size-2 shrink-0 rounded-full bg-primary" />
-                    <span className="w-28 font-medium">{t.label}</span>
-                    <span className="text-muted-foreground">{t.at ? formatDate(t.at) : "—"}</span>
-                    {t.by ? <span className="text-muted-foreground">· {t.by}</span> : null}
-                  </div>
-                  {t.note ? <p className="mt-1 pl-7 text-xs text-red-600">Lý do: {t.note}</p> : null}
-                </li>
-              ))}
+            <ol>
+              {events.map((t, i) => {
+                const isLast = i === events.length - 1;
+                return (
+                  <li key={i} className="flex gap-3">
+                    {/* Cột mốc: chấm màu + đường nối dọc */}
+                    <div aria-hidden className="flex flex-col items-center self-stretch">
+                      <span
+                        className={cn(
+                          "mt-[5px] size-2.5 shrink-0 rounded-full",
+                          EVENT_DOT_CLASS[t.key] ?? EVENT_DOT_CLASS.other,
+                        )}
+                      />
+                      {!isLast ? <span className="w-px flex-1 rounded-full bg-border" /> : null}
+                    </div>
+                    <div className={cn("min-w-0 flex-1", isLast ? "pb-0.5" : "pb-6")}>
+                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm">
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            EVENT_LABEL_CLASS[t.key] ?? EVENT_LABEL_CLASS.other,
+                          )}
+                        >
+                          {t.label}
+                        </span>
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {t.at ? formatDateTime(t.at) : "—"}
+                        </span>
+                        {t.by ? <span className="text-xs text-muted-foreground">· {t.by}</span> : null}
+                      </div>
+                      {t.detail ? (
+                        <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+                          {t.detail}
+                        </p>
+                      ) : null}
+                      {t.note ? (
+                        <p className="mt-1.5 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                          Lý do: {t.note}
+                        </p>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </CardContent>
         </Card>
