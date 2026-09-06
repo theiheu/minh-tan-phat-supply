@@ -17,7 +17,7 @@ interface StockLocationOption {
 }
 
 // Nút "In bảng tồn" theo kho (Task 12): chọn kho rồi mở PDF /api/reports/stock/pdf?location=<id>
-// trong tab mới. Mặc định chọn Kho chính (KHO_CHINH) — khớp mặc định của route PDF.
+// trong tab mới. Mặc định chọn Kho chính (KHO_CHINH); route yêu cầu tham số location bắt buộc.
 export function StockPdfButton({ locations }: { locations: StockLocationOption[] }) {
   const [locationId, setLocationId] = useState<string>(() => {
     const main = locations.find((l) => l.code === "KHO_CHINH");
