@@ -68,15 +68,15 @@ export function DefectsList({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border">
+        <table className="w-full min-w-[620px] text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-              <th className="px-3 py-2.5 font-medium">Mã</th>
-              <th className="hidden px-3 py-2.5 font-medium sm:table-cell">Người báo</th>
-              <th className="hidden px-3 py-2.5 font-medium md:table-cell">Kho nguồn</th>
-              <th className="hidden px-3 py-2.5 font-medium sm:table-cell">Ngày</th>
-              <th className="px-3 py-2.5 font-medium">Trạng thái</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Mã phiếu</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Người lập phiếu</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Kho nguồn</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Ngày lập</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Trạng thái</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -93,7 +93,7 @@ export function DefectsList({
                 onClick={() => setOpenId(r.id)}
                 className="cursor-pointer hover:bg-accent/40"
               >
-                <td className="px-3 py-2">
+                <td className="whitespace-nowrap px-3 py-2.5">
                   <button
                     type="button"
                     onClick={() => setOpenId(r.id)}
@@ -102,29 +102,29 @@ export function DefectsList({
                     {r.code}
                   </button>
                 </td>
-                  <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
-                    {r.reporterName ?? "—"}
-                  </td>
-                  <td className="hidden px-3 py-2 text-muted-foreground md:table-cell">
-                    {r.sourceName ?? "—"}
-                  </td>
-                  <td className="hidden px-3 py-2 text-muted-foreground sm:table-cell">
-                    {formatDate(r.createdAt)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant={statusBadgeVariant(r.status)}>
-                        {DEFECT_STATUS[r.status] ?? r.status}
+                <td className="max-w-[180px] truncate px-3 py-2.5 text-muted-foreground">
+                  {r.reporterName ?? "—"}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                  {r.sourceName ?? "—"}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                  {formatDate(r.createdAt)}
+                </td>
+                <td className="px-3 py-2.5">
+                  <div className="flex flex-wrap gap-1">
+                    <Badge variant={statusBadgeVariant(r.status)}>
+                      {DEFECT_STATUS[r.status] ?? r.status}
+                    </Badge>
+                    {r.repairRequested ? <Badge variant="warning">Chờ xác nhận sửa</Badge> : null}
+                    {r.liveExchange ? (
+                      <Badge variant={statusBadgeVariant(r.liveExchange.status)}>
+                        Đổi mới: {EXCHANGE_STATUS[r.liveExchange.status] ?? r.liveExchange.status}
                       </Badge>
-                      {r.repairRequested ? <Badge variant="warning">Chờ xác nhận sửa</Badge> : null}
-                      {r.liveExchange ? (
-                        <Badge variant={statusBadgeVariant(r.liveExchange.status)}>
-                          Đổi mới: {EXCHANGE_STATUS[r.liveExchange.status] ?? r.liveExchange.status}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </td>
-                </tr>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
@@ -298,26 +298,41 @@ function DefectDetailDialog({
 
         {/* Thao tác */}
         {row.status === "staging" && !row.liveExchange && !empty && (
-          <div className="space-y-2.5 border-t pt-3">
-            {canExchange && (
-              <Button
-                type="button"
-                size="lg"
-                onClick={doExchange}
-                disabled={pending || row.repairRequested}
-                className="w-full"
-              >
-                {row.repairRequested ? "Phiếu đang chờ xác nhận sửa" : "Tạo phiếu Đổi Mới (cấp mới + thu đồ hỏng)"}
-              </Button>
-            )}
-            <div className="flex flex-wrap gap-2">
+          <div className="space-y-3 border-t pt-4">
+            <h4 className="text-sm font-semibold">Xử lý phiếu</h4>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {canExchange && (
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={doExchange}
+                  disabled={pending || row.repairRequested}
+                  className="w-full sm:col-span-2"
+                >
+                  {row.repairRequested
+                    ? "Phiếu đang chờ xác nhận sửa"
+                    : "Tạo phiếu Đổi Mới (cấp mới + thu đồ hỏng)"}
+                </Button>
+              )}
               {canRequestRepair && (
-                <Button type="button" variant="outline" onClick={doRequestRepair} disabled={pending || row.items.length === 0}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={doRequestRepair}
+                  disabled={pending || row.items.length === 0}
+                  className="w-full"
+                >
                   Đề nghị gửi đi sửa
                 </Button>
               )}
               {canCancelRepairRequest && (
-                <Button type="button" variant="outline" onClick={doCancelRepairRequest} disabled={pending}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={doCancelRepairRequest}
+                  disabled={pending}
+                  className="w-full"
+                >
                   Hủy đề nghị sửa
                 </Button>
               )}
@@ -327,18 +342,25 @@ function DefectDetailDialog({
                   variant="secondary"
                   onClick={() => setShowRepairForm((v) => !v)}
                   disabled={row.items.length === 0}
+                  className="w-full"
                 >
                   <Wrench className="size-4" aria-hidden />
                   {row.repairRequested ? "Xác nhận sửa" : "Đưa đi sửa"}
                 </Button>
               )}
               {isManager && (
-                <Button type="button" variant="destructive" onClick={doCancel} disabled={pending}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={doCancel}
+                  disabled={pending}
+                  className="w-full"
+                >
                   <Trash2 className="size-4" aria-hidden />
                   Hủy phiếu
                 </Button>
               )}
-              <Button type="button" variant="outline" asChild>
+              <Button type="button" variant="outline" asChild className="w-full">
                 <Link href={`/api/defects/${row.id}/pdf`} target="_blank">
                   <Printer className="size-4" aria-hidden />
                   In PDF
