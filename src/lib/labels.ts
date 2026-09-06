@@ -108,6 +108,7 @@ export const MOVEMENT_TYPE: Record<string, string> = {
   requisition_out: "Cấp phát",
   return_in: "Nhập trả lại",
   defect_out: "Chuyển kho hỏng",
+  defect_collect_in: "Thu đồ hỏng về kho",
   repair_out: "Đưa đi sửa",
   repair_return_in: "Nhập lại kho (sửa xong)",
   exchange_out: "Cấp đổi mới",

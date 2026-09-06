@@ -2156,6 +2156,7 @@ export type Database = {
         | "transfer"
         | "issue_out"
         | "exchange_out"
+        | "defect_collect_in"
       receipt_status: "draft" | "posted" | "cancelled"
       repair_outcome: "returned_to_stock" | "liquidation"
       repair_status: "in_repair" | "returned" | "cancelled"
@@ -2347,6 +2348,7 @@ export const Constants = {
         "transfer",
         "issue_out",
         "exchange_out",
+        "defect_collect_in",
       ],
       receipt_status: ["draft", "posted", "cancelled"],
       repair_outcome: ["returned_to_stock", "liquidation"],

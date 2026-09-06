@@ -29,11 +29,8 @@ async function main() {
   // Dữ liệu nền: variant có tồn + kho chính
   const { data: variant } = await rc.from("variants").select("id").limit(1).single();
   const { data: mainLoc } = await mc.from("stock_locations").select("id").eq("code", "KHO_CHINH").single();
-  const { data: srcLoc } = await mc
-    .from("stock_locations")
-    .select("id")
-    .eq("code", "KHO_CHINH")
-    .single();
+  const { data: defectLoc } = await mc.from("stock_locations").select("id").eq("code", "KHO_HONG").single();
+  const srcLoc = mainLoc;
 
   // Bơm tồn cho variant (nếu thiếu) qua RPC adjust_stock để chắc chắn đủ
   await mc.rpc("adjust_stock", {
@@ -44,7 +41,8 @@ async function main() {
     p_by: managerId,
   });
 
-  // 1. Lập HONG staging đủ ảnh
+  // 1. Lập HONG staging đủ ảnh — chỉ khai báo, KHÔNG trừ Kho chính
+  const stockMainBefore = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
   const defect = await rc.rpc("record_defect", {
     p_items: [{ variant_id: variant!.id, quantity: 2, damage_detail: "Nứt vỡ", damage_type: "broken", severity: "medium", images: ["https://example.com/broken.jpg"] }],
     p_source_loc: srcLoc!.id,
@@ -53,6 +51,11 @@ async function main() {
   if (defect.error) throw defect.error;
   const noteId = defect.data as string;
   ok(!!noteId, "tạo HONG staging");
+  const stockMainAfterRecord = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  ok(
+    stockMainBefore.data!.quantity === stockMainAfterRecord.data!.quantity,
+    "record_defect KHÔNG trừ Kho chính (chỉ khai báo)",
+  );
 
   // 2. Tạo phiếu Đổi Mới (requester)
   const ex = await rc.rpc("create_exchange", { p_defect_id: noteId, p_by: requesterId });
@@ -76,16 +79,33 @@ async function main() {
   const approveReq = await rc.rpc("approve_exchange", { p_id: exId, p_by: requesterId });
   ok(!!approveReq.error, "requester không duyệt được: " + (approveReq.error?.message ?? "UNEXPECTED SUCCESS"));
 
-  // 7. Cấp phát → stock Kho chính giảm 2
+  // 7. Cấp phát → trừ Kho chính 2 (vật tư mới) + THU đồ hỏng về Kho hỏng 2 (chỉ cộng)
   const stockBefore = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const defectStockBefore = await mc
+    .from("stock_balances")
+    .select("quantity")
+    .eq("variant_id", variant!.id)
+    .eq("location_id", defectLoc!.id)
+    .maybeSingle();
   const issue = await mc.rpc("issue_exchange", { p_id: exId, p_by: managerId });
   ok(!issue.error, "issue_exchange: " + (issue.error?.message ?? "ok"));
   const stockAfter = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
-  ok(stockBefore.data!.quantity - 2 === stockAfter.data!.quantity, "stock Kho chính giảm đúng 2");
+  ok(stockBefore.data!.quantity - 2 === stockAfter.data!.quantity, "stock Kho chính giảm đúng 2 (cấp mới)");
+  const defectStockAfter = await mc
+    .from("stock_balances")
+    .select("quantity")
+    .eq("variant_id", variant!.id)
+    .eq("location_id", defectLoc!.id)
+    .maybeSingle();
+  const dBefore = defectStockBefore.data?.quantity ?? 0;
+  const dAfter = defectStockAfter.data?.quantity ?? 0;
+  ok(dAfter - dBefore === 2, `Kho hỏng tăng đúng 2 khi thu đồ hỏng (${dBefore} → ${dAfter})`);
 
-  // 8. Ledger exchange_out
-  const { data: led } = await mc.from("stock_movements").select("movement_type").eq("ref_id", exId).eq("ref_type", "exchange");
-  ok((led ?? []).length > 0 && led![0].movement_type === "exchange_out", "ledger ghi exchange_out");
+  // 8. Ledger: exchange_out (cấp mới) + defect_collect_in (thu đồ hỏng)
+  const { data: ledEx } = await mc.from("stock_movements").select("movement_type").eq("ref_id", exId).eq("ref_type", "exchange");
+  ok((ledEx ?? []).some((m) => m.movement_type === "exchange_out"), "ledger ghi exchange_out");
+  const { data: ledCollect } = await mc.from("stock_movements").select("movement_type").eq("ref_type", "defect").eq("ref_id", noteId);
+  ok((ledCollect ?? []).some((m) => m.movement_type === "defect_collect_in"), "ledger ghi defect_collect_in khi thu đồ hỏng");
 
   // 9. Nhận (manager xác nhận)
   const recv = await mc.rpc("receive_exchange", { p_id: exId, p_by: managerId });

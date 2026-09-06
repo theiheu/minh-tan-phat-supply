@@ -1056,18 +1056,19 @@ stock(variant) = có components ? min(floor(stock(child)/qty)) : sum(stock_balan
 - `post_receipt`: cộng stock (lưu unit_cost + lô/hạn) → lấy các requisition `pending`/`approved` theo `created_at, id` tăng dần (FIFO, tie-break bằng id) → lần lượt `fulfill` → ghi id vào `linked_requisition_ids`.
 
 ### 15.4 Hỏng → sửa → nhập lại / thanh lý
-1. `record_defect`: Kho chính −qty → Kho hỏng +qty (ledger `defect_out`).
-2. `send_to_repair`: Kho hỏng −qty → Kho đang sửa +qty (`repair_out`).
+1. `record_defect`: **chỉ khai báo phiếu HONG** — KHÔNG trừ Kho chính, không chuyển kho (code `0050`).
+2. `send_to_repair` (manager xác nhận sửa): THU đồ hỏng về Kho hỏng (chỉ cộng, ledger `defect_collect_in` — đồ đã cấp ra ngoài từ trước) rồi Kho hỏng −qty → Kho đang sửa +qty (`repair_out`).
 3. `complete_repair`: từng item outcome → `returned_to_stock` (Kho đang sửa → Kho chính, `repair_return_in`) hoặc `liquidation`.
 
 ### 15.5 Thanh lý
 - Tạo (pending) → duyệt (approved) → hoàn tất (completed): trừ stock location tương ứng (`liquidation_out`), ghi `proceeds`.
+- Thanh lý chỉ thao tác trên hàng **đã có ở Kho hỏng** (đã được thu về khi đổi mới / sửa không thành công).
 
 ### 15.6 Đổi mới (Phiếu Đổi Mới DM — tách khỏi phiếu yêu cầu)
 - Từ phiếu HONG `staging` đủ chứng cứ (mô tả + ≥1 ảnh/dòng) tạo **phiếu Đổi Mới** (`exchange_notes`, mã `DM-xxxx`, code `0046`+`0047`) — **không còn là phiếu yêu cầu**.
-- Vòng đời: `pending` (tạo thẳng) → manager `approved` → `issued` (trừ Kho chính, ledger `exchange_out`) → `received` (manager xác nhận). Có `rejected` (kèm lý do) / `cancelled`.
+- Vòng đời: `pending` (tạo thẳng) → manager `approved` → `issued` (trừ Kho chính cấp vật tư mới `exchange_out` **+ thu đồ hỏng về Kho hỏng `defect_collect_in`**) → `received` (manager xác nhận). Có `rejected` (kèm lý do) / `cancelled`.
 - **1 HONG = 1 hướng tại 1 thời điểm**: unique index chặn DM sống trùng; HONG có DM sống hoặc cờ đề nghị sửa thì chặn hướng kia.
-- Đồ hỏng **giữ nguyên Kho hỏng** khi đổi mới (manager tự quyết sau).
+- Đồ hỏng **chỉ về Kho hỏng khi manager thực sự xử lý** (cấp đổi mới / xác nhận sửa) — lập HONG không làm đồ tự về kho (code `0050`).
 - Quản lý: toggle manager [Phiếu hỏng | Phiếu đổi mới] tại `/defects`; chi tiết `/defects/exchange/[id]` (manager).
 - Legacy: phiếu yêu cầu `replacement` cũ vẫn hiển thị như lịch sử (không migrate, không tạo mới được).
 - Đề nghị sửa: người lập HONG bấm "Đề nghị sửa" (cờ `repair_requested_*`, code `0048`) → manager "Đưa đi sửa / Xác nhận sửa" → `send_to_repair` xoá cờ + tạo SC như luồng sửa cũ.

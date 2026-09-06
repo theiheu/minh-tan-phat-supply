@@ -36,9 +36,9 @@ const EMPTY: ItemDraft = {
 };
 
 const INTENTS: { key: Intent; label: string; hint: string }[] = [
-  { key: "record", label: "Chỉ ghi nhận", hint: "Đồ về Kho hỏng, xử lý sau" },
-  { key: "exchange", label: "Đổi mới ngay", hint: "Tạo phiếu Đổi Mới chờ duyệt" },
-  { key: "repair", label: "Gửi đi sửa", hint: "Chờ quản lý xác nhận" },
+  { key: "record", label: "Chỉ ghi nhận", hint: "Khai báo, chờ quản lý xử lý sau" },
+  { key: "exchange", label: "Đổi mới ngay", hint: "Quản lý cấp mới + thu đồ hỏng" },
+  { key: "repair", label: "Gửi đi sửa", hint: "Quản lý xác nhận gửi đơn vị sửa" },
 ];
 
 export function DefectForm({
@@ -175,7 +175,8 @@ export function DefectForm({
             </button>
           ))}
           <p className="pt-2 text-sm text-muted-foreground">
-            Đồ hỏng sẽ chuyển về <span className="font-medium text-foreground">Kho hỏng</span>.
+            Đây là <span className="font-medium text-foreground">khai báo</span> gửi quản lý kho —
+            đồ hỏng sẽ được thu về kho khi quản lý thực hiện đổi mới hoặc xác nhận sửa.
           </p>
         </CardContent>
       </Card>
