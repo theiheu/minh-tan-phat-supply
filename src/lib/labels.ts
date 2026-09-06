@@ -13,6 +13,15 @@ export const REQUISITION_STATUS: Record<string, string> = {
   cancelled: "Đã hủy",
 };
 
+export const EXCHANGE_STATUS: Record<string, string> = {
+  pending: "Đang chờ",
+  approved: "Đã duyệt",
+  issued: "Đã cấp phát",
+  received: "Đã nhận",
+  rejected: "Từ chối",
+  cancelled: "Đã hủy",
+};
+
 export const RECEIPT_STATUS: Record<string, string> = {
   draft: "Nháp",
   posted: "Đã ghi nhận",
@@ -101,6 +110,7 @@ export const MOVEMENT_TYPE: Record<string, string> = {
   defect_out: "Chuyển kho hỏng",
   repair_out: "Đưa đi sửa",
   repair_return_in: "Nhập lại kho (sửa xong)",
+  exchange_out: "Cấp đổi mới",
   liquidation_out: "Thanh lý",
   adjustment_in: "Điều chỉnh +",
   adjustment_out: "Điều chỉnh -",

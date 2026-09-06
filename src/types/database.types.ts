@@ -218,6 +218,8 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          repair_requested_at: string | null
+          repair_requested_by: string | null
           reported_by: string | null
           source_location_id: string | null
           status: Database["public"]["Enums"]["defect_status"]
@@ -228,6 +230,8 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          repair_requested_at?: string | null
+          repair_requested_by?: string | null
           reported_by?: string | null
           source_location_id?: string | null
           status?: Database["public"]["Enums"]["defect_status"]
@@ -238,12 +242,21 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          repair_requested_at?: string | null
+          repair_requested_by?: string | null
           reported_by?: string | null
           source_location_id?: string | null
           status?: Database["public"]["Enums"]["defect_status"]
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "defect_notes_repair_requested_by_fkey"
+            columns: ["repair_requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "defect_notes_reported_by_fkey"
             columns: ["reported_by"]
@@ -256,6 +269,156 @@ export type Database = {
             columns: ["source_location_id"]
             isOneToOne: false
             referencedRelation: "stock_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_note_items: {
+        Row: {
+          exchange_note_id: string
+          id: string
+          quantity: number
+          variant_id: string
+        }
+        Insert: {
+          exchange_note_id: string
+          id?: string
+          quantity: number
+          variant_id: string
+        }
+        Update: {
+          exchange_note_id?: string
+          id?: string
+          quantity?: number
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_note_items_exchange_note_id_fkey"
+            columns: ["exchange_note_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_note_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "exchange_note_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "exchange_note_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_notes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          cancelled_at: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          linked_defect_id: string
+          received_at: string | null
+          received_by: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["exchange_status"]
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cancelled_at?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          linked_defect_id: string
+          received_at?: string | null
+          received_by?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["exchange_status"]
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          cancelled_at?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          linked_defect_id?: string
+          received_at?: string | null
+          received_by?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["exchange_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_notes_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_notes_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_notes_linked_defect_id_fkey"
+            columns: ["linked_defect_id"]
+            isOneToOne: false
+            referencedRelation: "defect_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_notes_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_notes_rejected_by_fkey"
+            columns: ["rejected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1675,6 +1838,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      _rebuild_defect_notes: {
+        Args: { p_mode: string; p_repair_id: string }
+        Returns: undefined
+      }
+      _receipt_has_active_linked: { Args: { p_id: string }; Returns: boolean }
+      _revert_movements: {
+        Args: { p_by: string; p_ref_id: string; p_ref_type: string }
+        Returns: undefined
+      }
       adjust_stock: {
         Args: {
           p_by: string
@@ -1699,6 +1871,10 @@ export type Database = {
         Args: { p_user_id: string; p_username: string }
         Returns: undefined
       }
+      approve_exchange: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       approve_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -1708,6 +1884,10 @@ export type Database = {
         Returns: undefined
       }
       cancel_defect: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      cancel_exchange: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
@@ -1724,6 +1904,10 @@ export type Database = {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
+      cancel_repair_request: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       cancel_requisition: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -1735,6 +1919,10 @@ export type Database = {
       complete_repair: {
         Args: { p_by: string; p_outcomes: Json; p_repair_id: string }
         Returns: undefined
+      }
+      create_exchange: {
+        Args: { p_by: string; p_defect_id: string }
+        Returns: string
       }
       create_issue: {
         Args: {
@@ -1783,27 +1971,26 @@ export type Database = {
         }
         Returns: string
       }
-      create_stocktake: {
-        Args: { p_by: string; p_location_id: string; p_name: string }
-        Returns: string
-      }
+      create_stocktake:
+        | { Args: { p_by: string; p_location_id: string }; Returns: string }
+        | {
+            Args: { p_by: string; p_location_id: string; p_name: string }
+            Returns: string
+          }
       delete_defect: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
-      delete_issue: {
-        Args: { p_by: string; p_id: string }
-        Returns: undefined
-      }
+      delete_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       delete_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
-      delete_repair: {
+      delete_receipt: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
-      delete_receipt: {
+      delete_repair: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
@@ -1822,6 +2009,10 @@ export type Database = {
       get_login_email: { Args: { p_username: string }; Returns: string }
       is_manager: { Args: never; Returns: boolean }
       is_superuser: { Args: never; Returns: boolean }
+      issue_exchange: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       list_requester_accounts: {
         Args: never
         Returns: {
@@ -1838,6 +2029,10 @@ export type Database = {
         Args: { p_by: string; p_session_id: string }
         Returns: undefined
       }
+      receive_exchange: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       receive_requisition: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -1845,6 +2040,10 @@ export type Database = {
       record_defect: {
         Args: { p_by: string; p_items: Json; p_source_loc: string }
         Returns: string
+      }
+      reject_exchange: {
+        Args: { p_by: string; p_id: string; p_reason: string }
+        Returns: undefined
       }
       reject_liquidation: {
         Args: { p_by: string; p_id: string; p_reason: string }
@@ -1854,23 +2053,24 @@ export type Database = {
         Args: { p_by: string; p_id: string; p_reason: string }
         Returns: undefined
       }
+      request_repair: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       return_requisition_items: {
         Args: { p_by: string; p_items: Json; p_requisition_id: string }
         Returns: undefined
       }
-      revert_issue: {
-        Args: { p_by: string; p_id: string }
-        Returns: undefined
-      }
+      revert_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       revert_liquidation: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
-      revert_repair: {
+      revert_receipt: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
-      revert_receipt: {
+      revert_repair: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
@@ -1925,6 +2125,13 @@ export type Database = {
         | "returned"
         | "liquidated"
         | "cancelled"
+      exchange_status:
+        | "pending"
+        | "approved"
+        | "issued"
+        | "received"
+        | "rejected"
+        | "cancelled"
       liquidation_method: "sale" | "dispose"
       liquidation_status:
         | "pending"
@@ -1945,6 +2152,7 @@ export type Database = {
         | "adjustment_out"
         | "transfer"
         | "issue_out"
+        | "exchange_out"
       receipt_status: "draft" | "posted" | "cancelled"
       repair_outcome: "returned_to_stock" | "liquidation"
       repair_status: "in_repair" | "returned" | "cancelled"
@@ -2106,6 +2314,14 @@ export const Constants = {
         "liquidated",
         "cancelled",
       ],
+      exchange_status: [
+        "pending",
+        "approved",
+        "issued",
+        "received",
+        "rejected",
+        "cancelled",
+      ],
       liquidation_method: ["sale", "dispose"],
       liquidation_status: [
         "pending",
@@ -2127,6 +2343,7 @@ export const Constants = {
         "adjustment_out",
         "transfer",
         "issue_out",
+        "exchange_out",
       ],
       receipt_status: ["draft", "posted", "cancelled"],
       repair_outcome: ["returned_to_stock", "liquidation"],
