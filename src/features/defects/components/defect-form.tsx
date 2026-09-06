@@ -140,7 +140,8 @@ export function DefectForm({
           <CardTitle className="text-sm sm:text-base">Báo hỏng — chọn cách xử lý</CardTitle>
         </CardHeader>
         <CardContent className="px-3 pb-3 sm:px-6 sm:pb-4">
-          <div className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0">
+          {/* Mobile: 3 nút xếp dọc full-width (tránh cuộn ngang); ≥sm: 3 ô cạnh nhau. */}
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
             {INTENTS.map((it) => (
               <button
                 key={it.key}
@@ -148,7 +149,7 @@ export function DefectForm({
                 onClick={() => setIntent(it.key)}
                 aria-pressed={intent === it.key}
                 className={cn(
-                  "flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-colors sm:w-full sm:justify-center",
+                  "flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-sm font-medium transition-colors",
                   intent === it.key
                     ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                     : "text-muted-foreground hover:bg-accent",
