@@ -38,9 +38,9 @@ const styles = StyleSheet.create({
     fontFamily: "Roboto",
     fontSize: 10,
     color: "#000",
-    paddingTop: 34,
+    paddingTop: 26,
     paddingBottom: 52,
-    paddingHorizontal: 36,
+    paddingHorizontal: 32,
   },
   // Khung ngoài viền mỏng — fixed + absolute để lặp lại trên mọi trang.
   frame: {
@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     color: "#000",
   },
-  footerLeft: { left: 36 },
-  footerRight: { right: 36 },
+  footerLeft: { left: 32 },
+  footerRight: { right: 32 },
 
   // --- Header thương hiệu ---
   brandRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10 },
