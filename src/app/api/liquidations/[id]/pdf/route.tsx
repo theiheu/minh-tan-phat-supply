@@ -44,8 +44,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Biến thể", flex: 1.4 },
         { label: "Số lượng", flex: 0.8 },
         { label: "Phương thức", flex: 1.0 },
-        { label: "Giá trị", flex: 1.0 },
-        { label: "Tiền thu", flex: 1.0 },
+        { label: "Giá trị", flex: 1.0, align: "right" },
+        { label: "Tiền thu", flex: 1.0, align: "right" },
       ]}
       rows={(items ?? []).map((i) => [
         i.variants?.products?.name ?? "—",

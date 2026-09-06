@@ -43,7 +43,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Biến thể", flex: 1.4 },
         { label: "Số lượng", flex: 0.8 },
         { label: "Chi tiết sửa", flex: 1.5 },
-        { label: "Chi phí", flex: 1.0 },
+        { label: "Chi phí", flex: 1.0, align: "right" },
         { label: "Kết quả", flex: 1.2 },
       ]}
       rows={(items ?? []).map((i) => [

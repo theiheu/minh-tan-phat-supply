@@ -38,7 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       columns={[
         { label: "Tên vật tư", flex: 1.6 },
         { label: "Biến thể", flex: 1.4 },
-        { label: "Số lượng", flex: 0.8 },
+        { label: "Số lượng", flex: 0.8, align: "right" },
         { label: "Chi tiết hỏng", flex: 2.6 },
       ]}
       rows={(items ?? []).map((i) => [
