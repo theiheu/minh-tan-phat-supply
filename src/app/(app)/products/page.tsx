@@ -105,14 +105,15 @@ export default async function ProductsPage({
 
       {/* Danh mục dạng ô vuông:
           - Mobile (<lg): 2 hàng, dài quá thì cuộn ngang.
-          - Desktop (lg+): xếp 1 hàng ngang, căn giữa, wrap nếu quá nhiều. */}
-      <div className="mx-auto grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-center lg:gap-x-4 lg:gap-y-2 lg:overflow-visible lg:pb-0 xl:gap-x-5">
-        <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả" className="lg:w-24 xl:w-28">
-          <LayoutGrid className="size-6 shrink-0 md:size-7" aria-hidden />
+          - Desktop (lg+): các ô nhỏ hơn (2/3 kích thước cũ), wrap xuống hàng
+            mới thì đi từ trái sang phải (không căn giữa hàng thừa). */}
+      <div className="mx-auto grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-start lg:gap-x-3 lg:gap-y-2 lg:overflow-visible lg:pb-0 xl:gap-x-4">
+        <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả" className="lg:w-16 xl:w-[4.7rem]">
+          <LayoutGrid className="size-6 shrink-0 md:size-5" aria-hidden />
         </CategoryTile>
         {(categories ?? []).map((c) => (
-          <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name} className="lg:w-24 xl:w-28">
-            <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-7" />
+          <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name} className="lg:w-16 xl:w-[4.7rem]">
+            <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-5" />
           </CategoryTile>
         ))}
       </div>
