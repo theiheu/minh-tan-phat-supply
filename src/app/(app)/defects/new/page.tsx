@@ -27,7 +27,8 @@ export default async function NewDefectPage() {
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,
-      label: `${v.products?.name ?? "Vật tư"} — ${variantLabel(v.attributes, v.unit)}`,
+      name: v.products?.name ?? "Vật tư",
+      detail: variantLabel(v.attributes, v.unit),
     }));
 
   return (
