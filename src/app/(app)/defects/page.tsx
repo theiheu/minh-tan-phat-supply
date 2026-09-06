@@ -1,22 +1,15 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { DefectActions } from "@/features/defects/components/defect-actions";
-import { ExchangeRequestButton } from "@/features/exchanges/components/exchange-request-button";
 import { ExchangeManagerTab } from "@/features/exchanges/components/exchange-manager-tab";
-import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
+import {
+  DefectsList,
+  type DefectItemRow,
+  type DefectListRow,
+} from "@/features/defects/components/defects-list";
 import { getCurrentProfile } from "@/lib/auth";
-import { dayRange, formatDate } from "@/lib/format";
-import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
+import { dayRange } from "@/lib/format";
+import { DEFECT_STATUS } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -109,7 +102,7 @@ export default async function DefectsPage({
   let query = supabase
     .from("defect_notes")
     .select(
-      "id, code, status, reported_by, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, images)",
+      "id, code, status, reported_by, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -124,7 +117,7 @@ export default async function DefectsPage({
   const { data, count } = await query;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
-  // Phiếu HONG nào đang có phiếu Đổi Mới sống → ẩn nút tạo.
+  // Phiếu HONG nào đang có phiếu Đổi Mới sống → đánh dấu để modal hiển thị đúng.
   const noteIds = (data ?? []).map((d) => d.id);
   const liveByNote = new Map<string, { code: string; status: string }>();
   if (noteIds.length > 0) {
@@ -137,6 +130,34 @@ export default async function DefectsPage({
       if (e.linked_defect_id) liveByNote.set(e.linked_defect_id, { code: e.code, status: e.status });
     }
   }
+
+  const rows: DefectListRow[] = (data ?? []).map((d) => ({
+    id: d.id,
+    code: d.code,
+    status: d.status,
+    reportedById: d.reported_by ?? null,
+    reporterName: d.reporter?.name ?? null,
+    sourceName: d.source_location?.name ?? null,
+    createdAt: d.created_at,
+    repairRequested: !!d.repair_requested_at,
+    liveExchange: liveByNote.get(d.id) ?? null,
+    items: (d.defect_note_items ?? []).map((i) => {
+      const variants = i.variants as {
+        attributes?: unknown;
+        unit?: string | null;
+        products?: { name?: string | null } | null;
+      } | null;
+      return {
+        id: i.id,
+        quantity: i.quantity,
+        damageDetail: i.damage_detail,
+        note: i.note,
+        images: i.images ?? [],
+        productName: variants?.products?.name ?? null,
+        variantLabel: variantLabelFor(variants),
+      } satisfies DefectItemRow;
+    }),
+  }));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: DEFECT_STATUS[s] }));
   const locationOptions = (locations ?? []).map((l) => ({ value: l.id, label: l.name }));
@@ -179,71 +200,12 @@ export default async function DefectsPage({
         initial={{ q, status: status ?? "", location: location ?? "", from: from ?? "", to: to ?? "" }}
       />
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mã</TableHead>
-              <TableHead>Người báo</TableHead>
-              <TableHead>Kho nguồn</TableHead>
-              <TableHead>Ngày</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(data ?? []).length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Chưa có phiếu hỏng nào.
-                </TableCell>
-              </TableRow>
-            )}
-            {(data ?? []).map((d) => {
-              const live = liveByNote.get(d.id);
-              return (
-                <TableRow key={d.id}>
-                  <TableCell className="font-mono text-sm">{d.code}</TableCell>
-                  <TableCell className="text-muted-foreground">{d.reporter?.name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{d.source_location?.name ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(d.created_at)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant={statusBadgeVariant(d.status)}>
-                        {DEFECT_STATUS[d.status] ?? d.status}
-                      </Badge>
-                      {d.repair_requested_at ? (
-                        <Badge variant="warning">Chờ xác nhận sửa</Badge>
-                      ) : null}
-                      {live ? (
-                        <Badge variant={statusBadgeVariant(live.status)}>
-                          Đổi mới: {EXCHANGE_STATUS[live.status] ?? live.status}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center justify-end gap-1.5">
-                      <DefectActions
-                        note={{ id: d.id, status: d.status, itemIds: (d.defect_note_items ?? []).map((i) => i.id) }}
-                        isOwner={profile?.id === d.reported_by}
-                        repairRequested={!!d.repair_requested_at}
-                        canManage={isManager}
-                      />
-                      {d.status === "staging" && !live && !d.repair_requested_at && (
-                        <ExchangeRequestButton noteId={d.id} isManager={isManager} />
-                      )}
-                      <DevDocTools kind="defect" id={d.id} code={d.code} docName="phiếu hỏng" canReopen={false} isDev={isDev} compact />                      <Link href={`/api/defects/${d.id}/pdf`} target="_blank" className="inline-flex items-center whitespace-nowrap rounded-md px-2 py-1.5 text-sm text-primary hover:bg-accent">
-                        PDF
-                      </Link>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <DefectsList
+        rows={rows}
+        currentUserId={profile?.id ?? null}
+        isManager={isManager}
+        isDev={isDev}
+      />
 
       <Pagination
         basePath="/defects"
@@ -253,4 +215,18 @@ export default async function DefectsPage({
       />
     </div>
   );
+}
+
+// Helper nhãn biến thể (tách để type đơn giản trong map).
+function variantLabelFor(variants: {
+  attributes?: unknown;
+  unit?: string | null;
+} | null): string {
+  if (variants?.attributes && typeof variants.attributes === "object" && !Array.isArray(variants.attributes)) {
+    const values = Object.values(variants.attributes as Record<string, unknown>).filter(
+      (v) => typeof v === "string" && v.length > 0,
+    );
+    if (values.length > 0) return values.join(" · ");
+  }
+  return variants?.unit ?? "—";
 }
