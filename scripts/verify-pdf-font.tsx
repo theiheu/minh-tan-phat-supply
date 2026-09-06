@@ -49,19 +49,19 @@ async function main() {
     <SlipDocument
       title="PHIẾU NHẬP KHO"
       code="GRN-2025-0001"
-      date="05/09/2025"
-      info={[
-        ["Nhà cung cấp", "Công ty TNHH Thú y Dược phẩm Nam Đồng"],
-        ["Người lập", "Trần Thị Hương"],
-        ["Ghi chú", "Nhập theo hợp đồng ệ ộ — kiểm tra đạt"],
+      createdAt="2025-09-05T08:30:00.000Z"
+      fields={[
+        { label: "Nhà cung cấp", value: "Công ty TNHH Thú y Dược phẩm Nam Đồng" },
+        { label: "Người lập", value: "Trần Thị Hương" },
+        { label: "Ghi chú", value: "Nhập theo hợp đồng ệ ộ — kiểm tra đạt" },
       ]}
       columns={[
         { label: "Tên vật tư", flex: 1.6 },
         { label: "Biến thể", flex: 1.3 },
         { label: "Đơn vị", flex: 0.7 },
-        { label: "Số lượng", flex: 0.8 },
-        { label: "Đơn giá", flex: 1.0 },
-        { label: "Thành tiền", flex: 1.0 },
+        { label: "Số lượng", flex: 0.8, align: "right" },
+        { label: "Đơn giá", flex: 1.0, align: "right" },
+        { label: "Thành tiền", flex: 1.0, align: "right" },
         { label: "Lô", flex: 0.9 },
         { label: "Hạn sử dụng", flex: 0.9 },
       ]}
@@ -69,8 +69,9 @@ async function main() {
         ["Vắc-xin Gumboro (chủng 228E)", "1000 liều", "liều", 10, "125.000 đ", "1.250.000 đ", "L228E-01", "30/06/2026"],
         ["Thuốc sát trùng Iodine 10%", "5 lít/can", "can", 2, "480.000 đ", "960.000 đ", "", "31/12/2025"],
       ]}
+      totals={[{ left: "TỔNG CỘNG", right: "2.210.000 đ" }]}
+      amountInWords="Thành tiền bằng chữ: hai triệu hai trăm mười nghìn đồng"
       signers={["Người lập", "Thủ kho", "Người duyệt"]}
-      totalNote="Tổng tiền: 2.210.000 đ"
     />,
   );
   assert(grn.slice(0, 5).toString() === "%PDF-", `GRN là file PDF hợp lệ (${grn.length} bytes)`);
