@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { SearchIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
@@ -116,6 +118,9 @@ export function EntityCrud({
   page = 1,
   totalPages = 1,
   basePath,
+  search = "",
+  searchPlaceholder,
+  emptyText,
 }: {
   title: string;
   items: CrudRow[];
@@ -128,11 +133,39 @@ export function EntityCrud({
   totalPages?: number;
   /** Đường dẫn gốc cho phân trang (VD "/admin/categories"). */
   basePath: string;
+  /** Từ khóa tìm kiếm đang áp dụng (searchParams.q) — rỗng = không tìm. */
+  search?: string;
+  /** Có truyền thì hiện ô tìm kiếm trên tiêu đề (VD "Tìm nhà cung cấp…"). */
+  searchPlaceholder?: string;
+  /** Thông báo khi danh sách rỗng (mặc định "Chưa có dữ liệu"). */
+  emptyText?: string;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<Record<string, string>>({});
   const [editId, setEditId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [q, setQ] = useState(search ?? "");
+
+  // Đồng bộ ô tìm kiếm khi URL thay đổi (tìm mới, xóa lọc, back/forward).
+  useEffect(() => {
+    setQ(search ?? "");
+  }, [search]);
+
+  function submitSearch(e: FormEvent) {
+    e.preventDefault();
+    const term = q.trim();
+    if (term === (search ?? "")) return;
+    const params = new URLSearchParams();
+    if (term) params.set("q", term);
+    const s = params.toString();
+    router.push(s ? `${basePath}?${s}` : basePath);
+  }
+
+  function clearSearch() {
+    setQ("");
+    router.push(basePath);
+  }
 
   function run(action: () => Promise<void>, success: string) {
     startTransition(async () => {
@@ -154,7 +187,31 @@ export function EntityCrud({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-base">{title}</CardTitle>
+          {searchPlaceholder && (
+            <form onSubmit={submitSearch} className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
+              <div className="relative w-full max-w-xs">
+                <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  aria-label={searchPlaceholder}
+                  className="h-9 pl-8"
+                />
+              </div>
+              <Button type="submit" size="sm" variant="outline">
+                Tìm
+              </Button>
+              {search && (
+                <Button type="button" size="sm" variant="ghost" onClick={clearSearch}>
+                  Xóa
+                </Button>
+              )}
+            </form>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form
@@ -225,7 +282,7 @@ export function EntityCrud({
             {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length + 1} className="text-center text-muted-foreground">
-                  Chưa có dữ liệu
+                  {emptyText ?? "Chưa có dữ liệu"}
                 </TableCell>
               </TableRow>
             )}
@@ -280,7 +337,7 @@ export function EntityCrud({
           </TableBody>
         </Table>
 
-        <Pagination basePath={basePath} page={page} totalPages={totalPages} />
+        <Pagination basePath={basePath} page={page} totalPages={totalPages} params={search ? { q: search } : undefined} />
       </CardContent>
     </Card>
   );

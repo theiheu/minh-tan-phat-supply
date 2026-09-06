@@ -7,23 +7,30 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
 
+/** Các cột được tìm kiếm khi gõ ô tìm kiếm. */
+const SEARCH_COLUMNS = ["name", "contact_name", "phone", "email", "address"];
+
 export default async function AdminSuppliersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
   await requireManager();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
+  const q = sp.q?.trim() ?? "";
 
   const supabase = await createClient();
-  const { data, count } = await supabase
+
+  let query = supabase
     .from("suppliers")
     .select("id, name, contact_name, phone, email, address", { count: "exact" })
     .is("deleted_at", null)
     .order("name")
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  if (q) query = query.or(SEARCH_COLUMNS.map((c) => `${c}.ilike.%${q}%`).join(","));
 
+  const { data, count } = await query;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   const rows: CrudRow[] = (data ?? []).map((s) => ({
@@ -51,6 +58,9 @@ export default async function AdminSuppliersPage({
       page={page}
       totalPages={totalPages}
       basePath="/admin/suppliers"
+      search={q}
+      searchPlaceholder="Tìm tên, liên hệ, SĐT, email…"
+      emptyText={q ? "Không tìm thấy nhà cung cấp phù hợp." : undefined}
     />
   );
 }
