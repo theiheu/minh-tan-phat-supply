@@ -21,6 +21,7 @@ interface ItemDraft {
   variantId: string;
   quantity: string;
   damageDetail: string;
+  note: string;
   images: string[];
   uploading: boolean;
 }
@@ -29,6 +30,7 @@ const EMPTY: ItemDraft = {
   variantId: "",
   quantity: "1",
   damageDetail: "",
+  note: "",
   images: [],
   uploading: false,
 };
@@ -102,6 +104,7 @@ export function DefectForm({
             variantId: i.variantId,
             quantity: Number(i.quantity),
             damageDetail: i.damageDetail.trim(),
+            note: i.note.trim(),
             images: i.images,
           })),
         });
@@ -259,6 +262,17 @@ export function DefectForm({
                       className={fieldClass}
                     />
                   </div>
+                </div>
+
+                {/* Ghi chú tuỳ chọn */}
+                <div className="space-y-2">
+                  <Label className="text-base font-medium sm:text-sm">Ghi chú</Label>
+                  <Input
+                    value={it.note}
+                    onChange={(e) => setItem(i, { note: e.target.value })}
+                    placeholder="Ghi chú thêm (tuỳ chọn)…"
+                    className={fieldClass}
+                  />
                 </div>
 
                 {/* Ảnh */}

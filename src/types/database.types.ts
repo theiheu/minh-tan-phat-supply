@@ -149,6 +149,7 @@ export type Database = {
           defect_note_id: string
           id: string
           images: string[]
+          note: string | null
           quantity: number
           resolution: Database["public"]["Enums"]["defect_resolution"] | null
           severity: Database["public"]["Enums"]["severity_level"] | null
@@ -162,6 +163,7 @@ export type Database = {
           defect_note_id: string
           id?: string
           images?: string[]
+          note?: string | null
           quantity?: number
           resolution?: Database["public"]["Enums"]["defect_resolution"] | null
           severity?: Database["public"]["Enums"]["severity_level"] | null
@@ -175,6 +177,7 @@ export type Database = {
           defect_note_id?: string
           id?: string
           images?: string[]
+          note?: string | null
           quantity?: number
           resolution?: Database["public"]["Enums"]["defect_resolution"] | null
           severity?: Database["public"]["Enums"]["severity_level"] | null

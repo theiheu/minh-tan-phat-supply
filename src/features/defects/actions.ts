@@ -17,6 +17,7 @@ export async function recordDefect(input: DefectInput) {
     damage_type: null,
     severity: null,
     images: i.images,
+    note: i.note ?? "",
   }));
 
   const { data, error } = await supabase.rpc("record_defect", {
