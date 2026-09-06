@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
 
   // --- Header thương hiệu ---
   brandRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10 },
-  logo: { width: 76, height: 60, marginRight: 12, objectFit: "contain" },
+  logo: { width: 152, height: 117, marginRight: 14, objectFit: "contain" },
   brandBlock: { flex: 1 },
   brandName: { fontSize: 13, fontWeight: "bold", marginBottom: 2 },
   brandLine: { fontSize: 8.5, color: "#222", marginBottom: 1 },
