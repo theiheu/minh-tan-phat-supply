@@ -140,7 +140,7 @@ function displayValue(value: string | null | undefined): string {
 
 export function SlipDocument(props: {
   title: string; // ví dụ "PHIẾU XUẤT KHO"
-  code: string; // "PXK-0001"
+  code?: string; // "PXK-0001" — vẽ "Số phiếu: …" (header phải + footer trái); bỏ trống với mẫu không phải phiếu (bảng tồn kho…)
   createdAt: string; // ISO → tự vẽ "Ngày 06 tháng 09 năm 2026" dưới title
   fields?: SlipField[]; // cột trái (Bên nhận hàng…)
   rightPanel?: { heading?: string; fields: SlipField[] }; // ô phải (Thông tin xe…)
@@ -193,7 +193,9 @@ export function SlipDocument(props: {
       <Page size="A4" style={styles.page}>
         {/* Khung viền + footer lặp lại trên mọi trang */}
         <View fixed style={styles.frame} />
-        <Text fixed style={[styles.footerText, styles.footerLeft]}>Số phiếu: {code}</Text>
+        {code ? (
+          <Text fixed style={[styles.footerText, styles.footerLeft]}>Số phiếu: {code}</Text>
+        ) : null}
         <Text
           fixed
           style={[styles.footerText, styles.footerRight]}
@@ -212,9 +214,11 @@ export function SlipDocument(props: {
             <Text style={styles.brandLine}>{BRAND.address}</Text>
             <Text style={styles.brandLine}>{BRAND.phone}</Text>
           </View>
-          <View style={styles.codeBlock}>
-            <Text style={styles.codeText}>Số phiếu: {code}</Text>
-          </View>
+          {code ? (
+            <View style={styles.codeBlock}>
+              <Text style={styles.codeText}>Số phiếu: {code}</Text>
+            </View>
+          ) : null}
         </View>
 
         <Text style={styles.title}>{title}</Text>
