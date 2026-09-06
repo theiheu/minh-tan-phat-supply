@@ -185,12 +185,12 @@ export function ProductVariantsDialog({
                     </div>
                   </div>
                   {v.is_trackable_lot && (
-                    <Badge variant="outline" className="bg-sky-100 text-sky-700">
+                    <Badge variant="info">
                       Theo lô
                     </Badge>
                   )}
                   {v.is_default && (
-                    <Badge variant="outline" className="bg-amber-100 text-amber-700">
+                    <Badge variant="warning">
                       Mặc định
                     </Badge>
                   )}

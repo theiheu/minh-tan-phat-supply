@@ -14,7 +14,7 @@ import { IssueActions } from "@/features/issues/components/issue-actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
-import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -60,7 +60,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-mono text-lg font-semibold">{issue.code}</h2>
-            <Badge variant="outline" className={statusBadgeClass(issue.status)}>
+            <Badge variant={statusBadgeVariant(issue.status)}>
               {ISSUE_STATUS[issue.status] ?? issue.status}
             </Badge>
           </div>

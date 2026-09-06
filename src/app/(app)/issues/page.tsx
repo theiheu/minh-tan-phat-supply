@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { requireManager } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
-import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeClass } from "@/lib/labels";
+import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 type IssueStatus = "draft" | "posted" | "cancelled";
@@ -154,7 +154,7 @@ export default async function IssuesPage({
                     {isCustomer ? formatVnd(total?.amount ?? 0) : "—"}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={statusBadgeClass(r.status)}>
+                    <Badge variant={statusBadgeVariant(r.status)}>
                       {ISSUE_STATUS[r.status] ?? r.status}
                     </Badge>
                   </TableCell>

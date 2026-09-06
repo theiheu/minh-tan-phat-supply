@@ -37,10 +37,10 @@ export function ProductCard({
 
   const badge =
     totalQty === 0
-      ? { label: "Hết hàng", cls: "bg-red-100 text-red-700" }
+      ? { label: "Hết hàng", variant: "danger" as const }
       : low
-        ? { label: "Sắp hết", cls: "bg-amber-100 text-amber-700" }
-        : { label: "Còn hàng", cls: "bg-emerald-100 text-emerald-700" };
+        ? { label: "Sắp hết", variant: "warning" as const }
+        : { label: "Còn hàng", variant: "success" as const };
 
   return (
     <>
@@ -56,7 +56,7 @@ export function ProductCard({
           ) : (
             <ProductImageGallery images={uniqueImages} alt={product.name} />
           )}
-          <Badge variant="outline" className={`absolute top-2 left-2 ${badge.cls}`}>
+          <Badge variant={badge.variant} className="absolute top-2 left-2">
             {badge.label}
           </Badge>
         </div>

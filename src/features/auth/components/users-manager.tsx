@@ -196,7 +196,7 @@ function UserRow({ profile, zones, currentRole }: { profile: Profile; zones: Zon
         <div className="flex items-center gap-1.5">
           <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} />
           {isSystemAccount && (
-            <Badge variant="outline" className="shrink-0 bg-violet-100 text-violet-700">Hệ thống</Badge>
+            <Badge variant="violet" className="shrink-0">Hệ thống</Badge>
           )}
         </div>
       </TableCell>
@@ -249,9 +249,9 @@ function UserRow({ profile, zones, currentRole }: { profile: Profile; zones: Zon
             className="size-4 accent-primary"
           />
           {isActive ? (
-            <Badge variant="outline" className="bg-emerald-100 text-emerald-700">Hoạt động</Badge>
+            <Badge variant="success">Hoạt động</Badge>
           ) : (
-            <Badge variant="outline" className="bg-gray-100 text-gray-500">Đã khóa</Badge>
+            <Badge variant="neutral">Đã khóa</Badge>
           )}
         </label>
       </TableCell>

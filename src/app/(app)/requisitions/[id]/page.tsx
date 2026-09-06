@@ -16,7 +16,7 @@ import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -172,7 +172,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-mono text-lg font-semibold">{req.code}</h2>
-            <Badge variant="outline" className={statusBadgeClass(req.status)}>
+            <Badge variant={statusBadgeVariant(req.status)}>
               {REQUISITION_STATUS[req.status] ?? req.status}
             </Badge>
           </div>

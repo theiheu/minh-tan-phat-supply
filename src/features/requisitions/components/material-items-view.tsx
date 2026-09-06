@@ -162,7 +162,7 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                   <dt className="text-muted-foreground">Tồn kho (Kho chính)</dt>
                   <dd>
-                    <Badge variant="outline" className={cn(stock === 0 ? "text-red-600" : "text-emerald-700")}>
+                    <Badge variant={stock === 0 ? "danger" : "success"}>
                       {stock}
                     </Badge>
                   </dd>

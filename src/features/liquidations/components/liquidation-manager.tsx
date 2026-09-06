@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { LIQUIDATION_METHOD, LIQUIDATION_STATUS, statusBadgeClass } from "@/lib/labels";
+import { LIQUIDATION_METHOD, LIQUIDATION_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import {
   approveLiquidation,
@@ -155,7 +155,7 @@ export function LiquidationManager({
                 <TableRow key={n.id}>
                   <TableCell className="font-mono text-sm">{n.code}</TableCell>
                   <TableCell className="text-muted-foreground">{n.reason ?? "—"}</TableCell>
-                  <TableCell><Badge variant="outline" className={statusBadgeClass(n.status)}>{LIQUIDATION_STATUS[n.status] ?? n.status}</Badge></TableCell>
+                  <TableCell><Badge variant={statusBadgeVariant(n.status)}>{LIQUIDATION_STATUS[n.status] ?? n.status}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       {n.status === "pending" && (

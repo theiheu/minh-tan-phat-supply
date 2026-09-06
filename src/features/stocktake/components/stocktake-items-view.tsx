@@ -279,7 +279,7 @@ export function StocktakeItemsView({
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm font-semibold">{group.productName}</span>
                       {group.categoryName && (
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="info" className="text-[10px]">
                           {group.categoryName}
                         </Badge>
                       )}

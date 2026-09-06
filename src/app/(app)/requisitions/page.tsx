@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
-import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeClass } from "@/lib/labels";
+import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { dayRange, formatDate } from "@/lib/format";
 
@@ -113,7 +113,7 @@ export default async function RequisitionsPage({
                 </TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusBadgeClass(r.status)}>
+                  <Badge variant={statusBadgeVariant(r.status)}>
                     {REQUISITION_STATUS[r.status] ?? r.status}
                   </Badge>
                 </TableCell>

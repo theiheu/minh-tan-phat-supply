@@ -83,7 +83,7 @@ export function ProductDetailDialog({
                 <div className="flex items-center gap-1.5 text-sm font-medium">
                   <span className="truncate">{variantLabel(v.attributes, v.unit)}</span>
                   {v.is_default && (
-                    <Badge variant="outline" className="shrink-0 bg-amber-100 text-amber-700">
+                    <Badge variant="warning" className="shrink-0">
                       Mặc định
                     </Badge>
                   )}

@@ -114,32 +114,35 @@ export const LOCATION_TYPE: Record<string, string> = {
   other: "Khác",
 };
 
-// Màu badge trạng thái (mục 12.1): draft/cancelled=gray, pending=amber,
-// approved=sky, issued/completed/posted/returned=emerald, received=teal, rejected=red.
-export const STATUS_BADGE_CLASSES: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  pending: "bg-amber-100 text-amber-700",
-  approved: "bg-sky-100 text-sky-700",
-  issued: "bg-emerald-100 text-emerald-700",
-  received: "bg-teal-100 text-teal-700",
-  rejected: "bg-red-100 text-red-700",
-  cancelled: "bg-gray-100 text-gray-500",
-  posted: "bg-emerald-100 text-emerald-700",
-  staging: "bg-amber-100 text-amber-700",
-  in_repair: "bg-sky-100 text-sky-700",
-  returned: "bg-emerald-100 text-emerald-700",
-  liquidated: "bg-gray-100 text-gray-600",
-  completed: "bg-emerald-100 text-emerald-700",
+// Variant badge trạng thái (mục 12.1): draft/cancelled=neutral (xám),
+// pending/staging=warning (vàng), approved/in_repair=info (xanh dương),
+// issued/posted/returned/received/completed=success (xanh lá), rejected=danger (đỏ).
+export type StatusBadgeVariant =
+  | "neutral"
+  | "info"
+  | "warning"
+  | "success"
+  | "danger";
+
+export const STATUS_BADGE_VARIANTS: Record<string, StatusBadgeVariant> = {
+  draft: "neutral",
+  pending: "warning",
+  approved: "info",
+  issued: "success",
+  received: "success",
+  rejected: "danger",
+  cancelled: "neutral",
+  posted: "success",
+  staging: "warning",
+  in_repair: "info",
+  returned: "success",
+  liquidated: "neutral",
+  completed: "success",
 };
 
-export function statusLabel(map: Record<string, string>, key: string | null | undefined): string {
-  if (!key) return "—";
-  return map[key] ?? key;
-}
-
-export function statusBadgeClass(key: string | null | undefined): string {
-  if (!key) return "bg-gray-100 text-gray-600";
-  return STATUS_BADGE_CLASSES[key] ?? "bg-gray-100 text-gray-600";
+export function statusBadgeVariant(key: string | null | undefined): StatusBadgeVariant {
+  if (!key) return "neutral";
+  return STATUS_BADGE_VARIANTS[key] ?? "neutral";
 }
 
 // Icon danh mục (key lưu trong categories.icon: 'feed', 'medicine', ...).

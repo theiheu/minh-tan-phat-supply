@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { REQUISITION_STATUS, statusBadgeClass } from "@/lib/labels";
+import { REQUISITION_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 async function loadDashboard() {
@@ -38,10 +38,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={PackageOpen} label="Tổng vật tư" value={data.totalProducts} />
-        <StatCard icon={ClipboardList} label="Phiếu đang chờ" value={data.pendingCount} />
-        <StatCard icon={Truck} label="Đã cấp chưa nhận" value={data.issuedCount} />
-        <StatCard icon={Users} label="Phiếu nhập đã ghi" value={data.receiptsCount} />
+        <StatCard icon={PackageOpen} label="Tổng vật tư" value={data.totalProducts} tone="sky" />
+        <StatCard icon={ClipboardList} label="Phiếu đang chờ" value={data.pendingCount} tone="amber" />
+        <StatCard icon={Truck} label="Đã cấp chưa nhận" value={data.issuedCount} tone="orange" />
+        <StatCard icon={Users} label="Phiếu nhập đã ghi" value={data.receiptsCount} tone="emerald" />
       </div>
 
       <Card>
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
                     <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
                       {r.requester?.name ?? "—"} · {r.purpose}
                     </span>
-                    <Badge variant="outline" className={statusBadgeClass(r.status)}>
+                    <Badge variant={statusBadgeVariant(r.status)}>
                       {REQUISITION_STATUS[r.status] ?? r.status}
                     </Badge>
                   </Link>

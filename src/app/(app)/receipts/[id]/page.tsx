@@ -14,7 +14,7 @@ import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
-import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -86,7 +86,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-mono text-lg font-semibold">{receipt.code}</h2>
-            <Badge variant="outline" className={statusBadgeClass(receipt.status)}>
+            <Badge variant={statusBadgeVariant(receipt.status)}>
               {RECEIPT_STATUS[receipt.status] ?? receipt.status}
             </Badge>
           </div>
@@ -217,7 +217,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                         <TableCell className="text-muted-foreground">{rq.requester?.name ?? "—"}</TableCell>
                         <TableCell className="max-w-[320px] text-muted-foreground">{rq.purpose ?? "—"}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={statusBadgeClass(rq.status)}>
+                          <Badge variant={statusBadgeVariant(rq.status)}>
                             {REQUISITION_STATUS[rq.status] ?? rq.status}
                           </Badge>
                         </TableCell>

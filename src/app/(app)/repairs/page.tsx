@@ -14,7 +14,7 @@ import { RepairActions } from "@/features/repairs/components/repair-actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
-import { REPAIR_STATUS, statusBadgeClass, variantLabel } from "@/lib/labels";
+import { REPAIR_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -100,7 +100,7 @@ export default async function RepairsPage({
                 <TableCell className="text-muted-foreground">{formatDate(r.expected_return_at)}</TableCell>
                 <TableCell className="tabular-nums">{r.total_cost != null ? formatVnd(r.total_cost) : "—"}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusBadgeClass(r.status)}>
+                  <Badge variant={statusBadgeVariant(r.status)}>
                     {REPAIR_STATUS[r.status] ?? r.status}
                   </Badge>
                 </TableCell>

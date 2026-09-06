@@ -15,7 +15,7 @@ import { ExchangeRequestButton } from "@/features/defects/components/exchange-re
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate } from "@/lib/format";
-import { DEFECT_STATUS, statusBadgeClass } from "@/lib/labels";
+import { DEFECT_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -132,7 +132,7 @@ export default async function DefectsPage({
                 <TableCell className="text-muted-foreground">{d.source_location?.name ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(d.created_at)}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusBadgeClass(d.status)}>
+                  <Badge variant={statusBadgeVariant(d.status)}>
                     {DEFECT_STATUS[d.status] ?? d.status}
                   </Badge>
                 </TableCell>

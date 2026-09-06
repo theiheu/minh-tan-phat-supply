@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
 import { dayRange, formatDate } from "@/lib/format";
-import { RECEIPT_STATUS, statusBadgeClass } from "@/lib/labels";
+import { RECEIPT_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 type ReceiptStatus = "draft" | "posted" | "cancelled";
@@ -117,7 +117,7 @@ export default async function ReceiptsPage({
                 <TableCell className="text-muted-foreground">{r.creator?.name ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusBadgeClass(r.status)}>
+                  <Badge variant={statusBadgeVariant(r.status)}>
                     {RECEIPT_STATUS[r.status] ?? r.status}
                   </Badge>
                 </TableCell>

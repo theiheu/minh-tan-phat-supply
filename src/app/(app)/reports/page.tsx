@@ -115,14 +115,28 @@ export default async function ReportsPage({
               {(stock ?? []).length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Chưa có dữ liệu tồn kho.</TableCell></TableRow>}
               {(stock ?? []).map((s, i) => {
                 const price = s.variant_id ? variantMap.get(s.variant_id)?.price ?? null : null;
+                const qty = s.quantity ?? 0;
+                const isOut = qty === 0;
+                const isLow = !isOut && qty <= (s.min_stock ?? 0);
+                // Nền nhạt + chữ đậm cho dòng cần cảnh báo (thắng nền zebra bằng !).
+                const rowCls = isOut
+                  ? "bg-red-50! hover:bg-red-100!"
+                  : isLow
+                    ? "bg-amber-50! hover:bg-amber-100!"
+                    : "";
+                const qtyCls = isOut
+                  ? "font-bold text-red-700"
+                  : isLow
+                    ? "font-semibold text-amber-900"
+                    : "tabular-nums";
                 return (
-                  <TableRow key={i}>
+                  <TableRow key={i} className={rowCls}>
                     <TableCell>{nameOf(s.variant_id)}</TableCell>
                     <TableCell className="text-muted-foreground">{labelOf(s.variant_id)}</TableCell>
-                    <TableCell className={`tabular-nums ${(s.quantity ?? 0) <= (s.min_stock ?? 0) ? "font-medium text-red-600" : ""}`}>{s.quantity ?? 0}</TableCell>
+                    <TableCell className={`${qtyCls} tabular-nums`}>{qty}</TableCell>
                     <TableCell className="tabular-nums text-muted-foreground">{s.min_stock ?? 0}</TableCell>
                     <TableCell className="tabular-nums text-muted-foreground">{price != null ? formatVnd(price) : "—"}</TableCell>
-                    <TableCell className="tabular-nums">{price != null ? formatVnd((s.quantity ?? 0) * price) : "—"}</TableCell>
+                    <TableCell className="tabular-nums">{price != null ? formatVnd(qty * price) : "—"}</TableCell>
                   </TableRow>
                 );
               })}
@@ -148,14 +162,34 @@ export default async function ReportsPage({
             </TableRow></TableHeader>
             <TableBody>
               {(expiring ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Không có vật tư sắp hết hạn.</TableCell></TableRow>}
-              {(expiring ?? []).map((e, i) => (
-                <TableRow key={i}>
-                  <TableCell>{nameOf(e.variant_id)}</TableCell>
-                  <TableCell className="text-muted-foreground">{e.batch_no ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(e.expiry_date)}</TableCell>
-                  <TableCell className="tabular-nums">{e.quantity}</TableCell>
-                </TableRow>
-              ))}
+              {(expiring ?? []).map((e, i) => {
+                // Ngày hiện tại (Y-M-D) để so theo ngày, không theo giờ.
+                const today = new Date();
+                const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                const daysLeft = e.expiry_date
+                  ? Math.round((new Date(`${e.expiry_date}T00:00:00`).getTime() - new Date(`${ymd(today)}T00:00:00`).getTime()) / 86400000)
+                  : null;
+                const expired = daysLeft !== null && daysLeft < 0;
+                const soon = !expired && daysLeft !== null && daysLeft <= 7;
+                const rowCls = expired
+                  ? "bg-red-50! hover:bg-red-100!"
+                  : soon
+                    ? "bg-amber-50! hover:bg-amber-100!"
+                    : "";
+                const dateCls = expired
+                  ? "font-bold text-red-700"
+                  : soon
+                    ? "font-semibold text-amber-900"
+                    : "text-muted-foreground";
+                return (
+                  <TableRow key={i} className={rowCls}>
+                    <TableCell>{nameOf(e.variant_id)}</TableCell>
+                    <TableCell className="text-muted-foreground">{e.batch_no ?? "—"}</TableCell>
+                    <TableCell className={dateCls}>{formatDate(e.expiry_date)}</TableCell>
+                    <TableCell className="tabular-nums">{e.quantity}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
           <Pagination
