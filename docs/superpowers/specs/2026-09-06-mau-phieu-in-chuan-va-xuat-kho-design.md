@@ -168,6 +168,7 @@ issue_items(id uuid pk, issue_id uuid not null references issues on delete casca
 - Nội dung: tồn hiện tại theo `stock_balances` từng kho, chỉ mục > 0; composite tính từ linh kiện của kho đó; cột `STT | Tên hàng (kèm biến thể) | ĐVT | Tồn kho`; nhóm theo kho khi in "Tất cả" (tên kho làm dòng nhóm), hoặc ghi rõ kho khi chọn 1 kho.
 - Khung chuẩn: tiêu đề "BẢNG TỒN KHO", dòng ngày, không chữ ký; cuối ghi số mặt hàng.
 - Nút "In bảng tồn" trên màn `/reports` (kèm chọn kho) — thêm PDF cùng cụm CSV hiện có.
+- Triển khai: bảng tồn in theo 1 kho bắt buộc (tham số location); chưa hỗ trợ in gộp tất cả kho.
 
 ## 7. Phần E — In phiếu kiểm kê
 - Nút "In" trên màn Kiểm kê + route `/api/stocktake/[id]/pdf` (manager).

@@ -21,6 +21,7 @@ export function formatDate(value: string | null | undefined): string {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
+// in theo múi giờ máy chủ (mặc định +07, như formatDate)
 export function formatDateLong(value: string | null | undefined): string {
   if (!value) return "";
   const d = new Date(value);
