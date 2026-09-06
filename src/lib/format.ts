@@ -21,6 +21,13 @@ export function formatDate(value: string | null | undefined): string {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
+export function formatDateLong(value: string | null | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return `Ngày ${String(d.getDate()).padStart(2, "0")} tháng ${String(d.getMonth() + 1).padStart(2, "0")} năm ${d.getFullYear()}`;
+}
+
 // Khoảng ngày "YYYY-MM-DD" (múi giờ VN +07:00) → ISO UTC cho filter created_at.
 export function dayRange(from: string | null, to: string | null): { gte?: string; lte?: string } {
   const range: { gte?: string; lte?: string } = {};
