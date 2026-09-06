@@ -1,6 +1,8 @@
 # Hệ thống Quản lý Kho Trại Gà Minh Tân Phát
 
-Hệ thống quản lý vật tư trại gà: catalog sản phẩm, tồn kho đa kho, phiếu yêu cầu (nhiều trạng thái), nhập kho, vật tư hỏng → sửa chữa → thanh lý, kiểm kê, báo cáo.
+Hệ thống quản lý vật tư trại gà: catalog sản phẩm, tồn kho đa kho, phiếu yêu cầu (nhiều trạng thái), nhập kho, **phiếu xuất kho (bán cho khách / nội bộ khu)**, danh sách khách hàng, vật tư hỏng → sửa chữa → thanh lý, kiểm kê, báo cáo.
+
+Mọi phiếu in (nhập kho, yêu cầu, xuất kho, hỏng, sửa chữa, thanh lý, kiểm kê, bảng tồn) dùng chung **mẫu in chuẩn**: đầu phiếu TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG – Ấp Tân Tiến, xã Minh Tân, huyện Dầu Tiếng, Bình Dương – SĐT 0988 365 238 / 0963 077 879 + logo (`public/brand/logo.jpg`). Chi tiết thiết kế: `docs/superpowers/specs/2026-09-06-mau-phieu-in-chuan-va-xuat-kho-design.md`.
 
 > **Nguồn đặc tả duy nhất: [`BUILD_GUIDE.md`](./BUILD_GUIDE.md)** — đọc tuần tự mục 3 (khởi tạo) → 5 (SQL) → 6 (state machine) → 8 (RPC) → 14 (màn hình) → 15 (nghiệp vụ) → 21 (lộ trình).
 
