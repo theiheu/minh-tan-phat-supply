@@ -81,6 +81,7 @@ function readThree(n: number, leadZeroHundred = false): string {
       parts.push(TENS[t]);
       if (o > 0) {
         if (o === 1) parts.push("mốt");
+        else if (o === 4) parts.push("tư");
         else if (o === 5) parts.push("lăm");
         else parts.push(ONES[o]);
       }
