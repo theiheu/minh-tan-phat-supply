@@ -9,38 +9,29 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-// Bảng tồn kho in PDF theo MỘT kho (controller Task 12): query `location` = uuid kho,
-// mặc định KHO_CHINH khi không truyền. View location_stock (0037) là variants-driven
-// nên đã gồm cả composite parent (bung linh kiện) — xem 0037_location_stock_variants.sql.
+// Bảng tồn kho in PDF theo MỘT kho (controller Task 12): query `location` = uuid kho
+// BẮT BUỘC (UI luôn truyền) — không in thầm theo KHO_CHINH nữa. View location_stock
+// (0037) là variants-driven nên đã gồm cả composite parent (bung linh kiện) — xem
+// 0037_location_stock_variants.sql.
 export async function GET(req: Request) {
   await requireManager();
   ensurePdfFonts();
   const supabase = await createClient();
 
   const locationParam = new URL(req.url).searchParams.get("location");
-  let location: { id: string; code: string; name: string } | null = null;
+  if (!locationParam) return new NextResponse("Thiếu tham số kho (location)", { status: 400 });
 
-  if (locationParam) {
-    const { data } = await supabase
-      .from("stock_locations")
-      .select("id, code, name")
-      .eq("id", locationParam)
-      .maybeSingle();
-    location = data;
-  } else {
-    // Không truyền kho → in Kho chính.
-    const { data } = await supabase
-      .from("stock_locations")
-      .select("id, code, name")
-      .eq("code", "KHO_CHINH")
-      .maybeSingle();
-    location = data;
-  }
-  if (!location) return new NextResponse("Không tìm thấy kho", { status: 404 });
+  const { data: location, error: locationErr } = await supabase
+    .from("stock_locations")
+    .select("id, code, name")
+    .eq("id", locationParam)
+    .maybeSingle();
+  if (locationErr) return new NextResponse("Không đọc được dữ liệu tồn kho", { status: 502 });
+  if (!location) return new NextResponse("Thiếu tham số kho (location)", { status: 400 });
 
   // location_stock không có FK tới variants (view không khai FK được) nên PostgREST
   // không cho embed variants(...) — join bằng JS như màn Báo cáo vẫn làm với variant_stock.
-  const [{ data: stockRows }, { data: variants }] = await Promise.all([
+  const [{ data: stockRows, error: stockErr }, { data: variants, error: variantsErr }] = await Promise.all([
     supabase
       .from("location_stock")
       .select("variant_id, quantity")
@@ -48,6 +39,7 @@ export async function GET(req: Request) {
       .gt("quantity", 0),
     supabase.from("variants").select("id, attributes, unit, products(name)"),
   ]);
+  if (stockErr || variantsErr) return new NextResponse("Không đọc được dữ liệu tồn kho", { status: 502 });
 
   const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
   const lines = (stockRows ?? [])
