@@ -91,8 +91,8 @@ export default async function ReceiptsPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Mã</TableHead>
-              <TableHead>Hóa đơn</TableHead>
+              <TableHead className="w-28">Mã</TableHead>
+              <TableHead className="w-16 text-center">Hóa đơn</TableHead>
               <TableHead>Nhà cung cấp</TableHead>
               <TableHead>Người lập</TableHead>
               <TableHead>Ngày</TableHead>
@@ -112,24 +112,24 @@ export default async function ReceiptsPage({
               const invoiceImages = r.invoice_images ?? [];
               return (
                 <TableRow key={r.id}>
-                  <TableCell>
-                    <Link href={`/receipts/${r.id}`} className="font-mono text-sm text-primary hover:underline">
+                  <TableCell className="w-28 font-mono text-sm">
+                    <Link href={`/receipts/${r.id}`} className="text-primary hover:underline">
                       {r.code}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-16 text-center">
                     {invoiceImages.length > 0 ? (
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         <div className="relative inline-flex">
                           <ZoomableImage
                             src={invoiceImages[0]}
                             images={invoiceImages}
                             alt={`Hóa đơn ${r.code}`}
                             title={`Hóa đơn mua hàng — ${r.code}`}
-                            className="size-11 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
+                            className="size-10 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
                           />
                           {invoiceImages.length > 1 && (
-                            <span className="absolute -bottom-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-black/80 text-[10px] font-bold text-white shadow pointer-events-none">
+                            <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
                               +{invoiceImages.length - 1}
                             </span>
                           )}
