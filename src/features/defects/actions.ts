@@ -31,6 +31,18 @@ export async function recordDefect(input: DefectInput) {
   return data as string;
 }
 
+export async function updateDefectItemImages(itemId: string, images: string[]) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_defect_item_images", {
+    p_item_id: itemId,
+    p_images: images,
+    p_by: profile.id,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/defects");
+}
+
 export async function cancelDefect(id: string) {
   const profile = await requireProfile();
   const supabase = await createClient();

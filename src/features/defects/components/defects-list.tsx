@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Printer, Trash2, Undo2, Wrench } from "lucide-react";
+import { ImagePlus, Printer, Trash2, Undo2, Wrench, X } from "lucide-react";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
@@ -23,7 +23,9 @@ import {
   cancelDefect,
   cancelRepairRequest,
   requestRepair,
+  updateDefectItemImages,
 } from "@/features/defects/actions";
+import { uploadDefectImage } from "@/features/defects/upload";
 import { sendToRepair } from "@/features/repairs/actions";
 import { createExchange } from "@/features/exchanges/actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
@@ -72,7 +74,8 @@ export function DefectsList({
         <table className="w-full min-w-[520px] text-sm">
           <thead>
             <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Mã phiếu</th>
+              <th className="w-28 whitespace-nowrap px-3 py-2.5 font-medium">Mã phiếu</th>
+              <th className="w-16 whitespace-nowrap px-3 py-2.5 text-center font-medium">Hình ảnh</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Người lập phiếu</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Ngày lập</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-medium">Trạng thái</th>
@@ -81,47 +84,72 @@ export function DefectsList({
           <tbody className="divide-y">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">
                   Chưa có phiếu hỏng nào.
                 </td>
               </tr>
             )}
-            {rows.map((r) => (
-              <tr
-                key={r.id}
-                onClick={() => setOpenId(r.id)}
-                className="cursor-pointer hover:bg-accent/40"
-              >
-                <td className="whitespace-nowrap px-3 py-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(r.id)}
-                    className="font-mono font-semibold text-primary hover:underline"
-                  >
-                    {r.code}
-                  </button>
-                </td>
-                <td className="max-w-[180px] truncate px-3 py-2.5 text-muted-foreground">
-                  {r.reporterName ?? "—"}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
-                  {formatDate(r.createdAt)}
-                </td>
-                <td className="px-3 py-2.5">
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant={statusBadgeVariant(r.status)}>
-                      {DEFECT_STATUS[r.status] ?? r.status}
-                    </Badge>
-                    {r.repairRequested ? <Badge variant="warning">Chờ xác nhận sửa</Badge> : null}
-                    {r.liveExchange ? (
-                      <Badge variant={statusBadgeVariant(r.liveExchange.status)}>
-                        Đổi mới: {EXCHANGE_STATUS[r.liveExchange.status] ?? r.liveExchange.status}
+            {rows.map((r) => {
+              const allImages = (r.items ?? []).flatMap((i) => i.images ?? []);
+              return (
+                <tr
+                  key={r.id}
+                  onClick={() => setOpenId(r.id)}
+                  className="cursor-pointer hover:bg-accent/40"
+                >
+                  <td className="w-28 whitespace-nowrap px-3 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(r.id)}
+                      className="font-mono font-semibold text-primary hover:underline"
+                    >
+                      {r.code}
+                    </button>
+                  </td>
+                  <td className="w-16 px-3 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                    {allImages.length > 0 ? (
+                      <div className="flex items-center justify-center">
+                        <div className="relative inline-flex">
+                          <ZoomableImage
+                            src={allImages[0]}
+                            images={allImages}
+                            alt={`Ảnh hàng hỏng ${r.code}`}
+                            title={`Ảnh vật tư hỏng — ${r.code}`}
+                            className="size-10 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
+                          />
+                          {allImages.length > 1 && (
+                            <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
+                              +{allImages.length - 1}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="max-w-[180px] truncate px-3 py-2.5 text-muted-foreground">
+                    {r.reporterName ?? "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
+                    {formatDate(r.createdAt)}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant={statusBadgeVariant(r.status)}>
+                        {DEFECT_STATUS[r.status] ?? r.status}
                       </Badge>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {r.repairRequested ? <Badge variant="warning">Chờ xác nhận sửa</Badge> : null}
+                      {r.liveExchange ? (
+                        <Badge variant={statusBadgeVariant(r.liveExchange.status)}>
+                          Đổi mới: {EXCHANGE_STATUS[r.liveExchange.status] ?? r.liveExchange.status}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -172,7 +200,40 @@ function DefectDetailDialog({
   const [sentAt, setSentAt] = useState("");
   const [expectedReturnAt, setExpectedReturnAt] = useState("");
 
+  const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
   const empty = !currentUserId;
+
+  async function handleAddImage(itemId: string, currentImages: string[], e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setUploadingItemId(itemId);
+    try {
+      const urls = await Promise.all(files.map((f) => uploadDefectImage(f)));
+      const nextImages = [...currentImages, ...urls];
+      await updateDefectItemImages(itemId, nextImages);
+      toast.success(`Đã bổ sung ${urls.length} ảnh minh chứng`);
+      onChanged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Tải ảnh thất bại");
+    } finally {
+      setUploadingItemId(null);
+      e.target.value = "";
+    }
+  }
+
+  async function handleRemoveImage(itemId: string, currentImages: string[], urlToRemove: string) {
+    if (currentImages.length <= 1) {
+      return toast.error("Mỗi dòng hỏng cần giữ lại ít nhất 1 ảnh minh chứng");
+    }
+    const nextImages = currentImages.filter((u) => u !== urlToRemove);
+    try {
+      await updateDefectItemImages(itemId, nextImages);
+      toast.success("Đã xóa ảnh");
+      onChanged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Xóa ảnh thất bại");
+    }
+  }
 
   function run(action: () => Promise<unknown>, success: string, then?: () => void) {
     startTransition(async () => {
@@ -277,20 +338,57 @@ function DefectDetailDialog({
                   <span className="font-medium text-foreground">Ghi chú:</span> {it.note}
                 </p>
               ) : null}
-              {it.images.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {it.images.map((url) => (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {it.images.map((url) => (
+                  <div key={url} className="relative group">
                     <ZoomableImage
-                      key={url}
                       src={url}
                       images={it.images}
                       alt={`${it.productName ?? "Vật tư"} — ảnh hỏng`}
                       title={it.productName ?? "Ảnh vật tư hỏng"}
-                      className="size-16 rounded-md border object-cover"
+                      className="size-16 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
                     />
-                  ))}
-                </div>
-              ) : null}
+                    {(isOwner || isManager) && it.images.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage(it.id, it.images, url);
+                        }}
+                        className="absolute -right-1.5 -top-1.5 z-10 flex size-5 items-center justify-center rounded-full bg-red-600 text-white shadow-sm hover:bg-red-700"
+                        title="Xóa ảnh này"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {(isOwner || isManager) && (
+                  <Label className="cursor-pointer inline-flex items-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      asChild
+                      disabled={uploadingItemId === it.id}
+                      className="flex h-16 w-16 flex-col items-center justify-center gap-1 border-dashed p-0 text-[10px]"
+                    >
+                      <span>
+                        <ImagePlus className="size-4 text-muted-foreground" />
+                        {uploadingItemId === it.id ? "Đang tải…" : "+ Thêm ảnh"}
+                      </span>
+                    </Button>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      multiple
+                      className="sr-only"
+                      disabled={uploadingItemId === it.id}
+                      onChange={(e) => handleAddImage(it.id, it.images, e)}
+                    />
+                  </Label>
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -183,22 +183,11 @@ export function DefectForm({
 
       {/* Bước 2 — chi tiết các dòng hỏng */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 px-6 pt-6 sm:px-8 sm:pt-8">
-          <div>
-            <CardTitle className="text-lg font-bold">Chi tiết các dòng hỏng</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Mỗi dòng: chọn tên, ghi số lượng + mô tả, thêm ít nhất 1 ảnh.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setItems((a) => [...a, EMPTY])}
-            className="h-12 shrink-0 gap-1.5 px-4 text-base sm:h-10 sm:text-sm"
-          >
-            <Plus className="size-4" aria-hidden />
-            Thêm
-          </Button>
+        <CardHeader className="px-6 pt-6 sm:px-8 sm:pt-8">
+          <CardTitle className="text-lg font-bold">Chi tiết các dòng hỏng</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Mỗi dòng: chọn tên, ghi số lượng + mô tả, thêm ít nhất 1 ảnh.
+          </p>
         </CardHeader>
         <CardContent className="space-y-5 px-6 pb-6 sm:space-y-6 sm:px-8 sm:pb-8">
           {items.map((it, i) => {
@@ -338,6 +327,18 @@ export function DefectForm({
               </div>
             );
           })}
+
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setItems((a) => [...a, EMPTY])}
+              className="h-11 gap-1.5 px-4 text-sm font-medium"
+            >
+              <Plus className="size-4" aria-hidden />
+              + Thêm dòng hỏng
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

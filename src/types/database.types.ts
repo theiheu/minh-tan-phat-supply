@@ -1984,6 +1984,14 @@ export type Database = {
         }
         Returns: string
       }
+      update_defect_item_images: {
+        Args: {
+          p_by: string
+          p_images: string[]
+          p_item_id: string
+        }
+        Returns: undefined
+      }
       update_receipt: {
         Args: {
           p_by: string
