@@ -101,7 +101,7 @@ export function ImageLightbox({
       aria-modal="true"
       aria-label={title || "Xem ảnh phóng to"}
       data-lightbox-open="true"
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-[2px] sm:p-6 select-none"
+      className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-[2px] sm:p-6 select-none"
       onClick={close}
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
