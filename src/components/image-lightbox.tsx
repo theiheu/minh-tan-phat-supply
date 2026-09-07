@@ -61,26 +61,32 @@ export function ImageLightbox({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         close();
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         if (images.length > 1) {
           setCurrentIndex((i) => (i - 1 + images.length) % images.length);
         }
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         if (images.length > 1) {
           setCurrentIndex((i) => (i + 1) % images.length);
         }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true);
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, true);
       document.body.style.overflow = originalOverflow;
     };
   }, [open, images.length, close]);
@@ -94,6 +100,7 @@ export function ImageLightbox({
       role="dialog"
       aria-modal="true"
       aria-label={title || "Xem ảnh phóng to"}
+      data-lightbox-open="true"
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 text-white select-none animate-in fade-in duration-200"
       onClick={close}
       onMouseDown={(e) => e.stopPropagation()}
