@@ -298,8 +298,9 @@ function HeaderTabs({ view, isManager }: { view: string; isManager: boolean }) {
     { href: "/defects?view=repair", label: "Tập kết sửa", active: view === "repair", manager: true },
   ];
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2 rounded-lg border p-0.5">
+    <div className="space-y-2">
+      {/* Mobile: tabs cuộn ngang 1 hàng, không dồn chật */}
+      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:px-0">
         {tabs
           .filter((t) => !t.manager || isManager)
           .map((t) => (
@@ -307,20 +308,25 @@ function HeaderTabs({ view, isManager }: { view: string; isManager: boolean }) {
               key={t.href}
               href={t.href}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent",
-                t.active && "bg-primary text-primary-foreground hover:bg-primary/90",
+                "inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition-colors",
+                t.active
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "text-muted-foreground hover:bg-accent",
               )}
             >
               {t.label}
             </Link>
           ))}
       </div>
-      <Link
-        href="/defects/new"
-        className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-      >
-        + Ghi nhận hỏng
-      </Link>
+      {/* Nút ghi nhận nằm hàng riêng, full-width trên mobile */}
+      <div className="flex sm:justify-end">
+        <Link
+          href="/defects/new"
+          className="inline-flex h-10 w-full shrink-0 items-center justify-center gap-1 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:w-auto"
+        >
+          + Ghi nhận hỏng
+        </Link>
+      </div>
     </div>
   );
 }
