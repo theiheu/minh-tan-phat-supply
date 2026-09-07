@@ -263,62 +263,72 @@ export function ReceiptForm({
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle className="text-base">Vật tư nhập</CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])}>
-            + Thêm dòng
-          </Button>
         </CardHeader>
-        <CardContent className="space-y-2">
-          {items.map((it, i) => {
-            const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
-            return (
-              <div key={i} className="relative rounded-lg border bg-muted/30 p-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
-                  aria-label="Xóa dòng"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-                <div className="grid grid-cols-1 gap-2 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
-                  <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                    <Label className="text-xs">Vật tư</Label>
-                    <ComboboxInput
-                      value={it.variantId}
-                      onChange={(v) => setItem(i, { variantId: v })}
-                      options={variantOptions}
-                      placeholder="Chọn hoặc gõ tên vật tư…"
-                      emptyText="Không tìm thấy vật tư."
-                    />
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            {items.map((it, i) => {
+              const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
+              return (
+                <div key={i} className="relative rounded-lg border bg-muted/30 p-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
+                    aria-label="Xóa dòng"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                  <div className="grid grid-cols-1 gap-2 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
+                    <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                      <Label className="text-xs">Vật tư</Label>
+                      <ComboboxInput
+                        value={it.variantId}
+                        onChange={(v) => setItem(i, { variantId: v })}
+                        options={variantOptions}
+                        placeholder="Chọn hoặc gõ tên vật tư…"
+                        emptyText="Không tìm thấy vật tư."
+                      />
+                    </div>
+                    <div className="space-y-1 lg:col-span-2">
+                      <Label className="text-xs">Số lượng</Label>
+                      <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
+                    </div>
+                    <div className="space-y-1 lg:col-span-2">
+                      <Label className="text-xs">Đơn giá</Label>
+                      <Input type="number" min="0" value={it.unitCost} onChange={(e) => setItem(i, { unitCost: e.target.value })} />
+                    </div>
+                    {trackable ? (
+                      <>
+                        <div className="space-y-1 lg:col-span-2">
+                          <Label className="text-xs">Lô</Label>
+                          <Input value={it.batchNo} onChange={(e) => setItem(i, { batchNo: e.target.value })} />
+                        </div>
+                        <div className="space-y-1 lg:col-span-2">
+                          <Label className="text-xs">Hạn sử dụng</Label>
+                          <Input type="date" value={it.expiryDate} onChange={(e) => setItem(i, { expiryDate: e.target.value })} />
+                        </div>
+                      </>
+                    ) : null}
                   </div>
-                  <div className="space-y-1 lg:col-span-2">
-                    <Label className="text-xs">Số lượng</Label>
-                    <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
-                  </div>
-                  <div className="space-y-1 lg:col-span-2">
-                    <Label className="text-xs">Đơn giá</Label>
-                    <Input type="number" min="0" value={it.unitCost} onChange={(e) => setItem(i, { unitCost: e.target.value })} />
-                  </div>
-                  {trackable ? (
-                    <>
-                      <div className="space-y-1 lg:col-span-2">
-                        <Label className="text-xs">Lô</Label>
-                        <Input value={it.batchNo} onChange={(e) => setItem(i, { batchNo: e.target.value })} />
-                      </div>
-                      <div className="space-y-1 lg:col-span-2">
-                        <Label className="text-xs">Hạn sử dụng</Label>
-                        <Input type="date" value={it.expiryDate} onChange={(e) => setItem(i, { expiryDate: e.target.value })} />
-                      </div>
-                    </>
-                  ) : null}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <div className="pt-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setItems((a) => [...a, EMPTY])}
+            >
+              + Thêm dòng
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
