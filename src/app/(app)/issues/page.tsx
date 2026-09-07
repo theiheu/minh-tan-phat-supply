@@ -159,13 +159,15 @@ export default async function IssuesPage({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/api/issues/${r.id}/pdf`}
-                      target="_blank"
-                      className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent"
-                    >
-                      In
-                    </Link>
+                    <div className="flex justify-end">
+                      <Link
+                        href={`/api/issues/${r.id}/pdf`}
+                        target="_blank"
+                        className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent"
+                      >
+                        In
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

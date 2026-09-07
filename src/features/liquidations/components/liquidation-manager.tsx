@@ -157,7 +157,7 @@ export function LiquidationManager({
                   <TableCell className="text-muted-foreground">{n.reason ?? "—"}</TableCell>
                   <TableCell><Badge variant={statusBadgeVariant(n.status)}>{LIQUIDATION_STATUS[n.status] ?? n.status}</Badge></TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex justify-end gap-1">
                       {n.status === "pending" && (
                         <>
                           <Button size="sm" onClick={() => run(() => approveLiquidation(n.id), "Đã duyệt")} disabled={pending}>Duyệt</Button>

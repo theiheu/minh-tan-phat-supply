@@ -122,7 +122,7 @@ export default async function ReceiptsPage({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-end gap-1">
                     <ReceiptActions id={r.id} status={r.status} />
                     <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                       PDF

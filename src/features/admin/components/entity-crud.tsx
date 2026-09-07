@@ -330,7 +330,7 @@ export function EntityCrud({
                     </TableCell>
                   ))}
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex justify-end gap-1">
                       <Button size="sm" onClick={() => run(() => save(row.id, fullData(columns, editForm, row)), "Đã lưu")} disabled={pending}>
                         Lưu
                       </Button>
@@ -346,7 +346,7 @@ export function EntityCrud({
                     <TableCell key={c.key}>{cellContent(c, row[c.key])}</TableCell>
                   ))}
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex justify-end gap-1">
                       <Button
                         size="sm"
                         variant="outline"
