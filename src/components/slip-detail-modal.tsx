@@ -56,6 +56,7 @@ import { cancelDefect, requestRepair } from "@/features/defects/actions";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 import {
   auditEntityLabel,
+  slipStatusLabel,
   statusBadgeVariant,
 } from "@/lib/labels";
 import { isPrivileged } from "@/lib/types";
@@ -193,7 +194,7 @@ export function SlipDetailModal({
                     {auditEntityLabel(detail.type)}
                   </Badge>
                   <Badge variant={statusBadgeVariant(detail.status)} className="text-xs">
-                    {detail.status}
+                    {slipStatusLabel(detail.type, detail.status)}
                   </Badge>
                 </div>
                 {detail.pdfUrl && (
@@ -443,7 +444,7 @@ export function SlipDetailModal({
                             <TableCell className="text-xs text-muted-foreground">{rq.purpose ?? "—"}</TableCell>
                             <TableCell className="text-xs">
                               <Badge variant={statusBadgeVariant(rq.status)} className="text-[10px]">
-                                {rq.status}
+                                {slipStatusLabel("requisition", rq.status)}
                               </Badge>
                             </TableCell>
                           </TableRow>

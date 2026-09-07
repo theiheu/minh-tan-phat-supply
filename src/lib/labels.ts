@@ -157,6 +157,33 @@ export function statusBadgeVariant(key: string | null | undefined): StatusBadgeV
   return STATUS_BADGE_VARIANTS[key] ?? "neutral";
 }
 
+/**
+ * Chuyển trạng thái DB (tiếng Anh) thành nhãn tiếng Việt theo loại phiếu.
+ */
+export function slipStatusLabel(entityType: string | null | undefined, status: string | null | undefined): string {
+  if (!status) return "—";
+  const t = entityType?.toLowerCase().trim() ?? "";
+  if (t.startsWith("requisition")) return REQUISITION_STATUS[status] ?? status;
+  if (t.startsWith("receipt")) return RECEIPT_STATUS[status] ?? status;
+  if (t.startsWith("issue")) return ISSUE_STATUS[status] ?? status;
+  if (t.startsWith("exchange")) return EXCHANGE_STATUS[status] ?? status;
+  if (t.startsWith("defect")) return DEFECT_STATUS[status] ?? status;
+  if (t.startsWith("repair")) return REPAIR_STATUS[status] ?? status;
+  if (t.startsWith("liquidation")) return LIQUIDATION_STATUS[status] ?? status;
+  if (t.startsWith("stocktake")) return STOCKTAKE_STATUS[status] ?? status;
+  return (
+    REQUISITION_STATUS[status] ??
+    RECEIPT_STATUS[status] ??
+    ISSUE_STATUS[status] ??
+    EXCHANGE_STATUS[status] ??
+    DEFECT_STATUS[status] ??
+    LIQUIDATION_STATUS[status] ??
+    REPAIR_STATUS[status] ??
+    STOCKTAKE_STATUS[status] ??
+    status
+  );
+}
+
 // Icon danh mục (key lưu trong categories.icon: 'feed', 'medicine', ...).
 export const categoryIcons: Record<string, LucideIcon> = {
   feed: Wheat,

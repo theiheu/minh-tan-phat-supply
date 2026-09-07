@@ -5,6 +5,7 @@ import {
   auditEntityHref,
   auditEntityLabel,
   roleLabel,
+  slipStatusLabel,
   statusBadgeVariant,
   variantLabel,
 } from "./labels";
@@ -56,5 +57,16 @@ describe("labels helpers", () => {
     expect(statusBadgeVariant("approved")).toBe("info");
     expect(statusBadgeVariant("posted")).toBe("success");
     expect(variantLabel({ "Quy cách": "Hộp 10 vỉ" })).toBe("Hộp 10 vỉ");
+  });
+
+  it("translates slip statuses to Vietnamese properly", () => {
+    expect(slipStatusLabel("receipt", "draft")).toBe("Chờ duyệt đặt hàng");
+    expect(slipStatusLabel("receipt", "approved")).toBe("Đã duyệt (Chờ hàng về)");
+    expect(slipStatusLabel("receipt", "posted")).toBe("Đã nhập kho");
+    expect(slipStatusLabel("requisition", "pending")).toBe("Đang chờ");
+    expect(slipStatusLabel("requisition", "issued")).toBe("Đã cấp phát");
+    expect(slipStatusLabel("issue", "posted")).toBe("Đã xuất");
+    expect(slipStatusLabel("defect", "staging")).toBe("Đang tập kết");
+    expect(slipStatusLabel(null, null)).toBe("—");
   });
 });
