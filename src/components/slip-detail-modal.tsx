@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
@@ -129,8 +130,16 @@ export function SlipDetailModal({
   function handleAction(actionFn: () => Promise<unknown>, successMessage: string) {
     startTransition(async () => {
       try {
-        await actionFn();
-        toast.success(successMessage);
+        const res = await actionFn();
+        if (Array.isArray(res)) {
+          toast.success(
+            res.length > 0
+              ? `${successMessage} (tự động cấp phát ${res.length} phiếu yêu cầu)`
+              : `${successMessage} (không có phiếu yêu cầu nào cần cấp phát)`,
+          );
+        } else {
+          toast.success(successMessage);
+        }
         setRejecting(false);
         setRejectionReason("");
         reloadDetail();
@@ -456,6 +465,11 @@ export function SlipDetailModal({
                   <>
                     {detail.status === "draft" && (
                       <>
+                        <Button asChild size="sm" variant="outline" className="h-9 text-xs">
+                          <Link href={`/receipts/${detail.id}/edit`} onClick={onClose}>
+                            Sửa thông tin
+                          </Link>
+                        </Button>
                         <Button
                           size="sm"
                           onClick={() => handleAction(() => approveReceipt(detail.id), "Đã duyệt phiếu đặt hàng")}
@@ -477,9 +491,14 @@ export function SlipDetailModal({
                     )}
                     {detail.status === "approved" && (
                       <>
+                        <Button asChild size="sm" variant="outline" className="h-9 text-xs">
+                          <Link href={`/receipts/${detail.id}/edit`} onClick={onClose}>
+                            Kiểm đếm hàng về
+                          </Link>
+                        </Button>
                         <Button
                           size="sm"
-                          onClick={() => handleAction(() => postReceipt(detail.id), "Đã duyệt nhập kho thành công")}
+                          onClick={() => handleAction(() => postReceipt(detail.id), "Đã duyệt nhập kho")}
                           disabled={pending}
                           className="h-9 text-xs"
                         >

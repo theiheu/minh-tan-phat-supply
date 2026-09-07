@@ -34,7 +34,8 @@ export function ImageLightbox({
     }
   }, [open, initialIndex, images.length]);
 
-  const close = useCallback(() => {
+  const close = useCallback((e?: React.SyntheticEvent) => {
+    e?.stopPropagation();
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -95,6 +96,9 @@ export function ImageLightbox({
       aria-label={title || "Xem ảnh phóng to"}
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 text-white select-none animate-in fade-in duration-200"
       onClick={close}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       {/* Header bar: Title & Counter & Close */}
       <div

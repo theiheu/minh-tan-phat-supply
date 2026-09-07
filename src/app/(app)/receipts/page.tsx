@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
@@ -10,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
 import { ReceiptDialog } from "@/features/receipts/components/receipt-dialog";
 import { SlipCodeButton } from "@/components/slip-code-button";
 import { fetchCompositeVariantIds } from "@/features/products/data";
@@ -114,13 +112,12 @@ export default async function ReceiptsPage({
               <TableHead>Người lập</TableHead>
               <TableHead>Ngày</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
             {(data ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   Chưa có phiếu nhập kho nào.
                 </TableCell>
               </TableRow>
@@ -151,14 +148,6 @@ export default async function ReceiptsPage({
                     <Badge variant={statusBadgeVariant(r.status)}>
                       {RECEIPT_STATUS[r.status] ?? r.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <ReceiptActions id={r.id} status={r.status} />
-                      <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
-                        PDF
-                      </Link>
-                    </div>
                   </TableCell>
                 </TableRow>
               );

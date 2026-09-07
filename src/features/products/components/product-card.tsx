@@ -94,17 +94,13 @@ export function ProductCard({
         </CardContent>
       </Card>
       <ProductDetailDialog open={open} onOpenChange={setOpen} product={product} variants={variants} />
-      {historyOpen && (
-        <ProductHistoryDialog
-          open
-          onOpenChange={(v) => {
-            if (!v) setHistoryOpen(false);
-          }}
-          productName={product.name}
-          productId={product.id}
-          variants={variants}
-        />
-      )}
+      <ProductHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        productName={product.name}
+        productId={product.id}
+        variants={variants}
+      />
     </>
   );
 }
