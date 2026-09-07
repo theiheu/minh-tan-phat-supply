@@ -15,6 +15,7 @@ import { requireManager } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
 import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 type IssueStatus = "draft" | "posted" | "cancelled";
 type DestinationType = "zone" | "customer";
@@ -67,7 +68,7 @@ export default async function IssuesPage({
   let query = supabase
     .from("issues")
     .select(
-      "id, code, destination_type, status, created_at, customer:customers(name), zone:zones(name), creator:profiles(name)",
+      "id, code, destination_type, status, invoice_images, created_at, customer:customers(name), zone:zones(name), creator:profiles(name)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -131,7 +132,8 @@ export default async function IssuesPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Mã</TableHead>
+              <TableHead className="w-28">Mã</TableHead>
+              <TableHead className="w-16 text-center">Hóa đơn</TableHead>
               <TableHead>Đích xuất</TableHead>
               <TableHead>Tổng SL</TableHead>
               <TableHead>Thành tiền</TableHead>
@@ -143,7 +145,7 @@ export default async function IssuesPage({
           <TableBody>
             {(data ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   Chưa có phiếu xuất nào.
                 </TableCell>
               </TableRow>
@@ -154,10 +156,33 @@ export default async function IssuesPage({
                 r.destination_type === "zone"
                   ? (r.zone?.name ?? "Khu nội bộ")
                   : (r.customer?.name ?? "Khách hàng");
+              const invoiceImages = r.invoice_images ?? [];
               return (
                 <TableRow key={r.id}>
-                  <TableCell>
+                  <TableCell className="w-28">
                     <SlipCodeButton type="issue" id={r.id} code={r.code} />
+                  </TableCell>
+                  <TableCell className="w-16 text-center">
+                    {invoiceImages.length > 0 ? (
+                      <div className="flex items-center justify-center">
+                        <div className="relative inline-flex">
+                          <ZoomableImage
+                            src={invoiceImages[0]}
+                            images={invoiceImages}
+                            alt={`Hóa đơn ${r.code}`}
+                            title={`Hóa đơn xuất kho — ${r.code}`}
+                            className="size-10 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
+                          />
+                          {invoiceImages.length > 1 && (
+                            <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
+                              +{invoiceImages.length - 1}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">

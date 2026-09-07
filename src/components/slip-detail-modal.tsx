@@ -46,7 +46,12 @@ import {
   updateReceiptInvoiceImages,
 } from "@/features/receipts/actions";
 import { uploadReceiptInvoiceImage } from "@/features/receipts/upload";
-import { cancelIssue, postIssue } from "@/features/issues/actions";
+import {
+  cancelIssue,
+  postIssue,
+  updateIssueInvoiceImages,
+} from "@/features/issues/actions";
+import { uploadIssueInvoiceImage } from "@/features/issues/upload";
 import {
   approveExchange,
   cancelExchange,
@@ -152,22 +157,32 @@ export function SlipDetailModal({
     onActionComplete?.();
   }
 
+  const isInvoiceCapable = detail?.type === "receipt" || detail?.type === "issue";
+
   async function handleInvoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!detail || detail.type !== "receipt") return;
+    if (!detail || !isInvoiceCapable) return;
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
     setUploadingInvoices(true);
     try {
-      const uploadedUrls = await Promise.all(files.map((f) => uploadReceiptInvoiceImage(f)));
+      const uploadedUrls = await Promise.all(
+        files.map((f) =>
+          detail.type === "issue" ? uploadIssueInvoiceImage(f) : uploadReceiptInvoiceImage(f),
+        ),
+      );
       const currentImages = detail.invoiceImages ?? [];
       const nextImages = [...currentImages, ...uploadedUrls];
       setDetail({ ...detail, invoiceImages: nextImages });
 
       startTransition(async () => {
         try {
-          await updateReceiptInvoiceImages(detail.id, nextImages);
-          toast.success(`Đã bổ sung ${uploadedUrls.length} ảnh hóa đơn mua hàng thành công`);
+          if (detail.type === "issue") {
+            await updateIssueInvoiceImages(detail.id, nextImages);
+          } else {
+            await updateReceiptInvoiceImages(detail.id, nextImages);
+          }
+          toast.success(`Đã bổ sung ${uploadedUrls.length} ảnh hóa đơn thành công`);
           reloadDetail();
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Cập nhật ảnh hóa đơn thất bại");
@@ -182,7 +197,7 @@ export function SlipDetailModal({
   }
 
   function handleInvoiceRemove(urlToRemove: string) {
-    if (!detail || detail.type !== "receipt") return;
+    if (!detail || !isInvoiceCapable) return;
     if (!window.confirm("Bạn có chắc muốn xóa ảnh hóa đơn này không?")) return;
     const currentImages = detail.invoiceImages ?? [];
     const nextImages = currentImages.filter((u) => u !== urlToRemove);
@@ -190,7 +205,11 @@ export function SlipDetailModal({
 
     startTransition(async () => {
       try {
-        await updateReceiptInvoiceImages(detail.id, nextImages);
+        if (detail.type === "issue") {
+          await updateIssueInvoiceImages(detail.id, nextImages);
+        } else {
+          await updateReceiptInvoiceImages(detail.id, nextImages);
+        }
         toast.success("Đã xóa ảnh hóa đơn");
         reloadDetail();
       } catch (err) {
@@ -326,11 +345,12 @@ export function SlipDetailModal({
               </div>
 
               {/* Invoice / Evidence Images */}
-              {(detail.type === "receipt" || (detail.invoiceImages && detail.invoiceImages.length > 0)) && (
+              {(detail.type === "receipt" || detail.type === "issue" || (detail.invoiceImages && detail.invoiceImages.length > 0)) && (
                 <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-foreground">
-                      Hóa đơn & Chứng từ mua hàng {detail.invoiceImages && detail.invoiceImages.length > 0 ? `(${detail.invoiceImages.length} ảnh)` : ""}:
+                      {detail.type === "issue" ? "Hóa đơn & Chứng từ xuất kho" : "Hóa đơn & Chứng từ mua hàng"}
+                      {detail.invoiceImages && detail.invoiceImages.length > 0 ? ` (${detail.invoiceImages.length} ảnh)` : ""}:
                     </span>
                   </div>
 
@@ -346,7 +366,7 @@ export function SlipDetailModal({
                             title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
                             className="size-20 sm:size-24 rounded-lg border-2 object-cover"
                           />
-                          {detail.type === "receipt" && isManager && (
+                          {isManager && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -364,7 +384,7 @@ export function SlipDetailModal({
                         </div>
                       ))}
 
-                    {detail.type === "receipt" && isManager && (
+                    {isManager && (
                       <Label className="cursor-pointer">
                         <Button
                           type="button"

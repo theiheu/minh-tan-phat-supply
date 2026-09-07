@@ -39,6 +39,19 @@ export async function postIssue(id: string) {
   for (const p of ["/issues", "/dashboard", "/products", "/reports"]) revalidatePath(p);
 }
 
+export async function updateIssueInvoiceImages(id: string, invoiceImages: string[]) {
+  const profile = await requireManager();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_issue_invoice_images", {
+    p_id: id,
+    p_invoice_images: invoiceImages,
+    p_by: profile.id,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/issues");
+  revalidatePath(`/issues/${id}`);
+}
+
 export async function cancelIssue(id: string) {
   const profile = await requireManager();
   const supabase = await createClient();

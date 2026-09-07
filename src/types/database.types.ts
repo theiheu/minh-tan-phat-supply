@@ -491,6 +491,7 @@ export type Database = {
           destination_type: string
           driver_name: string | null
           id: string
+          invoice_images: string[]
           notes: string | null
           status: string
           updated_at: string
@@ -505,6 +506,7 @@ export type Database = {
           destination_type: string
           driver_name?: string | null
           id?: string
+          invoice_images?: string[]
           notes?: string | null
           status?: string
           updated_at?: string
@@ -519,6 +521,7 @@ export type Database = {
           destination_type?: string
           driver_name?: string | null
           id?: string
+          invoice_images?: string[]
           notes?: string | null
           status?: string
           updated_at?: string
@@ -2004,6 +2007,14 @@ export type Database = {
         Returns: undefined
       }
       update_receipt_invoice_images: {
+        Args: {
+          p_by: string
+          p_id: string
+          p_invoice_images: string[]
+        }
+        Returns: undefined
+      }
+      update_issue_invoice_images: {
         Args: {
           p_by: string
           p_id: string

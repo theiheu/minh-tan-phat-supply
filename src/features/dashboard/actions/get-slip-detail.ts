@@ -339,7 +339,7 @@ export async function getSlipDetail(
       const { data: iss, error } = await supabase
         .from("issues")
         .select(
-          "id, code, destination_type, status, notes, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
+          "id, code, destination_type, status, notes, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
         )
         .eq("id", id)
         .single();
@@ -390,6 +390,7 @@ export async function getSlipDetail(
           customerAddress: iss.customer?.address,
           customerPhone: iss.customer?.phone,
           purposeOrNotes: iss.notes,
+          invoiceImages: iss.invoice_images ?? [],
           vehiclePlate: iss.vehicle_plate,
           driverName: iss.driver_name,
           items,

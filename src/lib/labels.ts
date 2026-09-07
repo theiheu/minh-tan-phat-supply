@@ -255,6 +255,7 @@ export const AUDIT_ACTION_INFO: Record<string, { label: string; tone: StatusBadg
   "issue.create": { label: "Tạo phiếu xuất kho", tone: "info", entityLabel: "Phiếu xuất kho" },
   "issue.post": { label: "Xuất kho", tone: "success", entityLabel: "Phiếu xuất kho" },
   "issue.cancel": { label: "Hủy phiếu xuất kho", tone: "neutral", entityLabel: "Phiếu xuất kho" },
+  "issue.update_invoices": { label: "Cập nhật ảnh hóa đơn", tone: "neutral", entityLabel: "Phiếu xuất kho" },
   "issue.revert": { label: "Hoàn tác xuất kho", tone: "warning", entityLabel: "Phiếu xuất kho" },
   "issue.delete": { label: "Xóa phiếu xuất kho", tone: "danger", entityLabel: "Phiếu xuất kho" },
 

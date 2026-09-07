@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IssueActions } from "@/features/issues/components/issue-actions";
+import { IssueInvoices } from "@/features/issues/components/issue-invoices";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
@@ -140,6 +141,14 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
           <CardContent className="whitespace-pre-wrap text-sm text-muted-foreground">{issue.notes}</CardContent>
         </Card>
       )}
+
+      {/* Hóa đơn & chứng từ (hỗ trợ bổ sung ảnh kể cả sau khi đã xuất kho) */}
+      <IssueInvoices
+        issueId={issue.id}
+        issueCode={issue.code}
+        invoiceImages={issue.invoice_images ?? []}
+        status={issue.status}
+      />
 
       <Card>
         <CardHeader>
