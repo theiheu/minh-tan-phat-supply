@@ -50,12 +50,19 @@ function MaterialThumb({ images, alt, className }: { images: string[]; alt?: str
     );
   }
   return (
-    <ZoomableImage
-      src={src}
-      images={images}
-      alt={alt ?? "Vật tư"}
-      className={cn("shrink-0 rounded-md border object-cover", className)}
-    />
+    <div className="relative inline-flex shrink-0">
+      <ZoomableImage
+        src={src}
+        images={images}
+        alt={alt ?? "Vật tư"}
+        className={cn("shrink-0 rounded-md border object-cover", className)}
+      />
+      {images.length > 1 && (
+        <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
+          +{images.length - 1}
+        </span>
+      )}
+    </div>
   );
 }
 

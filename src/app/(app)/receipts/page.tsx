@@ -131,12 +131,22 @@ export default async function ReceiptsPage({
                   </TableCell>
                   <TableCell className="w-16 text-center">
                     {invoiceImages.length > 0 ? (
-                      <ZoomableImage
-                        src={invoiceImages[0]}
-                        alt="Hóa đơn"
-                        title={`Hóa đơn ${r.code} (1/${invoiceImages.length})`}
-                        className="mx-auto size-9 rounded border object-cover"
-                      />
+                      <div className="flex items-center justify-center">
+                        <div className="relative inline-flex">
+                          <ZoomableImage
+                            src={invoiceImages[0]}
+                            images={invoiceImages}
+                            alt={`Hóa đơn ${r.code}`}
+                            title={`Hóa đơn mua hàng — ${r.code}`}
+                            className="size-10 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
+                          />
+                          {invoiceImages.length > 1 && (
+                            <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
+                              +{invoiceImages.length - 1}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
