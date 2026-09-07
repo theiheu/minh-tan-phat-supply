@@ -108,6 +108,7 @@ export function ReceiptForm({
   }
 
   function removeInvoiceImage(url: string) {
+    if (!window.confirm("Bạn có chắc muốn xóa ảnh hóa đơn này không?")) return;
     setInvoiceImages((prev) => prev.filter((u) => u !== url));
   }
 

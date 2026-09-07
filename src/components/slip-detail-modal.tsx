@@ -182,6 +182,7 @@ export function SlipDetailModal({
 
   function handleInvoiceRemove(urlToRemove: string) {
     if (!detail || detail.type !== "receipt") return;
+    if (!window.confirm("Bạn có chắc muốn xóa ảnh hóa đơn này không?")) return;
     const currentImages = detail.invoiceImages ?? [];
     const nextImages = currentImages.filter((u) => u !== urlToRemove);
     setDetail({ ...detail, invoiceImages: nextImages });

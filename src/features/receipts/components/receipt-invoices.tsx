@@ -55,6 +55,7 @@ export function ReceiptInvoices({
   }
 
   function handleRemove(urlToRemove: string) {
+    if (!window.confirm("Bạn có chắc muốn xóa ảnh hóa đơn này không?")) return;
     const nextImages = images.filter((u) => u !== urlToRemove);
     setImages(nextImages);
 
