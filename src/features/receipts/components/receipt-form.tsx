@@ -225,45 +225,51 @@ export function ReceiptForm({
             Tải ảnh chụp hóa đơn VAT, phiếu giao hàng hoặc biên bản giao nhận từ nhà cung cấp trước khi duyệt nhập kho.
           </p>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {invoiceImages.length > 0 && (
-            <div className="flex flex-wrap gap-2.5">
-              {invoiceImages.map((url, idx) => (
-                <div key={url} className="relative">
-                  <ZoomableImage
-                    src={url}
-                    images={invoiceImages}
-                    alt={`Hóa đơn ${idx + 1}`}
-                    title={`Hóa đơn mua hàng #${idx + 1}`}
-                    className="size-20 rounded-lg border-2 object-cover sm:size-24"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeInvoiceImage(url)}
-                    className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
-                    aria-label="Xóa ảnh này"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              className="hidden"
-              disabled={uploadingInvoices}
-              onChange={handleInvoiceUpload}
-            />
-            <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
-            <span className="text-xs font-semibold">
-              {uploadingInvoices ? "Đang tải ảnh lên…" : "Bấm để thêm ảnh hóa đơn"}
-            </span>
-            <span className="text-[11px] text-muted-foreground">Có thể chọn nhiều ảnh một lúc (PNG, JPEG, WebP)</span>
-          </label>
+        <CardContent>
+          <div className="flex flex-wrap items-start gap-2.5">
+            {invoiceImages.map((url, idx) => (
+              <div key={url} className="relative group">
+                <ZoomableImage
+                  src={url}
+                  images={invoiceImages}
+                  alt={`Hóa đơn ${idx + 1}`}
+                  title={`Hóa đơn mua hàng #${idx + 1}`}
+                  className="size-20 rounded-lg border-2 object-cover sm:size-24"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeInvoiceImage(url)}
+                  className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+                  aria-label="Xóa ảnh này"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ))}
+            <Label className="cursor-pointer">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                asChild
+                disabled={uploadingInvoices}
+                className="flex size-20 flex-col items-center justify-center gap-1 border-dashed p-0 text-[10px] sm:size-24"
+              >
+                <span>
+                  <ImagePlus className="size-5" aria-hidden />
+                  {uploadingInvoices ? "Đang tải…" : "+ Thêm ảnh"}
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+                className="sr-only"
+                disabled={uploadingInvoices}
+                onChange={handleInvoiceUpload}
+              />
+            </Label>
+          </div>
         </CardContent>
       </Card>
 

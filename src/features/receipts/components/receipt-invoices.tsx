@@ -71,92 +71,77 @@ export function ReceiptInvoices({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base">Hóa đơn & Chứng từ mua hàng</CardTitle>
-            {images.length > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {images.length} ảnh
-              </Badge>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {status === "posted"
-              ? "Ảnh chụp hóa đơn VAT, phiếu xuất kho NCC hoặc biên bản giao nhận được lưu kèm phiếu nhập."
-              : "Tải ảnh chụp hóa đơn VAT, phiếu giao hàng từ nhà cung cấp trước khi duyệt nhập kho."}
-          </p>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base">Hóa đơn & Chứng từ mua hàng</CardTitle>
+          {images.length > 0 && (
+            <Badge variant="outline" className="text-xs">
+              {images.length} ảnh
+            </Badge>
+          )}
         </div>
-
-        {isManager && (
-          <Label className="cursor-pointer">
-            <Button variant="outline" size="sm" type="button" asChild disabled={uploading || pending}>
-              <span>
-                <ImagePlus className="size-4" />
-                {uploading || pending ? "Đang tải ảnh…" : images.length === 0 ? "+ Tải ảnh hóa đơn" : "+ Bổ sung ảnh"}
-              </span>
-            </Button>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              className="sr-only"
-              disabled={uploading || pending}
-              onChange={handleUpload}
-            />
-          </Label>
-        )}
+        <p className="text-xs text-muted-foreground">
+          {status === "posted"
+            ? "Ảnh chụp hóa đơn VAT, phiếu xuất kho NCC hoặc biên bản giao nhận được lưu kèm phiếu nhập."
+            : "Tải ảnh chụp hóa đơn VAT, phiếu giao hàng từ nhà cung cấp trước khi duyệt nhập kho."}
+        </p>
       </CardHeader>
 
-      <CardContent className="space-y-3">
-        {images.length > 0 && (
-          <div className="flex flex-wrap gap-2.5">
-            {images.map((url, idx) => (
-              <div key={url} className="relative group">
-                <ZoomableImage
-                  src={url}
-                  images={images}
-                  alt={`Hóa đơn ${idx + 1}`}
-                  title={`Hóa đơn #${idx + 1} (${receiptCode})`}
-                  className="size-20 rounded-lg border-2 object-cover shadow-sm sm:size-24"
-                />
-                {isManager && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemove(url);
-                    }}
-                    disabled={pending}
-                    className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
-                    aria-label="Xóa ảnh này"
-                    title="Xóa ảnh hóa đơn này"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+      <CardContent>
+        <div className="flex flex-wrap items-start gap-2.5">
+          {images.map((url, idx) => (
+            <div key={url} className="relative group">
+              <ZoomableImage
+                src={url}
+                images={images}
+                alt={`Hóa đơn ${idx + 1}`}
+                title={`Hóa đơn #${idx + 1} (${receiptCode})`}
+                className="size-20 rounded-lg border-2 object-cover shadow-sm sm:size-24"
+              />
+              {isManager && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(url);
+                  }}
+                  disabled={pending}
+                  className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
+                  aria-label="Xóa ảnh này"
+                  title="Xóa ảnh hóa đơn này"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+          ))}
 
-        {isManager && (
-          <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              className="hidden"
-              disabled={uploading || pending}
-              onChange={handleUpload}
-            />
-            <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
-            <span className="text-xs font-semibold">
-              {uploading || pending ? "Đang tải ảnh lên…" : images.length === 0 ? "Bấm để tải ảnh hóa đơn" : "Bấm để bổ sung thêm ảnh"}
-            </span>
-            <span className="text-[11px] text-muted-foreground">Có thể chọn nhiều ảnh một lúc (PNG, JPEG, WebP)</span>
-          </label>
-        )}
+          {isManager && (
+            <Label className="cursor-pointer">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                asChild
+                disabled={uploading || pending}
+                className="flex size-20 flex-col items-center justify-center gap-1 border-dashed p-0 text-[10px] sm:size-24"
+              >
+                <span>
+                  <ImagePlus className="size-5" aria-hidden />
+                  {uploading || pending ? "Đang tải…" : "+ Thêm ảnh"}
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+                className="sr-only"
+                disabled={uploading || pending}
+                onChange={handleUpload}
+              />
+            </Label>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -333,9 +334,10 @@ export function SlipDetailModal({
                     </span>
                   </div>
 
-                  {detail.invoiceImages && detail.invoiceImages.length > 0 && (
-                    <div className="flex flex-wrap gap-2.5 pt-0.5">
-                      {detail.invoiceImages.map((url, idx) => (
+                  <div className="flex flex-wrap items-start gap-2.5 pt-0.5">
+                    {detail.invoiceImages &&
+                      detail.invoiceImages.length > 0 &&
+                      detail.invoiceImages.map((url, idx) => (
                         <div key={url} className="relative group">
                           <ZoomableImage
                             src={url}
@@ -361,26 +363,33 @@ export function SlipDetailModal({
                           )}
                         </div>
                       ))}
-                    </div>
-                  )}
 
-                  {detail.type === "receipt" && isManager && (
-                    <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-3 text-center transition-colors hover:bg-accent">
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        multiple
-                        className="hidden"
-                        disabled={uploadingInvoices || pending}
-                        onChange={handleInvoiceUpload}
-                      />
-                      <ImagePlus className="size-5 text-muted-foreground" aria-hidden />
-                      <span className="text-xs font-semibold">
-                        {uploadingInvoices ? "Đang tải ảnh lên…" : (detail.invoiceImages?.length ?? 0) === 0 ? "Bấm để tải ảnh hóa đơn / chứng từ" : "Bấm để bổ sung thêm ảnh hóa đơn"}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">Có thể chọn nhiều ảnh một lúc (PNG, JPEG, WebP)</span>
-                    </label>
-                  )}
+                    {detail.type === "receipt" && isManager && (
+                      <Label className="cursor-pointer">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          disabled={uploadingInvoices || pending}
+                          className="flex size-20 flex-col items-center justify-center gap-1 border-dashed p-0 text-[10px] sm:size-24"
+                        >
+                          <span>
+                            <ImagePlus className="size-5" aria-hidden />
+                            {uploadingInvoices ? "Đang tải…" : "+ Thêm ảnh"}
+                          </span>
+                        </Button>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          multiple
+                          className="sr-only"
+                          disabled={uploadingInvoices || pending}
+                          onChange={handleInvoiceUpload}
+                        />
+                      </Label>
+                    )}
+                  </div>
                 </div>
               )}
 
