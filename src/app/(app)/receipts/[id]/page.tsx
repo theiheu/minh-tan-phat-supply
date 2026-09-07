@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Milestone } from "lucide-react";
+import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,13 +15,44 @@ import {
 import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
-import { formatDate, formatVnd } from "@/lib/format";
+import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { ReceiptInvoices } from "@/features/receipts/components/receipt-invoices";
 
 export const dynamic = "force-dynamic";
+
+/** Màu chấm trên timeline Tiến trình — khớp ý nghĩa trạng thái của phiếu. */
+const EVENT_DOT_CLASS: Record<string, string> = {
+  create: "bg-gray-400 dark:bg-gray-500",
+  update: "bg-amber-400 dark:bg-amber-500",
+  update_invoices: "bg-indigo-400 dark:bg-indigo-500",
+  approve: "bg-sky-500",
+  post: "bg-emerald-500",
+  cancel: "bg-red-500",
+  other: "bg-gray-400 dark:bg-gray-500",
+};
+
+/** Màu chữ nhãn mốc — tô theo trạng thái tương ứng. */
+const EVENT_LABEL_CLASS: Record<string, string> = {
+  create: "text-gray-700 dark:text-gray-300",
+  update: "text-amber-700 dark:text-amber-300",
+  update_invoices: "text-indigo-700 dark:text-indigo-300",
+  approve: "text-sky-700 dark:text-sky-300",
+  post: "text-emerald-700 dark:text-emerald-300",
+  cancel: "text-red-700 dark:text-red-300",
+  other: "text-gray-700 dark:text-gray-300",
+};
+
+const AUDIT_EVENT_KEY: Record<string, string> = {
+  "receipt.create": "create",
+  "receipt.update": "update",
+  "receipt.update_invoices": "update_invoices",
+  "receipt.approve": "approve",
+  "receipt.post": "post",
+  "receipt.cancel": "cancel",
+};
 
 const AUDIT_LABELS: Record<string, string> = {
   "receipt.create": "Tạo phiếu đặt hàng",
@@ -79,6 +112,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
     .eq("entity_id", id)
     .order("created_at", { ascending: true });
   const events = (audit ?? []).map((a) => ({
+    key: AUDIT_EVENT_KEY[a.action] ?? "other",
     label: AUDIT_LABELS[a.action] ?? a.action,
     at: a.created_at,
     by: a.actor?.name,
@@ -250,20 +284,48 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
       {events.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Tiến trình</CardTitle>
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                <Milestone className="size-4" aria-hidden />
+              </span>
+              <CardTitle className="text-base">Tiến trình</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
-            <ol className="space-y-2">
-              {events.map((t, i) => (
-                <li key={i} className="text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="size-2 shrink-0 rounded-full bg-primary" />
-                    <span className="w-40 font-medium">{t.label}</span>
-                    <span className="text-muted-foreground">{t.at ? formatDate(t.at) : "—"}</span>
-                    {t.by ? <span className="text-muted-foreground">· {t.by}</span> : null}
-                  </div>
-                </li>
-              ))}
+            <ol>
+              {events.map((t, i) => {
+                const isLast = i === events.length - 1;
+                return (
+                  <li key={i} className="flex gap-3">
+                    {/* Cột mốc: chấm màu + đường nối dọc */}
+                    <div aria-hidden className="flex flex-col items-center self-stretch">
+                      <span
+                        className={cn(
+                          "mt-[5px] size-2.5 shrink-0 rounded-full",
+                          EVENT_DOT_CLASS[t.key] ?? EVENT_DOT_CLASS.other,
+                        )}
+                      />
+                      {!isLast ? <span className="w-px flex-1 rounded-full bg-border" /> : null}
+                    </div>
+                    <div className={cn("min-w-0 flex-1", isLast ? "pb-0.5" : "pb-6")}>
+                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm">
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            EVENT_LABEL_CLASS[t.key] ?? EVENT_LABEL_CLASS.other,
+                          )}
+                        >
+                          {t.label}
+                        </span>
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {t.at ? formatDateTime(t.at) : "—"}
+                        </span>
+                        {t.by ? <span className="text-xs text-muted-foreground">· {t.by}</span> : null}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           </CardContent>
         </Card>
