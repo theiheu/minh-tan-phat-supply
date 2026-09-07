@@ -79,11 +79,11 @@ function CreateAccountForm({ zones, currentRole }: { zones: ZoneOption[]; curren
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="cu-name">Tên</Label>
             <Input id="cu-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
           </div>
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="cu-username">Tên đăng nhập</Label>
             <Input
               id="cu-username"
@@ -98,7 +98,7 @@ function CreateAccountForm({ zones, currentRole }: { zones: ZoneOption[]; curren
               placeholder="nguyen.van.a"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="cu-password">Mật khẩu</Label>
             <Input
               id="cu-password"
@@ -111,7 +111,7 @@ function CreateAccountForm({ zones, currentRole }: { zones: ZoneOption[]; curren
               placeholder="Tối thiểu 8 ký tự"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label>Vai trò</Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="w-full">
@@ -124,7 +124,7 @@ function CreateAccountForm({ zones, currentRole }: { zones: ZoneOption[]; curren
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label>Khu vực</Label>
             <Select value={zoneId ?? "none"} onValueChange={(v) => setZoneId(v === "none" ? null : v)}>
               <SelectTrigger className="w-full">

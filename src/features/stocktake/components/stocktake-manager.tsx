@@ -104,7 +104,7 @@ export function StocktakeManager({
         <CardHeader><CardTitle className="text-base">Tạo phiếu kiểm kê</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={create} className="flex flex-wrap items-end gap-3">
-            <div className="min-w-56 flex-1 space-y-1.5 sm:max-w-sm">
+            <div className="flex min-w-56 flex-1 flex-col gap-1.5 sm:max-w-sm">
               <Label htmlFor="stocktake-name">
                 Tên phiếu <span className="text-destructive">*</span>
               </Label>
@@ -117,7 +117,7 @@ export function StocktakeManager({
                 disabled={pending}
               />
             </div>
-            <div className="w-full space-y-1.5 sm:w-56">
+            <div className="flex w-full flex-col gap-1.5 sm:w-56">
               <Label htmlFor="stocktake-location">Vị trí kho</Label>
               <Select value={locationId} onValueChange={setLocationId} disabled={pending}>
                 <SelectTrigger id="stocktake-location" className="w-full"><SelectValue placeholder="Chọn kho" /></SelectTrigger>
