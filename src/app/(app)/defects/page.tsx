@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { DefectDialog } from "@/features/defects/components/defect-dialog";
 import { ExchangesList } from "@/features/exchanges/components/exchanges-list";
 import {
   DefectsList,
   type DefectItemRow,
   type DefectListRow,
 } from "@/features/defects/components/defects-list";
+import { fetchCompositeVariantIds } from "@/features/products/data";
 import { getCurrentProfile } from "@/lib/auth";
 import { dayRange } from "@/lib/format";
 import { DEFECT_STATUS } from "@/lib/labels";
@@ -47,11 +49,33 @@ export default async function DefectsPage({
 
   const supabase = await createClient();
 
-  const { data: locations } = await supabase
-    .from("stock_locations")
-    .select("id, name")
-    .eq("is_active", true)
-    .order("code");
+  const [{ data: locations }, mainLocations, { data: allVariants }, compositeIds] = await Promise.all([
+    supabase
+      .from("stock_locations")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("code"),
+    supabase
+      .from("stock_locations")
+      .select("id, code, name")
+      .eq("type", "main")
+      .eq("is_active", true)
+      .order("code"),
+    supabase.from("variants").select("id, attributes, unit, products(name)").order("id"),
+    fetchCompositeVariantIds(supabase),
+  ]);
+
+  const main = mainLocations.data ?? [];
+  const sourceLocationId =
+    main.find((l) => l.code === "KHO_CHINH")?.id ?? main[0]?.id ?? "";
+
+  const defectVariantOptions = (allVariants ?? [])
+    .filter((v) => !compositeIds.has(v.id))
+    .map((v) => ({
+      id: v.id,
+      name: v.products?.name ?? "Vật tư",
+      detail: variantLabelFor(v),
+    }));
 
   // ---- Tab: Tập kết sửa (manager) — gom vật tư hỏng staging nhiều HONG → 1 phiếu SC ----
   if (showRepairBatch) {
@@ -124,7 +148,12 @@ export default async function DefectsPage({
 
     return (
       <div className="space-y-4">
-        <HeaderTabs view={view} isManager={isManager} />
+        <HeaderTabs
+          view={view}
+          isManager={isManager}
+          sourceLocationId={sourceLocationId}
+          variants={defectVariantOptions}
+        />
         <RepairBatchTab notes={batchNotes} items={batchItems} />
       </div>
     );
@@ -165,7 +194,12 @@ export default async function DefectsPage({
     }));
     return (
       <div className="space-y-4">
-        <HeaderTabs view={view} isManager={isManager} />
+        <HeaderTabs
+          view={view}
+          isManager={isManager}
+          sourceLocationId={sourceLocationId}
+          variants={defectVariantOptions}
+        />
         <p className="text-sm text-muted-foreground">
           Phiếu Đổi Mới: đổi vật tư hỏng (đã có ảnh/chứng cứ ở phiếu HONG) lấy vật tư mới.
         </p>
@@ -241,7 +275,12 @@ export default async function DefectsPage({
 
   return (
     <div className="space-y-4">
-      <HeaderTabs view={view} isManager={isManager} />
+      <HeaderTabs
+        view={view}
+        isManager={isManager}
+        sourceLocationId={sourceLocationId}
+        variants={defectVariantOptions}
+      />
       <ListFilters
         basePath="/defects"
         searchPlaceholder="Tìm mã phiếu hỏng…"
@@ -286,7 +325,17 @@ function variantLabelFor(variants: {
 }
 
 /** Header tabs: Phiếu hỏng | Phiếu đổi mới | Tập kết sửa (+ nút Ghi nhận hỏng). */
-function HeaderTabs({ view, isManager }: { view: string; isManager: boolean }) {
+function HeaderTabs({
+  view,
+  isManager,
+  sourceLocationId,
+  variants,
+}: {
+  view: string;
+  isManager: boolean;
+  sourceLocationId: string;
+  variants: { id: string; name: string; detail: string }[];
+}) {
   const tabs = [
     { href: "/defects", label: "Phiếu hỏng", active: view === "defect" },
     {
@@ -317,20 +366,11 @@ function HeaderTabs({ view, isManager }: { view: string; isManager: boolean }) {
           </Link>
         ))}
       </div>
-      {/* Desktop: nút cùng hàng bên phải */}
-      <Link
-        href="/defects/new"
-        className="hidden shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 lg:inline-flex"
-      >
-        + Ghi nhận hỏng
-      </Link>
-      {/* Mobile: nút xuống hàng riêng full-width */}
-      <Link
-        href="/defects/new"
-        className="inline-flex h-9 w-full shrink-0 items-center justify-center gap-1 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 lg:hidden"
-      >
-        + Ghi nhận hỏng
-      </Link>
+      <DefectDialog
+        sourceLocationId={sourceLocationId}
+        isManager={isManager}
+        variants={variants}
+      />
     </div>
   );
 }

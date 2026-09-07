@@ -27,11 +27,15 @@ export function RequisitionForm({
   defaultZoneId = null,
   currentUser = null,
   accounts = [],
+  onSuccess,
+  onCancel,
 }: {
   zones: Zone[];
   defaultZoneId?: string | null;
   currentUser?: { id: string; role: string; name: string | null } | null;
   accounts?: { id: string; name: string | null; username: string; zone_id: string | null }[];
+  onSuccess?: (id: string) => void;
+  onCancel?: () => void;
 }) {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
@@ -119,7 +123,11 @@ export function RequisitionForm({
         if (submitAfterCreate) await submitRequisition(id);
         clear();
         toast.success(submitAfterCreate ? "Đã gửi phiếu yêu cầu" : "Đã lưu nháp");
-        router.push(`/requisitions/${id}`);
+        if (onSuccess) {
+          onSuccess(id);
+        } else {
+          router.push(`/requisitions/${id}`);
+        }
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Tạo phiếu thất bại");
@@ -129,17 +137,17 @@ export function RequisitionForm({
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader>
-          <CardTitle className="text-base">Thông tin phiếu</CardTitle>
+          <CardTitle className="text-base font-semibold">Thông tin phiếu</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {canChooseRequester && (
             <div className="space-y-2 sm:col-span-2">
               <div className="space-y-1.5">
-                <Label>Người yêu cầu</Label>
+                <Label className="font-medium">Người yêu cầu</Label>
                 {!choosingOther ? (
-                  <div className="flex items-center justify-between gap-2 rounded-lg border p-3">
+                  <div className="flex items-center justify-between gap-2 rounded-lg border-2 border-border/80 bg-muted/20 p-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{requesterName || currentUser?.name || "—"}</div>
                       <div className="text-xs text-muted-foreground">Tài khoản của bạn (mặc định)</div>
@@ -186,7 +194,7 @@ export function RequisitionForm({
             </div>
           )}
           <div className="space-y-1.5">
-            <Label>Khu vực</Label>
+            <Label className="font-medium">Khu vực</Label>
             <Select value={zoneId} onValueChange={setZoneId}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Chọn khu vực" />
@@ -199,15 +207,15 @@ export function RequisitionForm({
             </Select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label>Mục đích</Label>
+            <Label className="font-medium">Mục đích</Label>
             <Textarea value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Mục đích sử dụng vật tư…" rows={3} />
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader>
-          <CardTitle className="text-base">Vật tư yêu cầu</CardTitle>
+          <CardTitle className="text-base font-semibold">Vật tư yêu cầu</CardTitle>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
@@ -275,6 +283,11 @@ export function RequisitionForm({
       </Card>
 
       <div className="flex justify-end gap-2">
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={pending}>
+            Hủy
+          </Button>
+        )}
         <Button variant="outline" onClick={() => run(false)} disabled={pending}>
           Lưu nháp
         </Button>

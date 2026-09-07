@@ -108,7 +108,7 @@ export function ComboboxInput({
   }, [open]);
 
   return (
-    <div ref={wrapRef} className="relative">
+    <div ref={wrapRef} className="relative w-full">
       <Input
         value={text}
         placeholder={placeholder}
@@ -123,15 +123,15 @@ export function ComboboxInput({
         onFocus={() => setOpen(true)}
         onBlur={revertQuery}
         onKeyDown={handleKeyDown}
-        className={cn("pr-8", inputClassName)}
+        className={cn("pr-8 text-sm", inputClassName)}
       />
       <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 opacity-50" />
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-full w-max max-w-[min(90vw,560px)] overflow-hidden rounded-lg border-2 border-border bg-popover text-popover-foreground shadow-xl">
           {visible.length === 0 ? (
-            <p className="px-3 py-4 text-center text-sm">{emptyText}</p>
+            <p className="px-3 py-4 text-center text-sm text-muted-foreground">{emptyText}</p>
           ) : (
-            <ul role="listbox" className="max-h-72 overflow-y-auto p-1">
+            <ul role="listbox" className="max-h-72 overflow-y-auto p-1.5 space-y-0.5">
               {visible.map((o) => {
                 const active = o.value === value;
                 return (
@@ -141,21 +141,32 @@ export function ComboboxInput({
                       role="option"
                       aria-selected={active}
                       className={cn(
-                        "flex w-full items-center gap-1.5 rounded-sm px-1.5 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden",
+                        "flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-hidden",
+                        active && "bg-accent/70 font-medium",
                       )}
                       // Giữ focus trong ô nhập để không kích hoạt blur/revert trước khi chọn.
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => pick(o)}
                     >
-                      {active ? <Check className="size-4 shrink-0" aria-hidden /> : null}
+                      {active ? (
+                        <Check className="size-4 shrink-0 text-primary mt-0.5" aria-hidden />
+                      ) : (
+                        <div className="size-4 shrink-0" />
+                      )}
                       <span className="flex min-w-0 flex-1 flex-col items-start">
-                        <span className="w-full truncate font-medium">{o.label}</span>
+                        <span className="w-full font-medium leading-snug break-words text-foreground">
+                          {o.label}
+                        </span>
                         {o.detail ? (
-                          <span className="w-full truncate text-xs text-muted-foreground">{o.detail}</span>
+                          <span className="w-full text-xs text-muted-foreground mt-0.5 break-words">
+                            {o.detail}
+                          </span>
                         ) : null}
                       </span>
                       {o.hint ? (
-                        <span className="ml-auto shrink-0 pl-2 text-xs text-muted-foreground">{o.hint}</span>
+                        <span className="ml-auto shrink-0 pl-2 text-xs text-muted-foreground font-mono">
+                          {o.hint}
+                        </span>
                       ) : null}
                     </button>
                   </li>

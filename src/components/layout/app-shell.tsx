@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CartDrawer } from "@/features/products/components/cart-drawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SlipDetailModal } from "@/components/slip-detail-modal";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, MAIN_NAV, filterByRole } from "@/lib/nav";
 import { roleLabel } from "@/lib/labels";
@@ -18,6 +19,8 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
   const pathname = usePathname();
   const mobileDrawerOpen = useUIStore((s) => s.mobileDrawerOpen);
   const setMobileDrawerOpen = useUIStore((s) => s.setMobileDrawerOpen);
+  const slipModal = useUIStore((s) => s.slipModal);
+  const closeSlipModal = useUIStore((s) => s.closeSlipModal);
   const items = filterByRole([...MAIN_NAV, ...ADMIN_NAV], profile.role);
 
   return (
@@ -29,6 +32,11 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
       </div>
       <MobileNav profile={profile} />
       <CartDrawer />
+      <SlipDetailModal
+        entityType={slipModal?.type ?? null}
+        entityId={slipModal?.id ?? null}
+        onClose={closeSlipModal}
+      />
       <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <SheetContent side="left" className="w-72 gap-0 p-0">
           <SheetHeader className="border-b">

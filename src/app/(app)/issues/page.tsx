@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
@@ -10,9 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { IssueDialog } from "@/features/issues/components/issue-dialog";
+import { SlipCodeButton } from "@/components/slip-code-button";
 import { requireManager } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
-import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant } from "@/lib/labels";
+import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 type IssueStatus = "draft" | "posted" | "cancelled";
@@ -45,6 +46,23 @@ export default async function IssuesPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
+
+  const [{ data: zones }, { data: customers }, { data: variants }] = await Promise.all([
+    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("customers").select("id, name").is("deleted_at", null).order("name"),
+    supabase
+      .from("variants")
+      .select("id, attributes, unit, is_trackable_lot, price, products(name)")
+      .order("id"),
+  ]);
+
+  const variantOptions = (variants ?? []).map((v) => ({
+    id: v.id,
+    name: v.products?.name ?? "Vật tư",
+    detail: variantLabel(v.attributes, v.unit),
+    isTrackableLot: v.is_trackable_lot,
+    price: v.price,
+  }));
 
   let query = supabase
     .from("issues")
@@ -86,16 +104,15 @@ export default async function IssuesPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Xuất vật tư cho khu nội bộ hoặc bán cho khách — khi xác nhận xuất sẽ trừ tồn kho.
         </p>
-        <Link
-          href="/issues/new"
-          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          + Tạo phiếu xuất
-        </Link>
+        <IssueDialog
+          zones={zones ?? []}
+          customers={customers ?? []}
+          variants={variantOptions}
+        />
       </div>
 
       <ListFilters
@@ -105,7 +122,7 @@ export default async function IssuesPage({
         showDateRange
         filters={[
           { param: "status", label: "Trạng thái", options: statusOptions },
-          { param: "type", label: "Loại", options: typeOptions },
+          { param: "type", label: "Kiểu đích", options: typeOptions },
         ]}
         initial={{ q, status: status ?? "", type: type ?? "", from: from ?? "", to: to ?? "" }}
       />
@@ -114,60 +131,52 @@ export default async function IssuesPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Mã phiếu</TableHead>
-              <TableHead>Loại</TableHead>
-              <TableHead>Bên nhận</TableHead>
+              <TableHead>Mã</TableHead>
+              <TableHead>Đích xuất</TableHead>
+              <TableHead>Tổng SL</TableHead>
+              <TableHead>Thành tiền</TableHead>
+              <TableHead>Người lập</TableHead>
               <TableHead>Ngày</TableHead>
-              <TableHead className="text-right">Tổng SL</TableHead>
-              <TableHead className="text-right">Tổng tiền</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
             {(data ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  Chưa có phiếu xuất kho nào.
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  Chưa có phiếu xuất nào.
                 </TableCell>
               </TableRow>
             )}
             {(data ?? []).map((r) => {
-              const isCustomer = r.destination_type === "customer";
-              const total = totals.get(r.id);
+              const t = totals.get(r.id);
+              const destLabel =
+                r.destination_type === "zone"
+                  ? (r.zone?.name ?? "Khu nội bộ")
+                  : (r.customer?.name ?? "Khách hàng");
               return (
                 <TableRow key={r.id}>
                   <TableCell>
-                    <Link href={`/issues/${r.id}`} className="font-mono text-sm text-primary hover:underline">
-                      {r.code}
-                    </Link>
+                    <SlipCodeButton type="issue" id={r.id} code={r.code} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {ISSUE_DESTINATION[r.destination_type] ?? r.destination_type}
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span>{destLabel}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {ISSUE_DESTINATION[r.destination_type] ?? r.destination_type}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {isCustomer ? (r.customer?.name ?? "—") : (r.zone?.name ?? "—")}
+                  <TableCell className="tabular-nums">{t?.quantity ?? 0}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {r.destination_type === "customer" ? formatVnd(t?.amount ?? 0) : "—"}
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{r.creator?.name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{total?.quantity ?? 0}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {isCustomer ? formatVnd(total?.amount ?? 0) : "—"}
-                  </TableCell>
                   <TableCell>
                     <Badge variant={statusBadgeVariant(r.status)}>
                       {ISSUE_STATUS[r.status] ?? r.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end">
-                      <Link
-                        href={`/api/issues/${r.id}/pdf`}
-                        target="_blank"
-                        className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent"
-                      >
-                        In
-                      </Link>
-                    </div>
                   </TableCell>
                 </TableRow>
               );

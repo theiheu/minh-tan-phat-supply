@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -10,9 +9,13 @@ import {
 } from "@/components/ui/table";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { SlipCodeButton } from "@/components/slip-code-button";
+import { RequisitionDialog } from "@/features/requisitions/components/requisition-dialog";
+import { getCurrentProfile } from "@/lib/auth";
+import { dayRange, formatDate } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
-import { dayRange, formatDate } from "@/lib/format";
+import { isPrivileged } from "@/lib/types";
 
 const PAGE_SIZE = 20;
 type ReqStatus = "draft" | "pending" | "approved" | "issued" | "received" | "rejected" | "cancelled";
@@ -34,8 +37,14 @@ export default async function RequisitionsPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const supabase = await createClient();
+  const profile = await getCurrentProfile();
 
-  const { data: zones } = await supabase.from("zones").select("id, name").order("name");
+  const [{ data: zones }, { data: accounts }] = await Promise.all([
+    supabase.from("zones").select("*").is("deleted_at", null).order("name"),
+    isPrivileged(profile?.role)
+      ? supabase.rpc("list_requester_accounts")
+      : Promise.resolve({ data: null }),
+  ]);
 
   let query = supabase
     .from("requisitions")
@@ -60,6 +69,18 @@ export default async function RequisitionsPage({
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Danh sách phiếu yêu cầu vật tư từ các khu vực hoạt động.
+        </p>
+        <RequisitionDialog
+          zones={zones ?? []}
+          defaultZoneId={profile?.zone_id ?? null}
+          currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
+          accounts={accounts ?? []}
+        />
+      </div>
+
       <ListFilters
         basePath="/requisitions"
         searchPlaceholder="Tìm mã phiếu, mục đích…"
@@ -96,9 +117,7 @@ export default async function RequisitionsPage({
             {(data ?? []).map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  <Link href={`/requisitions/${r.id}`} className="font-mono text-sm text-primary hover:underline">
-                    {r.code}
-                  </Link>
+                  <SlipCodeButton type="requisition" id={r.id} code={r.code} />
                 </TableCell>
                 <TableCell>{r.requester?.name ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{r.zone?.name ?? "—"}</TableCell>

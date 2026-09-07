@@ -11,8 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
+import { ReceiptDialog } from "@/features/receipts/components/receipt-dialog";
+import { SlipCodeButton } from "@/components/slip-code-button";
+import { fetchCompositeVariantIds } from "@/features/products/data";
 import { dayRange, formatDate } from "@/lib/format";
-import { RECEIPT_STATUS, statusBadgeVariant } from "@/lib/labels";
+import { RECEIPT_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { ZoomableImage } from "@/components/image-lightbox";
 
@@ -37,11 +40,27 @@ export default async function ReceiptsPage({
 
   const supabase = await createClient();
 
-  const { data: suppliers } = await supabase
-    .from("suppliers")
-    .select("id, name")
-    .is("deleted_at", null)
-    .order("name");
+  const [{ data: suppliers }, { data: variants }, compositeIds] = await Promise.all([
+    supabase
+      .from("suppliers")
+      .select("id, name")
+      .is("deleted_at", null)
+      .order("name"),
+    supabase
+      .from("variants")
+      .select("id, attributes, unit, is_trackable_lot, products(name)")
+      .order("id"),
+    fetchCompositeVariantIds(supabase),
+  ]);
+
+  const variantOptions = (variants ?? [])
+    .filter((v) => !compositeIds.has(v.id))
+    .map((v) => ({
+      id: v.id,
+      name: v.products?.name ?? "Vật tư",
+      detail: variantLabel(v.attributes, v.unit),
+      isTrackableLot: v.is_trackable_lot,
+    }));
 
   let query = supabase
     .from("receipts")
@@ -63,16 +82,14 @@ export default async function ReceiptsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Lập phiếu đặt hàng / nhập kho từ nhà cung cấp — khi hàng về ghi nhận sẽ cộng tồn kho và tự động cấp phát các phiếu yêu cầu đang chờ.
         </p>
-        <Link
-          href="/receipts/new"
-          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          + Tạo phiếu đặt hàng / nhập kho
-        </Link>
+        <ReceiptDialog
+          suppliers={suppliers ?? []}
+          variants={variantOptions}
+        />
       </div>
 
       <ListFilters
@@ -112,29 +129,17 @@ export default async function ReceiptsPage({
               const invoiceImages = r.invoice_images ?? [];
               return (
                 <TableRow key={r.id}>
-                  <TableCell className="w-28 font-mono text-sm">
-                    <Link href={`/receipts/${r.id}`} className="text-primary hover:underline">
-                      {r.code}
-                    </Link>
+                  <TableCell className="w-28">
+                    <SlipCodeButton type="receipt" id={r.id} code={r.code} />
                   </TableCell>
                   <TableCell className="w-16 text-center">
                     {invoiceImages.length > 0 ? (
-                      <div className="flex items-center justify-center">
-                        <div className="relative inline-flex">
-                          <ZoomableImage
-                            src={invoiceImages[0]}
-                            images={invoiceImages}
-                            alt={`Hóa đơn ${r.code}`}
-                            title={`Hóa đơn mua hàng — ${r.code}`}
-                            className="size-10 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
-                          />
-                          {invoiceImages.length > 1 && (
-                            <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
-                              +{invoiceImages.length - 1}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      <ZoomableImage
+                        src={invoiceImages[0]}
+                        alt="Hóa đơn"
+                        title={`Hóa đơn ${r.code} (1/${invoiceImages.length})`}
+                        className="mx-auto size-9 rounded border object-cover"
+                      />
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ISSUE_DESTINATION } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { createIssue } from "../actions";
 
 interface ItemDraft {
@@ -43,10 +44,14 @@ export function IssueForm({
   zones,
   customers,
   variants,
+  onSuccess,
+  onCancel,
 }: {
   zones: { id: string; name: string }[];
   customers: { id: string; name: string }[];
   variants: VariantOption[];
+  onSuccess?: (id: string) => void;
+  onCancel?: () => void;
 }) {
   const router = useRouter();
   const [destinationType, setDestinationType] = useState<DestinationType>("zone");
@@ -123,7 +128,11 @@ export function IssueForm({
           })),
         });
         toast.success("Đã tạo phiếu xuất (nháp)");
-        router.push(`/issues/${id}`);
+        if (onSuccess) {
+          onSuccess(id);
+        } else {
+          router.push(`/issues/${id}`);
+        }
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
@@ -133,13 +142,13 @@ export function IssueForm({
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader>
-          <CardTitle className="text-base">Thông tin phiếu</CardTitle>
+          <CardTitle className="text-base font-semibold">Thông tin phiếu xuất</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label>Kiểu đích</Label>
+            <Label className="font-medium">Kiểu đích</Label>
             <Select
               value={destinationType}
               onValueChange={(v) => {
@@ -168,7 +177,7 @@ export function IssueForm({
 
           {destinationType === "zone" ? (
             <div className="space-y-1.5">
-              <Label>Khu nhận</Label>
+              <Label className="font-medium">Khu nhận</Label>
               <Select value={zoneId} onValueChange={setZoneId}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Chọn khu nhận" />
@@ -184,7 +193,7 @@ export function IssueForm({
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label>Khách hàng</Label>
+              <Label className="font-medium">Khách hàng</Label>
               <ComboboxInput
                 value={customerId}
                 onChange={(v) => setCustomerId(v === "" ? "" : v)}
@@ -210,7 +219,7 @@ export function IssueForm({
           {isSale && (
             <>
               <div className="space-y-1.5">
-                <Label>Biển số xe</Label>
+                <Label className="font-medium">Biển số xe</Label>
                 <Input
                   value={vehiclePlate}
                   onChange={(e) => setVehiclePlate(e.target.value)}
@@ -218,7 +227,7 @@ export function IssueForm({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Người vận chuyển</Label>
+                <Label className="font-medium">Người vận chuyển</Label>
                 <Input
                   value={driverName}
                   onChange={(e) => setDriverName(e.target.value)}
@@ -229,7 +238,7 @@ export function IssueForm({
           )}
 
           <div className="space-y-1.5 sm:col-span-2">
-            <Label>Ghi chú</Label>
+            <Label className="font-medium">Ghi chú</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -240,29 +249,30 @@ export function IssueForm({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Vật tư xuất</CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])}>
-            + Thêm dòng
+          <CardTitle className="text-base font-semibold">Vật tư xuất</CardTitle>
+          <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])} className="h-9 gap-1.5 px-3 text-xs font-medium">
+            <Plus className="size-3.5" aria-hidden />
+            Thêm dòng
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
           {items.map((it, i) => (
-            <div key={i} className="relative rounded-lg border bg-muted/30 p-2">
+            <div key={i} className="relative rounded-xl border-2 border-border/80 bg-muted/30 p-3">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                className="absolute right-2 top-2 z-10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
                 aria-label="Xóa dòng"
               >
                 <Trash2 className="size-4" />
               </Button>
-              <div className="grid grid-cols-1 gap-2 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
-                <div className="space-y-1 sm:col-span-2 lg:col-span-5">
-                  <Label className="text-xs">Vật tư</Label>
+              <div className="grid grid-cols-1 gap-2.5 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
+                <div className={cn("space-y-1 sm:col-span-2", isSale ? "lg:col-span-6" : "lg:col-span-8")}>
+                  <Label className="text-xs font-semibold">Vật tư</Label>
                   <ComboboxInput
                     value={it.variantId}
                     onChange={(v) => onPickVariant(i, v)}
@@ -271,8 +281,8 @@ export function IssueForm({
                     emptyText="Không tìm thấy vật tư."
                   />
                 </div>
-                <div className="space-y-1 lg:col-span-2">
-                  <Label className="text-xs">Số lượng</Label>
+                <div className={cn("space-y-1", isSale ? "lg:col-span-3" : "lg:col-span-4")}>
+                  <Label className="text-xs font-semibold">Số lượng</Label>
                   <Input
                     type="number"
                     min="1"
@@ -281,8 +291,8 @@ export function IssueForm({
                   />
                 </div>
                 {isSale && (
-                  <div className="space-y-1 lg:col-span-2">
-                    <Label className="text-xs">Đơn giá</Label>
+                  <div className="space-y-1 lg:col-span-3">
+                    <Label className="text-xs font-semibold">Đơn giá</Label>
                     <Input
                       type="number"
                       min="0"
@@ -299,6 +309,11 @@ export function IssueForm({
       </Card>
 
       <div className="flex justify-end gap-2">
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={pending}>
+            Hủy
+          </Button>
+        )}
         <Button onClick={run} disabled={pending}>
           {pending ? "Đang xử lý…" : "Tạo phiếu xuất"}
         </Button>

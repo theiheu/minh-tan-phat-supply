@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { ImagePlus, Trash2, X } from "lucide-react";
+import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { ComboboxInput } from "@/components/combobox-input";
 import { createReceipt, postReceipt, updateReceipt } from "../actions";
 import { uploadReceiptInvoiceImage } from "../upload";
 import { ZoomableImage } from "@/components/image-lightbox";
+import { cn } from "@/lib/utils";
 
 export interface ItemDraft {
   variantId: string;
@@ -42,6 +43,8 @@ export function ReceiptForm({
   initialNotes = "",
   initialInvoiceImages = [],
   initialItems,
+  onSuccess,
+  onCancel,
 }: {
   suppliers: { id: string; name: string }[];
   variants: VariantOption[];
@@ -52,6 +55,8 @@ export function ReceiptForm({
   initialNotes?: string;
   initialInvoiceImages?: string[];
   initialItems?: ItemDraft[];
+  onSuccess?: (id: string) => void;
+  onCancel?: () => void;
 }) {
   const router = useRouter();
   const isEditing = Boolean(receiptId);
@@ -139,7 +144,11 @@ export function ReceiptForm({
               ? `Đã duyệt nhập kho thành công (tự động cấp phát ${linked.length} phiếu yêu cầu)`
               : "Đã duyệt nhập kho thành công",
           );
-          router.push(`/receipts/${targetId}`);
+          if (onSuccess) {
+            onSuccess(targetId);
+          } else {
+            router.push(`/receipts/${targetId}`);
+          }
         } else {
           toast.success(
             isEditing
@@ -148,7 +157,11 @@ export function ReceiptForm({
                 : "Đã lưu cập nhật phiếu đặt hàng"
               : "Đã lưu phiếu đặt hàng (chờ duyệt)",
           );
-          router.push(targetId ? `/receipts/${targetId}` : "/receipts");
+          if (onSuccess && targetId) {
+            onSuccess(targetId);
+          } else {
+            router.push(targetId ? `/receipts/${targetId}` : "/receipts");
+          }
         }
         router.refresh();
       } catch (err) {
@@ -159,9 +172,9 @@ export function ReceiptForm({
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader>
-          <CardTitle className="text-base">
+          <CardTitle className="text-base font-semibold">
             {isEditing
               ? isApproved
                 ? `Kiểm đếm & Đối chiếu hàng về (${receiptCode ?? ""})`
@@ -170,8 +183,8 @@ export function ReceiptForm({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="max-w-sm space-y-1.5">
-            <Label>Nhà cung cấp</Label>
+          <div className="max-w-md space-y-1.5">
+            <Label className="font-medium">Nhà cung cấp</Label>
             <ComboboxInput
               value={supplierId ?? ""}
               onChange={(v) => setSupplierId(v === "" ? null : v)}
@@ -192,8 +205,8 @@ export function ReceiptForm({
               (mở tab mới, không mất phiếu đang nhập).
             </p>
           </div>
-          <div className="max-w-sm space-y-1.5 pt-3">
-            <Label>Ghi chú</Label>
+          <div className="max-w-md space-y-1.5 pt-3">
+            <Label className="font-medium">Ghi chú</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -204,19 +217,19 @@ export function ReceiptForm({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base">Hóa đơn & Chứng từ mua hàng</CardTitle>
+            <CardTitle className="text-base font-semibold">Hóa đơn & Chứng từ mua hàng</CardTitle>
             <p className="text-xs text-muted-foreground">
               Tải ảnh chụp hóa đơn VAT, phiếu giao hàng hoặc biên bản giao nhận từ nhà cung cấp trước khi duyệt nhập kho.
             </p>
           </div>
           <Label className="cursor-pointer">
-            <Button variant="outline" size="sm" type="button" asChild disabled={uploadingInvoices}>
+            <Button variant="outline" size="sm" type="button" asChild disabled={uploadingInvoices} className="h-9 gap-1.5 text-xs">
               <span>
                 <ImagePlus className="size-4" />
-                {uploadingInvoices ? "Đang tải ảnh…" : "+ Tải ảnh hóa đơn"}
+                {uploadingInvoices ? "Đang tải ảnh…" : "Tải ảnh hóa đơn"}
               </span>
             </Button>
             <input
@@ -231,7 +244,7 @@ export function ReceiptForm({
         </CardHeader>
         <CardContent>
           {invoiceImages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
+            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-8 text-center text-sm text-muted-foreground">
               <ImagePlus className="mb-2 size-8 text-muted-foreground/50" />
               <span>Chưa có ảnh hóa đơn mua hàng</span>
               <span className="text-xs">Bấm nút trên để tải ảnh từ máy tính hoặc điện thoại</span>
@@ -245,7 +258,7 @@ export function ReceiptForm({
                     images={invoiceImages}
                     alt={`Hóa đơn ${idx + 1}`}
                     title={`Hóa đơn mua hàng #${idx + 1}`}
-                    className="size-24 rounded-lg border object-cover shadow-sm sm:size-28"
+                    className="size-24 rounded-lg border-2 object-cover shadow-sm sm:size-28"
                   />
                   <button
                     type="button"
@@ -262,29 +275,29 @@ export function ReceiptForm({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-2 border-border shadow-xs rounded-xl">
         <CardHeader>
-          <CardTitle className="text-base">Vật tư nhập</CardTitle>
+          <CardTitle className="text-base font-semibold">Vật tư nhập</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
             {items.map((it, i) => {
               const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
               return (
-                <div key={i} className="relative rounded-lg border bg-muted/30 p-2">
+                <div key={i} className="relative rounded-xl border-2 border-border/80 bg-muted/30 p-3">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    className="absolute right-2 top-2 z-10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setItems((a) => a.filter((_, idx) => idx !== i))}
                     aria-label="Xóa dòng"
                   >
                     <Trash2 className="size-4" />
                   </Button>
-                  <div className="grid grid-cols-1 gap-2 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
-                    <div className="space-y-1 sm:col-span-2 lg:col-span-3">
-                      <Label className="text-xs">Vật tư</Label>
+                  <div className="grid grid-cols-1 gap-2.5 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
+                    <div className={cn("space-y-1 sm:col-span-2", trackable ? "lg:col-span-5" : "lg:col-span-6")}>
+                      <Label className="text-xs font-semibold">Vật tư</Label>
                       <ComboboxInput
                         value={it.variantId}
                         onChange={(v) => setItem(i, { variantId: v })}
@@ -293,22 +306,22 @@ export function ReceiptForm({
                         emptyText="Không tìm thấy vật tư."
                       />
                     </div>
-                    <div className="space-y-1 lg:col-span-2">
-                      <Label className="text-xs">Số lượng</Label>
+                    <div className={cn("space-y-1", trackable ? "lg:col-span-2" : "lg:col-span-3")}>
+                      <Label className="text-xs font-semibold">Số lượng</Label>
                       <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
                     </div>
-                    <div className="space-y-1 lg:col-span-2">
-                      <Label className="text-xs">Đơn giá</Label>
-                      <Input type="number" min="0" value={it.unitCost} onChange={(e) => setItem(i, { unitCost: e.target.value })} />
+                    <div className={cn("space-y-1", trackable ? "lg:col-span-2" : "lg:col-span-3")}>
+                      <Label className="text-xs font-semibold">Đơn giá</Label>
+                      <Input type="number" min="0" value={it.unitCost} onChange={(e) => setItem(i, { unitCost: e.target.value })} placeholder="đ" />
                     </div>
                     {trackable ? (
                       <>
-                        <div className="space-y-1 lg:col-span-2">
-                          <Label className="text-xs">Lô</Label>
-                          <Input value={it.batchNo} onChange={(e) => setItem(i, { batchNo: e.target.value })} />
+                        <div className="space-y-1 lg:col-span-1.5">
+                          <Label className="text-xs font-semibold">Lô</Label>
+                          <Input value={it.batchNo} onChange={(e) => setItem(i, { batchNo: e.target.value })} placeholder="Số lô" />
                         </div>
-                        <div className="space-y-1 lg:col-span-2">
-                          <Label className="text-xs">Hạn sử dụng</Label>
+                        <div className="space-y-1 lg:col-span-1.5">
+                          <Label className="text-xs font-semibold">Hạn sử dụng</Label>
                           <Input type="date" value={it.expiryDate} onChange={(e) => setItem(i, { expiryDate: e.target.value })} />
                         </div>
                       </>
@@ -325,14 +338,21 @@ export function ReceiptForm({
               variant="outline"
               size="sm"
               onClick={() => setItems((a) => [...a, EMPTY])}
+              className="h-9 gap-1.5 px-3 text-xs font-medium"
             >
-              + Thêm dòng
+              <Plus className="size-3.5" aria-hidden />
+              Thêm dòng
             </Button>
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-2">
+        {onCancel && (
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={pending}>
+            Hủy
+          </Button>
+        )}
         <Button variant="outline" onClick={() => run(false)} disabled={pending}>
           {isEditing
             ? isApproved

@@ -59,7 +59,7 @@ export function SearchSelect({
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[320px] max-w-[90vw] p-0 border-2 border-border shadow-xl" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
