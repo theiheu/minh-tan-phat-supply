@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Printer } from "lucide-react";
+import { Loader2, Milestone, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -58,6 +59,23 @@ import {
   statusBadgeVariant,
 } from "@/lib/labels";
 import { isPrivileged } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+const EVENT_DOT_CLASS: Record<string, string> = {
+  info: "bg-sky-500",
+  success: "bg-emerald-500",
+  warning: "bg-amber-400 dark:bg-amber-500",
+  danger: "bg-red-500",
+  neutral: "bg-gray-400 dark:bg-gray-500",
+};
+
+const EVENT_LABEL_CLASS: Record<string, string> = {
+  info: "text-sky-700 dark:text-sky-300",
+  success: "text-emerald-700 dark:text-emerald-300",
+  warning: "text-amber-700 dark:text-amber-300",
+  danger: "text-red-700 dark:text-red-300",
+  neutral: "text-gray-700 dark:text-gray-300",
+};
 
 interface SlipDetailModalProps {
   entityType: string | null;
@@ -215,6 +233,18 @@ export function SlipDetailModal({
                     <span className="font-medium text-foreground">{detail.customerName}</span>
                   </div>
                 )}
+                {detail.customerPhone && (
+                  <div>
+                    <span className="text-muted-foreground">Điện thoại: </span>
+                    <span className="font-medium text-foreground">{detail.customerPhone}</span>
+                  </div>
+                )}
+                {detail.customerAddress && (
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground">Địa chỉ: </span>
+                    <span className="font-medium text-foreground">{detail.customerAddress}</span>
+                  </div>
+                )}
                 {detail.vehiclePlate && (
                   <div>
                     <span className="text-muted-foreground">Biển số xe: </span>
@@ -257,6 +287,41 @@ export function SlipDetailModal({
                         title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
                         className="size-20 sm:size-24 rounded-lg border-2 object-cover"
                       />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Defect Evidence if replacement requisition */}
+              {detail.defectEvidence && (
+                <div className="space-y-2 p-3.5 border-2 border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                      Bằng chứng vật tư hỏng kèm theo (Phiếu báo hỏng {detail.defectEvidence.code}):
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {detail.defectEvidence.items.map((it, idx) => (
+                      <div key={it.id || idx} className="text-xs space-y-1">
+                        <div className="font-medium text-foreground">
+                          {it.productName ?? "Vật tư"} {it.unit ? `(${it.unit})` : ""} · SL: {it.quantity}
+                          {it.damageDetail ? ` — ${it.damageDetail}` : ""}
+                        </div>
+                        {it.images && it.images.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            {it.images.map((img, imgIdx) => (
+                              <ZoomableImage
+                                key={img}
+                                src={img}
+                                images={it.images}
+                                alt={`Ảnh hỏng #${imgIdx + 1}`}
+                                title={`Ảnh hỏng ${detail.defectEvidence?.code} (${imgIdx + 1}/${it.images.length})`}
+                                className="size-16 rounded-md border object-cover"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -335,9 +400,117 @@ export function SlipDetailModal({
                         </TableRow>
                       ))}
                     </TableBody>
+                    <TableFooter className="bg-muted/30 font-semibold text-xs">
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-right">Tổng cộng:</TableCell>
+                        <TableCell className="text-center font-mono">{detail.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
+                        {detail.items.some((i) => i.unitPrice != null) && (
+                          <TableCell className="text-right font-mono">
+                            {formatVnd(detail.items.reduce((s, i) => s + i.quantity * (i.unitPrice ?? 0), 0))}
+                          </TableCell>
+                        )}
+                        {detail.items.some((i) => i.batchNo || i.expiryDate) && <TableCell />}
+                        {detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && <TableCell />}
+                      </TableRow>
+                    </TableFooter>
                   </Table>
                 </div>
               </div>
+
+              {/* Linked Requisitions for receipt */}
+              {detail.linkedRequisitions && detail.linkedRequisitions.length > 0 && (
+                <div className="space-y-2 p-3.5 border-2 border-border/80 rounded-xl bg-card">
+                  <span className="text-xs font-semibold text-foreground">
+                    Phiếu yêu cầu được cấp phát tự động ({detail.linkedRequisitions.length} phiếu):
+                  </span>
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/40">
+                        <TableRow>
+                          <TableHead className="text-xs">Mã phiếu</TableHead>
+                          <TableHead className="text-xs">Người yêu cầu</TableHead>
+                          <TableHead className="text-xs">Mục đích</TableHead>
+                          <TableHead className="text-xs">Trạng thái</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {detail.linkedRequisitions.map((rq) => (
+                          <TableRow key={rq.id}>
+                            <TableCell className="font-mono text-xs font-semibold text-primary">
+                              {rq.code}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{rq.requesterName ?? "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{rq.purpose ?? "—"}</TableCell>
+                            <TableCell className="text-xs">
+                              <Badge variant={statusBadgeVariant(rq.status)} className="text-[10px]">
+                                {rq.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Timeline / Tiến trình hoạt động */}
+              {detail.timeline && detail.timeline.length > 0 && (
+                <div className="space-y-3 p-3.5 border-2 border-border/80 rounded-xl bg-card">
+                  <div className="flex items-center gap-2">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                      <Milestone className="size-3.5" aria-hidden />
+                    </span>
+                    <span className="text-xs font-semibold text-foreground">Tiến trình</span>
+                  </div>
+                  <ol className="pl-1 pt-1">
+                    {detail.timeline.map((t, i) => {
+                      const isLast = i === detail.timeline!.length - 1;
+                      const tone = t.tone ?? "neutral";
+                      return (
+                        <li key={i} className="flex gap-3">
+                          {/* Cột mốc: chấm màu + đường nối dọc */}
+                          <div aria-hidden className="flex flex-col items-center self-stretch">
+                            <span
+                              className={cn(
+                                "mt-[5px] size-2.5 shrink-0 rounded-full",
+                                EVENT_DOT_CLASS[tone] ?? "bg-gray-400 dark:bg-gray-500",
+                              )}
+                            />
+                            {!isLast ? <span className="w-px flex-1 rounded-full bg-border" /> : null}
+                          </div>
+                          <div className={cn("min-w-0 flex-1", isLast ? "pb-0.5" : "pb-4")}>
+                            <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-xs">
+                              <span
+                                className={cn(
+                                  "font-semibold",
+                                  EVENT_LABEL_CLASS[tone] ?? "text-foreground",
+                                )}
+                              >
+                                {t.label}
+                              </span>
+                              <span className="tabular-nums text-muted-foreground">
+                                {t.at ? formatDateTime(t.at) : "—"}
+                              </span>
+                              {t.by ? <span className="text-muted-foreground">· {t.by}</span> : null}
+                            </div>
+                            {t.note && (
+                              <p className="mt-1 text-xs text-red-600 dark:text-red-400 font-medium">
+                                Lý do: {t.note}
+                              </p>
+                            )}
+                            {t.detail && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {t.detail}
+                              </p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              )}
 
               {/* Rejection input prompt if opened */}
               {rejecting && (
