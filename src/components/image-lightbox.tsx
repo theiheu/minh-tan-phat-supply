@@ -101,93 +101,90 @@ export function ImageLightbox({
       aria-modal="true"
       aria-label={title || "Xem ảnh phóng to"}
       data-lightbox-open="true"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 text-white select-none animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-[2px] sm:p-6 select-none"
       onClick={close}
       onMouseDown={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
-      {/* Header bar: Title & Counter & Close */}
+      {/* Khung gallery thu gọn — không phủ toàn màn hình */}
       <div
-        className="absolute top-0 inset-x-0 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-auto"
+        className="relative flex w-full max-w-[min(94vw,56rem)] flex-col overflow-hidden rounded-2xl border border-border/80 bg-background text-foreground shadow-2xl animate-in zoom-in-95 fade-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 min-w-0 pr-4">
-          {title && <span className="font-medium text-sm sm:text-base truncate drop-shadow">{title}</span>}
+        {/* Header bar: Title & Counter & Close */}
+        <div className="flex items-center justify-between gap-3 border-b px-3 py-2 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2.5">
+            {title && <span className="truncate text-sm font-medium sm:text-base">{title}</span>}
+            {images.length > 1 && (
+              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+                {currentIndex + 1} / {images.length}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            aria-label="Đóng ảnh phóng to"
+            onClick={close}
+            className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </div>
+
+        {/* Main Image View */}
+        <div className="relative flex min-h-0 items-center justify-center overflow-hidden bg-muted/50 p-3 sm:p-5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={appAssetUrl(currentSrc)}
+            alt={title || `Ảnh ${currentIndex + 1}`}
+            className="max-h-[60vh] w-auto max-w-full object-contain rounded-lg transition-all"
+          />
+
+          {/* Previous / Next buttons */}
           {images.length > 1 && (
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white/90 shrink-0 tabular-nums">
-              {currentIndex + 1} / {images.length}
-            </span>
+            <>
+              <button
+                type="button"
+                aria-label="Ảnh trước"
+                onClick={prev}
+                className="absolute left-2 top-1/2 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-105 sm:left-3"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Ảnh sau"
+                onClick={next}
+                className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-105 sm:right-3"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </>
           )}
         </div>
-        <button
-          type="button"
-          aria-label="Đóng ảnh phóng to"
-          onClick={close}
-          className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 shrink-0"
-        >
-          <X className="size-5" aria-hidden />
-        </button>
+
+        {/* Thumbnail dots when multiple images */}
+        {images.length > 1 && images.length <= 15 && (
+          <div className="flex items-center justify-center gap-1.5 border-t px-4 py-2.5">
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                aria-label={`Chuyển đến ảnh ${idx + 1}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentIndex(idx);
+                }}
+                className={cn(
+                  "h-2 rounded-full transition-all cursor-pointer",
+                  idx === currentIndex ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Main Image View */}
-      <div
-        className="relative flex items-center justify-center max-h-[85vh] max-w-[95vw] pointer-events-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={appAssetUrl(currentSrc)}
-          alt={title || `Ảnh ${currentIndex + 1}`}
-          className="max-h-[82vh] w-auto max-w-[90vw] object-contain rounded-lg shadow-2xl transition-all"
-        />
-      </div>
-
-      {/* Previous / Next buttons */}
-      {images.length > 1 && (
-        <>
-          <button
-            type="button"
-            aria-label="Ảnh trước"
-            onClick={prev}
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white border border-white/10 backdrop-blur-sm transition-all hover:bg-black/80 hover:scale-105"
-          >
-            <ChevronLeft className="size-6" />
-          </button>
-          <button
-            type="button"
-            aria-label="Ảnh sau"
-            onClick={next}
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white border border-white/10 backdrop-blur-sm transition-all hover:bg-black/80 hover:scale-105"
-          >
-            <ChevronRight className="size-6" />
-          </button>
-        </>
-      )}
-
-      {/* Thumbnail dots when multiple images */}
-      {images.length > 1 && images.length <= 15 && (
-        <div
-          className="absolute bottom-4 inset-x-0 flex justify-center gap-1.5 px-4 pointer-events-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {images.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              aria-label={`Chuyển đến ảnh ${idx + 1}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentIndex(idx);
-              }}
-              className={cn(
-                "h-2 rounded-full transition-all cursor-pointer",
-                idx === currentIndex ? "w-6 bg-white" : "w-2 bg-white/40 hover:bg-white/70"
-              )}
-            />
-          ))}
-        </div>
-      )}
     </div>,
     document.body
   );
