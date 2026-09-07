@@ -14,6 +14,7 @@ import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
 import { dayRange, formatDate } from "@/lib/format";
 import { RECEIPT_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 type ReceiptStatus = "draft" | "approved" | "posted" | "cancelled";
 const STATUSES: ReceiptStatus[] = ["draft", "approved", "posted", "cancelled"];
@@ -44,7 +45,7 @@ export default async function ReceiptsPage({
 
   let query = supabase
     .from("receipts")
-    .select("id, code, status, created_at, supplier:suppliers(name), creator:profiles!receipts_created_by_fkey(name)", { count: "exact" })
+    .select("id, code, status, created_at, invoice_images, supplier:suppliers(name), creator:profiles!receipts_created_by_fkey(name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as ReceiptStatus)) query = query.eq("status", status as ReceiptStatus);
@@ -91,6 +92,7 @@ export default async function ReceiptsPage({
           <TableHeader>
             <TableRow>
               <TableHead>Mã</TableHead>
+              <TableHead>Hóa đơn</TableHead>
               <TableHead>Nhà cung cấp</TableHead>
               <TableHead>Người lập</TableHead>
               <TableHead>Ngày</TableHead>
@@ -101,36 +103,61 @@ export default async function ReceiptsPage({
           <TableBody>
             {(data ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   Chưa có phiếu nhập kho nào.
                 </TableCell>
               </TableRow>
             )}
-            {(data ?? []).map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>
-                  <Link href={`/receipts/${r.id}`} className="font-mono text-sm text-primary hover:underline">
-                    {r.code}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{r.supplier?.name ?? "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{r.creator?.name ?? "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
-                <TableCell>
-                  <Badge variant={statusBadgeVariant(r.status)}>
-                    {RECEIPT_STATUS[r.status] ?? r.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <ReceiptActions id={r.id} status={r.status} />
-                    <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
-                      PDF
+            {(data ?? []).map((r) => {
+              const invoiceImages = r.invoice_images ?? [];
+              return (
+                <TableRow key={r.id}>
+                  <TableCell>
+                    <Link href={`/receipts/${r.id}`} className="font-mono text-sm text-primary hover:underline">
+                      {r.code}
                     </Link>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>
+                    {invoiceImages.length > 0 ? (
+                      <div className="flex items-center">
+                        <div className="relative inline-flex">
+                          <ZoomableImage
+                            src={invoiceImages[0]}
+                            images={invoiceImages}
+                            alt={`Hóa đơn ${r.code}`}
+                            title={`Hóa đơn mua hàng — ${r.code}`}
+                            className="size-11 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
+                          />
+                          {invoiceImages.length > 1 && (
+                            <span className="absolute -bottom-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-black/80 text-[10px] font-bold text-white shadow pointer-events-none">
+                              +{invoiceImages.length - 1}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{r.supplier?.name ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{r.creator?.name ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusBadgeVariant(r.status)}>
+                      {RECEIPT_STATUS[r.status] ?? r.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1">
+                      <ReceiptActions id={r.id} status={r.status} />
+                      <Link href={`/api/receipts/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                        PDF
+                      </Link>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
