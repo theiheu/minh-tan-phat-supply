@@ -60,6 +60,23 @@ export async function createRequisition(input: RequisitionInput) {
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity }));
 
+  // Kiểm tra tính hợp lệ của variant_id (tránh lỗi khóa ngoại do giỏ hàng cũ lưu trong localStorage trên máy người dùng)
+  const variantIds = items.map((i) => i.variant_id);
+  const { data: validVariants, error: checkError } = await supabase
+    .from("variants")
+    .select("id")
+    .in("id", variantIds);
+
+  if (checkError) throw new Error(checkError.message);
+
+  const validIds = new Set((validVariants ?? []).map((v) => v.id));
+  const invalid = variantIds.filter((id) => !validIds.has(id));
+  if (invalid.length > 0) {
+    throw new Error(
+      "Một số vật tư trong giỏ hàng không còn tồn tại trong hệ thống (do giỏ hàng cũ trên máy). Vui lòng xóa giỏ hàng và chọn lại vật tư từ Kho."
+    );
+  }
+
   // Manager có thể tạo dùm cho người yêu cầu khác; RPC kiểm tra quyền (is_manager).
   const requesterId = parsed.requesterId ?? profile.id;
 
@@ -72,7 +89,14 @@ export async function createRequisition(input: RequisitionInput) {
     p_requester_id: requesterId,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.message.includes("requisition_items_variant_id_fkey")) {
+      throw new Error(
+        "Vật tư trong giỏ hàng không tồn tại trong cơ sở dữ liệu. Vui lòng xóa giỏ hàng và chọn lại từ Kho vật tư."
+      );
+    }
+    throw new Error(error.message);
+  }
   revalidatePath("/requisitions");
   return data as string;
 }
@@ -118,8 +142,47 @@ export async function approveRequisition(id: string) {
 export async function fulfillRequisition(id: string) {
   const profile = await requireProfile();
   const supabase = await createClient();
+
+  // Kiểm tra tồn kho trước khi cấp phát để báo lỗi rõ ràng nếu thiếu hàng
+  const { data: reqItems } = await supabase
+    .from("requisition_items")
+    .select("variant_id, quantity, variants(attributes, unit, products(name))")
+    .eq("requisition_id", id);
+
+  if (reqItems && reqItems.length > 0) {
+    const variantIds = reqItems.map((i) => i.variant_id);
+    const { data: stockRows } = await supabase
+      .from("variant_stock")
+      .select("variant_id, quantity")
+      .in("variant_id", variantIds);
+
+    const stockMap = new Map((stockRows ?? []).map((s) => [s.variant_id, s.quantity]));
+    const insufficient = reqItems.filter((i) => (stockMap.get(i.variant_id) ?? 0) < i.quantity);
+
+    if (insufficient.length > 0) {
+      const names = insufficient
+        .map((i) => {
+          const v = i.variants as { unit?: string | null; products?: { name?: string | null } | null } | null;
+          const name = v?.products?.name ?? "Vật tư";
+          const currentStock = stockMap.get(i.variant_id) ?? 0;
+          return `"${name}" (cần ${i.quantity}, tồn hiện có ${currentStock})`;
+        })
+        .join(", ");
+      throw new Error(
+        `Không đủ tồn kho để cấp phát: ${names}. Vui lòng tạo phiếu đặt hàng nhập kho bổ sung trước khi cấp phát.`
+      );
+    }
+  }
+
   const { error } = await supabase.rpc("fulfill_requisition", { p_id: id, p_by: profile.id, p_notes: "" });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.message.includes("Không đủ tồn") || error.message.includes("không đủ tồn")) {
+      throw new Error(
+        "Không đủ tồn kho để cấp phát! Phiếu có vật tư đang hết hoặc thiếu số lượng trong Kho chính. Vui lòng tạo phiếu đặt hàng nhập kho bổ sung trước."
+      );
+    }
+    throw new Error(error.message);
+  }
 
   const meta = await requisitionMeta(id);
   await safeNotify(

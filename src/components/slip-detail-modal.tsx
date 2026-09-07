@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2, Milestone, Printer, QrCode, X } from "lucide-react";
+import { AlertTriangle, ImagePlus, Loader2, Milestone, Printer, QrCode, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -245,7 +245,21 @@ export function SlipDetailModal({
         setRejectionReason("");
         reloadDetail();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
+        const msg = err instanceof Error ? err.message : "Thao tác thất bại";
+        if (msg.includes("tạo phiếu đặt hàng") || msg.includes("Không đủ tồn kho")) {
+          toast.error(msg, {
+            action: {
+              label: "Đặt hàng ngay",
+              onClick: () => {
+                onClose();
+                if (detail?.id) router.push(`/receipts/new?requisition_id=${detail.id}`);
+              },
+            },
+            duration: 8000,
+          });
+        } else {
+          toast.error(msg);
+        }
       }
     });
   }
@@ -470,6 +484,26 @@ export function SlipDetailModal({
                 </div>
               )}
 
+              {/* Cảnh báo tồn kho không đủ cấp phát (cho phiếu yêu cầu) */}
+              {isManager &&
+                detail.type === "requisition" &&
+                (detail.status === "pending" || detail.status === "approved") &&
+                detail.items.some((m) => (m.stock ?? 0) < m.quantity) && (
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 border-2 border-amber-300 dark:border-amber-900 bg-amber-50/70 dark:bg-amber-950/30 rounded-xl text-xs">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                    <p className="text-amber-800 dark:text-amber-200">
+                      <span className="font-semibold">Tồn kho không đủ cấp phát:</span> Có vật tư trong phiếu đang hết hoặc thiếu tồn kho. Quản kho có thể lập phiếu đặt hàng để nhập bổ sung.
+                    </p>
+                  </div>
+                  <Button size="sm" asChild className="h-8 text-xs shrink-0">
+                    <Link href={`/receipts/new?requisition_id=${detail.id}`} onClick={onClose}>
+                      Tạo phiếu đặt hàng nhập kho
+                    </Link>
+                  </Button>
+                </div>
+              )}
+
               {/* Items Table */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
@@ -482,16 +516,17 @@ export function SlipDetailModal({
                     <TableHeader className="bg-muted/40">
                       <TableRow>
                         <TableHead className="w-12 text-center text-xs">STT</TableHead>
-                        <TableHead className="text-xs">Tên vật tư</TableHead>
-                        <TableHead className="text-xs">Quy cách / ĐVT</TableHead>
-                        <TableHead className="w-20 text-center text-xs">SL</TableHead>
+                        <TableHead className="w-16 text-center text-xs">Ảnh</TableHead>
+                        <TableHead className="min-w-[180px] text-xs">Tên vật tư</TableHead>
+                        <TableHead className="w-20 text-center text-xs">ĐVT</TableHead>
+                        <TableHead className="w-16 text-center text-xs">SL</TableHead>
                         {detail.items.some((i) => i.unitPrice != null) && (
                           <TableHead className="w-28 text-right text-xs">Đơn giá</TableHead>
                         )}
                         {detail.items.some((i) => i.batchNo || i.expiryDate) && (
                           <TableHead className="w-32 text-xs">Lô / HSD</TableHead>
                         )}
-                        {detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && (
+                        {detail.type === "defect" && detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && (
                           <TableHead className="text-xs">Mô tả hỏng & Ảnh</TableHead>
                         )}
                       </TableRow>
@@ -502,13 +537,46 @@ export function SlipDetailModal({
                           <TableCell className="text-center font-mono text-xs text-muted-foreground">
                             {idx + 1}
                           </TableCell>
-                          <TableCell className="font-medium text-xs text-foreground">
-                            {it.productName}
+                          <TableCell className="w-16 text-center">
+                            {it.images && it.images.length > 0 ? (
+                              <div className="relative inline-flex shrink-0">
+                                <ZoomableImage
+                                  src={it.images[0]}
+                                  images={it.images}
+                                  alt={it.productName}
+                                  title={it.productName}
+                                  className="size-10 shrink-0 rounded-md border object-cover"
+                                />
+                                {it.images.length > 1 && (
+                                  <span className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-black/80 text-[8px] font-bold text-white shadow pointer-events-none">
+                                    +{it.images.length - 1}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="mx-auto size-10 rounded-md border bg-muted/40 flex items-center justify-center text-muted-foreground/40 text-[10px]">
+                                —
+                              </div>
+                            )}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {it.variantLabel} {it.unit ? `(${it.unit})` : ""}
+                          <TableCell className="font-medium text-xs text-foreground min-w-[180px]">
+                            <div className="font-medium text-foreground">{it.productName}</div>
+                            {it.stock !== undefined && it.stock !== null && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+                                <span>Tồn kho:</span>
+                                <Badge
+                                  variant={it.stock === 0 ? "danger" : it.stock < it.quantity ? "warning" : "success"}
+                                  className="text-[10px] px-1.5 py-0"
+                                >
+                                  {it.stock}
+                                </Badge>
+                              </div>
+                            )}
                           </TableCell>
-                          <TableCell className="text-center font-mono text-xs font-semibold">
+                          <TableCell className="text-center text-xs text-muted-foreground w-20">
+                            {it.unit ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-center font-mono text-xs font-semibold w-16">
                             {it.quantity}
                           </TableCell>
                           {detail.items.some((i) => i.unitPrice != null) && (
@@ -522,7 +590,7 @@ export function SlipDetailModal({
                               {it.expiryDate && <div>HSD: {formatDate(it.expiryDate)}</div>}
                             </TableCell>
                           )}
-                          {detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && (
+                          {detail.type === "defect" && detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && (
                             <TableCell className="text-xs">
                               {it.damageDetail && <div>{it.damageDetail}</div>}
                               {it.images && it.images.length > 0 && (
@@ -545,7 +613,7 @@ export function SlipDetailModal({
                     </TableBody>
                     <TableFooter className="bg-muted/30 font-semibold text-xs">
                       <TableRow>
-                        <TableCell colSpan={3} className="text-right">Tổng cộng:</TableCell>
+                        <TableCell colSpan={4} className="text-right">Tổng cộng:</TableCell>
                         <TableCell className="text-center font-mono">{detail.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
                         {detail.items.some((i) => i.unitPrice != null) && (
                           <TableCell className="text-right font-mono">
@@ -553,7 +621,7 @@ export function SlipDetailModal({
                           </TableCell>
                         )}
                         {detail.items.some((i) => i.batchNo || i.expiryDate) && <TableCell />}
-                        {detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && <TableCell />}
+                        {detail.type === "defect" && detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && <TableCell />}
                       </TableRow>
                     </TableFooter>
                   </Table>

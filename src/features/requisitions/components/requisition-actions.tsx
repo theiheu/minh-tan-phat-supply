@@ -42,7 +42,20 @@ export function RequisitionActions({
         setRejecting(false);
         setReason("");
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Thao tác thất bại");
+        const msg = e instanceof Error ? e.message : "Thao tác thất bại";
+        if (msg.includes("tạo phiếu đặt hàng") || msg.includes("Không đủ tồn kho")) {
+          toast.error(msg, {
+            action: {
+              label: "Đặt hàng ngay",
+              onClick: () => {
+                window.location.href = `/receipts/new?requisition_id=${requisitionId}`;
+              },
+            },
+            duration: 8000,
+          });
+        } else {
+          toast.error(msg);
+        }
       }
     });
   }

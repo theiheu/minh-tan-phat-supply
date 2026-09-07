@@ -27,7 +27,7 @@ export interface NavItem {
 }
 
 export const MAIN_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Trang chủ", icon: LayoutDashboard },
   { href: "/products", label: "Kho vật tư", icon: PackageOpen },
   { href: "/requisitions", label: "Phiếu yêu cầu", icon: ClipboardList },
   { href: "/defects", label: "Vật tư hỏng", icon: Trash2 },
@@ -63,5 +63,5 @@ export function findTitle(pathname: string): string {
   const match = all
     .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0];
-  return match?.label ?? "Dashboard";
+  return match?.label ?? "Trang chủ";
 }

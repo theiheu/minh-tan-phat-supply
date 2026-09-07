@@ -131,7 +131,18 @@ export function RequisitionForm({
         }
         router.refresh();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Tạo phiếu thất bại");
+        const msg = err instanceof Error ? err.message : "Tạo phiếu thất bại";
+        if (msg.includes("giỏ hàng") || msg.includes("variant_id")) {
+          toast.error(msg, {
+            action: {
+              label: "Xóa giỏ hàng",
+              onClick: () => clear(),
+            },
+            duration: 8000,
+          });
+        } else {
+          toast.error(msg);
+        }
       }
     });
   }

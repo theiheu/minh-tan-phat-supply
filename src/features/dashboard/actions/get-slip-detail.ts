@@ -46,6 +46,8 @@ export interface SlipDetailPayload {
     damageDetail?: string | null;
     images?: string[];
     note?: string | null;
+    /** Tồn kho hiện tại tại Kho chính (chỉ phiếu yêu cầu vật tư). */
+    stock?: number | null;
     /** Số lượng đã trả lại kho trước đó (chỉ phiếu yêu cầu vật tư). */
     returned?: number;
   }[];
@@ -134,12 +136,25 @@ export async function getSlipDetail(
       const { data: req, error } = await supabase
         .from("requisitions")
         .select(
-          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(attributes, unit, products(name)))",
+          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images, description)))",
         )
         .eq("id", id)
         .single();
 
       if (error || !req) return { detail: null, currentUser, error: "Không tìm thấy phiếu yêu cầu" };
+
+      // Lấy tồn kho hiện tại từng vật tư
+      const variantIds = [...new Set((req.items ?? []).map((i) => i.variant_id).filter((v): v is string => Boolean(v)))];
+      const stockByVariant = new Map<string, number>();
+      if (variantIds.length > 0) {
+        const { data: stockRows } = await supabase
+          .from("variant_stock")
+          .select("variant_id, quantity")
+          .in("variant_id", variantIds);
+        for (const s of stockRows ?? []) {
+          if (s.variant_id != null && s.quantity != null) stockByVariant.set(s.variant_id, s.quantity);
+        }
+      }
 
       // Lấy lịch sử trả lại vật tư (tổng đã trả theo variant — dùng cho form trả trong modal).
       const { data: returnEvents } = await supabase
@@ -156,7 +171,16 @@ export async function getSlipDetail(
       }
 
       const items = (req.items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.variants as {
+          attributes?: unknown;
+          unit?: string | null;
+          images?: string[] | null;
+          products?: { name?: string | null; images?: string[] | null; description?: string | null } | null;
+        } | null;
+        const images = [
+          ...(v?.images ?? []),
+          ...(v?.products?.images ?? []),
+        ];
         return {
           id: it.id,
           variantId: it.variant_id,
@@ -164,6 +188,8 @@ export async function getSlipDetail(
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
           quantity: it.quantity,
+          images,
+          stock: it.variant_id ? (stockByVariant.get(it.variant_id) ?? null) : null,
           returned: it.variant_id ? (returnedByVariant.get(it.variant_id) ?? 0) : 0,
         };
       });
