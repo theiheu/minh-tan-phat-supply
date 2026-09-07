@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,27 +55,57 @@ function blankRow(): DraftRow {
 }
 
 function ImagePicker({
+  label = "Ảnh đại diện",
   preview,
   onFile,
 }: {
+  label?: string;
   preview: string | null;
   onFile: (file: File | null, preview: string | null) => void;
 }) {
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     onFile(file, file ? URL.createObjectURL(file) : null);
+    e.target.value = "";
   }
+
+  function onRemove(e: React.MouseEvent) {
+    e.stopPropagation();
+    onFile(null, null);
+  }
+
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs">Ảnh</Label>
-      <input
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        onChange={onChange}
-        className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
-      />
-      {preview && (
-        <ZoomableImage src={preview} alt="Xem trước" className="h-16 w-16 rounded-lg border object-cover" />
+      <Label className="text-xs font-semibold">{label}</Label>
+      {preview ? (
+        <div className="relative inline-block">
+          <ZoomableImage
+            src={preview}
+            alt="Ảnh xem trước"
+            title="Ảnh vật tư"
+            className="size-20 rounded-lg border-2 object-cover sm:size-24"
+          />
+          <button
+            type="button"
+            onClick={onRemove}
+            className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+            aria-label="Xóa ảnh này"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      ) : (
+        <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={onChange}
+          />
+          <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
+          <span className="text-xs font-semibold">Bấm để tải ảnh lên</span>
+          <span className="text-[11px] text-muted-foreground">PNG, JPEG, WebP</span>
+        </label>
       )}
     </div>
   );

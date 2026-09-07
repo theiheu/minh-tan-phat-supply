@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, ImagePlus, RefreshCw, X } from "lucide-react";
 import { formatVnd } from "@/lib/format";
 import { attributesToPairs, pairsToJson, kitLabel } from "@/lib/attributes";
 import {
@@ -360,24 +360,46 @@ export function ProductVariantsDialog({
                 onTrackableLot={setIsTrackableLot}
               />
 
-              <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Ảnh dòng (quy cách)</Label>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0] ?? null;
-                    setImageFile(f);
-                    setImagePreview(f ? URL.createObjectURL(f) : null);
-                  }}
-                  className="block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-2 file:py-1 file:text-xs file:font-medium file:text-primary-foreground"
-                />
-                {imagePreview && (
-                  <ZoomableImage
-                    src={imagePreview}
-                    alt="Xem trước"
-                    className="mt-1.5 h-12 w-12 rounded-md border object-cover"
-                  />
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs font-semibold">Ảnh dòng (quy cách)</Label>
+                {imagePreview ? (
+                  <div className="relative inline-block">
+                    <ZoomableImage
+                      src={imagePreview}
+                      alt="Xem trước"
+                      title="Ảnh quy cách"
+                      className="size-20 rounded-lg border-2 object-cover sm:size-24"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                      className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+                      aria-label="Xóa ảnh này"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        setImageFile(f);
+                        setImagePreview(f ? URL.createObjectURL(f) : null);
+                        e.target.value = "";
+                      }}
+                    />
+                    <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
+                    <span className="text-xs font-semibold">Bấm để tải ảnh lên</span>
+                    <span className="text-[11px] text-muted-foreground">PNG, JPEG, WebP</span>
+                  </label>
                 )}
               </div>
 

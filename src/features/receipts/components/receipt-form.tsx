@@ -218,47 +218,23 @@ export function ReceiptForm({
       </Card>
 
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-base font-semibold">Hóa đơn & Chứng từ mua hàng</CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Tải ảnh chụp hóa đơn VAT, phiếu giao hàng hoặc biên bản giao nhận từ nhà cung cấp trước khi duyệt nhập kho.
-            </p>
-          </div>
-          <Label className="cursor-pointer">
-            <Button variant="outline" size="sm" type="button" asChild disabled={uploadingInvoices} className="h-9 gap-1.5 text-xs">
-              <span>
-                <ImagePlus className="size-4" />
-                {uploadingInvoices ? "Đang tải ảnh…" : "Tải ảnh hóa đơn"}
-              </span>
-            </Button>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              multiple
-              className="sr-only"
-              disabled={uploadingInvoices}
-              onChange={handleInvoiceUpload}
-            />
-          </Label>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Hóa đơn & Chứng từ mua hàng</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Tải ảnh chụp hóa đơn VAT, phiếu giao hàng hoặc biên bản giao nhận từ nhà cung cấp trước khi duyệt nhập kho.
+          </p>
         </CardHeader>
-        <CardContent>
-          {invoiceImages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-8 text-center text-sm text-muted-foreground">
-              <ImagePlus className="mb-2 size-8 text-muted-foreground/50" />
-              <span>Chưa có ảnh hóa đơn mua hàng</span>
-              <span className="text-xs">Bấm nút trên để tải ảnh từ máy tính hoặc điện thoại</span>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-3">
+        <CardContent className="space-y-3">
+          {invoiceImages.length > 0 && (
+            <div className="flex flex-wrap gap-2.5">
               {invoiceImages.map((url, idx) => (
-                <div key={url} className="relative group">
+                <div key={url} className="relative">
                   <ZoomableImage
                     src={url}
                     images={invoiceImages}
                     alt={`Hóa đơn ${idx + 1}`}
                     title={`Hóa đơn mua hàng #${idx + 1}`}
-                    className="size-24 rounded-lg border-2 object-cover shadow-sm sm:size-28"
+                    className="size-20 rounded-lg border-2 object-cover sm:size-24"
                   />
                   <button
                     type="button"
@@ -272,6 +248,21 @@ export function ReceiptForm({
               ))}
             </div>
           )}
+          <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className="hidden"
+              disabled={uploadingInvoices}
+              onChange={handleInvoiceUpload}
+            />
+            <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
+            <span className="text-xs font-semibold">
+              {uploadingInvoices ? "Đang tải ảnh lên…" : "Bấm để thêm ảnh hóa đơn"}
+            </span>
+            <span className="text-[11px] text-muted-foreground">Có thể chọn nhiều ảnh một lúc (PNG, JPEG, WebP)</span>
+          </label>
         </CardContent>
       </Card>
 

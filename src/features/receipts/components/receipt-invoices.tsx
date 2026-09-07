@@ -107,23 +107,9 @@ export function ReceiptInvoices({
         )}
       </CardHeader>
 
-      <CardContent>
-        {images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
-            <ImagePlus className="mb-2 size-8 text-muted-foreground/50" />
-            <p className="font-medium">Chưa có ảnh hóa đơn mua hàng.</p>
-            {status === "posted" && isManager ? (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                ⚠️ Phiếu đã nhập kho nhưng chưa có hóa đơn. Quản kho có thể bấm <strong>&quot;+ Tải ảnh hóa đơn&quot;</strong> ở góc phải để bổ sung bất kỳ lúc nào.
-              </p>
-            ) : isManager ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Quản kho có thể bấm nút <strong>&quot;+ Tải ảnh hóa đơn&quot;</strong> để bổ sung chứng từ vào hệ thống.
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-3">
+      <CardContent className="space-y-3">
+        {images.length > 0 && (
+          <div className="flex flex-wrap gap-2.5">
             {images.map((url, idx) => (
               <div key={url} className="relative group">
                 <ZoomableImage
@@ -131,7 +117,7 @@ export function ReceiptInvoices({
                   images={images}
                   alt={`Hóa đơn ${idx + 1}`}
                   title={`Hóa đơn #${idx + 1} (${receiptCode})`}
-                  className="size-28 rounded-lg border object-cover shadow-sm transition-transform hover:scale-105"
+                  className="size-20 rounded-lg border-2 object-cover shadow-sm sm:size-24"
                 />
                 {isManager && (
                   <button
@@ -151,6 +137,24 @@ export function ReceiptInvoices({
               </div>
             ))}
           </div>
+        )}
+
+        {isManager && (
+          <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className="hidden"
+              disabled={uploading || pending}
+              onChange={handleUpload}
+            />
+            <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
+            <span className="text-xs font-semibold">
+              {uploading || pending ? "Đang tải ảnh lên…" : images.length === 0 ? "Bấm để tải ảnh hóa đơn" : "Bấm để bổ sung thêm ảnh"}
+            </span>
+            <span className="text-[11px] text-muted-foreground">Có thể chọn nhiều ảnh một lúc (PNG, JPEG, WebP)</span>
+          </label>
         )}
       </CardContent>
     </Card>
