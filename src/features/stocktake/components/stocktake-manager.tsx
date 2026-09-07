@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { Pencil, Printer, Trash2 } from "lucide-react";
+import { Pencil, Printer, QrCode, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -206,14 +206,24 @@ export function StocktakeManager({
                       </Button>
                     )}
                     {s.items.length > 0 && (
-                      <Link
-                        href={`/api/stocktake/${s.id}/pdf`}
-                        target="_blank"
-                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
-                      >
-                        <Printer className="size-3.5" aria-hidden />
-                        In
-                      </Link>
+                      <>
+                        <Link
+                          href={`/qr/stocktake/${s.id}`}
+                          target="_blank"
+                          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
+                        >
+                          <QrCode className="size-3.5" aria-hidden />
+                          In mã QR
+                        </Link>
+                        <Link
+                          href={`/api/stocktake/${s.id}/pdf`}
+                          target="_blank"
+                          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
+                        >
+                          <Printer className="size-3.5" aria-hidden />
+                          In
+                        </Link>
+                      </>
                     )}
 
                     {/* Công cụ dev — tách riêng khỏi nút nghiệp vụ để khỏi lẫn */}

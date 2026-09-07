@@ -143,7 +143,7 @@ export function IssueForm({
   return (
     <div className="space-y-4">
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader>
+        <CardHeader className="pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Thông tin phiếu xuất</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -250,7 +250,7 @@ export function IssueForm({
       </Card>
 
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Vật tư xuất</CardTitle>
           <Button type="button" variant="outline" size="sm" onClick={() => setItems((a) => [...a, EMPTY])} className="h-9 gap-1.5 px-3 text-xs font-medium">
             <Plus className="size-3.5" aria-hidden />

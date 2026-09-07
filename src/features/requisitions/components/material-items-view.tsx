@@ -119,10 +119,10 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
   const stock = item?.stock ?? null;
   return (
     <Dialog open={item !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="w-[96vw] sm:max-w-lg h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-2 border-border shadow-2xl rounded-2xl">
         {item && (
           <>
-            <DialogHeader>
+            <DialogHeader className="pb-3 border-b border-border/60">
               <DialogTitle className="pr-8">{item.productName ?? "Vật tư"}</DialogTitle>
               {item.description ? <DialogDescription>{item.description}</DialogDescription> : null}
             </DialogHeader>
@@ -153,8 +153,8 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
             <dl className="space-y-1.5 text-sm">
               {attrs.length > 0 && (
                 <div className="rounded-lg border p-3">
-                  <dt className="mb-1.5 text-xs font-semibold text-muted-foreground">Biến thể</dt>
-                  <dd className="grid gap-1">
+                  <dt className="mb-1.5 text-xs font-semibold text-muted-foreground pb-1.5 border-b border-border/60">Biến thể</dt>
+                  <dd className="grid gap-1 pt-1">
                     {attrs.map(([k, v]) => (
                       <div key={k} className="flex items-baseline justify-between gap-3">
                         <span className="text-muted-foreground">{k}</span>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -73,6 +74,14 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
         <div className="flex items-center gap-2">
           <IssueActions id={issue.id} status={issue.status} />
           <DevDocTools kind="issue" id={issue.id} code={issue.code} docName="phiếu xuất" canReopen={issue.status === "posted"} isDev={isDev} compact />
+          <Link
+            href={`/qr/issue/${issue.id}`}
+            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
+            target="_blank"
+          >
+            <QrCode className="size-4" aria-hidden />
+            In mã QR
+          </Link>
           <Link
             href={`/api/issues/${issue.id}/pdf`}
             className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"

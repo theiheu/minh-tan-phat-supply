@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImagePlus, Printer, Trash2, Undo2, Wrench, X } from "lucide-react";
+import { ImagePlus, Printer, QrCode, Trash2, Undo2, Wrench, X } from "lucide-react";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
@@ -457,6 +457,12 @@ function DefectDetailDialog({
                   Hủy phiếu
                 </Button>
               )}
+              <Button type="button" variant="outline" asChild className="w-full">
+                <Link href={`/qr/defect/${row.id}`} target="_blank">
+                  <QrCode className="size-4" aria-hidden />
+                  In mã QR
+                </Link>
+              </Button>
               <Button type="button" variant="outline" asChild className="w-full">
                 <Link href={`/api/defects/${row.id}/pdf`} target="_blank">
                   <Printer className="size-4" aria-hidden />

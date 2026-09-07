@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Milestone } from "lucide-react";
+import { Milestone, QrCode } from "lucide-react";
 import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,6 +137,14 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         <div className="flex items-center gap-2">
           <ReceiptActions id={receipt.id} status={receipt.status} />
           <DevDocTools kind="receipt" id={receipt.id} code={receipt.code} docName="phiếu nhập" canReopen={receipt.status === "posted"} isDev={isDev} compact />
+          <Link
+            href={`/qr/receipt/${receipt.id}`}
+            className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
+            target="_blank"
+          >
+            <QrCode className="size-4" aria-hidden />
+            In mã QR
+          </Link>
           <Link
             href={`/api/receipts/${receipt.id}/pdf`}
             className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent"

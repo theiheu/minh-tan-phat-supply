@@ -133,14 +133,16 @@ export type StatusBadgeVariant =
   | "neutral"
   | "info"
   | "warning"
+  | "orange"
   | "success"
-  | "danger";
+  | "danger"
+  | "violet";
 
 export const STATUS_BADGE_VARIANTS: Record<string, StatusBadgeVariant> = {
   draft: "neutral",
   pending: "warning",
   approved: "info",
-  issued: "success",
+  issued: "orange",
   received: "success",
   rejected: "danger",
   cancelled: "neutral",
@@ -230,7 +232,7 @@ export const AUDIT_ACTION_INFO: Record<string, { label: string; tone: StatusBadg
   "requisition.create": { label: "Tạo phiếu yêu cầu", tone: "info", entityLabel: "Phiếu yêu cầu" },
   "requisition.submit": { label: "Gửi phiếu yêu cầu", tone: "warning", entityLabel: "Phiếu yêu cầu" },
   "requisition.approve": { label: "Duyệt phiếu yêu cầu", tone: "info", entityLabel: "Phiếu yêu cầu" },
-  "requisition.fulfill": { label: "Cấp phát vật tư", tone: "success", entityLabel: "Phiếu yêu cầu" },
+  "requisition.fulfill": { label: "Cấp phát vật tư", tone: "warning", entityLabel: "Phiếu yêu cầu" },
   "requisition.receive": { label: "Xác nhận nhận hàng", tone: "success", entityLabel: "Phiếu yêu cầu" },
   "requisition.reject": { label: "Từ chối phiếu yêu cầu", tone: "danger", entityLabel: "Phiếu yêu cầu" },
   "requisition.cancel": { label: "Hủy phiếu yêu cầu", tone: "neutral", entityLabel: "Phiếu yêu cầu" },

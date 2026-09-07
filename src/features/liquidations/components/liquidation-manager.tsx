@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
@@ -169,6 +170,10 @@ export function LiquidationManager({
                         <Button size="sm" onClick={() => { setCompleting(n.id); setProceeds({}); }} disabled={pending}>Hoàn tất</Button>
                       )}
                       <DevDocTools kind="liquidation" id={n.id} code={n.code} docName="phiếu thanh lý" canReopen={n.status === "completed"} isDev={isDev} compact />
+                      <Link href={`/qr/liquidation/${n.id}`} target="_blank" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                        <QrCode className="size-4" aria-hidden />
+                        In mã QR
+                      </Link>
                       <Link href={`/api/liquidations/${n.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                         PDF
                       </Link>

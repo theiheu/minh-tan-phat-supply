@@ -174,7 +174,7 @@ export function ReceiptForm({
   return (
     <div className="space-y-4">
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader>
+        <CardHeader className="pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">
             {isEditing
               ? isApproved
@@ -274,7 +274,7 @@ export function ReceiptForm({
       </Card>
 
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader>
+        <CardHeader className="pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Vật tư nhập</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">

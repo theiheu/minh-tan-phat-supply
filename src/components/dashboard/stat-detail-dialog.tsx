@@ -121,8 +121,8 @@ export function StatDetailDialog({ type, onClose, items }: StatDetailDialogProps
 
   return (
     <Dialog open={Boolean(type)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[88vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
-        <DialogHeader className="pb-2 border-b">
+      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[88vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
+        <DialogHeader className="shrink-0 pb-2 border-b">
           <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
             <div className="flex items-center gap-2">
               <DialogTitle className="text-base font-semibold">{config.title}</DialogTitle>
@@ -172,7 +172,7 @@ export function StatDetailDialog({ type, onClose, items }: StatDetailDialogProps
         </div>
 
         {/* Content list */}
-        <div className="flex-1 overflow-y-auto mt-2 min-h-[250px] max-h-[50vh] rounded-md border">
+        <div className="flex-1 min-h-0 overflow-y-auto mt-2 min-h-[250px] max-h-[50vh] rounded-md border">
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-center p-4">
               <p className="text-sm text-muted-foreground">

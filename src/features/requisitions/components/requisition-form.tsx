@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Minus, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,7 +139,7 @@ export function RequisitionForm({
   return (
     <div className="space-y-4">
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader>
+        <CardHeader className="pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Thông tin phiếu</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -214,7 +215,7 @@ export function RequisitionForm({
       </Card>
 
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader>
+        <CardHeader className="pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Vật tư yêu cầu</CardTitle>
         </CardHeader>
         <CardContent>
@@ -229,21 +230,28 @@ export function RequisitionForm({
               )}
               <ul className="divide-y">
                 {items.map((i) => (
-                  <li key={i.variantId} className="flex items-center gap-3 py-2.5">
+                  <li key={i.variantId} className="flex items-start gap-3 py-3">
                     {i.image ? (
                       <ZoomableImage
                         src={i.image}
                         alt={i.name}
                         title={`${i.name} · ${i.label}`}
-                        className="size-11 shrink-0 rounded-md border object-cover"
+                        className="size-14 sm:size-16 shrink-0 rounded-lg border object-cover aspect-square"
                       />
                     ) : (
-                      <div className="size-11 shrink-0 rounded-md border bg-muted" />
+                      <div className="flex size-14 sm:size-16 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground">
+                        <Package className="size-6 opacity-40" aria-hidden />
+                      </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{i.name}</div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="truncate">{i.label}</span>
+                      <div className="text-sm font-medium leading-snug line-clamp-2">{i.name}</div>
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                        {i.label && i.label !== i.unit && <span className="truncate">{i.label}</span>}
+                        {i.unit && (
+                          <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-foreground text-[10px]">
+                            ĐVT: {i.unit}
+                          </span>
+                        )}
                         {i.stock === 0 && (
                           <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
                             Chờ nhập hàng
@@ -251,29 +259,61 @@ export function RequisitionForm({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, Math.max(1, i.quantity - 1))} aria-label="Giảm">−</Button>
-                      <Input
-                        type="number"
-                        min="1"
-                        className="h-7 w-16 text-center text-xs font-medium tabular-nums px-1"
-                        value={i.quantity}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (!isNaN(val) && val > 0) {
-                            updateQty(i.variantId, val);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          if (isNaN(val) || val < 1) {
-                            updateQty(i.variantId, 1);
-                          }
-                        }}
-                      />
-                      <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity + 1)} aria-label="Tăng">+</Button>
+                    <div className="flex flex-col items-end justify-between gap-2 shrink-0 self-stretch">
+                      {/* Thùng rác ở trên */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="h-6 w-6 text-muted-foreground hover:bg-destructive/10 hover:text-destructive p-0"
+                        onClick={() => removeItem(i.variantId)}
+                        aria-label="Xóa"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+
+                      {/* Số lượng ở dưới */}
+                      <div className="inline-flex h-6 items-center rounded-md border border-border/80 bg-background p-0.5 shadow-xs">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="h-5 w-5 rounded text-foreground hover:bg-muted p-0"
+                          onClick={() => updateQty(i.variantId, Math.max(1, i.quantity - 1))}
+                          aria-label="Giảm"
+                        >
+                          <Minus className="size-2.5" />
+                        </Button>
+                        <Input
+                          type="number"
+                          min="1"
+                          className="h-5 w-7 border-0 bg-transparent text-center text-xs font-bold tabular-nums p-0 focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          value={i.quantity}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val) && val > 0) {
+                              updateQty(i.variantId, val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (isNaN(val) || val < 1) {
+                              updateQty(i.variantId, 1);
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="h-5 w-5 rounded text-foreground hover:bg-muted p-0"
+                          onClick={() => updateQty(i.variantId, i.quantity + 1)}
+                          aria-label="Tăng"
+                        >
+                          <Plus className="size-2.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button variant="ghost" size="icon-xs" onClick={() => removeItem(i.variantId)} aria-label="Xóa">×</Button>
                   </li>
                 ))}
               </ul>

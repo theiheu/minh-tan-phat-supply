@@ -7,6 +7,14 @@ describe("pdf qr helpers", () => {
     expect(dataUri).toMatch(/^data:image\/png;base64,/);
   });
 
+  it("accepts a custom output width (nhãn QR in lớn)", async () => {
+    const small = await generateQrDataUri("http://localhost:3000/issues/123");
+    const large = await generateQrDataUri("http://localhost:3000/issues/123", 512);
+    expect(large).toMatch(/^data:image\/png;base64,/);
+    // PNG 512px phải lớn hơn PNG 160px.
+    expect(large.length).toBeGreaterThan(small.length);
+  });
+
   it("extracts full slip url using request headers", () => {
     const req = new Request("http://127.0.0.1:3000/api/requisitions/123/pdf", {
       headers: {

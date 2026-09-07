@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
@@ -118,6 +119,10 @@ export default async function RepairsPage({
                       }}
                     />
                     <DevDocTools kind="repair" id={r.id} code={r.code} docName="phiếu sửa" canReopen={r.status === "returned"} isDev={isDev} compact />
+                    <Link href={`/qr/repair/${r.id}`} target="_blank" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
+                      <QrCode className="size-4" aria-hidden />
+                      In mã QR
+                    </Link>
                     <Link href={`/api/repairs/${r.id}/pdf`} target="_blank" className="rounded-md px-2 py-1 text-sm text-primary hover:bg-accent">
                       PDF
                     </Link>

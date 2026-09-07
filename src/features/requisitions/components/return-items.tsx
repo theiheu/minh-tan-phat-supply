@@ -16,7 +16,16 @@ interface Item {
   returned: number;
 }
 
-export function ReturnItems({ requisitionId, items }: { requisitionId: string; items: Item[] }) {
+export function ReturnItems({
+  requisitionId,
+  items,
+  onSuccess,
+}: {
+  requisitionId: string;
+  items: Item[];
+  /** Được gọi sau khi trả lại thành công (vd modal cần tải lại nội dung). */
+  onSuccess?: () => void;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [qty, setQty] = useState<Record<string, string>>({});
@@ -43,6 +52,7 @@ export function ReturnItems({ requisitionId, items }: { requisitionId: string; i
         toast.success("Đã nhập trả lại kho");
         setQty({});
         router.refresh();
+        onSuccess?.();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Trả lại thất bại");
       }

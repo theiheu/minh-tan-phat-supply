@@ -11,6 +11,7 @@ import {
   Package,
   PackageX,
   Printer,
+  QrCode,
   Undo2,
   User,
 } from "lucide-react";
@@ -55,26 +56,42 @@ const CHIP_CLASS: Record<string, string> = {
 /** Màu chấm trên timeline Tiến trình — khớp ý nghĩa trạng thái của phiếu. */
 const EVENT_DOT_CLASS: Record<string, string> = {
   create: "bg-gray-400 dark:bg-gray-500",
+  "requisition.create": "bg-gray-400 dark:bg-gray-500",
   submit: "bg-amber-400 dark:bg-amber-500",
+  "requisition.submit": "bg-amber-400 dark:bg-amber-500",
   approve: "bg-sky-500",
-  fulfill: "bg-emerald-500",
+  "requisition.approve": "bg-sky-500",
+  fulfill: "bg-orange-500",
+  "requisition.fulfill": "bg-orange-500",
   receive: "bg-emerald-500",
+  "requisition.receive": "bg-emerald-500",
   reject: "bg-red-500",
+  "requisition.reject": "bg-red-500",
   cancel: "bg-gray-400 dark:bg-gray-500",
+  "requisition.cancel": "bg-gray-400 dark:bg-gray-500",
   return: "bg-violet-500",
+  "requisition.return": "bg-violet-500",
   other: "bg-gray-400 dark:bg-gray-500",
 };
 
 /** Màu chữ nhãn mốc — tô theo trạng thái tương ứng. */
 const EVENT_LABEL_CLASS: Record<string, string> = {
   create: "text-gray-700 dark:text-gray-300",
+  "requisition.create": "text-gray-700 dark:text-gray-300",
   submit: "text-amber-700 dark:text-amber-300",
+  "requisition.submit": "text-amber-700 dark:text-amber-300",
   approve: "text-sky-700 dark:text-sky-300",
-  fulfill: "text-emerald-700 dark:text-emerald-300",
+  "requisition.approve": "text-sky-700 dark:text-sky-300",
+  fulfill: "text-orange-700 dark:text-orange-300",
+  "requisition.fulfill": "text-orange-700 dark:text-orange-300",
   receive: "text-emerald-700 dark:text-emerald-300",
+  "requisition.receive": "text-emerald-700 dark:text-emerald-300",
   reject: "text-red-700 dark:text-red-300",
+  "requisition.reject": "text-red-700 dark:text-red-300",
   cancel: "text-gray-700 dark:text-gray-300",
+  "requisition.cancel": "text-gray-700 dark:text-gray-300",
   return: "text-violet-700 dark:text-violet-300",
+  "requisition.return": "text-violet-700 dark:text-violet-300",
   other: "text-gray-700 dark:text-gray-300",
 };
 
@@ -103,7 +120,7 @@ function SectionHeader({
   right?: ReactNode;
 }) {
   return (
-    <CardHeader>
+    <CardHeader className="pb-3 border-b border-border/60">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <span
@@ -343,15 +360,6 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {profile && (
-            <RequisitionActions
-              requisitionId={req.id}
-              status={req.status}
-              requesterId={req.requester_id}
-              currentUserId={profile.id}
-              role={profile.role}
-            />
-          )}
-          {profile && (
             <DevDocTools
               kind="requisition"
               id={req.id}
@@ -362,6 +370,12 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               compact
             />
           )}
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/qr/requisition/${req.id}`} target="_blank">
+              <QrCode aria-hidden />
+              In mã QR
+            </Link>
+          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href={`/api/requisitions/${req.id}/pdf`} target="_blank">
               <Printer aria-hidden />
@@ -408,7 +422,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
 
           {canReturn && (
             <div className="mt-5 border-t pt-5">
-              <div className="mb-3 flex items-center gap-2">
+              <div className="mb-3 flex items-center gap-2 pb-2 border-b border-border/60">
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                   <Undo2 className="size-4" aria-hidden />
                 </span>
@@ -496,6 +510,16 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
             <ol>
               {events.map((t, i) => {
                 const isLast = i === events.length - 1;
+                const isFulfill =
+                  t.key === "fulfill" ||
+                  t.key === "requisition.fulfill" ||
+                  t.label?.toLowerCase().includes("cấp phát");
+                const dotClass = isFulfill
+                  ? "bg-orange-500"
+                  : (EVENT_DOT_CLASS[t.key] ?? EVENT_DOT_CLASS.other);
+                const labelClass = isFulfill
+                  ? "text-orange-700 dark:text-orange-300"
+                  : (EVENT_LABEL_CLASS[t.key] ?? EVENT_LABEL_CLASS.other);
                 return (
                   <li key={i} className="flex gap-3">
                     {/* Cột mốc: chấm màu + đường nối dọc */}
@@ -503,8 +527,9 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                       <span
                         className={cn(
                           "mt-[5px] size-2.5 shrink-0 rounded-full",
-                          EVENT_DOT_CLASS[t.key] ?? EVENT_DOT_CLASS.other,
+                          dotClass,
                         )}
+                        style={isFulfill ? { backgroundColor: "#f97316" } : undefined}
                       />
                       {!isLast ? <span className="w-px flex-1 rounded-full bg-border" /> : null}
                     </div>
@@ -513,7 +538,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                         <span
                           className={cn(
                             "font-semibold",
-                            EVENT_LABEL_CLASS[t.key] ?? EVENT_LABEL_CLASS.other,
+                            labelClass,
                           )}
                         >
                           {t.label}
@@ -540,6 +565,19 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
             </ol>
           </CardContent>
         </Card>
+      )}
+
+      {/* Nút thao tác theo trạng thái — đặt cuối trang, canh phải (giống thanh nút trong modal) */}
+      {profile && (
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t pt-4">
+          <RequisitionActions
+            requisitionId={req.id}
+            status={req.status}
+            requesterId={req.requester_id}
+            currentUserId={profile.id}
+            role={profile.role}
+          />
+        </div>
       )}
     </div>
   );

@@ -19,6 +19,7 @@ import { ZoomableImage } from "@/components/image-lightbox";
 import { EXCHANGE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -242,20 +243,37 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
           </CardHeader>
           <CardContent>
             <ol>
-              {timeline.map((t, i) => (
-                <li key={i} className="flex gap-3">
-                  <span aria-hidden className="mt-[5px] size-2.5 shrink-0 rounded-full bg-emerald-500" />
-                  <div className="min-w-0 flex-1 pb-4">
-                    <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm">
-                      <span className="font-semibold">{t.label}</span>
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {t.at ? formatDateTime(t.at) : "—"}
-                      </span>
-                      {t.by ? <span className="text-xs text-muted-foreground">· {t.by}</span> : null}
+              {timeline.map((t, i) => {
+                const isFulfill = t.label?.toLowerCase().includes("cấp phát");
+                return (
+                  <li key={i} className="flex gap-3">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "mt-[5px] size-2.5 shrink-0 rounded-full",
+                        isFulfill ? "bg-orange-500" : "bg-emerald-500",
+                      )}
+                      style={isFulfill ? { backgroundColor: "#f97316" } : undefined}
+                    />
+                    <div className="min-w-0 flex-1 pb-4">
+                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm">
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            isFulfill ? "text-orange-700 dark:text-orange-300" : "",
+                          )}
+                        >
+                          {t.label}
+                        </span>
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {t.at ? formatDateTime(t.at) : "—"}
+                        </span>
+                        {t.by ? <span className="text-xs text-muted-foreground">· {t.by}</span> : null}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ol>
           </CardContent>
         </Card>

@@ -158,7 +158,7 @@ export function DefectForm({
     <form onSubmit={submit} className="space-y-4">
       {/* Bước 1 — cách xử lý */}
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader className="p-4 sm:p-5">
+        <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Chọn cách xử lý</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2.5 px-4 pb-4 sm:px-5 sm:pb-5">
@@ -199,7 +199,7 @@ export function DefectForm({
 
       {/* Bước 2 — chi tiết các dòng hỏng */}
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader className="p-4 sm:p-5">
+        <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Chi tiết các dòng hỏng</CardTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Mỗi dòng: chọn tên, ghi số lượng + mô tả, thêm ít nhất 1 ảnh.

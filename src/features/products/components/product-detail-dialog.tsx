@@ -68,7 +68,7 @@ export function ProductDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="pb-3 border-b border-border/60">
           <DialogTitle>{product.name}</DialogTitle>
           {product.description ? <DialogDescription>{product.description}</DialogDescription> : null}
         </DialogHeader>

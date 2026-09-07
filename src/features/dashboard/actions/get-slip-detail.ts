@@ -46,6 +46,8 @@ export interface SlipDetailPayload {
     damageDetail?: string | null;
     images?: string[];
     note?: string | null;
+    /** Số lượng đã trả lại kho trước đó (chỉ phiếu yêu cầu vật tư). */
+    returned?: number;
   }[];
   linkedRequisitions?: {
     id: string;
@@ -139,6 +141,20 @@ export async function getSlipDetail(
 
       if (error || !req) return { detail: null, currentUser, error: "Không tìm thấy phiếu yêu cầu" };
 
+      // Lấy lịch sử trả lại vật tư (tổng đã trả theo variant — dùng cho form trả trong modal).
+      const { data: returnEvents } = await supabase
+        .from("requisition_returns")
+        .select("id, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(attributes, unit, products(name)))")
+        .eq("requisition_id", req.id)
+        .order("created_at", { ascending: true });
+
+      const returnedByVariant = new Map<string, number>();
+      for (const ev of (returnEvents ?? []) as { items?: { variant_id?: string | null; quantity: number }[] }[]) {
+        for (const it of ev.items ?? []) {
+          if (it.variant_id) returnedByVariant.set(it.variant_id, (returnedByVariant.get(it.variant_id) ?? 0) + it.quantity);
+        }
+      }
+
       const items = (req.items ?? []).map((it) => {
         const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
@@ -148,6 +164,7 @@ export async function getSlipDetail(
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
           quantity: it.quantity,
+          returned: it.variant_id ? (returnedByVariant.get(it.variant_id) ?? 0) : 0,
         };
       });
 
@@ -179,13 +196,7 @@ export async function getSlipDetail(
         }
       }
 
-      // Lấy lịch sử trả lại vật tư
-      const { data: returnEvents } = await supabase
-        .from("requisition_returns")
-        .select("id, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(quantity, variants(attributes, unit, products(name)))")
-        .eq("requisition_id", req.id)
-        .order("created_at", { ascending: true });
-
+      // Lịch sử trả lại vật tư → mốc trên timeline
       const returnMilestones: SlipTimelineEvent[] = (returnEvents ?? []).map((ev) => {
         const typed = ev as {
           created_at: string;

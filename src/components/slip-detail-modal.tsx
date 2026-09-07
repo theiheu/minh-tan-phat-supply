@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2, Milestone, Printer, X } from "lucide-react";
+import { ImagePlus, Loader2, Milestone, Printer, QrCode, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
   rejectRequisition,
   submitRequisition,
 } from "@/features/requisitions/actions";
+import { ReturnItems } from "@/features/requisitions/components/return-items";
 import {
   approveReceipt,
   cancelReceipt,
@@ -84,6 +85,15 @@ const EVENT_LABEL_CLASS: Record<string, string> = {
   warning: "text-amber-700 dark:text-amber-300",
   danger: "text-red-700 dark:text-red-300",
   neutral: "text-gray-700 dark:text-gray-300",
+};
+
+/** Mốc đặc biệt: Cấp phát vật tư (phiếu yêu cầu) tô cam. */
+const EVENT_KEY_DOT_CLASS: Record<string, string> = {
+  "requisition.fulfill": "bg-orange-500",
+};
+
+const EVENT_KEY_LABEL_CLASS: Record<string, string> = {
+  "requisition.fulfill": "text-orange-700 dark:text-orange-300",
 };
 
 interface SlipDetailModalProps {
@@ -247,7 +257,7 @@ export function SlipDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
+      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
         {loading || !detail ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -256,7 +266,7 @@ export function SlipDetailModal({
         ) : (
           <>
             {/* Header */}
-            <DialogHeader className="pb-3 border-b">
+            <DialogHeader className="shrink-0 pb-3 border-b">
               <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
                 <div className="flex items-center gap-2.5">
                   <DialogTitle className="font-mono text-lg font-bold text-primary">
@@ -270,12 +280,24 @@ export function SlipDetailModal({
                   </Badge>
                 </div>
                 {detail.pdfUrl && (
-                  <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
-                    <a href={detail.pdfUrl} target="_blank" rel="noreferrer">
-                      <Printer className="size-3.5" />
-                      In phiếu PDF
-                    </a>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+                      <a
+                        href={`/qr/${detail.type}/${detail.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <QrCode className="size-3.5" />
+                        In mã QR
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+                      <a href={detail.pdfUrl} target="_blank" rel="noreferrer">
+                        <Printer className="size-3.5" />
+                        In phiếu PDF
+                      </a>
+                    </Button>
+                  </div>
                 )}
               </div>
               <DialogDescription className="text-xs text-muted-foreground mt-1">
@@ -285,7 +307,7 @@ export function SlipDetailModal({
             </DialogHeader>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto space-y-4 py-3 pr-1">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-4 py-3 pr-1">
               {/* Info Summary Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3.5 bg-muted/20 border-2 border-border/80 rounded-xl text-xs">
                 {detail.zoneName && (
@@ -347,7 +369,7 @@ export function SlipDetailModal({
               {/* Invoice / Evidence Images */}
               {(detail.type === "receipt" || detail.type === "issue" || (detail.invoiceImages && detail.invoiceImages.length > 0)) && (
                 <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pb-2 border-b border-border/60">
                     <span className="text-xs font-semibold text-foreground">
                       {detail.type === "issue" ? "Hóa đơn & Chứng từ xuất kho" : "Hóa đơn & Chứng từ mua hàng"}
                       {detail.invoiceImages && detail.invoiceImages.length > 0 ? ` (${detail.invoiceImages.length} ảnh)` : ""}:
@@ -415,8 +437,8 @@ export function SlipDetailModal({
 
               {/* Defect Evidence if replacement requisition */}
               {detail.defectEvidence && (
-                <div className="space-y-2 p-3.5 border-2 border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 rounded-xl">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-2.5 p-3.5 border-2 border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 rounded-xl">
+                  <div className="flex items-center gap-2 pb-2 border-b border-amber-300/60 dark:border-amber-900/60">
                     <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">
                       Bằng chứng vật tư hỏng kèm theo (Phiếu báo hỏng {detail.defectEvidence.code}):
                     </span>
@@ -449,8 +471,8 @@ export function SlipDetailModal({
               )}
 
               {/* Items Table */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
                   <span className="text-xs font-semibold text-foreground">
                     Danh sách vật tư ({detail.items.length} món):
                   </span>
@@ -538,12 +560,39 @@ export function SlipDetailModal({
                 </div>
               </div>
 
+              {/* Trả lại vật tư cho phiếu yêu cầu đã cấp/nhận */}
+              {detail.type === "requisition" &&
+                (detail.status === "issued" || detail.status === "received") &&
+                (isManager || isOwner) &&
+                detail.items.some((i) => i.quantity - (i.returned ?? 0) > 0) && (
+                <div className="space-y-2.5 p-3.5 border-2 border-amber-300 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/20 rounded-xl">
+                  <div className="flex items-center gap-2 pb-2 border-b border-amber-300/60 dark:border-amber-900/60">
+                    <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                      Trả lại vật tư không dùng hết
+                    </span>
+                  </div>
+                  <ReturnItems
+                    requisitionId={detail.id}
+                    onSuccess={reloadDetail}
+                    items={detail.items.map((i) => ({
+                      id: i.id,
+                      variantId: i.variantId ?? "",
+                      label: `${i.productName} — ${i.variantLabel}`,
+                      quantity: i.quantity,
+                      returned: i.returned ?? 0,
+                    }))}
+                  />
+                </div>
+              )}
+
               {/* Linked Requisitions for receipt */}
               {detail.linkedRequisitions && detail.linkedRequisitions.length > 0 && (
-                <div className="space-y-2 p-3.5 border-2 border-border/80 rounded-xl bg-card">
-                  <span className="text-xs font-semibold text-foreground">
-                    Phiếu yêu cầu được cấp phát tự động ({detail.linkedRequisitions.length} phiếu):
-                  </span>
+                <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
+                  <div className="pb-2 border-b border-border/60">
+                    <span className="text-xs font-semibold text-foreground">
+                      Phiếu yêu cầu được cấp phát tự động ({detail.linkedRequisitions.length} phiếu):
+                    </span>
+                  </div>
                   <div className="rounded-lg border overflow-hidden">
                     <Table>
                       <TableHeader className="bg-muted/40">
@@ -578,7 +627,7 @@ export function SlipDetailModal({
               {/* Timeline / Tiến trình hoạt động */}
               {detail.timeline && detail.timeline.length > 0 && (
                 <div className="space-y-3 p-3.5 border-2 border-border/80 rounded-xl bg-card">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/60">
                     <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
                       <Milestone className="size-3.5" aria-hidden />
                     </span>
@@ -588,6 +637,17 @@ export function SlipDetailModal({
                     {detail.timeline.map((t, i) => {
                       const isLast = i === detail.timeline!.length - 1;
                       const tone = t.tone ?? "neutral";
+                      const isFulfill =
+                        t.key === "requisition.fulfill" ||
+                        t.key === "fulfill" ||
+                        t.key === "exchange.issue" ||
+                        t.label?.toLowerCase().includes("cấp phát");
+                      const dotClass = isFulfill
+                        ? "bg-orange-500"
+                        : (EVENT_KEY_DOT_CLASS[t.key] ?? EVENT_DOT_CLASS[tone] ?? "bg-gray-400 dark:bg-gray-500");
+                      const labelClass = isFulfill
+                        ? "text-orange-700 dark:text-orange-300"
+                        : (EVENT_KEY_LABEL_CLASS[t.key] ?? EVENT_LABEL_CLASS[tone] ?? "text-foreground");
                       return (
                         <li key={i} className="flex gap-3">
                           {/* Cột mốc: chấm màu + đường nối dọc */}
@@ -595,8 +655,9 @@ export function SlipDetailModal({
                             <span
                               className={cn(
                                 "mt-[5px] size-2.5 shrink-0 rounded-full",
-                                EVENT_DOT_CLASS[tone] ?? "bg-gray-400 dark:bg-gray-500",
+                                dotClass,
                               )}
+                              style={isFulfill ? { backgroundColor: "#f97316" } : undefined}
                             />
                             {!isLast ? <span className="w-px flex-1 rounded-full bg-border" /> : null}
                           </div>
@@ -605,7 +666,7 @@ export function SlipDetailModal({
                               <span
                                 className={cn(
                                   "font-semibold",
-                                  EVENT_LABEL_CLASS[tone] ?? "text-foreground",
+                                  labelClass,
                                 )}
                               >
                                 {t.label}
@@ -635,11 +696,13 @@ export function SlipDetailModal({
 
               {/* Rejection input prompt if opened */}
               {rejecting && (
-                <div className="space-y-2 p-3.5 border-2 border-red-300 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 rounded-xl">
-                  <label className="text-xs font-semibold text-red-700 dark:text-red-300">
-                    Nhập lý do từ chối:
-                  </label>
-                  <div className="flex gap-2">
+                <div className="space-y-2.5 p-3.5 border-2 border-red-300 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 rounded-xl">
+                  <div className="pb-1.5 border-b border-red-300/60 dark:border-red-900/60">
+                    <label className="text-xs font-semibold text-red-700 dark:text-red-300">
+                      Nhập lý do từ chối:
+                    </label>
+                  </div>
+                  <div className="flex gap-2 pt-0.5">
                     <Input
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
@@ -678,14 +741,14 @@ export function SlipDetailModal({
             </div>
 
             {/* Footer Action Bar */}
-            <DialogFooter className="pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+            <DialogFooter className="shrink-0 pt-3 border-t flex flex-row flex-wrap items-center justify-end gap-2">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={onClose} className="h-9 text-xs">
                   Đóng
                 </Button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-row flex-wrap items-center justify-end gap-2">
                 {/* Requisition Actions */}
                 {detail.type === "requisition" && (
                   <>

@@ -36,14 +36,14 @@ export function ReceiptDialog({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 border-2 border-border shadow-2xl rounded-2xl">
-        <DialogHeader className="pb-2 border-b">
+      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
+        <DialogHeader className="shrink-0 pb-2 border-b">
           <DialogTitle className="text-base font-semibold">Tạo phiếu đặt hàng / nhập kho</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Lập phiếu đặt hàng hoặc ghi nhận nhập kho từ nhà cung cấp.
           </DialogDescription>
         </DialogHeader>
-        <div className="pt-2">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pr-1">
           <ReceiptForm
             suppliers={suppliers}
             variants={variants}

@@ -55,6 +55,7 @@ describe("labels helpers", () => {
     expect(roleLabel("requester")).toBe("Người yêu cầu");
     expect(roleLabel("superuser")).toBe("Quản trị hệ thống");
     expect(statusBadgeVariant("approved")).toBe("info");
+    expect(statusBadgeVariant("issued")).toBe("orange");
     expect(statusBadgeVariant("posted")).toBe("success");
     expect(variantLabel({ "Quy cách": "Hộp 10 vỉ" })).toBe("Hộp 10 vỉ");
   });
