@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Milestone, Printer } from "lucide-react";
+import { ImagePlus, Loader2, Milestone, Printer, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,9 @@ import {
   approveReceipt,
   cancelReceipt,
   postReceipt,
+  updateReceiptInvoiceImages,
 } from "@/features/receipts/actions";
+import { uploadReceiptInvoiceImage } from "@/features/receipts/upload";
 import { cancelIssue, postIssue } from "@/features/issues/actions";
 import {
   approveExchange,
@@ -103,6 +105,7 @@ export function SlipDetailModal({
   const [pending, startTransition] = useTransition();
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [uploadingInvoices, setUploadingInvoices] = useState(false);
 
   const isOpen = Boolean(entityType && entityId);
 
@@ -111,6 +114,7 @@ export function SlipDetailModal({
       setDetail(null);
       setRejecting(false);
       setRejectionReason("");
+      setUploadingInvoices(false);
       return;
     }
 
@@ -118,6 +122,7 @@ export function SlipDetailModal({
     setLoading(true);
     setRejecting(false);
     setRejectionReason("");
+    setUploadingInvoices(false);
 
     getSlipDetail(entityType, entityId).then((res) => {
       if (!active) return;
@@ -144,6 +149,52 @@ export function SlipDetailModal({
     });
     router.refresh();
     onActionComplete?.();
+  }
+
+  async function handleInvoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!detail || detail.type !== "receipt") return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    setUploadingInvoices(true);
+    try {
+      const uploadedUrls = await Promise.all(files.map((f) => uploadReceiptInvoiceImage(f)));
+      const currentImages = detail.invoiceImages ?? [];
+      const nextImages = [...currentImages, ...uploadedUrls];
+      setDetail({ ...detail, invoiceImages: nextImages });
+
+      startTransition(async () => {
+        try {
+          await updateReceiptInvoiceImages(detail.id, nextImages);
+          toast.success(`Đã bổ sung ${uploadedUrls.length} ảnh hóa đơn mua hàng thành công`);
+          reloadDetail();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Cập nhật ảnh hóa đơn thất bại");
+        }
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Tải ảnh hóa đơn thất bại");
+    } finally {
+      setUploadingInvoices(false);
+      e.target.value = "";
+    }
+  }
+
+  function handleInvoiceRemove(urlToRemove: string) {
+    if (!detail || detail.type !== "receipt") return;
+    const currentImages = detail.invoiceImages ?? [];
+    const nextImages = currentImages.filter((u) => u !== urlToRemove);
+    setDetail({ ...detail, invoiceImages: nextImages });
+
+    startTransition(async () => {
+      try {
+        await updateReceiptInvoiceImages(detail.id, nextImages);
+        toast.success("Đã xóa ảnh hóa đơn");
+        reloadDetail();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Xóa ảnh thất bại");
+      }
+    });
   }
 
   function handleAction(actionFn: () => Promise<unknown>, successMessage: string) {
@@ -272,24 +323,63 @@ export function SlipDetailModal({
                 )}
               </div>
 
-              {/* Invoice / Evidence Images if present */}
-              {detail.invoiceImages && detail.invoiceImages.length > 0 && (
-                <div className="space-y-1.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
-                  <span className="text-xs font-semibold text-foreground">
-                    Ảnh hóa đơn & Chứng từ ({detail.invoiceImages.length} ảnh):
-                  </span>
-                  <div className="flex flex-wrap gap-2.5 pt-1">
-                    {detail.invoiceImages.map((url, idx) => (
-                      <ZoomableImage
-                        key={url}
-                        src={url}
-                        images={detail.invoiceImages}
-                        alt={`Ảnh #${idx + 1}`}
-                        title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
-                        className="size-20 sm:size-24 rounded-lg border-2 object-cover"
-                      />
-                    ))}
+              {/* Invoice / Evidence Images */}
+              {(detail.type === "receipt" || (detail.invoiceImages && detail.invoiceImages.length > 0)) && (
+                <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-foreground">
+                      Hóa đơn & Chứng từ mua hàng {detail.invoiceImages && detail.invoiceImages.length > 0 ? `(${detail.invoiceImages.length} ảnh)` : ""}:
+                    </span>
                   </div>
+
+                  {detail.invoiceImages && detail.invoiceImages.length > 0 && (
+                    <div className="flex flex-wrap gap-2.5 pt-0.5">
+                      {detail.invoiceImages.map((url, idx) => (
+                        <div key={url} className="relative group">
+                          <ZoomableImage
+                            src={url}
+                            images={detail.invoiceImages}
+                            alt={`Ảnh #${idx + 1}`}
+                            title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
+                            className="size-20 sm:size-24 rounded-lg border-2 object-cover"
+                          />
+                          {detail.type === "receipt" && isManager && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInvoiceRemove(url);
+                              }}
+                              disabled={pending}
+                              className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
+                              aria-label="Xóa ảnh này"
+                              title="Xóa ảnh hóa đơn này"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {detail.type === "receipt" && isManager && (
+                    <label className="flex min-h-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-3 text-center transition-colors hover:bg-accent">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        multiple
+                        className="hidden"
+                        disabled={uploadingInvoices || pending}
+                        onChange={handleInvoiceUpload}
+                      />
+                      <ImagePlus className="size-5 text-muted-foreground" aria-hidden />
+                      <span className="text-xs font-semibold">
+                        {uploadingInvoices ? "Đang tải ảnh lên…" : (detail.invoiceImages?.length ?? 0) === 0 ? "Bấm để tải ảnh hóa đơn / chứng từ" : "Bấm để bổ sung thêm ảnh hóa đơn"}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">Có thể chọn nhiều ảnh một lúc (PNG, JPEG, WebP)</span>
+                    </label>
+                  )}
                 </div>
               )}
 
