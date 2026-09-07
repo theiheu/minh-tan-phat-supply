@@ -12,6 +12,12 @@ import { dayRange } from "@/lib/format";
 import { DEFECT_STATUS } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "cn";
+import {
+  RepairBatchTab,
+  type BatchItem,
+  type BatchNote,
+} from "@/features/defects/components/repair-batch-tab";
 
 type DefectStatus = "staging" | "in_repair" | "returned" | "liquidated" | "cancelled";
 const STATUSES: DefectStatus[] = ["staging", "in_repair", "returned", "liquidated", "cancelled"];
@@ -37,6 +43,7 @@ export default async function DefectsPage({
   const isManager = isPrivileged(profile?.role);
   const isDev = isSuperuser(profile?.role);
   const showExchange = isManager && view === "exchange";
+  const showRepairBatch = isManager && view === "repair";
 
   const supabase = await createClient();
 
@@ -45,6 +52,83 @@ export default async function DefectsPage({
     .select("id, name")
     .eq("is_active", true)
     .order("code");
+
+  // ---- Tab: Tập kết sửa (manager) — gom vật tư hỏng staging nhiều HONG → 1 phiếu SC ----
+  if (showRepairBatch) {
+    const stagingNotes = await supabase
+      .from("defect_notes")
+      .select(
+        "id, code, reported_by, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
+      )
+      .eq("status", "staging")
+      .order("created_at", { ascending: false });
+
+    const noteRows = stagingNotes.data ?? [];
+
+    // Loại các HONG đang có phiếu Đổi Mới sống
+    const noteIds = noteRows.map((d) => d.id);
+    const { data: liveEx } =
+      noteIds.length > 0
+        ? await supabase
+            .from("exchange_notes")
+            .select("linked_defect_id")
+            .in("linked_defect_id", noteIds)
+            .in("status", ["pending", "approved", "issued", "received"])
+        : { data: [] as { linked_defect_id: string | null }[] };
+    const liveNoteIds = new Set((liveEx ?? []).map((e) => e.linked_defect_id));
+
+    // Loại các dòng đã từng đi sửa (tránh gửi trùng)
+    const allItemIds = noteRows.flatMap((d) => (d.defect_note_items ?? []).map((i) => i.id));
+    const { data: repairedIds } =
+      allItemIds.length > 0
+        ? await supabase
+            .from("repair_order_items")
+            .select("defect_item_id")
+            .in("defect_item_id", allItemIds)
+        : { data: [] as { defect_item_id: string | null }[] };
+    const repairedItemIds = new Set((repairedIds ?? []).map((r) => r.defect_item_id));
+
+    const batchNotes: BatchNote[] = [];
+    const batchItems: BatchItem[] = [];
+    for (const d of noteRows) {
+      if (liveNoteIds.has(d.id)) continue;
+      if (d.repair_requested_at) continue; // phiếu đang chờ xác nhận sửa — xử lý ở modal phiếu
+      const items = (d.defect_note_items ?? [])
+        .filter((i) => !repairedItemIds.has(i.id))
+        .map((i) => {
+          const variants = i.variants as {
+            attributes?: unknown;
+            unit?: string | null;
+            products?: { name?: string | null } | null;
+          } | null;
+          return {
+            id: i.id,
+            noteId: d.id,
+            quantity: i.quantity,
+            productName: variants?.products?.name ?? null,
+            variantLabel: variantLabelFor(variants),
+            damageDetail: i.damage_detail,
+            note: i.note,
+            images: i.images ?? [],
+          } satisfies BatchItem;
+        });
+      if (items.length === 0) continue;
+      batchNotes.push({
+        id: d.id,
+        code: d.code,
+        reporterName: d.reporter?.name ?? null,
+        createdAt: d.created_at,
+      });
+      batchItems.push(...items);
+    }
+
+    return (
+      <div className="space-y-4">
+        <HeaderTabs view={view} isManager={isManager} />
+        <RepairBatchTab notes={batchNotes} items={batchItems} />
+      </div>
+    );
+  }
 
   // ---- Chế độ quản lý phiếu Đổi Mới (manager) ----
   if (showExchange) {
@@ -81,28 +165,7 @@ export default async function DefectsPage({
     }));
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 rounded-lg border p-0.5">
-            <Link
-              href="/defects"
-              className="rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent"
-            >
-              Phiếu hỏng
-            </Link>
-            <Link
-              href="/defects?view=exchange"
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Phiếu đổi mới
-            </Link>
-          </div>
-          <Link
-            href="/defects/new"
-            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            + Ghi nhận hỏng
-          </Link>
-        </div>
+        <HeaderTabs view={view} isManager={isManager} />
         <p className="text-sm text-muted-foreground">
           Phiếu Đổi Mới: đổi vật tư hỏng (đã có ảnh/chứng cứ ở phiếu HONG) lấy vật tư mới.
         </p>
@@ -178,30 +241,7 @@ export default async function DefectsPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 rounded-lg border p-0.5">
-          <Link
-            href="/defects"
-            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Phiếu hỏng
-          </Link>
-          {isManager && (
-            <Link
-              href="/defects?view=exchange"
-              className="rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent"
-            >
-              Phiếu đổi mới
-            </Link>
-          )}
-        </div>
-        <Link
-          href="/defects/new"
-          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          + Ghi nhận hỏng
-        </Link>
-      </div>
+      <HeaderTabs view={view} isManager={isManager} />
       <ListFilters
         basePath="/defects"
         searchPlaceholder="Tìm mã phiếu hỏng…"
@@ -243,4 +283,44 @@ function variantLabelFor(variants: {
     if (values.length > 0) return values.join(" · ");
   }
   return variants?.unit ?? "—";
+}
+
+/** Header tabs: Phiếu hỏng | Phiếu đổi mới | Tập kết sửa (+ nút Ghi nhận hỏng). */
+function HeaderTabs({ view, isManager }: { view: string; isManager: boolean }) {
+  const tabs = [
+    { href: "/defects", label: "Phiếu hỏng", active: view === "defect" },
+    {
+      href: "/defects?view=exchange",
+      label: "Phiếu đổi mới",
+      active: view === "exchange",
+      manager: true,
+    },
+    { href: "/defects?view=repair", label: "Tập kết sửa", active: view === "repair", manager: true },
+  ];
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 rounded-lg border p-0.5">
+        {tabs
+          .filter((t) => !t.manager || isManager)
+          .map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent",
+                t.active && "bg-primary text-primary-foreground hover:bg-primary/90",
+              )}
+            >
+              {t.label}
+            </Link>
+          ))}
+      </div>
+      <Link
+        href="/defects/new"
+        className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        + Ghi nhận hỏng
+      </Link>
+    </div>
+  );
 }
