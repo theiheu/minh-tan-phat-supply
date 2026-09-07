@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatVnd } from "@/lib/format";
 import { formatAmountInWords } from "@/lib/money-words";
@@ -50,10 +51,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (doc.vehicle_plate) rightFields.push({ label: "Biển số xe", value: doc.vehicle_plate });
   if (doc.driver_name) rightFields.push({ label: "Người vận chuyển", value: doc.driver_name });
 
+  const qrCode = await generateQrDataUri(getSlipUrl(_req, `/issues/${id}`));
+
   const buffer = await renderToBuffer(
     <SlipDocument
       title="PHIẾU XUẤT KHO"
       code={doc.code}
+      qrCode={qrCode}
       createdAt={doc.created_at}
       fields={destFields}
       rightPanel={rightFields.length > 0 ? { heading: "Thông tin xe vận chuyển", fields: rightFields } : undefined}

@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatVnd } from "@/lib/format";
 import { LIQUIDATION_METHOD, variantLabel } from "@/lib/labels";
@@ -29,10 +30,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .select("quantity, method, unit_value, proceeds, variants(attributes, unit, products(name))")
     .eq("liquidation_note_id", id);
 
+  const qrCode = await generateQrDataUri(getSlipUrl(_req, `/liquidations`));
+
   const buffer = await renderToBuffer(
     <SlipDocument
       title="PHIẾU THANH LÝ"
       code={l.code}
+      qrCode={qrCode}
       createdAt={l.created_at}
       fields={[
         { label: "Lý do", value: l.reason },

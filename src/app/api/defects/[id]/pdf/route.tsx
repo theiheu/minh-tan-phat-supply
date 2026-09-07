@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
@@ -26,10 +27,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .select("quantity, damage_detail, variants(attributes, unit, products(name))")
     .eq("defect_note_id", id);
 
+  const qrCode = await generateQrDataUri(getSlipUrl(_req, `/defects`));
+
   const buffer = await renderToBuffer(
     <SlipDocument
       title="PHIẾU GHI NHẬN VẬT TƯ HỎNG"
       code={d.code}
+      qrCode={qrCode}
       createdAt={d.created_at}
       fields={[
         { label: "Người báo", value: d.reporter?.name },

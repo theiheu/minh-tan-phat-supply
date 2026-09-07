@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
 import { formatAmountInWords } from "@/lib/money-words";
@@ -29,11 +30,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .eq("receipt_id", id);
 
   const total = (items ?? []).reduce((n, i) => n + i.quantity * (i.unit_cost ?? 0), 0);
+  const qrCode = await generateQrDataUri(getSlipUrl(_req, `/receipts/${id}`));
 
   const buffer = await renderToBuffer(
     <SlipDocument
       title="PHIẾU ĐẶT HÀNG & NHẬP KHO"
       code={r.code}
+      qrCode={qrCode}
       createdAt={r.created_at}
       fields={[
         { label: "Nhà cung cấp", value: r.supplier?.name },

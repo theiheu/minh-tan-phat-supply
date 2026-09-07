@@ -67,8 +67,9 @@ const styles = StyleSheet.create({
   brandBlock: { flex: 1 },
   brandName: { fontSize: 13, fontWeight: "bold", marginBottom: 2 },
   brandLine: { fontSize: 8.5, color: "#222", marginBottom: 1 },
-  codeBlock: { alignItems: "flex-end", paddingTop: 1 },
-  codeText: { fontSize: 10.5, fontWeight: "bold" },
+  codeBlock: { alignItems: "flex-end", justifyContent: "center" },
+  qrImage: { width: 50, height: 50, marginBottom: 2 },
+  codeText: { fontSize: 10.5, fontWeight: "bold", textAlign: "right" },
 
   // --- Title + ngày ---
   title: { fontSize: 17, fontWeight: "bold", textAlign: "center", marginBottom: 2 },
@@ -147,6 +148,7 @@ export function SlipDocument(props: {
   signers?: string[];
   totals?: SlipTotals[]; // dòng "TỔNG CỘNG" cuối bảng (có viền trên)
   amountInWords?: string; // "Thành tiền bằng chữ: …" (có money-words cung cấp)
+  qrCode?: string; // Data URI ảnh mã QR ở góc phải trên cùng
 }): JSX.Element {
   const {
     title,
@@ -159,6 +161,7 @@ export function SlipDocument(props: {
     signers = [],
     totals = [],
     amountInWords,
+    qrCode,
   } = props;
 
   const logo = brandLogoDataUri();
@@ -210,11 +213,15 @@ export function SlipDocument(props: {
             <Text style={styles.brandLine}>{BRAND.address}</Text>
             <Text style={styles.brandLine}>{BRAND.phone}</Text>
           </View>
-          {code ? (
-            <View style={styles.codeBlock}>
+          <View style={styles.codeBlock}>
+            {qrCode ? (
+              // eslint-disable-next-line jsx-a11y/alt-text
+              <Image src={qrCode} style={styles.qrImage} />
+            ) : null}
+            {code ? (
               <Text style={styles.codeText}>Số phiếu: {code}</Text>
-            </View>
-          ) : null}
+            ) : null}
+          </View>
         </View>
 
         <Text style={styles.title}>{title}</Text>

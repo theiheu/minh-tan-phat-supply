@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { variantLabel } from "@/lib/labels";
@@ -32,10 +33,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const isPosted = session.status === "posted";
   const rows = (items ?? []).filter((i) => !isPosted || i.checked);
 
+  const qrCode = await generateQrDataUri(getSlipUrl(_req, `/stocktake`));
+
   const buffer = await renderToBuffer(
     <SlipDocument
       title="PHIẾU KIỂM KÊ"
       code={session.code}
+      qrCode={qrCode}
       createdAt={session.created_at}
       fields={[
         { label: "Kho", value: session.location?.name },

@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
 import { REPAIR_OUTCOME, variantLabel } from "@/lib/labels";
@@ -27,10 +28,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .select("quantity, repair_detail, cost, outcome, variants(attributes, unit, products(name))")
     .eq("repair_order_id", id);
 
+  const qrCode = await generateQrDataUri(getSlipUrl(_req, `/repairs`));
+
   const buffer = await renderToBuffer(
     <SlipDocument
       title="PHIẾU SỬA CHỮA"
       code={r.code}
+      qrCode={qrCode}
       createdAt={r.created_at}
       fields={[
         { label: "Đơn vị sửa", value: r.vendor },
