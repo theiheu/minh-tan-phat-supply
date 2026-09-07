@@ -1995,6 +1995,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_receipt_invoice_images: {
+        Args: {
+          p_by: string
+          p_id: string
+          p_invoice_images: string[]
+        }
+        Returns: undefined
+      }
       create_requisition: {
         Args: {
           p_items: Json

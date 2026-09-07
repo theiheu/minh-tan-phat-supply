@@ -58,6 +58,19 @@ export async function updateReceipt(id: string, input: ReceiptInput) {
   revalidatePath(`/receipts/${id}`);
 }
 
+export async function updateReceiptInvoiceImages(id: string, invoiceImages: string[]) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_receipt_invoice_images", {
+    p_id: id,
+    p_invoice_images: invoiceImages,
+    p_by: profile.id,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/receipts");
+  revalidatePath(`/receipts/${id}`);
+}
+
 export async function approveReceipt(id: string) {
   const profile = await requireProfile();
   const supabase = await createClient();

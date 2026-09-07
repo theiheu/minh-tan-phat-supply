@@ -15,15 +15,16 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
 import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
-import { isSuperuser } from "@/lib/types";
+import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
-import { ZoomableImage } from "@/components/image-lightbox";
+import { ReceiptInvoices } from "@/features/receipts/components/receipt-invoices";
 
 export const dynamic = "force-dynamic";
 
 const AUDIT_LABELS: Record<string, string> = {
   "receipt.create": "Tạo phiếu đặt hàng",
   "receipt.update": "Kiểm đếm / Cập nhật",
+  "receipt.update_invoices": "Cập nhật ảnh hóa đơn",
   "receipt.approve": "Duyệt đặt hàng",
   "receipt.post": "Duyệt nhập kho",
   "receipt.cancel": "Hủy phiếu",
@@ -121,42 +122,14 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         </Card>
       )}
 
-      {/* Hóa đơn & chứng từ mua hàng */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Hóa đơn & Chứng từ mua hàng</CardTitle>
-          {(receipt.invoice_images ?? []).length > 0 && (
-            <Badge variant="outline">
-              {(receipt.invoice_images ?? []).length} ảnh
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent>
-          {(receipt.invoice_images ?? []).length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
-              <p>Chưa có ảnh hóa đơn mua hàng.</p>
-              {(receipt.status === "draft" || receipt.status === "approved") && (
-                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                  ⚠️ Quản kho có thể bấm &quot;Kiểm đếm hàng về&quot; để tải ảnh hóa đơn VAT / chứng từ giao hàng lên trước khi duyệt nhập kho.
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              {(receipt.invoice_images ?? []).map((url: string, idx: number) => (
-                <ZoomableImage
-                  key={url}
-                  src={url}
-                  images={receipt.invoice_images}
-                  alt={`Hóa đơn ${idx + 1}`}
-                  title={`Hóa đơn #${idx + 1} (${receipt.code})`}
-                  className="size-28 rounded-lg border object-cover shadow-sm transition-transform hover:scale-105"
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Hóa đơn & chứng từ mua hàng (hỗ trợ bổ sung ảnh trước và sau khi duyệt nhập kho) */}
+      <ReceiptInvoices
+        receiptId={receipt.id}
+        receiptCode={receipt.code}
+        invoiceImages={receipt.invoice_images ?? []}
+        status={receipt.status}
+        isManager={isPrivileged(profile?.role)}
+      />
 
       <Card>
         <CardHeader>
