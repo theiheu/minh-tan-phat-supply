@@ -3,6 +3,7 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -55,12 +56,29 @@ export function CartDrawer() {
                     <Button
                       variant="outline"
                       size="icon-xs"
-                      onClick={() => updateQty(i.variantId, i.quantity - 1)}
+                      onClick={() => updateQty(i.variantId, Math.max(1, i.quantity - 1))}
                       aria-label="Giảm số lượng"
                     >
                       <Minus className="size-3" />
                     </Button>
-                    <span className="w-8 text-center text-sm tabular-nums">{i.quantity}</span>
+                    <Input
+                      type="number"
+                      min="1"
+                      className="h-7 w-14 text-center text-xs font-medium tabular-nums px-1"
+                      value={i.quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val > 0) {
+                          updateQty(i.variantId, val);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (isNaN(val) || val < 1) {
+                          updateQty(i.variantId, 1);
+                        }
+                      }}
+                    />
                     <Button
                       variant="outline"
                       size="icon-xs"

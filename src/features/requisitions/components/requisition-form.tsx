@@ -244,8 +244,25 @@ export function RequisitionForm({
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity - 1)} aria-label="Giảm">−</Button>
-                      <span className="w-10 text-center text-sm tabular-nums">{i.quantity}</span>
+                      <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, Math.max(1, i.quantity - 1))} aria-label="Giảm">−</Button>
+                      <Input
+                        type="number"
+                        min="1"
+                        className="h-7 w-16 text-center text-xs font-medium tabular-nums px-1"
+                        value={i.quantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (!isNaN(val) && val > 0) {
+                            updateQty(i.variantId, val);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          if (isNaN(val) || val < 1) {
+                            updateQty(i.variantId, 1);
+                          }
+                        }}
+                      />
                       <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity + 1)} aria-label="Tăng">+</Button>
                     </div>
                     <Button variant="ghost" size="icon-xs" onClick={() => removeItem(i.variantId)} aria-label="Xóa">×</Button>

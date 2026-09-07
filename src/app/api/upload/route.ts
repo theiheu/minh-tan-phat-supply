@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // Bucket cho phép nhận file (đổi tên nguồn nếu cần bucket mới ở đây).
-const ALLOWED_BUCKETS = new Set(["product-images", "category-icons", "defect-images"]);
+const ALLOWED_BUCKETS = new Set(["product-images", "category-icons", "defect-images", "receipt-images"]);
 const ALLOWED_TYPES = new Map<string, string>([
   ["image/png", "png"],
   ["image/jpeg", "jpg"],

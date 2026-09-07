@@ -23,6 +23,7 @@ export async function createReceipt(input: ReceiptInput) {
     p_supplier_id: parsed.supplierId ?? (null as unknown as string),
     p_by: profile.id,
     ...(parsed.notes != null ? { p_notes: parsed.notes } : {}),
+    p_invoice_images: parsed.invoiceImages ?? [],
   });
 
   if (error) throw new Error(error.message);
@@ -49,6 +50,7 @@ export async function updateReceipt(id: string, input: ReceiptInput) {
     p_supplier_id: parsed.supplierId ?? (null as unknown as string),
     p_by: profile.id,
     ...(parsed.notes != null ? { p_notes: parsed.notes } : {}),
+    p_invoice_images: parsed.invoiceImages ?? [],
   });
 
   if (error) throw new Error(error.message);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { ImagePlus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ComboboxInput } from "@/components/combobox-input";
 import { createReceipt, postReceipt, updateReceipt } from "../actions";
+import { uploadReceiptInvoiceImage } from "../upload";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 export interface ItemDraft {
   variantId: string;
@@ -38,6 +40,7 @@ export function ReceiptForm({
   receiptStatus,
   initialSupplierId = null,
   initialNotes = "",
+  initialInvoiceImages = [],
   initialItems,
 }: {
   suppliers: { id: string; name: string }[];
@@ -47,6 +50,7 @@ export function ReceiptForm({
   receiptStatus?: string;
   initialSupplierId?: string | null;
   initialNotes?: string;
+  initialInvoiceImages?: string[];
   initialItems?: ItemDraft[];
 }) {
   const router = useRouter();
@@ -54,6 +58,8 @@ export function ReceiptForm({
   const isApproved = receiptStatus === "approved";
   const [supplierId, setSupplierId] = useState<string | null>(initialSupplierId);
   const [notes, setNotes] = useState(initialNotes);
+  const [invoiceImages, setInvoiceImages] = useState<string[]>(initialInvoiceImages);
+  const [uploadingInvoices, setUploadingInvoices] = useState(false);
   const [items, setItems] = useState<ItemDraft[]>(
     initialItems && initialItems.length > 0 ? initialItems : [EMPTY],
   );
@@ -80,6 +86,26 @@ export function ReceiptForm({
     setItems((arr) => arr.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
   }
 
+  async function handleInvoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setUploadingInvoices(true);
+    try {
+      const urls = await Promise.all(files.map((f) => uploadReceiptInvoiceImage(f)));
+      setInvoiceImages((prev) => [...prev, ...urls]);
+      toast.success(`Đã tải lên ${urls.length} ảnh hóa đơn / chứng từ`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Tải ảnh thất bại");
+    } finally {
+      setUploadingInvoices(false);
+      e.target.value = "";
+    }
+  }
+
+  function removeInvoiceImage(url: string) {
+    setInvoiceImages((prev) => prev.filter((u) => u !== url));
+  }
+
   async function run(postAfterSave: boolean) {
     const valid = items.filter((i) => i.variantId && Number(i.quantity) > 0);
     if (valid.length === 0) return toast.error("Thêm ít nhất 1 vật tư");
@@ -89,6 +115,7 @@ export function ReceiptForm({
         const payload = {
           supplierId,
           notes: notes.trim() ? notes : undefined,
+          invoiceImages,
           items: valid.map((i) => ({
             variantId: i.variantId,
             quantity: Number(i.quantity),
@@ -117,7 +144,7 @@ export function ReceiptForm({
           toast.success(
             isEditing
               ? isApproved
-                ? "Đã lưu kết quả kiểm đếm"
+                ? "Đã lưu kết quả kiểm đếm & hóa đơn"
                 : "Đã lưu cập nhật phiếu đặt hàng"
               : "Đã lưu phiếu đặt hàng (chờ duyệt)",
           );
@@ -174,6 +201,64 @@ export function ReceiptForm({
               rows={3}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base">Hóa đơn & Chứng từ mua hàng</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Tải ảnh chụp hóa đơn VAT, phiếu giao hàng hoặc biên bản giao nhận từ nhà cung cấp trước khi duyệt nhập kho.
+            </p>
+          </div>
+          <Label className="cursor-pointer">
+            <Button variant="outline" size="sm" type="button" asChild disabled={uploadingInvoices}>
+              <span>
+                <ImagePlus className="size-4" />
+                {uploadingInvoices ? "Đang tải ảnh…" : "+ Tải ảnh hóa đơn"}
+              </span>
+            </Button>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className="sr-only"
+              disabled={uploadingInvoices}
+              onChange={handleInvoiceUpload}
+            />
+          </Label>
+        </CardHeader>
+        <CardContent>
+          {invoiceImages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
+              <ImagePlus className="mb-2 size-8 text-muted-foreground/50" />
+              <span>Chưa có ảnh hóa đơn mua hàng</span>
+              <span className="text-xs">Bấm nút trên để tải ảnh từ máy tính hoặc điện thoại</span>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {invoiceImages.map((url, idx) => (
+                <div key={url} className="relative group">
+                  <ZoomableImage
+                    src={url}
+                    images={invoiceImages}
+                    alt={`Hóa đơn ${idx + 1}`}
+                    title={`Hóa đơn mua hàng #${idx + 1}`}
+                    className="size-24 rounded-lg border object-cover shadow-sm sm:size-28"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeInvoiceImage(url)}
+                    className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+                    aria-label="Xóa ảnh này"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

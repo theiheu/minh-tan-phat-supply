@@ -16,6 +16,7 @@ export const receiptSchema = z.object({
     .max(500, "Ghi chú tối đa 500 ký tự")
     .optional()
     .transform((v) => (v ? v : undefined)),
+  invoiceImages: z.array(z.string()).optional(),
   items: z.array(receiptItemSchema).min(1, "Phải có ít nhất 1 vật tư"),
 });
 

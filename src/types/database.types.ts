@@ -873,6 +873,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          invoice_images: string[]
           linked_requisition_ids: string[]
           notes: string | null
           status: Database["public"]["Enums"]["receipt_status"]
@@ -886,6 +887,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          invoice_images?: string[]
           linked_requisition_ids?: string[]
           notes?: string | null
           status?: Database["public"]["Enums"]["receipt_status"]
@@ -899,6 +901,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          invoice_images?: string[]
           linked_requisition_ids?: string[]
           notes?: string | null
           status?: Database["public"]["Enums"]["receipt_status"]
@@ -1974,6 +1977,7 @@ export type Database = {
       create_receipt: {
         Args: {
           p_by: string
+          p_invoice_images?: string[]
           p_items: Json
           p_notes?: string
           p_supplier_id: string
@@ -1984,6 +1988,7 @@ export type Database = {
         Args: {
           p_by: string
           p_id: string
+          p_invoice_images?: string[]
           p_items: Json
           p_notes?: string
           p_supplier_id: string

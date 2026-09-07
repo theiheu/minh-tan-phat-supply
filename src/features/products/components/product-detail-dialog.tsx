@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -38,14 +39,16 @@ export function ProductDetailDialog({
 }) {
   const addItem = useCartStore((s) => s.addItem);
   const [selectedId, setSelectedId] = useState(variants[0]?.id ?? "");
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState("1");
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
+  const numQty = Math.max(1, parseInt(qty, 10) || 1);
 
   function addToCart() {
     if (!selected) return;
+    const finalQty = numQty;
     addItem({
       variantId: selected.id,
-      quantity: qty,
+      quantity: finalQty,
       name: product.name,
       label: variantLabel(selected.attributes, selected.unit),
       unit: selected.unit,
@@ -54,8 +57,8 @@ export function ProductDetailDialog({
     });
     if (selected.stock === 0) {
       toast.success("Đã thêm vào giỏ (vật tư hết hàng — sẽ đặt hàng chờ nhập kho)");
-    } else if (qty > selected.stock) {
-      toast.success(`Đã thêm vào giỏ (tồn hiện có: ${selected.stock}, sẽ chờ nhập thêm ${qty - selected.stock})`);
+    } else if (finalQty > selected.stock) {
+      toast.success(`Đã thêm vào giỏ (tồn hiện có: ${selected.stock}, sẽ chờ nhập thêm ${finalQty - selected.stock})`);
     } else {
       toast.success("Đã thêm vào giỏ");
     }
@@ -84,7 +87,7 @@ export function ProductDetailDialog({
                 checked={selectedId === v.id}
                 onChange={() => {
                   setSelectedId(v.id);
-                  setQty(1);
+                  setQty("1");
                 }}
                 className="size-4 shrink-0 accent-primary"
               />
@@ -129,12 +132,31 @@ export function ProductDetailDialog({
 
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">Số lượng</span>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon-xs" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Giảm số lượng">
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="icon-xs"
+              onClick={() => setQty(String(Math.max(1, numQty - 1)))}
+              aria-label="Giảm số lượng"
+            >
               −
             </Button>
-            <span className="w-10 text-center tabular-nums">{qty}</span>
-            <Button variant="outline" size="icon-xs" onClick={() => setQty((q) => q + 1)} aria-label="Tăng số lượng">
+            <Input
+              type="number"
+              min="1"
+              className="h-8 w-18 text-center font-medium tabular-nums"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              onBlur={() => {
+                if (!qty || parseInt(qty, 10) < 1) setQty("1");
+              }}
+            />
+            <Button
+              variant="outline"
+              size="icon-xs"
+              onClick={() => setQty(String(numQty + 1))}
+              aria-label="Tăng số lượng"
+            >
               +
             </Button>
           </div>
@@ -145,14 +167,14 @@ export function ProductDetailDialog({
             ⚠️ <strong>Vật tư hiện đang hết hàng:</strong> Bạn vẫn có thể tạo yêu cầu với số lượng mong muốn. Quản kho sẽ nhận được thông tin để lên kế hoạch đặt hàng và cấp phát khi hàng về.
           </div>
         )}
-        {selected && selected.stock > 0 && qty > selected.stock && (
+        {selected && selected.stock > 0 && numQty > selected.stock && (
           <div className="rounded-md bg-blue-500/10 p-2.5 text-xs text-blue-600 dark:text-blue-400">
-            ℹ️ <strong>Tồn kho hiện có {selected.stock} {selected.unit ?? "cái"}:</strong> Bạn đang yêu cầu {qty}. Quản kho sẽ cấp trước số lượng có sẵn hoặc nhập thêm {qty - selected.stock} để cấp đủ.
+            ℹ️ <strong>Tồn kho hiện có {selected.stock} {selected.unit ?? "cái"}:</strong> Bạn đang yêu cầu {numQty}. Quản kho sẽ cấp trước số lượng có sẵn hoặc nhập thêm {numQty - selected.stock} để cấp đủ.
           </div>
         )}
 
         <DialogFooter>
-          <Button onClick={addToCart} disabled={!selected || qty < 1}>
+          <Button onClick={addToCart} disabled={!selected || numQty < 1}>
             {selected?.stock === 0 ? "Thêm vào giỏ (chờ nhập hàng)" : "Thêm vào giỏ"}
           </Button>
         </DialogFooter>

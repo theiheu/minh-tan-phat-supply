@@ -52,6 +52,7 @@ export default async function EditReceiptPage({ params }: { params: Promise<{ id
       receiptStatus={receipt.status}
       initialSupplierId={receipt.supplier_id}
       initialNotes={receipt.notes ?? ""}
+      initialInvoiceImages={receipt.invoice_images ?? []}
       initialItems={initialItems}
       suppliers={suppliers ?? []}
       variants={variantOptions}
