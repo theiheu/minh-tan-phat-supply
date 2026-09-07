@@ -15,8 +15,8 @@ import { dayRange, formatDate } from "@/lib/format";
 import { RECEIPT_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
-type ReceiptStatus = "draft" | "posted" | "cancelled";
-const STATUSES: ReceiptStatus[] = ["draft", "posted", "cancelled"];
+type ReceiptStatus = "draft" | "approved" | "posted" | "cancelled";
+const STATUSES: ReceiptStatus[] = ["draft", "approved", "posted", "cancelled"];
 const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
@@ -44,7 +44,7 @@ export default async function ReceiptsPage({
 
   let query = supabase
     .from("receipts")
-    .select("id, code, status, created_at, supplier:suppliers(name), creator:profiles(name)", { count: "exact" })
+    .select("id, code, status, created_at, supplier:suppliers(name), creator:profiles!receipts_created_by_fkey(name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (status && STATUSES.includes(status as ReceiptStatus)) query = query.eq("status", status as ReceiptStatus);

@@ -177,7 +177,7 @@ export function ProductsManager({
                             <span className={v.isComposite ? "font-medium text-foreground" : ""}>
                               {v.isComposite ? kitLabel(v.label, v.components) : v.label}
                             </span>
-                            <span className="tabular-nums">· {v.quantity}</span>
+                            <span className="tabular-nums">· {v.quantity}{v.unit ? ` ${v.unit}` : ""}</span>
                             {v.isComposite && <span className="text-[10px] text-primary">(bộ còn ráp được)</span>}
                           </div>
                         ))}
@@ -186,7 +186,15 @@ export function ProductsManager({
                   </TableCell>
                   <TableCell className="tabular-nums font-medium">
                     {p.totalStock}
-                    {kitRow?.unit ? <span className="ml-1 text-xs font-normal text-muted-foreground">{kitRow.unit}</span> : null}
+                    {kitRow?.unit ? (
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">{kitRow.unit}</span>
+                    ) : (
+                      p.variants.find((v) => v.unit)?.unit ? (
+                        <span className="ml-1 text-xs font-normal text-muted-foreground">
+                          {p.variants.find((v) => v.unit)?.unit}
+                        </span>
+                      ) : null
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(p.createdAt)}</TableCell>
                   <TableCell>

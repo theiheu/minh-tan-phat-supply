@@ -18,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: r } = await supabase
     .from("receipts")
-    .select("code, notes, created_at, supplier:suppliers(name), creator:profiles(name)")
+    .select("code, notes, created_at, supplier:suppliers(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name)")
     .eq("id", id)
     .single();
   if (!r) return new NextResponse("Không tìm thấy phiếu", { status: 404 });
@@ -32,12 +32,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const buffer = await renderToBuffer(
     <SlipDocument
-      title="PHIẾU NHẬP KHO"
+      title="PHIẾU ĐẶT HÀNG & NHẬP KHO"
       code={r.code}
       createdAt={r.created_at}
       fields={[
         { label: "Nhà cung cấp", value: r.supplier?.name },
         { label: "Người lập", value: r.creator?.name },
+        { label: "Người duyệt", value: r.approver?.name },
         { label: "Ghi chú", value: r.notes },
       ]}
       columns={[

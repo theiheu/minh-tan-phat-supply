@@ -87,6 +87,7 @@ export default async function ReportsPage({
   const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const nameOf = (id: string | null) => (id ? variantMap.get(id)?.products?.name ?? "—" : "—");
+  const unitOf = (id: string | null) => (id ? variantMap.get(id)?.unit ?? "—" : "—");
   const labelOf = (id: string | null) => {
     const v = id ? variantMap.get(id) : undefined;
     return v ? variantLabel(v.attributes, v.unit) : "—";
@@ -109,10 +110,10 @@ export default async function ReportsPage({
         <CardContent>
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Vật tư</TableHead><TableHead>Biến thể</TableHead><TableHead>Tồn</TableHead><TableHead>Tối thiểu</TableHead><TableHead>Đơn giá</TableHead><TableHead>Giá trị tồn</TableHead>
+              <TableHead>Vật tư</TableHead><TableHead>Biến thể</TableHead><TableHead>Đơn vị tính</TableHead><TableHead>Tồn</TableHead><TableHead>Tối thiểu</TableHead><TableHead>Đơn giá</TableHead><TableHead>Giá trị tồn</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {(stock ?? []).length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">Chưa có dữ liệu tồn kho.</TableCell></TableRow>}
+              {(stock ?? []).length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Chưa có dữ liệu tồn kho.</TableCell></TableRow>}
               {(stock ?? []).map((s, i) => {
                 const price = s.variant_id ? variantMap.get(s.variant_id)?.price ?? null : null;
                 const qty = s.quantity ?? 0;
@@ -133,6 +134,7 @@ export default async function ReportsPage({
                   <TableRow key={i} className={rowCls}>
                     <TableCell>{nameOf(s.variant_id)}</TableCell>
                     <TableCell className="text-muted-foreground">{labelOf(s.variant_id)}</TableCell>
+                    <TableCell className="text-muted-foreground">{unitOf(s.variant_id)}</TableCell>
                     <TableCell className={`${qtyCls} tabular-nums`}>{qty}</TableCell>
                     <TableCell className="tabular-nums text-muted-foreground">{s.min_stock ?? 0}</TableCell>
                     <TableCell className="tabular-nums text-muted-foreground">{price != null ? formatVnd(price) : "—"}</TableCell>
@@ -158,10 +160,10 @@ export default async function ReportsPage({
         <CardContent>
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Vật tư</TableHead><TableHead>Lô</TableHead><TableHead>Hạn sử dụng</TableHead><TableHead>SL</TableHead>
+              <TableHead>Vật tư</TableHead><TableHead>Đơn vị tính</TableHead><TableHead>Lô</TableHead><TableHead>Hạn sử dụng</TableHead><TableHead>SL</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {(expiring ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Không có vật tư sắp hết hạn.</TableCell></TableRow>}
+              {(expiring ?? []).length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Không có vật tư sắp hết hạn.</TableCell></TableRow>}
               {(expiring ?? []).map((e, i) => {
                 // Ngày hiện tại (Y-M-D) để so theo ngày, không theo giờ.
                 const today = new Date();
@@ -184,6 +186,7 @@ export default async function ReportsPage({
                 return (
                   <TableRow key={i} className={rowCls}>
                     <TableCell>{nameOf(e.variant_id)}</TableCell>
+                    <TableCell className="text-muted-foreground">{unitOf(e.variant_id)}</TableCell>
                     <TableCell className="text-muted-foreground">{e.batch_no ?? "—"}</TableCell>
                     <TableCell className={dateCls}>{formatDate(e.expiry_date)}</TableCell>
                     <TableCell className="tabular-nums">{e.quantity}</TableCell>
@@ -208,13 +211,14 @@ export default async function ReportsPage({
         <CardContent>
           <Table>
             <TableHeader><TableRow>
-              <TableHead>Vật tư</TableHead><TableHead>Loại</TableHead><TableHead>SL</TableHead><TableHead>Thời gian</TableHead>
+              <TableHead>Vật tư</TableHead><TableHead>Đơn vị tính</TableHead><TableHead>Loại</TableHead><TableHead>SL</TableHead><TableHead>Thời gian</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {(movements ?? []).length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Chưa có biến động kho.</TableCell></TableRow>}
+              {(movements ?? []).length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Chưa có biến động kho.</TableCell></TableRow>}
               {(movements ?? []).map((m, i) => (
                 <TableRow key={i}>
                   <TableCell>{nameOf(m.variant_id)}</TableCell>
+                  <TableCell className="text-muted-foreground">{unitOf(m.variant_id)}</TableCell>
                   <TableCell className="text-muted-foreground">{MOVEMENT_TYPE[m.movement_type] ?? m.movement_type}</TableCell>
                   <TableCell className="tabular-nums">{m.quantity}</TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(m.created_at)}</TableCell>

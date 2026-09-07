@@ -23,7 +23,8 @@ export const EXCHANGE_STATUS: Record<string, string> = {
 };
 
 export const RECEIPT_STATUS: Record<string, string> = {
-  draft: "Chờ hàng về",
+  draft: "Chờ duyệt đặt hàng",
+  approved: "Đã duyệt (Chờ hàng về)",
   posted: "Đã nhập kho",
   cancelled: "Đã hủy",
 };

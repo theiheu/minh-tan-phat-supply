@@ -51,7 +51,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
   const { data: defectItems } = note?.defect?.id
     ? await supabase
         .from("defect_note_items")
-        .select("id, quantity, damage_detail, images, variants(products(name))")
+        .select("id, quantity, damage_detail, images, variants(attributes, unit, products(name))")
         .eq("defect_note_id", note.defect.id)
     : { data: [] };
 
@@ -128,13 +128,14 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
               <TableRow>
                 <TableHead>Tên vật tư</TableHead>
                 <TableHead>Quy cách</TableHead>
+                <TableHead>Đơn vị tính</TableHead>
                 <TableHead className="text-right">Số lượng</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {(noteItems ?? []).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     Không có vật tư.
                   </TableCell>
                 </TableRow>
@@ -151,6 +152,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
                     <TableCell className="text-muted-foreground">
                       {variantLabel(variants?.attributes, variants?.unit)}
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{variants?.unit ?? "—"}</TableCell>
                     <TableCell className="text-right tabular-nums">{i.quantity}</TableCell>
                   </TableRow>
                 );
@@ -179,6 +181,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
             <TableHeader>
               <TableRow>
                 <TableHead>Tên vật tư</TableHead>
+                <TableHead>Đơn vị tính</TableHead>
                 <TableHead>Số lượng</TableHead>
                 <TableHead>Chi tiết hỏng</TableHead>
                 <TableHead>Ảnh</TableHead>
@@ -187,16 +190,21 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
             <TableBody>
               {(defectItems ?? []).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     Không có dòng vật tư hỏng.
                   </TableCell>
                 </TableRow>
               )}
               {(defectItems ?? []).map((it) => {
-                const variants = it.variants as { products?: { name?: string | null } | null } | null;
+                const variants = it.variants as {
+                  attributes?: unknown;
+                  unit?: string | null;
+                  products?: { name?: string | null } | null;
+                } | null;
                 return (
                   <TableRow key={it.id}>
                     <TableCell className="font-medium">{variants?.products?.name ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{variants?.unit ?? "—"}</TableCell>
                     <TableCell className="tabular-nums">{it.quantity}</TableCell>
                     <TableCell className="max-w-[320px] text-muted-foreground">{it.damage_detail ?? "—"}</TableCell>
                     <TableCell>

@@ -56,6 +56,15 @@ export async function updateReceipt(id: string, input: ReceiptInput) {
   revalidatePath(`/receipts/${id}`);
 }
 
+export async function approveReceipt(id: string) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("approve_receipt", { p_id: id, p_by: profile.id });
+  if (error) throw new Error(error.message);
+  revalidatePath("/receipts");
+  revalidatePath(`/receipts/${id}`);
+}
+
 export async function postReceipt(id: string) {
   const profile = await requireProfile();
   const supabase = await createClient();

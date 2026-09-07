@@ -867,6 +867,8 @@ export type Database = {
       }
       receipts: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           code: string
           created_at: string
           created_by: string | null
@@ -878,6 +880,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           code: string
           created_at?: string
           created_by?: string | null
@@ -889,6 +893,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           code?: string
           created_at?: string
           created_by?: string | null
@@ -900,6 +906,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "receipts_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "receipts_created_by_fkey"
             columns: ["created_by"]
@@ -1882,6 +1895,10 @@ export type Database = {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
+      approve_receipt: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       approve_requisition: {
         Args: { p_by: string; p_id: string }
         Returns: undefined
@@ -2167,7 +2184,7 @@ export type Database = {
         | "issue_out"
         | "exchange_out"
         | "defect_collect_in"
-      receipt_status: "draft" | "posted" | "cancelled"
+      receipt_status: "draft" | "approved" | "posted" | "cancelled"
       repair_outcome: "returned_to_stock" | "liquidation"
       repair_status: "in_repair" | "returned" | "cancelled"
       requisition_status:
@@ -2360,7 +2377,7 @@ export const Constants = {
         "exchange_out",
         "defect_collect_in",
       ],
-      receipt_status: ["draft", "posted", "cancelled"],
+      receipt_status: ["draft", "approved", "posted", "cancelled"],
       repair_outcome: ["returned_to_stock", "liquidation"],
       repair_status: ["in_repair", "returned", "cancelled"],
       requisition_status: [

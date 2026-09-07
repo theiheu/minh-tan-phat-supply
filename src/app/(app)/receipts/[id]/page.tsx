@@ -23,7 +23,8 @@ export const dynamic = "force-dynamic";
 const AUDIT_LABELS: Record<string, string> = {
   "receipt.create": "Tạo phiếu đặt hàng",
   "receipt.update": "Kiểm đếm / Cập nhật",
-  "receipt.post": "Ghi nhận nhập kho",
+  "receipt.approve": "Duyệt đặt hàng",
+  "receipt.post": "Duyệt nhập kho",
   "receipt.cancel": "Hủy phiếu",
 };
 
@@ -35,7 +36,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
 
   const { data: receipt } = await supabase
     .from("receipts")
-    .select("*, supplier:suppliers(name), creator:profiles(name)")
+    .select("*, supplier:suppliers(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name)")
     .eq("id", id)
     .single();
   if (!receipt) notFound();
@@ -92,7 +93,8 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            {receipt.supplier?.name ?? "Không có nhà cung cấp"} · {receipt.creator?.name ?? "—"} ·{" "}
+            {receipt.supplier?.name ?? "Không có nhà cung cấp"} · Người tạo: {receipt.creator?.name ?? "—"}
+            {receipt.approver?.name ? ` · Người duyệt: ${receipt.approver.name}` : ""} ·{" "}
             {formatDate(receipt.created_at)}
           </p>
         </div>
@@ -128,6 +130,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
               <TableHeader>
                 <TableRow>
                   <TableHead>Tên vật tư</TableHead>
+                  <TableHead>Đơn vị tính</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
                   <TableHead className="text-right">Đơn giá</TableHead>
                   <TableHead className="text-right">Thành tiền</TableHead>
@@ -138,7 +141,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
               <TableBody>
                 {(items ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       Chưa có vật tư nào.
                     </TableCell>
                   </TableRow>
@@ -157,6 +160,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                           {variantLabel(v?.attributes, v?.unit)}
                         </span>
                       </TableCell>
+                      <TableCell className="text-muted-foreground">{v?.unit ?? "—"}</TableCell>
                       <TableCell className="text-right tabular-nums">{it.quantity}</TableCell>
                       <TableCell className="text-right tabular-nums">
                         {it.unit_cost != null ? formatVnd(it.unit_cost) : "—"}
@@ -173,7 +177,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                 })}
                 {(items ?? []).length > 0 && (
                   <TableRow>
-                    <TableCell className="font-medium">Tổng cộng</TableCell>
+                    <TableCell colSpan={2} className="font-medium">Tổng cộng</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{totalQuantity}</TableCell>
                     <TableCell />
                     <TableCell className="text-right font-medium tabular-nums">{formatVnd(total)}</TableCell>

@@ -35,6 +35,7 @@ export function ReceiptForm({
   variants,
   receiptId,
   receiptCode,
+  receiptStatus,
   initialSupplierId = null,
   initialNotes = "",
   initialItems,
@@ -43,12 +44,14 @@ export function ReceiptForm({
   variants: VariantOption[];
   receiptId?: string;
   receiptCode?: string;
+  receiptStatus?: string;
   initialSupplierId?: string | null;
   initialNotes?: string;
   initialItems?: ItemDraft[];
 }) {
   const router = useRouter();
   const isEditing = Boolean(receiptId);
+  const isApproved = receiptStatus === "approved";
   const [supplierId, setSupplierId] = useState<string | null>(initialSupplierId);
   const [notes, setNotes] = useState(initialNotes);
   const [items, setItems] = useState<ItemDraft[]>(
@@ -106,12 +109,18 @@ export function ReceiptForm({
           const linked = (await postReceipt(targetId)) as string[] | null;
           toast.success(
             linked && linked.length > 0
-              ? `Đã ghi nhận phiếu nhập (tự động cấp phát ${linked.length} phiếu yêu cầu)`
-              : "Đã ghi nhận phiếu nhập",
+              ? `Đã duyệt nhập kho thành công (tự động cấp phát ${linked.length} phiếu yêu cầu)`
+              : "Đã duyệt nhập kho thành công",
           );
           router.push(`/receipts/${targetId}`);
         } else {
-          toast.success(isEditing ? "Đã lưu cập nhật phiếu đặt hàng" : "Đã lưu nháp phiếu đặt hàng");
+          toast.success(
+            isEditing
+              ? isApproved
+                ? "Đã lưu kết quả kiểm đếm"
+                : "Đã lưu cập nhật phiếu đặt hàng"
+              : "Đã lưu phiếu đặt hàng (chờ duyệt)",
+          );
           router.push(targetId ? `/receipts/${targetId}` : "/receipts");
         }
         router.refresh();
@@ -126,7 +135,11 @@ export function ReceiptForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            {isEditing ? `Kiểm đếm & Cập nhật phiếu đặt hàng (${receiptCode ?? ""})` : "Thông tin phiếu đặt hàng / nhập kho"}
+            {isEditing
+              ? isApproved
+                ? `Kiểm đếm & Đối chiếu hàng về (${receiptCode ?? ""})`
+                : `Chỉnh sửa thông tin phiếu đặt hàng (${receiptCode ?? ""})`
+              : "Thông tin phiếu đặt hàng / nhập kho"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -226,10 +239,20 @@ export function ReceiptForm({
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => run(false)} disabled={pending}>
-          {isEditing ? "Lưu thay đổi (chưa nhập kho)" : "Lưu nháp (đặt hàng)"}
+          {isEditing
+            ? isApproved
+              ? "Lưu kiểm đếm (chưa nhập kho)"
+              : "Lưu thay đổi"
+            : "Lưu phiếu đặt hàng"}
         </Button>
         <Button onClick={() => run(true)} disabled={pending}>
-          {pending ? "Đang xử lý…" : "Ghi nhận nhập kho"}
+          {pending
+            ? "Đang xử lý…"
+            : isApproved
+              ? "Duyệt nhập kho"
+              : isEditing
+                ? "Lưu & Nhập kho ngay"
+                : "Lưu & Nhập kho ngay"}
         </Button>
       </div>
     </div>

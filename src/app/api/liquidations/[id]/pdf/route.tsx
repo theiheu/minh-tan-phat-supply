@@ -40,16 +40,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Người duyệt", value: l.approver?.name },
       ]}
       columns={[
-        { label: "Tên vật tư", flex: 1.6 },
-        { label: "Biến thể", flex: 1.4 },
-        { label: "Số lượng", flex: 0.8 },
-        { label: "Phương thức", flex: 1.0 },
-        { label: "Giá trị", flex: 1.0, align: "right" },
-        { label: "Tiền thu", flex: 1.0, align: "right" },
+        { label: "Tên vật tư", flex: 1.5 },
+        { label: "Biến thể", flex: 1.3 },
+        { label: "Đơn vị", flex: 0.6 },
+        { label: "Số lượng", flex: 0.7 },
+        { label: "Phương thức", flex: 0.9 },
+        { label: "Giá trị", flex: 0.9, align: "right" },
+        { label: "Tiền thu", flex: 0.9, align: "right" },
       ]}
       rows={(items ?? []).map((i) => [
         i.variants?.products?.name ?? "—",
         variantLabel(i.variants?.attributes, i.variants?.unit),
+        i.variants?.unit ?? "—",
         i.quantity,
         LIQUIDATION_METHOD[i.method] ?? i.method,
         i.unit_value != null ? formatVnd(i.unit_value) : "—",

@@ -36,14 +36,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Kho nguồn", value: d.source?.name },
       ]}
       columns={[
-        { label: "Tên vật tư", flex: 1.6 },
-        { label: "Biến thể", flex: 1.4 },
+        { label: "Tên vật tư", flex: 1.5 },
+        { label: "Biến thể", flex: 1.3 },
+        { label: "Đơn vị", flex: 0.7 },
         { label: "Số lượng", flex: 0.8, align: "right" },
-        { label: "Chi tiết hỏng", flex: 2.6 },
+        { label: "Chi tiết hỏng", flex: 2.1 },
       ]}
       rows={(items ?? []).map((i) => [
         i.variants?.products?.name ?? "—",
         variantLabel(i.variants?.attributes, i.variants?.unit),
+        i.variants?.unit ?? "—",
         i.quantity,
         i.damage_detail ?? "",
       ])}

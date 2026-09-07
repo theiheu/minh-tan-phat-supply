@@ -24,7 +24,7 @@ export default async function EditReceiptPage({ params }: { params: Promise<{ id
     fetchCompositeVariantIds(supabase),
   ]);
 
-  if (!receipt || receipt.status !== "draft") {
+  if (!receipt || (receipt.status !== "draft" && receipt.status !== "approved")) {
     notFound();
   }
 
@@ -49,6 +49,7 @@ export default async function EditReceiptPage({ params }: { params: Promise<{ id
     <ReceiptForm
       receiptId={receipt.id}
       receiptCode={receipt.code}
+      receiptStatus={receipt.status}
       initialSupplierId={receipt.supplier_id}
       initialNotes={receipt.notes ?? ""}
       initialItems={initialItems}

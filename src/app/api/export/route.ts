@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     rows = (data ?? []).map((r) => ({
       "Vật tư": map.get(r.variant_id ?? "")?.products?.name ?? "—",
       "Biến thể": label(r.variant_id),
+      "Đơn vị tính": map.get(r.variant_id ?? "")?.unit ?? "—",
       "Tồn": r.quantity ?? 0,
       "Tối thiểu": r.min_stock ?? 0,
     }));
@@ -48,6 +49,7 @@ export async function GET(req: NextRequest) {
     rows = (data ?? []).map((m) => ({
       "Vật tư": map.get(m.variant_id)?.products?.name ?? "—",
       "Biến thể": label(m.variant_id),
+      "Đơn vị tính": map.get(m.variant_id)?.unit ?? "—",
       "Loại": m.movement_type,
       "Số lượng": m.quantity,
       "Thời gian": m.created_at,

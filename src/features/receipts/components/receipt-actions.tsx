@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { cancelReceipt, postReceipt } from "../actions";
+import { approveReceipt, cancelReceipt, postReceipt } from "../actions";
 
 export function ReceiptActions({ id, status }: { id: string; status: string }) {
   const router = useRouter();
@@ -16,11 +16,14 @@ export function ReceiptActions({ id, status }: { id: string; status: string }) {
       try {
         const res = await action();
         if (Array.isArray(res)) {
-          toast.success(res.length > 0 ? `${success} (đã cấp phát ${res.length} phiếu)` : `${success} (không cấp phát phiếu nào)`);
+          toast.success(
+            res.length > 0
+              ? `${success} (tự động cấp phát ${res.length} phiếu yêu cầu)`
+              : `${success} (không có phiếu yêu cầu nào cần cấp phát)`,
+          );
         } else {
           toast.success(success);
         }
-        // Sau Ghi nhận → mở trang chi tiết để xem danh sách phiếu yêu cầu đã được cấp phát.
         if (goDetail) {
           router.push(`/receipts/${id}`);
         } else {
@@ -33,19 +36,55 @@ export function ReceiptActions({ id, status }: { id: string; status: string }) {
     });
   }
 
-  if (status !== "draft") return null;
+  if (status === "draft") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/receipts/${id}/edit`}>Sửa thông tin</Link>
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => run(() => approveReceipt(id), "Đã duyệt phiếu đặt hàng", true)}
+          disabled={pending}
+        >
+          Duyệt đặt hàng
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => run(() => cancelReceipt(id), "Đã hủy phiếu đặt hàng", false)}
+          disabled={pending}
+        >
+          Hủy
+        </Button>
+      </div>
+    );
+  }
 
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button asChild size="sm" variant="outline">
-        <Link href={`/receipts/${id}/edit`}>Kiểm đếm / Sửa</Link>
-      </Button>
-      <Button size="sm" onClick={() => run(() => postReceipt(id), "Đã ghi nhận phiếu nhập", true)} disabled={pending}>
-        Ghi nhận nhập kho
-      </Button>
-      <Button size="sm" variant="destructive" onClick={() => run(() => cancelReceipt(id), "Đã hủy phiếu nhập", false)} disabled={pending}>
-        Hủy
-      </Button>
-    </div>
-  );
+  if (status === "approved") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/receipts/${id}/edit`}>Kiểm đếm hàng về</Link>
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => run(() => postReceipt(id), "Đã duyệt nhập kho", true)}
+          disabled={pending}
+        >
+          Duyệt nhập kho
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => run(() => cancelReceipt(id), "Đã hủy phiếu nhập", false)}
+          disabled={pending}
+        >
+          Hủy
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
 }

@@ -39,16 +39,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Tổng chi phí", value: r.total_cost != null ? formatVnd(r.total_cost) : "—" },
       ]}
       columns={[
-        { label: "Tên vật tư", flex: 1.6 },
-        { label: "Biến thể", flex: 1.4 },
-        { label: "Số lượng", flex: 0.8 },
-        { label: "Chi tiết sửa", flex: 1.5 },
-        { label: "Chi phí", flex: 1.0, align: "right" },
-        { label: "Kết quả", flex: 1.2 },
+        { label: "Tên vật tư", flex: 1.5 },
+        { label: "Biến thể", flex: 1.3 },
+        { label: "Đơn vị", flex: 0.6 },
+        { label: "Số lượng", flex: 0.7 },
+        { label: "Chi tiết sửa", flex: 1.4 },
+        { label: "Chi phí", flex: 0.9, align: "right" },
+        { label: "Kết quả", flex: 1.1 },
       ]}
       rows={(items ?? []).map((i) => [
         i.variants?.products?.name ?? "—",
         variantLabel(i.variants?.attributes, i.variants?.unit),
+        i.variants?.unit ?? "—",
         i.quantity,
         i.repair_detail ?? "",
         i.cost != null ? formatVnd(i.cost) : "—",

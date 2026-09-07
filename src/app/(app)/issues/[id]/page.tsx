@@ -152,6 +152,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                 <TableRow>
                   <TableHead className="w-12">STT</TableHead>
                   <TableHead>Tên hàng</TableHead>
+                  <TableHead>Đơn vị tính</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
                   {isCustomer && (
                     <>
@@ -164,7 +165,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
               <TableBody>
                 {(items ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isCustomer ? 5 : 3} className="text-center text-muted-foreground">
+                    <TableCell colSpan={isCustomer ? 6 : 4} className="text-center text-muted-foreground">
                       Chưa có vật tư nào.
                     </TableCell>
                   </TableRow>
@@ -182,6 +183,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                         <span className="font-medium">{v?.products?.name ?? "Vật tư"}</span>
                         <span className="ml-1 text-muted-foreground">{variantLabel(v?.attributes, v?.unit)}</span>
                       </TableCell>
+                      <TableCell className="text-muted-foreground">{v?.unit ?? "—"}</TableCell>
                       <TableCell className="text-right tabular-nums">{it.quantity}</TableCell>
                       {isCustomer && (
                         <>
@@ -198,7 +200,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                 })}
                 {(items ?? []).length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={2} className="font-medium">
+                    <TableCell colSpan={3} className="font-medium">
                       Tổng cộng
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{totalQuantity}</TableCell>

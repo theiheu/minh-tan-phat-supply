@@ -195,6 +195,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     items: {
       id: string;
       productName: string | null;
+      unit: string | null;
       quantity: number;
       damageDetail: string | null;
       images: string[];
@@ -205,19 +206,23 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
       supabase
         .from("defect_note_items")
-        .select("id, quantity, damage_detail, images, variants(products(name))")
+        .select("id, quantity, damage_detail, images, variants(attributes, unit, products(name))")
         .eq("defect_note_id", req.linked_defect_id),
     ]);
     if (dnote) {
       defectEvidence = {
         code: dnote.code,
-        items: (ditems ?? []).map((it) => ({
-          id: it.id,
-          productName: (it.variants as { products?: { name: string | null } | null } | null)?.products?.name ?? null,
-          quantity: it.quantity,
-          damageDetail: it.damage_detail,
-          images: it.images ?? [],
-        })),
+        items: (ditems ?? []).map((it) => {
+          const v = it.variants as { unit?: string | null; products?: { name: string | null } | null } | null;
+          return {
+            id: it.id,
+            productName: v?.products?.name ?? null,
+            unit: v?.unit ?? null,
+            quantity: it.quantity,
+            damageDetail: it.damage_detail,
+            images: it.images ?? [],
+          };
+        }),
       };
     }
   }
@@ -448,6 +453,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               <TableHeader>
                 <TableRow>
                   <TableHead>Tên vật tư</TableHead>
+                  <TableHead>Đơn vị tính</TableHead>
                   <TableHead>Số lượng</TableHead>
                   <TableHead>Chi tiết hỏng</TableHead>
                   <TableHead>Ảnh</TableHead>
@@ -457,6 +463,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                 {defectEvidence.items.map((it) => (
                   <TableRow key={it.id}>
                     <TableCell className="font-medium">{it.productName ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{it.unit ?? "—"}</TableCell>
                     <TableCell className="tabular-nums">{it.quantity}</TableCell>
                     <TableCell className="max-w-[320px] text-muted-foreground">{it.damageDetail ?? "—"}</TableCell>
                     <TableCell>

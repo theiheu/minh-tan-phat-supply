@@ -33,6 +33,7 @@ type SortKey =
   | "fulfillerName"
   | "destinationName"
   | "spec"
+  | "unit"
   | "quantity"
   | "status";
 
@@ -63,6 +64,8 @@ function sortValue(row: ProductHistoryRow, spec: { label: string; unit: string |
       return row.destinationName;
     case "spec":
       return spec?.label ?? null;
+    case "unit":
+      return spec?.unit ?? null;
     case "quantity":
       return row.quantity;
     case "status":
@@ -243,6 +246,7 @@ export function ProductHistoryDialog({
                     <SortHeader label="Người cấp" sortKey="fulfillerName" sort={sort} onSort={toggleSort} />
                     <SortHeader label="Khu" sortKey="destinationName" sort={sort} onSort={toggleSort} />
                     {showSpec ? <SortHeader label="Quy cách" sortKey="spec" sort={sort} onSort={toggleSort} /> : null}
+                    <SortHeader label="Đơn vị tính" sortKey="unit" sort={sort} onSort={toggleSort} />
                     <SortHeader label="Số lượng" sortKey="quantity" sort={sort} onSort={toggleSort} align="right" />
                     <SortHeader label="Trạng thái" sortKey="status" sort={sort} onSort={toggleSort} />
                   </TableRow>
@@ -265,9 +269,9 @@ export function ProductHistoryDialog({
                         {showSpec ? (
                           <TableCell className="text-muted-foreground">{spec?.label ?? "—"}</TableCell>
                         ) : null}
+                        <TableCell className="text-muted-foreground">{spec?.unit ?? "—"}</TableCell>
                         <TableCell className="text-right whitespace-nowrap font-medium tabular-nums">
                           {r.quantity}
-                          {spec?.unit ? <span className="ml-1 text-xs font-normal text-muted-foreground">{spec.unit}</span> : null}
                         </TableCell>
                         <TableCell>
                           <Badge variant={statusBadgeVariant(r.status)}>{statusLabel(r)}</Badge>
