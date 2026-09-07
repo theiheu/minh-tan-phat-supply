@@ -21,7 +21,8 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 const AUDIT_LABELS: Record<string, string> = {
-  "receipt.create": "Tạo phiếu nháp",
+  "receipt.create": "Tạo phiếu đặt hàng",
+  "receipt.update": "Kiểm đếm / Cập nhật",
   "receipt.post": "Ghi nhận nhập kho",
   "receipt.cancel": "Hủy phiếu",
 };

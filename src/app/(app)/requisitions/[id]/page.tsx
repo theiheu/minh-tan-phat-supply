@@ -36,7 +36,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 export const dynamic = "force-dynamic";
 
@@ -378,6 +378,24 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
         </Card>
       )}
 
+      {isManager && (req.status === "pending" || req.status === "approved") && materialItems.some((m) => (m.stock ?? 0) < m.quantity) && (
+        <Card className="border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3.5">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                <span className="font-semibold">Tồn kho không đủ cấp phát:</span> Có vật tư trong phiếu đang hết hoặc thiếu tồn kho. Quản kho có thể lập phiếu đặt hàng để nhập bổ sung.
+              </p>
+            </div>
+            <Button size="sm" asChild>
+              <Link href={`/receipts/new?requisition_id=${req.id}`}>
+                Tạo phiếu đặt hàng nhập kho
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <SectionHeader icon={Package} tone="emerald" title="Vật tư" />
         <CardContent>
@@ -444,8 +462,14 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {it.images.map((url) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img key={url} src={appAssetUrl(url)} alt="" className="size-12 rounded-md border object-cover" />
+                          <ZoomableImage
+                            key={url}
+                            src={url}
+                            images={it.images}
+                            alt={`${it.productName ?? "Vật tư"} — ảnh minh chứng`}
+                            title={it.productName ?? "Minh chứng hỏng"}
+                            className="size-12 rounded-md border object-cover"
+                          />
                         ))}
                         {it.images.length === 0 ? <span className="text-muted-foreground">—</span> : null}
                       </div>

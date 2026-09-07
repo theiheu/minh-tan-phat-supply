@@ -17,7 +17,7 @@ import { variantLabel } from "@/lib/labels";
 import { useCartStore } from "@/stores/cart-store";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 /** Tên hiển thị cho 1 dòng: quy cách, hoặc bộ kèm "gồm linh kiện ×định mức". */
 function variantDisplayName(v: VariantWithStock): string {
@@ -50,8 +50,15 @@ export function ProductDetailDialog({
       label: variantLabel(selected.attributes, selected.unit),
       unit: selected.unit,
       image: selected.images?.[0] ?? product.images?.[0] ?? null,
+      stock: selected.stock,
     });
-    toast.success("Đã thêm vào giỏ");
+    if (selected.stock === 0) {
+      toast.success("Đã thêm vào giỏ (vật tư hết hàng — sẽ đặt hàng chờ nhập kho)");
+    } else if (qty > selected.stock) {
+      toast.success(`Đã thêm vào giỏ (tồn hiện có: ${selected.stock}, sẽ chờ nhập thêm ${qty - selected.stock})`);
+    } else {
+      toast.success("Đã thêm vào giỏ");
+    }
     onOpenChange(false);
   }
 
@@ -82,8 +89,12 @@ export function ProductDetailDialog({
                 className="size-4 shrink-0 accent-primary"
               />
               {v.images?.[0] ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={appAssetUrl(v.images[0])} alt="" className="size-10 shrink-0 rounded-md border object-cover" />
+                <ZoomableImage
+                  src={v.images[0]}
+                  images={v.images}
+                  alt={variantDisplayName(v)}
+                  className="size-10 shrink-0 rounded-md border object-cover"
+                />
               ) : (
                 <div className="size-10 shrink-0 rounded-md border bg-muted" />
               )}
@@ -129,9 +140,20 @@ export function ProductDetailDialog({
           </div>
         </div>
 
+        {selected && selected.stock === 0 && (
+          <div className="rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-600 dark:text-amber-400">
+            ⚠️ <strong>Vật tư hiện đang hết hàng:</strong> Bạn vẫn có thể tạo yêu cầu với số lượng mong muốn. Quản kho sẽ nhận được thông tin để lên kế hoạch đặt hàng và cấp phát khi hàng về.
+          </div>
+        )}
+        {selected && selected.stock > 0 && qty > selected.stock && (
+          <div className="rounded-md bg-blue-500/10 p-2.5 text-xs text-blue-600 dark:text-blue-400">
+            ℹ️ <strong>Tồn kho hiện có {selected.stock} {selected.unit ?? "cái"}:</strong> Bạn đang yêu cầu {qty}. Quản kho sẽ cấp trước số lượng có sẵn hoặc nhập thêm {qty - selected.stock} để cấp đủ.
+          </div>
+        )}
+
         <DialogFooter>
-          <Button onClick={addToCart} disabled={!selected || selected.stock === 0}>
-            Thêm vào giỏ
+          <Button onClick={addToCart} disabled={!selected || qty < 1}>
+            {selected?.stock === 0 ? "Thêm vào giỏ (chờ nhập hàng)" : "Thêm vào giỏ"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -20,7 +20,7 @@ import type { Zone } from "@/lib/types";
 import { isPrivileged } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { createRequisition, submitRequisition } from "../actions";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 export function RequisitionForm({
   zones,
@@ -213,28 +213,46 @@ export function RequisitionForm({
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Chưa có vật tư. Hãy thêm từ Kho vật tư.</p>
           ) : (
-            <ul className="divide-y">
-              {items.map((i) => (
-                <li key={i.variantId} className="flex items-center gap-3 py-2.5">
-                  {i.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={appAssetUrl(i.image)} alt="" className="size-11 shrink-0 rounded-md border object-cover" />
-                  ) : (
-                    <div className="size-11 shrink-0 rounded-md border bg-muted" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{i.name}</div>
-                    <div className="text-xs text-muted-foreground">{i.label}</div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity - 1)} aria-label="Giảm">−</Button>
-                    <span className="w-10 text-center text-sm tabular-nums">{i.quantity}</span>
-                    <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity + 1)} aria-label="Tăng">+</Button>
-                  </div>
-                  <Button variant="ghost" size="icon-xs" onClick={() => removeItem(i.variantId)} aria-label="Xóa">×</Button>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-3">
+              {items.some((i) => i.stock === 0) && (
+                <div className="rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-300">
+                  ⚠️ <strong>Lưu ý:</strong> Phiếu chứa vật tư đang hết hàng trong kho. Quản kho sẽ tiếp nhận thông tin yêu cầu để đặt hàng từ nhà cung cấp và tự động cấp phát khi hàng về.
+                </div>
+              )}
+              <ul className="divide-y">
+                {items.map((i) => (
+                  <li key={i.variantId} className="flex items-center gap-3 py-2.5">
+                    {i.image ? (
+                      <ZoomableImage
+                        src={i.image}
+                        alt={i.name}
+                        title={`${i.name} · ${i.label}`}
+                        className="size-11 shrink-0 rounded-md border object-cover"
+                      />
+                    ) : (
+                      <div className="size-11 shrink-0 rounded-md border bg-muted" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{i.name}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="truncate">{i.label}</span>
+                        {i.stock === 0 && (
+                          <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                            Chờ nhập hàng
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity - 1)} aria-label="Giảm">−</Button>
+                      <span className="w-10 text-center text-sm tabular-nums">{i.quantity}</span>
+                      <Button variant="outline" size="icon-xs" onClick={() => updateQty(i.variantId, i.quantity + 1)} aria-label="Tăng">+</Button>
+                    </div>
+                    <Button variant="ghost" size="icon-xs" onClick={() => removeItem(i.variantId)} aria-label="Xóa">×</Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </CardContent>
       </Card>

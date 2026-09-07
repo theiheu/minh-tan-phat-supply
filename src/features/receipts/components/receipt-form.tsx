@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ComboboxInput } from "@/components/combobox-input";
-import { createReceipt, postReceipt } from "../actions";
+import { createReceipt, postReceipt, updateReceipt } from "../actions";
 
-interface ItemDraft {
+export interface ItemDraft {
   variantId: string;
   quantity: string;
   unitCost: string;
@@ -21,7 +21,7 @@ interface ItemDraft {
   expiryDate: string;
 }
 
-interface VariantOption {
+export interface VariantOption {
   id: string;
   name: string;
   detail: string;
@@ -33,14 +33,27 @@ const EMPTY: ItemDraft = { variantId: "", quantity: "1", unitCost: "", batchNo: 
 export function ReceiptForm({
   suppliers,
   variants,
+  receiptId,
+  receiptCode,
+  initialSupplierId = null,
+  initialNotes = "",
+  initialItems,
 }: {
   suppliers: { id: string; name: string }[];
   variants: VariantOption[];
+  receiptId?: string;
+  receiptCode?: string;
+  initialSupplierId?: string | null;
+  initialNotes?: string;
+  initialItems?: ItemDraft[];
 }) {
   const router = useRouter();
-  const [supplierId, setSupplierId] = useState<string | null>(null);
-  const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
+  const isEditing = Boolean(receiptId);
+  const [supplierId, setSupplierId] = useState<string | null>(initialSupplierId);
+  const [notes, setNotes] = useState(initialNotes);
+  const [items, setItems] = useState<ItemDraft[]>(
+    initialItems && initialItems.length > 0 ? initialItems : [EMPTY],
+  );
   const [pending, startTransition] = useTransition();
 
   // Options cho ô gõ-tìm chọn vật tư: dòng 1 = tên, dòng 2 = biến thể · đơn vị,
@@ -64,13 +77,13 @@ export function ReceiptForm({
     setItems((arr) => arr.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
   }
 
-  async function run(postAfterCreate: boolean) {
+  async function run(postAfterSave: boolean) {
     const valid = items.filter((i) => i.variantId && Number(i.quantity) > 0);
     if (valid.length === 0) return toast.error("Thêm ít nhất 1 vật tư");
 
     startTransition(async () => {
       try {
-        const id = await createReceipt({
+        const payload = {
           supplierId,
           notes: notes.trim() ? notes : undefined,
           items: valid.map((i) => ({
@@ -80,18 +93,26 @@ export function ReceiptForm({
             batchNo: i.batchNo || undefined,
             expiryDate: i.expiryDate || undefined,
           })),
-        });
-        if (postAfterCreate) {
-          const linked = (await postReceipt(id)) as string[] | null;
+        };
+
+        let targetId = receiptId;
+        if (isEditing && receiptId) {
+          await updateReceipt(receiptId, payload);
+        } else {
+          targetId = await createReceipt(payload);
+        }
+
+        if (postAfterSave && targetId) {
+          const linked = (await postReceipt(targetId)) as string[] | null;
           toast.success(
             linked && linked.length > 0
-              ? `Đã ghi nhận phiếu nhập (cấp phát ${linked.length} phiếu yêu cầu)`
+              ? `Đã ghi nhận phiếu nhập (tự động cấp phát ${linked.length} phiếu yêu cầu)`
               : "Đã ghi nhận phiếu nhập",
           );
-          router.push(`/receipts/${id}`);
+          router.push(`/receipts/${targetId}`);
         } else {
-          toast.success("Đã lưu nháp");
-          router.push("/receipts");
+          toast.success(isEditing ? "Đã lưu cập nhật phiếu đặt hàng" : "Đã lưu nháp phiếu đặt hàng");
+          router.push(targetId ? `/receipts/${targetId}` : "/receipts");
         }
         router.refresh();
       } catch (err) {
@@ -104,7 +125,9 @@ export function ReceiptForm({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Thông tin phiếu</CardTitle>
+          <CardTitle className="text-base">
+            {isEditing ? `Kiểm đếm & Cập nhật phiếu đặt hàng (${receiptCode ?? ""})` : "Thông tin phiếu đặt hàng / nhập kho"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="max-w-sm space-y-1.5">
@@ -203,10 +226,10 @@ export function ReceiptForm({
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => run(false)} disabled={pending}>
-          Lưu nháp
+          {isEditing ? "Lưu thay đổi (chưa nhập kho)" : "Lưu nháp (đặt hàng)"}
         </Button>
         <Button onClick={() => run(true)} disabled={pending}>
-          {pending ? "Đang xử lý…" : "Lưu & Ghi nhận"}
+          {pending ? "Đang xử lý…" : "Ghi nhận nhập kho"}
         </Button>
       </div>
     </div>

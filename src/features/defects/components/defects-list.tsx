@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Printer, Trash2, Undo2, Wrench } from "lucide-react";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import {
@@ -240,12 +240,14 @@ function DefectDetailDialog({
               </Badge>
             ) : null}
           </DialogTitle>
-          <DialogDescription className="space-y-0.5 text-sm">
-            <div>
-              Người báo: <span className="text-foreground">{row.reporterName ?? "—"}</span> · Kho nguồn:{" "}
-              <span className="text-foreground">{row.sourceName ?? "—"}</span>
+          <DialogDescription asChild>
+            <div className="space-y-0.5 text-sm">
+              <div>
+                Người báo: <span className="text-foreground">{row.reporterName ?? "—"}</span> · Kho nguồn:{" "}
+                <span className="text-foreground">{row.sourceName ?? "—"}</span>
+              </div>
+              <div>Ngày lập: {formatDate(row.createdAt)}</div>
             </div>
-            <div>Ngày lập: {formatDate(row.createdAt)}</div>
           </DialogDescription>
         </DialogHeader>
 
@@ -278,11 +280,12 @@ function DefectDetailDialog({
               {it.images.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
                   {it.images.map((url) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <ZoomableImage
                       key={url}
-                      src={appAssetUrl(url)}
-                      alt="Ảnh hỏng"
+                      src={url}
+                      images={it.images}
+                      alt={`${it.productName ?? "Vật tư"} — ảnh hỏng`}
+                      title={it.productName ?? "Ảnh vật tư hỏng"}
                       className="size-16 rounded-md border object-cover"
                     />
                   ))}

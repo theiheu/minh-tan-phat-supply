@@ -1,12 +1,19 @@
-import { ReceiptForm } from "@/features/receipts/components/receipt-form";
+import { ReceiptForm, type ItemDraft } from "@/features/receipts/components/receipt-form";
 import { fetchCompositeVariantIds } from "@/features/products/data";
 import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewReceiptPage() {
+export default async function NewReceiptPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ requisition_id?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : undefined;
+  const requisitionId = sp?.requisition_id;
   const supabase = await createClient();
+
   const [{ data: suppliers }, { data: variants }, compositeIds] = await Promise.all([
     supabase.from("suppliers").select("id, name").is("deleted_at", null).order("name"),
     supabase
@@ -27,5 +34,40 @@ export default async function NewReceiptPage() {
       isTrackableLot: v.is_trackable_lot,
     }));
 
-  return <ReceiptForm suppliers={suppliers ?? []} variants={variantOptions} />;
+  let initialItems: ItemDraft[] | undefined;
+  let initialNotes = "";
+
+  if (requisitionId) {
+    const [{ data: req }, { data: reqItems }] = await Promise.all([
+      supabase.from("requisitions").select("code, purpose").eq("id", requisitionId).single(),
+      supabase
+        .from("requisition_items")
+        .select("variant_id, quantity")
+        .eq("requisition_id", requisitionId),
+    ]);
+
+    if (reqItems && reqItems.length > 0) {
+      initialItems = reqItems
+        .filter((it) => !compositeIds.has(it.variant_id))
+        .map((it) => ({
+          variantId: it.variant_id,
+          quantity: String(it.quantity),
+          unitCost: "",
+          batchNo: "",
+          expiryDate: "",
+        }));
+    }
+    if (req) {
+      initialNotes = `Đặt hàng bổ sung cho phiếu yêu cầu ${req.code}${req.purpose ? ` (${req.purpose})` : ""}`;
+    }
+  }
+
+  return (
+    <ReceiptForm
+      suppliers={suppliers ?? []}
+      variants={variantOptions}
+      initialItems={initialItems}
+      initialNotes={initialNotes}
+    />
+  );
 }

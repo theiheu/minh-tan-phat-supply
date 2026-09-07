@@ -12,7 +12,7 @@ import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-i
 import { recordDefect, requestRepair } from "../actions";
 import { createExchange } from "@/features/exchanges/actions";
 import { uploadDefectImage } from "../upload";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { cn } from "cn";
 
 type Intent = "record" | "exchange" | "repair";
@@ -288,22 +288,24 @@ export function DefectForm({
                     <div className="flex flex-wrap gap-3">
                       {it.images.map((url) => (
                         <div key={url} className="relative">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={appAssetUrl(url)}
+                          <ZoomableImage
+                            src={url}
+                            images={it.images}
                             alt="Ảnh hàng hỏng"
+                            title="Ảnh hàng hỏng"
                             className="size-24 rounded-lg border object-cover sm:size-28"
                           />
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setItems((a) =>
                                 a.map((r, idx) =>
                                   idx === i ? { ...r, images: r.images.filter((u) => u !== url) } : r,
                                 ),
-                              )
-                            }
-                            className="absolute -right-2 -top-2 flex size-8 items-center justify-center rounded-full bg-red-600 text-white"
+                              );
+                            }}
+                            className="absolute -right-2 -top-2 z-10 flex size-8 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
                             aria-label="Bỏ ảnh này"
                           >
                             <X className="size-4" />

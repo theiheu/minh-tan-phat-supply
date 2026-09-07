@@ -21,7 +21,7 @@ import { deleteProduct } from "../actions";
 import { ProductFormDialog } from "./product-form-dialog";
 import { ProductVariantsDialog } from "./product-variants-dialog";
 import type { AdminProductRow } from "../types";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 /** Ảnh chính của vật tư: ưu tiên ảnh dòng mặc định → ảnh vật tư → dòng đầu có ảnh. */
 function productMainImage(p: AdminProductRow): string | null {
@@ -129,26 +129,25 @@ export function ProductsManager({
             {products.map((p) => {
               const kitRow = p.variants.find((v) => v.isComposite);
               const mainImage = productMainImage(p);
+              const allImages = [
+                ...(p.images ?? []),
+                ...p.variants.flatMap((v) => v.images ?? []),
+              ].filter((u): u is string => Boolean(u));
+              const uniqueImages = [...new Set(allImages)];
               return (
                 <TableRow key={p.id}>
                   <TableCell className="w-10 py-2 pl-2 pr-1">
-                    <button
-                      type="button"
-                      onClick={() => setVariantsProduct(p)}
-                      title="Ảnh chính — bấm để xem/sửa ảnh dòng biến thể"
-                      className="block"
-                    >
-                      {mainImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={appAssetUrl(mainImage)}
-                          alt=""
-                          className="size-10 rounded-md border object-cover"
-                        />
-                      ) : (
-                        <div className="size-10 rounded-md border bg-muted" />
-                      )}
-                    </button>
+                    {mainImage ? (
+                      <ZoomableImage
+                        src={mainImage}
+                        images={uniqueImages.length > 0 ? uniqueImages : [mainImage]}
+                        alt={p.name}
+                        title={p.name}
+                        className="size-10 rounded-md border object-cover"
+                      />
+                    ) : (
+                      <div className="size-10 rounded-md border bg-muted" />
+                    )}
                   </TableCell>
                   <TableCell className="pl-1">
                     <div className="flex items-center gap-1.5">

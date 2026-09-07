@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 export function CartDrawer() {
   const isOpen = useUIStore((s) => s.isCartOpen);
@@ -31,14 +31,25 @@ export function CartDrawer() {
               {items.map((i) => (
                 <li key={i.variantId} className="flex items-center gap-3 border-b pb-3">
                   {i.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={appAssetUrl(i.image)} alt="" className="size-11 shrink-0 rounded-md border object-cover" />
+                    <ZoomableImage
+                      src={i.image}
+                      alt={i.name}
+                      title={`${i.name} · ${i.label}`}
+                      className="size-11 shrink-0 rounded-md border object-cover"
+                    />
                   ) : (
                     <div className="size-11 shrink-0 rounded-md border bg-muted" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{i.name}</div>
-                    <div className="text-xs text-muted-foreground">{i.label}</div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="truncate">{i.label}</span>
+                      {i.stock === 0 && (
+                        <span className="shrink-0 rounded bg-amber-500/15 px-1 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                          Chờ nhập hàng
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
@@ -74,6 +85,11 @@ export function CartDrawer() {
         </div>
 
         <div className="space-y-3 border-t px-4 py-4">
+          {items.some((i) => i.stock === 0) && (
+            <p className="rounded bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+              ⚠️ Có vật tư đang hết hàng. Phiếu yêu cầu sẽ được chuyển cho quản kho đặt hàng và cấp phát khi hàng về.
+            </p>
+          )}
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>Tổng số lượng</span>
             <span className="font-medium tabular-nums text-foreground">{totalQty}</span>

@@ -26,7 +26,7 @@ import { createProduct, updateProduct, updateVariant } from "../actions";
 import { uploadProductImage } from "../upload";
 import type { AdminProductRow } from "../types";
 import { VariantFields } from "./variant-fields";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 type CreateMode = "le" | "quy-cach" | "bo";
 
@@ -74,8 +74,7 @@ function ImagePicker({
         className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
       />
       {preview && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={appAssetUrl(preview)} alt="Xem trước" className="h-16 w-16 rounded-lg border object-cover" />
+        <ZoomableImage src={preview} alt="Xem trước" className="h-16 w-16 rounded-lg border object-cover" />
       )}
     </div>
   );

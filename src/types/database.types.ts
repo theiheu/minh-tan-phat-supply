@@ -1963,6 +1963,16 @@ export type Database = {
         }
         Returns: string
       }
+      update_receipt: {
+        Args: {
+          p_by: string
+          p_id: string
+          p_items: Json
+          p_notes?: string
+          p_supplier_id: string
+        }
+        Returns: undefined
+      }
       create_requisition: {
         Args: {
           p_items: Json

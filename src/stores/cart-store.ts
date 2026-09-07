@@ -8,6 +8,7 @@ export interface CartItem {
   label: string;
   unit: string | null;
   image?: string | null;
+  stock?: number | null;
 }
 
 interface CartState {

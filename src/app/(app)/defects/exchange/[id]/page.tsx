@@ -15,7 +15,7 @@ import {
 import { ExchangeDetailActions } from "@/features/exchanges/components/exchange-detail-actions";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { EXCHANGE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
@@ -202,11 +202,12 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {(it.images ?? []).map((url) => (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <ZoomableImage
                             key={url}
-                            src={appAssetUrl(url)}
-                            alt=""
+                            src={url}
+                            images={it.images ?? []}
+                            alt={`${variants?.products?.name ?? "Vật tư"} — ảnh minh chứng hỏng`}
+                            title={variants?.products?.name ?? "Minh chứng hỏng"}
                             className="size-12 rounded-md border object-cover"
                           />
                         ))}

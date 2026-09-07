@@ -64,13 +64,13 @@ export default async function ReceiptsPage({
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          Lập phiếu nhập từ nhà cung cấp — ghi nhận sẽ cộng tồn kho và tự cấp phát các phiếu yêu cầu đang chờ.
+          Lập phiếu đặt hàng / nhập kho từ nhà cung cấp — khi hàng về ghi nhận sẽ cộng tồn kho và tự động cấp phát các phiếu yêu cầu đang chờ.
         </p>
         <Link
           href="/receipts/new"
           className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          + Tạo phiếu nhập
+          + Tạo phiếu đặt hàng / nhập kho
         </Link>
       </div>
 

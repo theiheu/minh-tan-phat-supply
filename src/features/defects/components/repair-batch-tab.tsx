@@ -15,10 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Wrench } from "lucide-react";
+import { ImageOff, Wrench } from "lucide-react";
 import { cn } from "cn";
 import { formatDate } from "@/lib/format";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { sendToRepair } from "@/features/repairs/actions";
 
 export interface BatchItem {
@@ -149,13 +149,31 @@ export function RepairBatchTab({
                         checked={checked.has(i.id)}
                         onChange={() => toggle(i.id)}
                         aria-label="Chọn dòng"
-                        className={cn("mt-1 size-4 shrink-0 accent-primary")}
+                        className={cn("mt-3.5 size-4 shrink-0 accent-primary")}
                       />
-                      <div className="min-w-0 flex-1">
+                      {i.images.length > 0 ? (
+                        <div className="flex shrink-0 gap-1">
+                          {i.images.slice(0, 2).map((url) => (
+                            <ZoomableImage
+                              key={url}
+                              src={url}
+                              images={i.images}
+                              alt={`${i.productName ?? "Vật tư"} — ảnh hỏng`}
+                              title={i.productName ?? "Ảnh hỏng"}
+                              className="size-12 rounded-md border object-cover"
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground">
+                          <ImageOff className="size-4" aria-hidden />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1 pt-0.5">
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                           <span className="font-medium">{i.productName ?? "Vật tư"}</span>
                           <span className="shrink-0 text-sm text-muted-foreground">
-                            {i.variantLabel} · SL {i.quantity}
+                            {i.variantLabel} · <span className="font-semibold text-foreground">SL {i.quantity}</span>
                           </span>
                         </div>
                         {i.damageDetail ? (
@@ -165,19 +183,6 @@ export function RepairBatchTab({
                           <p className="text-xs text-muted-foreground">Ghi chú: {i.note}</p>
                         ) : null}
                       </div>
-                      {i.images.length > 0 ? (
-                        <div className="flex shrink-0 gap-1">
-                          {i.images.slice(0, 2).map((url) => (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              key={url}
-                              src={appAssetUrl(url)}
-                              alt="Ảnh hỏng"
-                              className="size-12 rounded-md border object-cover"
-                            />
-                          ))}
-                        </div>
-                      ) : null}
                     </div>
                   ))}
                 </div>

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { formatVnd } from "@/lib/format";
 import { attributesToPairs, pairsToJson, kitLabel } from "@/lib/attributes";
 import {
@@ -28,7 +28,7 @@ import {
 import { uploadProductImage } from "../upload";
 import type { AdminProductRow, AdminVariantRow } from "../types";
 import { VariantFields } from "./variant-fields";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 type LoadState = "loading" | "ready" | "error";
 
@@ -63,8 +63,6 @@ export function ProductVariantsDialog({
   const [kitQty, setKitQty] = useState<Record<string, string>>({});
   // Chỉ khi SỬA 1 dòng mới được đặt dòng đó làm mặc định.
   const [wantDefault, setWantDefault] = useState(false);
-  // Ảnh đang phóng to (bấm ảnh biến thể để xem).
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   async function load() {
     if (!product) return;
@@ -87,16 +85,6 @@ export function ProductVariantsDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, product?.id]);
-
-  // Đóng ảnh phóng to bằng phím Esc.
-  useEffect(() => {
-    if (!previewImage) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPreviewImage(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [previewImage]);
 
   // Danh sách linh kiện có thể chọn cho dòng bộ: các dòng KHÔNG phải bộ, khác dòng đang sửa.
   const kitCandidates = variants.filter((v) => !v.isComposite && v.id !== editing?.id);
@@ -241,8 +229,7 @@ export function ProductVariantsDialog({
   }
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto overflow-x-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Biến thể · {product?.name}</DialogTitle>
@@ -284,15 +271,13 @@ export function ProductVariantsDialog({
                 {variants.map((v) => (
                   <li key={v.id} className="flex items-center gap-3 rounded-lg border p-3">
                     {v.images?.[0] ? (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewImage(v.images[0])}
-                        title="Bấm để phóng to ảnh"
-                        className="shrink-0 cursor-zoom-in"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={appAssetUrl(v.images[0])} alt="" className="size-12 rounded-md border object-cover" />
-                      </button>
+                      <ZoomableImage
+                        src={v.images[0]}
+                        images={v.images}
+                        alt={v.label}
+                        title={product?.name ? `${product.name} · ${v.label}` : v.label}
+                        className="size-12 rounded-md border object-cover"
+                      />
                     ) : (
                       <div className="size-12 shrink-0 rounded-md border bg-muted" />
                     )}
@@ -388,8 +373,11 @@ export function ProductVariantsDialog({
                   className="block w-full text-sm text-muted-foreground file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-2 file:py-1 file:text-xs file:font-medium file:text-primary-foreground"
                 />
                 {imagePreview && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={appAssetUrl(imagePreview)} alt="Xem trước" className="mt-1.5 h-12 w-12 rounded-md border object-cover" />
+                  <ZoomableImage
+                    src={imagePreview}
+                    alt="Xem trước"
+                    className="mt-1.5 h-12 w-12 rounded-md border object-cover"
+                  />
                 )}
               </div>
 
@@ -471,33 +459,5 @@ export function ProductVariantsDialog({
         </div>
       </DialogContent>
     </Dialog>
-
-    {/* Phóng to ảnh biến thể — lớp phủ đơn giản (tránh lỗi Dialog lồng nhau). */}
-    {previewImage && (
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={product?.name ? `Ảnh ${product.name}` : "Ảnh biến thể"}
-        className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 p-4"
-        onClick={() => setPreviewImage(null)}
-      >
-        <button
-          type="button"
-          aria-label="Đóng ảnh"
-          onClick={() => setPreviewImage(null)}
-          className="absolute top-4 right-4 flex size-9 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-        >
-          <X className="size-5" aria-hidden />
-        </button>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={appAssetUrl(previewImage)}
-          alt={product?.name ? `Ảnh ${product.name}` : "Ảnh biến thể"}
-          className="max-h-[86vh] w-auto max-w-full object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
-    )}
-    </>
   );
 }

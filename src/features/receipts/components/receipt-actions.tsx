@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -36,8 +37,11 @@ export function ReceiptActions({ id, status }: { id: string; status: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <Button asChild size="sm" variant="outline">
+        <Link href={`/receipts/${id}/edit`}>Kiểm đếm / Sửa</Link>
+      </Button>
       <Button size="sm" onClick={() => run(() => postReceipt(id), "Đã ghi nhận phiếu nhập", true)} disabled={pending}>
-        Ghi nhận
+        Ghi nhận nhập kho
       </Button>
       <Button size="sm" variant="destructive" onClick={() => run(() => cancelReceipt(id), "Đã hủy phiếu nhập", false)} disabled={pending}>
         Hủy

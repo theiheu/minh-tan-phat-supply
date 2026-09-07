@@ -163,13 +163,15 @@ function ExchangeDetailModal({
               {EXCHANGE_STATUS[row.status] ?? row.status}
             </Badge>
           </DialogTitle>
-          <DialogDescription className="space-y-0.5 text-sm">
-            <div>
-              Phiếu hỏng liên quan:{" "}
-              <span className="font-mono text-foreground">{row.defectCode ?? "—"}</span> · Người lập
-              HONG: <span className="text-foreground">{row.reporterName ?? "—"}</span>
+          <DialogDescription asChild>
+            <div className="space-y-0.5 text-sm">
+              <div>
+                Phiếu hỏng liên quan:{" "}
+                <span className="font-mono text-foreground">{row.defectCode ?? "—"}</span> · Người lập
+                HONG: <span className="text-foreground">{row.reporterName ?? "—"}</span>
+              </div>
+              <div>Ngày lập: {formatDate(row.createdAt)}</div>
             </div>
-            <div>Ngày lập: {formatDate(row.createdAt)}</div>
           </DialogDescription>
         </DialogHeader>
 

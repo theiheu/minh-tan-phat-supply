@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { variantLabel } from "@/lib/labels";
 import { cn } from "cn";
-import { appAssetUrl } from "@/lib/images";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 /** Một dòng vật tư trong phiếu — đủ thông tin để quản kho đối chiếu & lấy đúng đồ. */
 export interface MaterialItemView {
@@ -40,7 +40,7 @@ function attributeEntries(attrs: unknown): [string, string][] {
   return [];
 }
 
-function MaterialThumb({ images, className }: { images: string[]; className?: string }) {
+function MaterialThumb({ images, alt, className }: { images: string[]; alt?: string; className?: string }) {
   const src = images[0];
   if (!src) {
     return (
@@ -49,8 +49,14 @@ function MaterialThumb({ images, className }: { images: string[]; className?: st
       </div>
     );
   }
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={appAssetUrl(src)} alt="" className={cn("shrink-0 rounded-md border object-cover", className)} />;
+  return (
+    <ZoomableImage
+      src={src}
+      images={images}
+      alt={alt ?? "Vật tư"}
+      className={cn("shrink-0 rounded-md border object-cover", className)}
+    />
+  );
 }
 
 export function MaterialItemsView({ items }: { items: MaterialItemView[] }) {
@@ -119,11 +125,12 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
               {item.images.length > 0 ? (
                 <div className="flex gap-2 overflow-x-auto pb-1">
                   {item.images.map((src, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <ZoomableImage
                       key={i}
-                      src={appAssetUrl(src)}
+                      src={src}
+                      images={item.images}
                       alt={`${item.productName ?? "Vật tư"} — ảnh ${i + 1}`}
+                      title={item.productName ?? "Vật tư"}
                       className="h-44 w-44 shrink-0 rounded-lg border object-cover"
                     />
                   ))}
