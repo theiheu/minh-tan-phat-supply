@@ -59,22 +59,31 @@ export interface ProductVariantsPayload {
   variants: AdminVariantRow[];
 }
 
+/** Loại phiếu xuất một dòng lịch sử của vật tư. */
+export type ProductHistoryKind = "requisition" | "issue";
+
 /**
- * Một dòng lịch sử yêu cầu/cấp của vật tư: 1 dòng vật tư (theo quy cách)
- * trên 1 phiếu yêu cầu (requisition). Số lượng không đổi giữa các bước
- * duyệt → cấp, nên quantity là cả số yêu cầu lẫn số cấp khi phiếu đã cấp.
+ * Một dòng lịch sử cấp/xuất của vật tư: 1 dòng vật tư (theo quy cách) trên một
+ * phiếu — phiếu yêu cầu/cấp phát (requisition) hoặc phiếu xuất kho (issue).
+ * Số lượng không đổi giữa các bước duyệt → cấp, nên quantity là cả số yêu cầu
+ * lẫn số cấp khi phiếu đã cấp.
  */
 export interface ProductHistoryRow {
-  /** Id dòng requisition_items — dùng làm key khi render. */
+  kind: ProductHistoryKind;
+  /** Id dòng (requisition_items / issue_items) — dùng làm key khi render. */
   itemId: string;
-  requisitionId: string;
+  /** Mã phiếu (REQ-… / PXK-…). */
   code: string;
   status: string;
-  /** Ngày cấp phát thực tế (fulfilled_at); null khi phiếu chưa cấp. */
-  fulfilledAt: string | null;
+  /** Thời điểm cấp phát/xuất kho: requisition.fulfilled_at hoặc thời điểm phiếu
+   *  xuất kho được xác nhận (posted — updated_at lúc post); null khi chưa cấp/xuất. */
+  occurredAt: string | null;
+  /** Người yêu cầu (chỉ phiếu yêu cầu có; phiếu xuất kho để trống). */
   requesterName: string | null;
+  /** Người cấp: requisition.fulfiller; với phiếu xuất kho là người lập và xuất phiếu. */
   fulfillerName: string | null;
-  zoneName: string | null;
+  /** Nơi/bên nhận: khu (cả 2 loại phiếu) hoặc khách hàng (xuất bán). */
+  destinationName: string | null;
   variantId: string;
   quantity: number;
 }

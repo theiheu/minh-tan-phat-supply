@@ -40,9 +40,12 @@ export async function getProductVariants(productId: string): Promise<ProductVari
 }
 
 /**
- * Lịch sử yêu cầu/cấp của 1 vật tư: mọi dòng requisition_items thuộc biến thể
- * của vật tư (trừ phiếu nháp chưa gửi), sắp mới nhất trước, tối đa 100 dòng.
- * Tuân theo RLS: nhân viên thường chỉ thấy phiếu của mình, quản lý kho thấy tất cả.
+ * Lịch sử cấp/xuất của 1 vật tư: mọi dòng requisition_items (phiếu yêu cầu/cấp
+ * phát — trừ phiếu nháp chưa gửi) cộng các dòng issue_items của phiếu xuất kho
+ * đã xác nhận xuất (posted). Sắp theo thời điểm cấp/xuất mới nhất trước (dòng
+ * chưa cấp xếp cuối), tối đa 100 dòng.
+ * Tuân theo RLS: nhân viên thường chỉ thấy phiếu yêu cầu của mình; dữ liệu
+ * phiếu xuất kho chỉ quản lý kho đọc được → dòng issue tự bị RLS lọc với vai khác.
  */
 export async function getProductHistory(productId: string): Promise<ProductHistoryRow[]> {
   await requireProfile();
@@ -52,13 +55,12 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
   const variantIds = (variantRows ?? []).map((v) => v.id);
   if (variantIds.length === 0) return [];
 
-  // Dạng dòng phẳng: 1 requisition_items + phiếu chứa nó (inner join — requisition_id not null).
-  type HistoryQueryRow = {
+  // ---- Phiếu yêu cầu/cấp phát: 1 requisition_items + phiếu chứa nó (inner join). ----
+  type RequisitionRow = {
     id: string;
     variant_id: string;
     quantity: number;
     requisition: {
-      id: string;
       code: string;
       status: string;
       fulfilled_at: string | null;
@@ -67,38 +69,87 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       zone: { name: string | null } | null;
     } | null;
   };
-
-  const { data, error } = await supabase
+  const { data: reqData, error: reqErr } = await supabase
     .from("requisition_items")
     .select(
-      "id, variant_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(id, code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name))",
+      "id, variant_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name))",
     )
     .in("variant_id", variantIds)
     // Lọc cột của quan hệ to-one đã inner join → bỏ phiếu nháp chưa gửi yêu cầu.
     .neq("requisition.status", "draft")
-    // Ngày tạo dòng ≈ ngày tạo phiếu (ghi cùng lúc khi tạo) → đủ để sắp lịch sử.
     .order("created_at", { ascending: false })
     .limit(100);
-  if (error) throw new Error(error.message);
+  if (reqErr) throw new Error(reqErr.message);
+
+  // ---- Phiếu xuất kho đã xuất (posted): 1 issue_items + phiếu chứa nó. ----
+  type IssueRow = {
+    id: string;
+    variant_id: string;
+    quantity: number;
+    issue: {
+      code: string;
+      status: string;
+      updated_at: string;
+      creator: { name: string | null } | null;
+      zone: { name: string | null } | null;
+      customer: { name: string | null } | null;
+    } | null;
+  };
+  const { data: issueData, error: issueErr } = await supabase
+    .from("issue_items")
+    .select(
+      "id, variant_id, quantity, issue:issues!issue_items_issue_id_fkey!inner(code, status, updated_at, creator:profiles!issues_creator_id_fkey(name), zone:zones!issues_zone_id_fkey(name), customer:customers!issues_customer_id_fkey(name))",
+    )
+    .in("variant_id", variantIds)
+    // Chỉ phiếu đã thực sự xuất kho mới tính là lịch sử cấp/xuất của vật tư.
+    .eq("issue.status", "posted")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (issueErr) throw new Error(issueErr.message);
 
   const rows: ProductHistoryRow[] = [];
-  for (const raw of (data ?? []) as unknown as HistoryQueryRow[]) {
+  for (const raw of (reqData ?? []) as unknown as RequisitionRow[]) {
     const req = raw.requisition;
     if (!req) continue;
     rows.push({
+      kind: "requisition",
       itemId: raw.id,
-      requisitionId: req.id,
       code: req.code,
       status: req.status,
-      fulfilledAt: req.fulfilled_at,
+      occurredAt: req.fulfilled_at,
       requesterName: req.requester?.name ?? null,
       fulfillerName: req.fulfiller?.name ?? null,
-      zoneName: req.zone?.name ?? null,
+      destinationName: req.zone?.name ?? null,
       variantId: raw.variant_id,
       quantity: raw.quantity,
     });
   }
-  return rows;
+  for (const raw of (issueData ?? []) as unknown as IssueRow[]) {
+    const iss = raw.issue;
+    if (!iss) continue;
+    rows.push({
+      kind: "issue",
+      itemId: raw.id,
+      code: iss.code,
+      status: iss.status,
+      // updated_at lúc post = thời điểm xuất kho (post_issue ghi updated_at = now()).
+      occurredAt: iss.updated_at,
+      requesterName: null,
+      fulfillerName: iss.creator?.name ?? null,
+      destinationName: iss.zone?.name ?? iss.customer?.name ?? null,
+      variantId: raw.variant_id,
+      quantity: raw.quantity,
+    });
+  }
+
+  // Mặc định: thời điểm cấp/xuất mới nhất trước; dòng chưa cấp (null) xếp cuối.
+  rows.sort((a, b) => {
+    if (a.occurredAt && b.occurredAt) return b.occurredAt.localeCompare(a.occurredAt);
+    if (a.occurredAt) return -1;
+    if (b.occurredAt) return 1;
+    return 0;
+  });
+  return rows.slice(0, 100);
 }
 
 export async function createProduct(input: ProductInput) {

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { REQUISITION_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getProductHistory } from "../actions";
@@ -27,31 +27,46 @@ import type { ProductHistoryRow, VariantWithStock } from "../types";
 
 /** Cột có thể sort; giá trị so sánh lấy từ helper sortValue bên dưới. */
 type SortKey =
-  | "fulfilledAt"
+  | "code"
+  | "occurredAt"
   | "requesterName"
   | "fulfillerName"
-  | "zoneName"
+  | "destinationName"
   | "spec"
   | "quantity"
   | "status";
 
+/** Nhãn trạng thái theo loại phiếu (yêu cầu/cấp phát hay xuất kho). */
+function statusLabel(row: ProductHistoryRow): string {
+  return row.kind === "issue"
+    ? (ISSUE_STATUS[row.status] ?? row.status)
+    : (REQUISITION_STATUS[row.status] ?? row.status);
+}
+
+/** Nhãn loại phiếu — dòng phụ dưới mã phiếu trong cột Phiếu. */
+function kindLabel(kind: ProductHistoryRow["kind"]): string {
+  return kind === "issue" ? "Phiếu xuất kho" : "Phiếu yêu cầu";
+}
+
 /** Trả giá trị so sánh của 1 dòng theo cột; null/không có → luôn xếp cuối. */
 function sortValue(row: ProductHistoryRow, spec: { label: string; unit: string | null } | undefined, key: SortKey): string | number | null {
   switch (key) {
-    case "fulfilledAt":
-      return row.fulfilledAt;
+    case "code":
+      return row.code;
+    case "occurredAt":
+      return row.occurredAt;
     case "requesterName":
       return row.requesterName;
     case "fulfillerName":
       return row.fulfillerName;
-    case "zoneName":
-      return row.zoneName;
+    case "destinationName":
+      return row.destinationName;
     case "spec":
       return spec?.label ?? null;
     case "quantity":
       return row.quantity;
     case "status":
-      return REQUISITION_STATUS[row.status] ?? row.status;
+      return statusLabel(row);
   }
 }
 
@@ -79,7 +94,8 @@ function compareRows(
 }
 
 /**
- * Modal lịch sử yêu cầu/cấp của 1 vật tư (mở từ nút góc trên phải thẻ vật tư).
+ * Modal lịch sử cấp phát và xuất kho của 1 vật tư (mở từ nút góc trên phải thẻ vật tư).
+ * Gồm các dòng phiếu yêu cầu/cấp phát (requisition) lẫn phiếu xuất kho (issue).
  * Dữ liệu load khi mở; mỗi lần mở là một lần hỏi lại để luôn mới.
  */
 /** Tiêu đề cột sort được — bấm để đổi cột/chiều, có mũi tên chỉ hướng đang sort. */
@@ -176,7 +192,8 @@ export function ProductHistoryDialog({
     setSort((prev) => (prev?.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
   }
 
-  // Sort client-side trên các dòng đã load; chưa chọn cột → giữ thứ tự server (mới nhất trước).
+  // Sort client-side trên các dòng đã load; chưa chọn cột → giữ thứ tự server
+  // (thời điểm cấp/xuất mới nhất trước, dòng chưa cấp xếp cuối).
   const displayRows = useMemo(() => {
     if (!rows || rows.length === 0 || !sort) return rows;
     const list = [...rows];
@@ -191,7 +208,7 @@ export function ProductHistoryDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="pr-8">{productName}</DialogTitle>
-          <DialogDescription>Lịch sử yêu cầu và cấp phát vật tư</DialogDescription>
+          <DialogDescription>Lịch sử cấp phát và xuất kho vật tư</DialogDescription>
         </DialogHeader>
 
         {rows === null && !error && (
@@ -213,17 +230,18 @@ export function ProductHistoryDialog({
         {rows !== null &&
           (rows.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              Vật tư này chưa từng được yêu cầu cấp.
+              Vật tư này chưa từng được yêu cầu, cấp phát hay xuất kho.
             </p>
           ) : (
             <div className="max-h-[60vh] overflow-auto rounded-lg border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <SortHeader label="Ngày cấp" sortKey="fulfilledAt" sort={sort} onSort={toggleSort} />
+                    <SortHeader label="Phiếu" sortKey="code" sort={sort} onSort={toggleSort} />
+                    <SortHeader label="Ngày cấp/xuất" sortKey="occurredAt" sort={sort} onSort={toggleSort} />
                     <SortHeader label="Người yêu cầu" sortKey="requesterName" sort={sort} onSort={toggleSort} />
                     <SortHeader label="Người cấp" sortKey="fulfillerName" sort={sort} onSort={toggleSort} />
-                    <SortHeader label="Khu" sortKey="zoneName" sort={sort} onSort={toggleSort} />
+                    <SortHeader label="Khu" sortKey="destinationName" sort={sort} onSort={toggleSort} />
                     {showSpec ? <SortHeader label="Quy cách" sortKey="spec" sort={sort} onSort={toggleSort} /> : null}
                     <SortHeader label="Số lượng" sortKey="quantity" sort={sort} onSort={toggleSort} align="right" />
                     <SortHeader label="Trạng thái" sortKey="status" sort={sort} onSort={toggleSort} />
@@ -234,12 +252,16 @@ export function ProductHistoryDialog({
                     const spec = variantInfo.get(r.variantId);
                     return (
                       <TableRow key={r.itemId}>
+                        <TableCell className="whitespace-nowrap">
+                          <div className="font-mono text-sm font-medium">{r.code}</div>
+                          <div className="text-[11px] text-muted-foreground">{kindLabel(r.kind)}</div>
+                        </TableCell>
                         <TableCell className="whitespace-nowrap text-muted-foreground">
-                          {formatDate(r.fulfilledAt)}
+                          {formatDate(r.occurredAt)}
                         </TableCell>
                         <TableCell>{r.requesterName ?? "—"}</TableCell>
                         <TableCell>{r.fulfillerName ?? "—"}</TableCell>
-                        <TableCell>{r.zoneName ?? "—"}</TableCell>
+                        <TableCell>{r.destinationName ?? "—"}</TableCell>
                         {showSpec ? (
                           <TableCell className="text-muted-foreground">{spec?.label ?? "—"}</TableCell>
                         ) : null}
@@ -248,9 +270,7 @@ export function ProductHistoryDialog({
                           {spec?.unit ? <span className="ml-1 text-xs font-normal text-muted-foreground">{spec.unit}</span> : null}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={statusBadgeVariant(r.status)}>
-                            {REQUISITION_STATUS[r.status] ?? r.status}
-                          </Badge>
+                          <Badge variant={statusBadgeVariant(r.status)}>{statusLabel(r)}</Badge>
                         </TableCell>
                       </TableRow>
                     );

@@ -68,13 +68,13 @@ export function ProductCard({
           <Badge variant={badge.variant} className="absolute top-2 left-2">
             {badge.label}
           </Badge>
-          {/* Nút lịch sử yêu cầu/cấp — không mở dialog chi tiết khi bấm. */}
+          {/* Nút lịch sử cấp/xuất — không mở dialog chi tiết khi bấm. */}
           <Button
             type="button"
             variant="secondary"
             size="icon-xs"
-            aria-label="Xem lịch sử yêu cầu/cấp"
-            title="Lịch sử yêu cầu/cấp"
+            aria-label="Xem lịch sử cấp phát và xuất kho"
+            title="Lịch sử cấp phát và xuất kho"
             className="absolute top-2 right-2 size-7 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background"
             onClick={(e) => {
               e.stopPropagation();
