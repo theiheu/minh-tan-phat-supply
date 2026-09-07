@@ -297,36 +297,40 @@ function HeaderTabs({ view, isManager }: { view: string; isManager: boolean }) {
     },
     { href: "/defects?view=repair", label: "Tập kết sửa", active: view === "repair", manager: true },
   ];
+  const visible = tabs.filter((t) => !t.manager || isManager);
   return (
-    <div className="space-y-2">
-      {/* Mobile: tabs cuộn ngang 1 hàng, không dồn chật */}
-      <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:px-0">
-        {tabs
-          .filter((t) => !t.manager || isManager)
-          .map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              className={cn(
-                "inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg px-3.5 text-sm font-medium transition-colors",
-                t.active
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {t.label}
-            </Link>
-          ))}
+    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+      {/* Kiểu tab cũ: khối bo viền, tab active nền đậm; cuộn ngang nếu chật */}
+      <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto rounded-lg border p-0.5">
+        {visible.map((t) => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className={cn(
+              "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              t.active
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "text-muted-foreground hover:bg-accent",
+            )}
+          >
+            {t.label}
+          </Link>
+        ))}
       </div>
-      {/* Nút ghi nhận nằm hàng riêng, full-width trên mobile */}
-      <div className="flex sm:justify-end">
-        <Link
-          href="/defects/new"
-          className="inline-flex h-10 w-full shrink-0 items-center justify-center gap-1 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:w-auto"
-        >
-          + Ghi nhận hỏng
-        </Link>
-      </div>
+      {/* Desktop: nút cùng hàng bên phải */}
+      <Link
+        href="/defects/new"
+        className="hidden shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 lg:inline-flex"
+      >
+        + Ghi nhận hỏng
+      </Link>
+      {/* Mobile: nút xuống hàng riêng full-width */}
+      <Link
+        href="/defects/new"
+        className="inline-flex h-9 w-full shrink-0 items-center justify-center gap-1 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 lg:hidden"
+      >
+        + Ghi nhận hỏng
+      </Link>
     </div>
   );
 }
