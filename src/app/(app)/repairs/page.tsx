@@ -3,6 +3,7 @@ import { QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import {
   Table,
   TableBody,
@@ -63,6 +64,8 @@ export default async function RepairsPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="defects" />
+
       <ListFilters
         basePath="/repairs"
         searchPlaceholder="Tìm mã phiếu, đơn vị sửa…"

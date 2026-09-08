@@ -17,23 +17,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# --- Cấu hình (đọc từ supabase/config.toml) ---
-PROJECT_ID="$(sed -n 's/^project_id *= *"\([^"]*\)".*/\1/p' supabase/config.toml | head -1)"
-PROJECT_ID="${PROJECT_ID:-minh-tan-phat-supply}"
-API_PORT="$(sed -n 's/^port *= *\([0-9][0-9]*\).*/\1/p' supabase/config.toml | head -1)"
-API_PORT="${API_PORT:-54321}"
-API_URL="http://127.0.0.1:${API_PORT}"
-APP_URL="http://localhost:3001"
-STUDIO_URL="http://127.0.0.1:54323"
-PID_FILE=".tmp/dev-server.pid"
-LOG_FILE=".tmp/dev-server.log"
-
 # --- Tìm binary supabase CLI ---
 resolve_cli() {
   if [ -n "${SUPABASE_CLI:-}" ] && [ -x "$SUPABASE_CLI" ]; then printf '%s\n' "$SUPABASE_CLI"; return 0; fi
   if command -v supabase >/dev/null 2>&1; then command -v supabase; return 0; fi
   local c
-  for c in "$HOME"/.bun/install/cache/@supabase/cli-linux-x64@*/bin/supabase; do
+  for c in /home/thehi/.bun/install/cache/@supabase/cli-linux-x64@*/bin/supabase "$HOME"/.bun/install/cache/@supabase/cli-linux-x64@*/bin/supabase; do
     [ -x "$c" ] && { printf '%s\n' "$c"; return 0; }
   done
   return 1
@@ -45,6 +34,21 @@ if [ -z "$CLI" ]; then
   exit 1
 fi
 echo "Supabase CLI: $CLI"
+
+mkdir -p .tmp/home .tmp
+export TMPDIR="${PWD}/.tmp"
+export HOME="${PWD}/.tmp/home"
+
+# --- Cấu hình (đọc từ supabase/config.toml) ---
+PROJECT_ID="$(sed -n 's/^project_id *= *"\([^"]*\)".*/\1/p' supabase/config.toml | head -1)"
+PROJECT_ID="${PROJECT_ID:-minh-tan-phat-supply}"
+API_PORT="$(sed -n 's/^port *= *\([0-9][0-9]*\).*/\1/p' supabase/config.toml | head -1)"
+API_PORT="${API_PORT:-54321}"
+API_URL="http://127.0.0.1:${API_PORT}"
+APP_URL="http://localhost:3001"
+STUDIO_URL="http://127.0.0.1:54323"
+PID_FILE=".tmp/dev-server.pid"
+LOG_FILE=".tmp/dev-server.log"
 
 # --- Dọn container Supabase cũ của project này (chỉ container ĐÃ DỪNG) ---
 # Không bao giờ đụng tới container đang chạy -> an toàn khi stack đã up.

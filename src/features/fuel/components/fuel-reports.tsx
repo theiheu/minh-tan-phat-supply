@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDateTime } from "@/lib/format";
 import { formatConsumptionRate, formatFuelLiters, formatOdo } from "@/lib/fuel";
 import type { FuelReportRow, FuelType } from "../types";
 import type { VehicleSelection } from "./fuel-dispense-dialog";
@@ -23,13 +24,14 @@ export function FuelReports({
   reportData,
   vehicles,
   zones,
+  fuelTypes,
   filters,
 }: {
   reportData: FuelReportRow[];
   vehicles: VehicleSelection[];
   zones: { id: string; name: string }[];
   fuelTypes: FuelType[];
-  filters: { from: string; to: string; vehicleId: string; zoneId: string };
+  filters: { from: string; to: string; vehicleId: string; zoneId: string; fuelTypeId: string };
 }) {
   // Aggregate consumption by vehicle
   const vehicleStats = useMemo(() => {
@@ -80,7 +82,7 @@ export function FuelReports({
         }
       }
 
-      const normDiff = avgRate != null && v.fuelNorm != null ? avgRate - v.fuelNorm : null;
+      const normDiff = avgRate != null && v.fuelNorm != null ? Math.round((avgRate - v.fuelNorm) * 100) / 100 : null;
       const isOverNorm = normDiff != null && normDiff > 0;
 
       return {
@@ -120,9 +122,9 @@ export function FuelReports({
     // Sheet 1: Chi tiết từng lần cấp dầu
     const detailRows = reportData.map((r) => ({
       "Mã phiếu": r.code,
-      "Thời gian": r.created_at,
-      "Phương tiện": r.vehicle ? `${r.vehicle.code} - ${r.vehicle.name}` : "—",
-      "Khu vực": r.zone?.name ?? "—",
+      "Thời gian": formatDateTime(r.created_at),
+      "Phương tiện": r.vehicle ? `${r.vehicle.code} - ${r.vehicle.name}` : "Khác / Không gán xe",
+      "Khu vực": r.zone?.name ?? "Chưa phân khu",
       "Loại nhiên liệu": r.fuel_type?.name ?? "—",
       "Số lít": Number(r.quantity),
       "Đoạn đường / Giờ chạy": r.usage_diff ? Number(r.usage_diff) : "—",
@@ -179,7 +181,14 @@ export function FuelReports({
         basePath="/fuel"
         title="Chọn khoảng thời gian báo cáo"
         showDateRange
+        showSearch={false}
         filters={[
+          {
+            param: "fuelTypeId",
+            label: "Loại dầu",
+            allLabel: "Tất cả loại dầu",
+            options: fuelTypes.map((ft) => ({ value: ft.id, label: ft.name })),
+          },
           {
             param: "vehicleId",
             label: "Phương tiện",
@@ -197,6 +206,7 @@ export function FuelReports({
           tab: "reports",
           from: filters.from,
           to: filters.to,
+          fuelTypeId: filters.fuelTypeId,
           vehicleId: filters.vehicleId,
           zoneId: filters.zoneId,
         }}

@@ -1,5 +1,6 @@
 import { deleteCategory, saveCategory } from "@/features/admin/actions";
 import { EntityCrud, type CrudRow } from "@/features/admin/components/entity-crud";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -55,19 +56,22 @@ export default async function AdminCategoriesPage({
   }));
 
   return (
-    <EntityCrud
-      title="Danh mục"
-      items={rows}
-      columns={[
-        { key: "name", label: "Tên" },
-        { key: "icon", label: "Icon", kind: "icon", options: ICON_OPTIONS },
-        { key: "display_order", label: "Thứ tự" },
-      ]}
-      save={saveCategory}
-      remove={deleteCategory}
-      page={page}
-      totalPages={totalPages}
-      basePath="/admin/categories"
-    />
+    <div className="space-y-4">
+      <SubnavTabs group="admin" />
+      <EntityCrud
+        title="Danh mục"
+        items={rows}
+        columns={[
+          { key: "name", label: "Tên" },
+          { key: "icon", label: "Icon", kind: "icon", options: ICON_OPTIONS },
+          { key: "display_order", label: "Thứ tự" },
+        ]}
+        save={saveCategory}
+        remove={deleteCategory}
+        page={page}
+        totalPages={totalPages}
+        basePath="/admin/categories"
+      />
+    </div>
   );
 }

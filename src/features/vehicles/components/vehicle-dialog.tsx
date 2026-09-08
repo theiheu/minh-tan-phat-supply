@@ -153,8 +153,8 @@ export function VehicleDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="code" className="text-xs font-semibold">
                 Biển số xe / Mã máy <span className="text-destructive">*</span>
               </Label>
@@ -168,7 +168,7 @@ export function VehicleDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="name" className="text-xs font-semibold">
                 Tên phương tiện <span className="text-destructive">*</span>
               </Label>
@@ -182,10 +182,10 @@ export function VehicleDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="type" className="text-xs font-semibold">Loại phương tiện</Label>
               <Select value={type} onValueChange={(v) => setType(v as VehicleInput["type"])} disabled={pending}>
-                <SelectTrigger id="type">
+                <SelectTrigger id="type" className="w-full">
                   <SelectValue placeholder="Chọn loại xe" />
                 </SelectTrigger>
                 <SelectContent>
@@ -198,10 +198,10 @@ export function VehicleDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="zoneId" className="text-xs font-semibold">Khu vực / Đội xe</Label>
               <Select value={zoneId} onValueChange={setZoneId} disabled={pending}>
-                <SelectTrigger id="zoneId">
+                <SelectTrigger id="zoneId" className="w-full">
                   <SelectValue placeholder="Chọn khu vực" />
                 </SelectTrigger>
                 <SelectContent>
@@ -215,7 +215,7 @@ export function VehicleDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="defaultDriver" className="text-xs font-semibold">Tài xế / Người lái chính</Label>
               <Input
                 id="defaultDriver"
@@ -226,10 +226,10 @@ export function VehicleDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="fuelTypeId" className="text-xs font-semibold">Loại dầu mặc định</Label>
               <Select value={fuelTypeId} onValueChange={setFuelTypeId} disabled={pending}>
-                <SelectTrigger id="fuelTypeId">
+                <SelectTrigger id="fuelTypeId" className="w-full">
                   <SelectValue placeholder="Chọn loại dầu" />
                 </SelectTrigger>
                 <SelectContent>
@@ -243,7 +243,7 @@ export function VehicleDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="currentOdo" className="text-xs font-semibold">Chỉ số Odo / Giờ máy ban đầu</Label>
               <Input
                 id="currentOdo"
@@ -256,10 +256,10 @@ export function VehicleDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="odoUnit" className="text-xs font-semibold">Đơn vị đo</Label>
               <Select value={odoUnit} onValueChange={(v) => setOdoUnit(v as VehicleInput["odoUnit"])} disabled={pending}>
-                <SelectTrigger id="odoUnit">
+                <SelectTrigger id="odoUnit" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -269,7 +269,7 @@ export function VehicleDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="fuelNorm" className="text-xs font-semibold">
                 Định mức tiêu hao ({odoUnit === "km" ? "Lít / 100km" : "Lít / giờ"})
               </Label>
@@ -285,7 +285,7 @@ export function VehicleDialog({
               />
             </div>
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="notes" className="text-xs font-semibold">Ghi chú</Label>
               <Textarea
                 id="notes"

@@ -1,4 +1,5 @@
 import { LiquidationManager } from "@/features/liquidations/components/liquidation-manager";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { getCurrentProfile } from "@/lib/auth";
 import { variantLabel } from "@/lib/labels";
 import { isSuperuser } from "@/lib/types";
@@ -61,12 +62,15 @@ export default async function LiquidationsPage({
   }));
 
   return (
-    <LiquidationManager
-      notes={noteRows}
-      variants={variants}
-      page={page}
-      totalPages={totalPages}
-      isDev={isDev}
-    />
+    <div className="space-y-4">
+      <SubnavTabs group="defects" />
+      <LiquidationManager
+        notes={noteRows}
+        variants={variants}
+        page={page}
+        totalPages={totalPages}
+        isDev={isDev}
+      />
+    </div>
   );
 }

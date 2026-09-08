@@ -1,5 +1,6 @@
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ProductsManager } from "@/features/products/components/products-manager";
 import { fetchProductVariantRows } from "@/features/products/data";
 import type { AdminProductRow } from "@/features/products/types";
@@ -71,6 +72,8 @@ export default async function AdminProductsPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="admin" />
+
       <ListFilters
         basePath="/admin/products"
         searchPlaceholder="Tìm vật tư…"

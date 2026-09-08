@@ -68,12 +68,56 @@ export function generateVehicleQrToken(code: string): string {
   return `VEH_${sanitized}_${suffix}`;
 }
 
-/** Parse QR scan text and determine its type. */
+/** Construct a full vehicle scan URL from token or code. */
+export function getVehicleQrScanUrl(token: string, origin?: string): string {
+  const base = origin ? origin.replace(/\/+$/, "") : "";
+  return `${base}/fuel/scan?vehicle=${encodeURIComponent(token)}`;
+}
+
+/** Parse QR scan text and determine its type. Supports plain tokens, codes, and full web URLs. */
 export function parseQrText(
   text: string
 ): { type: "vehicle" | "dispense" | "receipt" | "unknown"; value: string } {
   const trimmed = text.trim();
   if (!trimmed) return { type: "unknown", value: "" };
+
+  // Check if text is a URL
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+    try {
+      const url = new URL(trimmed, "http://localhost");
+      
+      // Check query parameters
+      const vehicleParam =
+        url.searchParams.get("vehicle") ||
+        url.searchParams.get("token") ||
+        url.searchParams.get("vehicleId") ||
+        url.searchParams.get("code") ||
+        url.searchParams.get("v");
+      if (vehicleParam) {
+        return parseQrText(vehicleParam);
+      }
+
+      const dispenseParam = url.searchParams.get("dispense") || url.searchParams.get("dispenseId");
+      if (dispenseParam) {
+        return { type: "dispense", value: dispenseParam };
+      }
+
+      const receiptParam = url.searchParams.get("receipt") || url.searchParams.get("receiptId");
+      if (receiptParam) {
+        return { type: "receipt", value: receiptParam };
+      }
+
+      // Check pathname segments
+      const pathSegments = url.pathname.split("/").filter(Boolean);
+      const lastSegment = pathSegments[pathSegments.length - 1];
+      if (lastSegment && lastSegment !== "scan") {
+        return parseQrText(decodeURIComponent(lastSegment));
+      }
+    } catch {
+      // If URL parsing fails, proceed with raw string matching below
+    }
+  }
+
   if (trimmed.startsWith("VEH_")) return { type: "vehicle", value: trimmed };
   if (trimmed.startsWith("CKD-")) return { type: "dispense", value: trimmed };
   if (trimmed.startsWith("NKD-")) return { type: "receipt", value: trimmed };

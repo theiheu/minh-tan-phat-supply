@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { ReceiptDialog } from "@/features/receipts/components/receipt-dialog";
 import { SlipCodeButton } from "@/components/slip-code-button";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { fetchCompositeVariantIds } from "@/features/products/data";
 import { dayRange, formatDate } from "@/lib/format";
 import { RECEIPT_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
@@ -80,6 +81,8 @@ export default async function ReceiptsPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="warehouse" />
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Lập phiếu đặt hàng / nhập kho từ nhà cung cấp — khi hàng về ghi nhận sẽ cộng tồn kho và tự động cấp phát các phiếu yêu cầu đang chờ.

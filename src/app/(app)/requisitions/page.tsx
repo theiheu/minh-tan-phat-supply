@@ -10,6 +10,7 @@ import {
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { SlipCodeButton } from "@/components/slip-code-button";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { RequisitionDialog } from "@/features/requisitions/components/requisition-dialog";
 import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate } from "@/lib/format";
@@ -69,6 +70,8 @@ export default async function RequisitionsPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="requisitions" />
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Danh sách phiếu yêu cầu vật tư từ các khu vực hoạt động.

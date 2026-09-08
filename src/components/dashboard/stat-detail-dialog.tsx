@@ -121,9 +121,9 @@ export function StatDetailDialog({ type, onClose, items }: StatDetailDialogProps
 
   return (
     <Dialog open={Boolean(type)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[88vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
-        <DialogHeader className="shrink-0 pb-2 border-b">
-          <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[88vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
+        <DialogHeader className="shrink-0 pb-2 border-b pr-10 sm:pr-8 min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <DialogTitle className="text-base font-semibold">{config.title}</DialogTitle>
               <Badge variant="neutral" className="font-mono text-xs">

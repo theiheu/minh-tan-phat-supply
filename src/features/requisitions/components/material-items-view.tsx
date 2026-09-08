@@ -119,12 +119,12 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
   const stock = item?.stock ?? null;
   return (
     <Dialog open={item !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent className="w-[96vw] sm:max-w-lg h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-2 border-border shadow-2xl rounded-2xl">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-lg h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-2 border-border shadow-2xl rounded-2xl min-w-0">
         {item && (
           <>
-            <DialogHeader className="pb-3 border-b border-border/60">
-              <DialogTitle className="pr-8">{item.productName ?? "Vật tư"}</DialogTitle>
-              {item.description ? <DialogDescription>{item.description}</DialogDescription> : null}
+            <DialogHeader className="pb-3 border-b border-border/60 pr-10 sm:pr-8 min-w-0">
+              <DialogTitle className="break-words">{item.productName ?? "Vật tư"}</DialogTitle>
+              {item.description ? <DialogDescription className="break-words">{item.description}</DialogDescription> : null}
             </DialogHeader>
 
             {/* Ảnh vật tư */}

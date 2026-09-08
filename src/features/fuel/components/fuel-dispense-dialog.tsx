@@ -172,13 +172,13 @@ export function FuelDispenseDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="vehicleId" className="text-xs font-semibold">
                 Phương tiện / Xe nhận dầu
               </Label>
               <Select value={vehicleId} onValueChange={setVehicleId} disabled={pending}>
-                <SelectTrigger id="vehicleId">
+                <SelectTrigger id="vehicleId" className="w-full">
                   <SelectValue placeholder="Chọn xe / máy móc" />
                 </SelectTrigger>
                 <SelectContent>
@@ -192,12 +192,12 @@ export function FuelDispenseDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="fuelTypeId" className="text-xs font-semibold">
                 Loại dầu cấp <span className="text-destructive">*</span>
               </Label>
               <Select value={fuelTypeId} onValueChange={setFuelTypeId} disabled={pending}>
-                <SelectTrigger id="fuelTypeId">
+                <SelectTrigger id="fuelTypeId" className="w-full">
                   <SelectValue placeholder="Chọn loại dầu" />
                 </SelectTrigger>
                 <SelectContent>
@@ -210,7 +210,7 @@ export function FuelDispenseDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="quantity" className="text-xs font-semibold">
                 Số lượng cấp (Lít) <span className="text-destructive">*</span>
               </Label>
@@ -227,10 +227,10 @@ export function FuelDispenseDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="zoneId" className="text-xs font-semibold">Khu vực / Công trình</Label>
               <Select value={zoneId} onValueChange={setZoneId} disabled={pending}>
-                <SelectTrigger id="zoneId">
+                <SelectTrigger id="zoneId" className="w-full">
                   <SelectValue placeholder="Chọn khu vực" />
                 </SelectTrigger>
                 <SelectContent>
@@ -244,7 +244,7 @@ export function FuelDispenseDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="driverName" className="text-xs font-semibold">Tài xế / Người nhận</Label>
               <Input
                 id="driverName"
@@ -256,7 +256,7 @@ export function FuelDispenseDialog({
             </div>
 
             {selectedVehicle && (
-              <div className="space-y-1.5 sm:col-span-2">
+              <div className="space-y-1.5 sm:col-span-2 min-w-0">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="currentOdo" className="text-xs font-semibold">
                     Chỉ số Odo / Giờ máy mới ({odoUnit})
@@ -283,7 +283,7 @@ export function FuelDispenseDialog({
               </div>
             )}
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label className="text-xs font-semibold">Ảnh đồng hồ bơm / Odo xe</Label>
               <div className="flex flex-wrap gap-2">
                 {meterImages.map((img, idx) => (
@@ -318,7 +318,7 @@ export function FuelDispenseDialog({
               </div>
             </div>
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="notes" className="text-xs font-semibold">Ghi chú</Label>
               <Textarea
                 id="notes"

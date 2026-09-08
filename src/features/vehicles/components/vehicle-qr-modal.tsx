@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getVehicleQrScanUrl } from "@/lib/fuel";
 
 export interface VehicleQrSummary {
   id: string;
@@ -37,7 +38,9 @@ export function VehicleQrModal({
   useEffect(() => {
     if (!vehicle || !open) return;
     setGenerating(true);
-    QRCode.toDataURL(vehicle.qrToken, {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const scanUrl = getVehicleQrScanUrl(vehicle.qrToken, origin);
+    QRCode.toDataURL(scanUrl, {
       margin: 1,
       width: 400,
       color: {
@@ -82,7 +85,7 @@ export function VehicleQrModal({
 
         {/* Visual Decal Sticker Preview (Rendered natively in HTML) */}
         <div className="flex flex-col items-center justify-center p-2">
-          <div className="w-full max-w-[380px] rounded-xl border-2 border-emerald-700 bg-white p-3.5 shadow-xl text-emerald-950 dark:bg-white dark:text-emerald-950">
+          <div className="w-full max-w-[380px] overflow-hidden rounded-xl border-2 border-emerald-700 bg-white p-3.5 shadow-xl text-emerald-950 dark:bg-white dark:text-emerald-950">
             {/* Decal Header */}
             <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
               <div>
@@ -99,9 +102,9 @@ export function VehicleQrModal({
             </div>
 
             {/* Decal Body: QR Code + Details */}
-            <div className="mt-3 grid grid-cols-[110px_1fr] items-center gap-3">
+            <div className="mt-3 grid grid-cols-[105px_1fr] items-center gap-3">
               {/* QR Code Container */}
-              <div className="flex size-[110px] items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50/50 p-1">
+              <div className="flex size-[105px] items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50/50 p-1 shrink-0">
                 {generating || !qrDataUrl ? (
                   <Loader2 className="size-8 animate-spin text-emerald-600" />
                 ) : (
@@ -115,29 +118,29 @@ export function VehicleQrModal({
               </div>
 
               {/* Vehicle Metadata */}
-              <div className="space-y-1.5 text-left">
-                <div>
+              <div className="space-y-1.5 text-left min-w-0">
+                <div className="min-w-0">
                   <p className="text-[9px] uppercase tracking-wider text-emerald-700 font-semibold">
                     BIỂN SỐ / MÃ MÁY
                   </p>
-                  <p className="text-xl font-black tracking-tight text-emerald-950">
+                  <p className="text-xl font-black tracking-tight text-emerald-950 truncate">
                     {vehicle.code}
                   </p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[9px] uppercase tracking-wider text-emerald-700 font-semibold">
                     TÊN PHƯƠNG TIỆN
                   </p>
-                  <p className="text-xs font-bold truncate text-emerald-900">
+                  <p className="text-xs font-bold text-emerald-900 line-clamp-2 break-words leading-tight">
                     {vehicle.name}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-1 text-[10px] text-emerald-800 pt-0.5">
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-[8px] text-emerald-600 block">NHIÊN LIỆU</span>
                     <span className="font-semibold truncate block">{vehicle.fuelTypeName || "Dầu DO"}</span>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-[8px] text-emerald-600 block">KHU VỰC</span>
                     <span className="font-semibold truncate block">{vehicle.zoneName || "Chung"}</span>
                   </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { CheckCircle2, ChevronLeft, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -45,20 +46,28 @@ export interface VehicleScanResult {
 
 export function FuelQuickScan({
   fuelTypes = [],
+  initialVehicle = null,
+  initialQueryParam,
 }: {
   fuelTypes?: FuelType[];
+  initialVehicle?: VehicleScanResult | null;
+  initialQueryParam?: string;
 }) {
   const [pending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const litersInputRef = useRef<HTMLInputElement>(null);
 
   // State: 'scanning' | 'dispensing' | 'completed'
-  const [step, setStep] = useState<"scanning" | "dispensing" | "completed">("scanning");
-  const [vehicle, setVehicle] = useState<VehicleScanResult | null>(null);
+  const [step, setStep] = useState<"scanning" | "dispensing" | "completed">(
+    initialVehicle ? "dispensing" : "scanning"
+  );
+  const [vehicle, setVehicle] = useState<VehicleScanResult | null>(initialVehicle ?? null);
   const [searching, setSearching] = useState(false);
 
   // Form values
   const [quantity, setQuantity] = useState("");
-  const [currentOdo, setCurrentOdo] = useState("");
-  const [driverName, setDriverName] = useState("");
+  const [currentOdo, setCurrentOdo] = useState(initialVehicle ? String(initialVehicle.current_odo ?? 0) : "");
+  const [driverName, setDriverName] = useState(initialVehicle?.default_driver ?? "");
   const [meterImages, setMeterImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [notes, setNotes] = useState("");
@@ -66,8 +75,39 @@ export function FuelQuickScan({
   // Completed result
   const [createdSlip, setCreatedSlip] = useState<{ id: string; code: string; liters: number } | null>(null);
 
+  // If initialQueryParam was provided but vehicle was not found on server
+  useEffect(() => {
+    if (initialQueryParam && !initialVehicle) {
+      toast.error(`Không tìm thấy phương tiện với mã "${initialQueryParam}"`);
+    }
+  }, [initialQueryParam, initialVehicle]);
+
+  // Client-side query param handling if navigated without server prefetch
+  useEffect(() => {
+    if (initialVehicle || vehicle) return;
+    const clientParam =
+      searchParams?.get("vehicle") ||
+      searchParams?.get("token") ||
+      searchParams?.get("code") ||
+      searchParams?.get("vehicleId") ||
+      searchParams?.get("v");
+    if (clientParam) {
+      handleScan(clientParam);
+    }
+  }, [searchParams, initialVehicle, vehicle]);
+
+  // Auto-focus the liters input when in dispensing step
+  useEffect(() => {
+    if (step === "dispensing") {
+      const timer = setTimeout(() => {
+        litersInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
   async function handleScan(qrText: string) {
-    if (searching || step !== "scanning") return;
+    if (searching) return;
     setSearching(true);
 
     try {
@@ -168,6 +208,11 @@ export function FuelQuickScan({
     setMeterImages([]);
     setNotes("");
     setStep("scanning");
+    if (typeof window !== "undefined" && window.location.search) {
+      const url = new URL(window.location.href);
+      url.search = "";
+      window.history.replaceState({}, "", url.pathname);
+    }
   }
 
   return (
@@ -266,6 +311,7 @@ export function FuelQuickScan({
                 </Label>
                 <div className="relative">
                   <Input
+                    ref={litersInputRef}
                     id="liters"
                     type="number"
                     step="0.01"

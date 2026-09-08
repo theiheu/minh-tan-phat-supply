@@ -44,8 +44,8 @@ export function IssueDialog({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
-        <DialogHeader className="shrink-0 pb-2 border-b">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
+        <DialogHeader className="shrink-0 pb-2 border-b pr-10 sm:pr-8 min-w-0">
           <DialogTitle className="text-base font-semibold">Tạo phiếu xuất kho</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Lập phiếu xuất vật tư cho khu nội bộ hoặc bán cho khách hàng.

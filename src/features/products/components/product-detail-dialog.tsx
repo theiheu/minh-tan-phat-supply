@@ -67,18 +67,18 @@ export function ProductDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader className="pb-3 border-b border-border/60">
-          <DialogTitle>{product.name}</DialogTitle>
-          {product.description ? <DialogDescription>{product.description}</DialogDescription> : null}
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg min-w-0">
+        <DialogHeader className="pb-3 border-b border-border/60 min-w-0">
+          <DialogTitle className="break-words leading-snug">{product.name}</DialogTitle>
+          {product.description ? <DialogDescription className="break-words">{product.description}</DialogDescription> : null}
         </DialogHeader>
 
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
           {variants.map((v) => (
             <label
               key={v.id}
-              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
-                selectedId === v.id ? "border-primary bg-primary/5" : "hover:bg-accent"
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors min-w-0 ${
+                selectedId === v.id ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-accent"
               }`}
             >
               <input
@@ -108,38 +108,40 @@ export function ProductDetailDialog({
               ) : (
                 <div className="size-10 shrink-0 rounded-md border bg-muted" />
               )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 text-sm font-medium">
-                  <span className="truncate">{variantDisplayName(v)}</span>
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <div className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+                  <span className="truncate" title={variantDisplayName(v)}>
+                    {variantDisplayName(v)}
+                  </span>
                   {v.is_default && (
-                    <Badge variant="warning" className="shrink-0">
+                    <Badge variant="warning" className="shrink-0 text-[10px] px-1.5 py-0">
                       Mặc định
                     </Badge>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="truncate text-xs text-muted-foreground">
                   {v.isComposite
                     ? v.components && v.components.length > 0
                       ? "Bộ lắp ráp — tồn tự tính theo linh kiện"
                       : "Bộ lắp ráp (chưa khai linh kiện)"
-                    : v.unit ?? ""}
+                    : v.unit ? `Đơn vị: ${v.unit}` : ""}
                 </div>
               </div>
               <div className="shrink-0 text-right text-sm">
-                <div className={`text-xs font-medium ${v.stock === 0 ? "text-red-600" : "text-emerald-600"}`}>
+                <div className={`text-xs font-semibold ${v.stock === 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                   {v.isComposite ? `Tồn bộ: ${v.stock}` : `Tồn: ${v.stock}`}
                 </div>
                 {v.isComposite ? (
-                  <div className="text-[10px] text-muted-foreground">số bộ còn ráp được</div>
+                  <div className="text-[10px] text-muted-foreground">khả dụng</div>
                 ) : null}
               </div>
             </label>
           ))}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 min-w-0">
           <span className="text-sm text-muted-foreground">Số lượng</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <Button
               variant="outline"
               size="icon-xs"
@@ -170,18 +172,18 @@ export function ProductDetailDialog({
         </div>
 
         {selected && selected.stock === 0 && (
-          <div className="rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-600 dark:text-amber-400">
+          <div className="rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-600 dark:text-amber-400 break-words">
             ⚠️ <strong>Vật tư hiện đang hết hàng:</strong> Bạn vẫn có thể tạo yêu cầu với số lượng mong muốn. Quản kho sẽ nhận được thông tin để lên kế hoạch đặt hàng và cấp phát khi hàng về.
           </div>
         )}
         {selected && selected.stock > 0 && numQty > selected.stock && (
-          <div className="rounded-md bg-blue-500/10 p-2.5 text-xs text-blue-600 dark:text-blue-400">
+          <div className="rounded-md bg-blue-500/10 p-2.5 text-xs text-blue-600 dark:text-blue-400 break-words">
             ℹ️ <strong>Tồn kho hiện có {selected.stock} {selected.unit ?? "cái"}:</strong> Bạn đang yêu cầu {numQty}. Quản kho sẽ cấp trước số lượng có sẵn hoặc nhập thêm {numQty - selected.stock} để cấp đủ.
           </div>
         )}
 
-        <DialogFooter>
-          <Button onClick={addToCart} disabled={!selected || numQty < 1}>
+        <DialogFooter className="min-w-0">
+          <Button className="w-full sm:w-auto" onClick={addToCart} disabled={!selected || numQty < 1}>
             {selected?.stock === 0 ? "Thêm vào giỏ (chờ nhập hàng)" : "Thêm vào giỏ"}
           </Button>
         </DialogFooter>

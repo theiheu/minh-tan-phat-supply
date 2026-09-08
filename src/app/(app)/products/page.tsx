@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category-icon";
 import { Pagination } from "@/components/pagination";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ProductCard } from "@/features/products/components/product-card";
 import type { VariantWithStock } from "@/features/products/types";
 import { materialLabel } from "@/lib/attributes";
@@ -112,6 +113,8 @@ export default async function ProductsPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="requisitions" />
+
       {/* Ô tìm kiếm — căn giữa, giữ query param category khi tìm trong danh mục đang chọn. */}
       <form method="get" className="mx-auto flex w-full max-w-xl gap-2">
         <Input type="search" name="q" defaultValue={q} placeholder="Tìm vật tư…" className="flex-1" />
@@ -122,18 +125,20 @@ export default async function ProductsPage({
       </form>
 
       {/* Danh mục dạng ô vuông:
-          - Mobile (<lg): 2 hàng, dài quá thì cuộn ngang.
+          - Mobile (<lg): 2 hàng, dài quá thì cuộn ngang toàn màn hình mượt mà.
           - Desktop (lg+): các ô nhỏ hơn (2/3 kích thước cũ), wrap xuống hàng
             mới thì đi từ trái sang phải (không căn giữa hàng thừa). */}
-      <div className="mx-auto grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-1 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-start lg:gap-x-3 lg:gap-y-2 lg:overflow-visible lg:pb-0 xl:gap-x-4">
-        <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả" className="lg:w-16 xl:w-[4.7rem]">
-          <LayoutGrid className="size-6 shrink-0 md:size-5" aria-hidden />
-        </CategoryTile>
-        {(categories ?? []).map((c) => (
-          <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name} className="lg:w-16 xl:w-[4.7rem]">
-            <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-5" />
+      <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 lg:overflow-visible lg:pb-0">
+        <div className="grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-start lg:gap-x-3 lg:gap-y-2 xl:gap-x-4">
+          <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả" className="lg:w-16 xl:w-[4.7rem]">
+            <LayoutGrid className="size-6 shrink-0 md:size-5" aria-hidden />
           </CategoryTile>
-        ))}
+          {(categories ?? []).map((c) => (
+            <CategoryTile key={c.id} active={categoryId === c.id} href={categoryHref(c.id)} label={c.name} className="lg:w-16 xl:w-[4.7rem]">
+              <CategoryIcon value={c.icon} className="size-6 shrink-0 md:size-5" />
+            </CategoryTile>
+          ))}
+        </div>
       </div>
 
       <p className="text-sm text-muted-foreground">{count ?? 0} vật tư</p>

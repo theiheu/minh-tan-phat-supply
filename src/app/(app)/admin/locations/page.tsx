@@ -1,5 +1,6 @@
 import { deactivateLocation, saveLocation } from "@/features/admin/actions";
 import { EntityCrud, type CrudRow } from "@/features/admin/components/entity-crud";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,19 +42,22 @@ export default async function AdminLocationsPage({
   }));
 
   return (
-    <EntityCrud
-      title="Kho/vị trí"
-      items={rows}
-      columns={[
-        { key: "code", label: "Mã" },
-        { key: "name", label: "Tên" },
-        { key: "type", label: "Loại", kind: "select", options: TYPE_OPTIONS },
-      ]}
-      save={saveLocation}
-      remove={deactivateLocation}
-      page={page}
-      totalPages={totalPages}
-      basePath="/admin/locations"
-    />
+    <div className="space-y-4">
+      <SubnavTabs group="admin" />
+      <EntityCrud
+        title="Kho/vị trí"
+        items={rows}
+        columns={[
+          { key: "code", label: "Mã" },
+          { key: "name", label: "Tên" },
+          { key: "type", label: "Loại", kind: "select", options: TYPE_OPTIONS },
+        ]}
+        save={saveLocation}
+        remove={deactivateLocation}
+        page={page}
+        totalPages={totalPages}
+        basePath="/admin/locations"
+      />
+    </div>
   );
 }

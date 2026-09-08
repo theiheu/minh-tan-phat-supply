@@ -1,3 +1,4 @@
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { TransfersManager } from "@/features/transfers/components/transfers-manager";
 import { fetchCompositeVariantIds } from "@/features/products/data";
 import { variantLabel } from "@/lib/labels";
@@ -21,5 +22,10 @@ export default async function TransfersPage() {
       label: `${v.products?.name ?? "Vật tư"} — ${variantLabel(v.attributes, v.unit)}`,
     }));
 
-  return <TransfersManager locations={locations ?? []} variants={variantOptions} />;
+  return (
+    <div className="space-y-4">
+      <SubnavTabs group="warehouse" />
+      <TransfersManager locations={locations ?? []} variants={variantOptions} />
+    </div>
+  );
 }

@@ -9,6 +9,8 @@ function supabaseStoragePatterns(): NonNullable<NonNullable<NextConfig["images"]
     { protocol: "http", hostname: "localhost", port: "54321", pathname: "/storage/v1/object/**" },
     // Supabase hosted project storage (production cloud)
     { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/**" },
+    // Unsplash (placeholder / seed / mock images)
+    { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
   ];
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

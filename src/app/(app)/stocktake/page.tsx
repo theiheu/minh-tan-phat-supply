@@ -1,5 +1,6 @@
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { StocktakeManager } from "@/features/stocktake/components/stocktake-manager";
 import type { StocktakeSessionView } from "@/features/stocktake/types";
 import { requireProfile } from "@/lib/auth";
@@ -87,6 +88,8 @@ export default async function StocktakePage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="warehouse" />
+
       <ListFilters
         basePath="/stocktake"
         searchPlaceholder="Tìm tên / mã phiếu kiểm kê…"

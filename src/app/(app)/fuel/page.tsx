@@ -50,12 +50,13 @@ export default async function FuelPage({
   const now = new Date();
   const vnYear = now.getFullYear();
   const vnMonth = String(now.getMonth() + 1).padStart(2, "0");
-  const vnDay = String(now.getDate()).padStart(2, "0");
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   const defaultFrom = `${vnYear}-${vnMonth}-01`;
-  const defaultTo = `${vnYear}-${vnMonth}-${vnDay}`;
+  const defaultTo = `${vnYear}-${vnMonth}-${String(lastDay.getDate()).padStart(2, "0")}`;
 
   const from = sp.from ?? defaultFrom;
   const to = sp.to ?? defaultTo;
+  const q = sp.q ?? "";
 
   const supabase = await createClient();
 
@@ -147,6 +148,7 @@ export default async function FuelPage({
         <DispensesTabContent
           from={from}
           to={to}
+          q={q}
           page={page}
           fuelTypeId={fuelTypeId}
           vehicleId={vehicleId}
@@ -161,6 +163,7 @@ export default async function FuelPage({
         <ReceiptsTabContent
           from={from}
           to={to}
+          q={q}
           page={page}
           fuelTypeId={fuelTypeId}
           fuelTypes={fuelTypes}
@@ -172,6 +175,7 @@ export default async function FuelPage({
         <ReportsTabContent
           from={from}
           to={to}
+          fuelTypeId={fuelTypeId}
           vehicleId={vehicleId}
           zoneId={zoneId}
           fuelTypes={fuelTypes}
@@ -209,6 +213,7 @@ async function OverviewTabContent({
 async function DispensesTabContent({
   from,
   to,
+  q,
   page,
   fuelTypeId,
   vehicleId,
@@ -219,6 +224,7 @@ async function DispensesTabContent({
 }: {
   from: string;
   to: string;
+  q: string;
   page: number;
   fuelTypeId: string;
   vehicleId: string;
@@ -230,6 +236,7 @@ async function DispensesTabContent({
   const { data, total } = await getFuelDispenses({
     from,
     to,
+    q: q || undefined,
     page,
     fuelTypeId: fuelTypeId || undefined,
     vehicleId: vehicleId || undefined,
@@ -245,7 +252,7 @@ async function DispensesTabContent({
       fuelTypes={fuelTypes}
       vehicles={vehicles}
       zones={zones}
-      filters={{ from, to, vehicleId, zoneId, fuelTypeId }}
+      filters={{ from, to, q, vehicleId, zoneId, fuelTypeId }}
     />
   );
 }
@@ -253,6 +260,7 @@ async function DispensesTabContent({
 async function ReceiptsTabContent({
   from,
   to,
+  q,
   page,
   fuelTypeId,
   fuelTypes,
@@ -260,6 +268,7 @@ async function ReceiptsTabContent({
 }: {
   from: string;
   to: string;
+  q: string;
   page: number;
   fuelTypeId: string;
   fuelTypes: FuelType[];
@@ -268,6 +277,7 @@ async function ReceiptsTabContent({
   const { data, total } = await getFuelReceipts({
     from,
     to,
+    q: q || undefined,
     page,
     fuelTypeId: fuelTypeId || undefined,
   });
@@ -280,7 +290,7 @@ async function ReceiptsTabContent({
       pageSize={20}
       fuelTypes={fuelTypes}
       suppliers={suppliers}
-      filters={{ from, to, fuelTypeId }}
+      filters={{ from, to, q, fuelTypeId }}
     />
   );
 }
@@ -288,6 +298,7 @@ async function ReceiptsTabContent({
 async function ReportsTabContent({
   from,
   to,
+  fuelTypeId,
   vehicleId,
   zoneId,
   fuelTypes,
@@ -296,6 +307,7 @@ async function ReportsTabContent({
 }: {
   from: string;
   to: string;
+  fuelTypeId: string;
   vehicleId: string;
   zoneId: string;
   fuelTypes: FuelType[];
@@ -305,6 +317,7 @@ async function ReportsTabContent({
   const reportData = await getFuelReportData({
     from,
     to,
+    fuelTypeId: fuelTypeId || undefined,
     vehicleId: vehicleId || undefined,
     zoneId: zoneId || undefined,
   });
@@ -315,7 +328,7 @@ async function ReportsTabContent({
       vehicles={vehicles}
       zones={zones}
       fuelTypes={fuelTypes}
-      filters={{ from, to, vehicleId, zoneId }}
+      filters={{ from, to, vehicleId, zoneId, fuelTypeId }}
     />
   );
 }

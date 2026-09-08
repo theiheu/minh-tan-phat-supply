@@ -1,7 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
-import { generateQrDataUri } from "@/features/pdf/qr";
+import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { VehicleQrLabelDocument } from "@/features/pdf/vehicle-qr-label";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +12,7 @@ function safeFilename(code: string): string {
   return code.replace(/[^a-zA-Z0-9._-]+/g, "-") || "vehicle";
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   await requireProfile();
   const { id } = await params;
   const supabase = await createClient();
@@ -26,7 +26,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   try {
     ensurePdfFonts();
-    const qrCode = await generateQrDataUri(vehicle.qr_token, 768);
+    const scanUrl = getSlipUrl(request, `/fuel/scan?vehicle=${encodeURIComponent(vehicle.qr_token)}`);
+    const qrCode = await generateQrDataUri(scanUrl, 768);
     const buffer = await renderToBuffer(
       <VehicleQrLabelDocument
         qrCode={qrCode}

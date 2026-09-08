@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { IssueDialog } from "@/features/issues/components/issue-dialog";
 import { SlipCodeButton } from "@/components/slip-code-button";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { requireManager } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
 import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
@@ -105,6 +106,8 @@ export default async function IssuesPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="warehouse" />
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Xuất vật tư cho khu nội bộ hoặc bán cho khách — khi xác nhận xuất sẽ trừ tồn kho.

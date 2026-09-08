@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { DefectDialog } from "@/features/defects/components/defect-dialog";
 import {
   DefectsList,
@@ -159,6 +160,7 @@ export default async function DefectsPage({
 
     return (
       <div className="space-y-4">
+        <SubnavTabs group="defects" userRole={profile?.role} />
         <HeaderTabs
           view={view}
           isManager={isManager}
@@ -336,6 +338,8 @@ export default async function DefectsPage({
 
   return (
     <div className="space-y-4">
+      <SubnavTabs group="defects" userRole={profile?.role} />
+
       <HeaderTabs
         view={view}
         isManager={isManager}

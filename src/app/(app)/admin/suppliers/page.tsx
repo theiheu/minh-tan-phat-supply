@@ -1,5 +1,6 @@
 import { deleteSupplier, saveSupplier } from "@/features/admin/actions";
 import { EntityCrud, type CrudRow } from "@/features/admin/components/entity-crud";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,25 +44,28 @@ export default async function AdminSuppliersPage({
   }));
 
   return (
-    <EntityCrud
-      title="Nhà cung cấp"
-      items={rows}
-      columns={[
-        { key: "name", label: "Tên" },
-        { key: "contact_name", label: "Liên hệ" },
-        { key: "phone", label: "Điện thoại" },
-        { key: "email", label: "Email" },
-        { key: "address", label: "Địa chỉ" },
-      ]}
-      save={saveSupplier}
-      remove={deleteSupplier}
-      page={page}
-      totalPages={totalPages}
-      basePath="/admin/suppliers"
-      search={q}
-      searchPlaceholder="Tìm tên, liên hệ, SĐT, email…"
-      emptyText={q ? "Không tìm thấy nhà cung cấp phù hợp." : undefined}
-      createMode="modal"
-    />
+    <div className="space-y-4">
+      <SubnavTabs group="admin" />
+      <EntityCrud
+        title="Nhà cung cấp"
+        items={rows}
+        columns={[
+          { key: "name", label: "Tên" },
+          { key: "contact_name", label: "Liên hệ" },
+          { key: "phone", label: "Điện thoại" },
+          { key: "email", label: "Email" },
+          { key: "address", label: "Địa chỉ" },
+        ]}
+        save={saveSupplier}
+        remove={deleteSupplier}
+        page={page}
+        totalPages={totalPages}
+        basePath="/admin/suppliers"
+        search={q}
+        searchPlaceholder="Tìm tên, liên hệ, SĐT, email…"
+        emptyText={q ? "Không tìm thấy nhà cung cấp phù hợp." : undefined}
+        createMode="modal"
+      />
+    </div>
   );
 }

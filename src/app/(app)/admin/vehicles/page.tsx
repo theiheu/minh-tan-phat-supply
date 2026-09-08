@@ -1,3 +1,4 @@
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { VehicleList, type VehicleListRow } from "@/features/vehicles/components/vehicle-list";
 import { VEHICLE_TYPE_LABELS } from "@/features/vehicles/schema";
 import { requireManager } from "@/lib/auth";
@@ -59,13 +60,16 @@ export default async function AdminVehiclesPage({
   }));
 
   return (
-    <VehicleList
-      vehicles={rows}
-      fuelTypes={fuelTypesResult.data ?? []}
-      zones={zonesResult.data ?? []}
-      page={page}
-      totalPages={Math.max(1, Math.ceil((vehiclesResult.count ?? 0) / PAGE_SIZE))}
-      filters={{ q, type, status }}
-    />
+    <div className="space-y-4">
+      <SubnavTabs group="admin" />
+      <VehicleList
+        vehicles={rows}
+        fuelTypes={fuelTypesResult.data ?? []}
+        zones={zonesResult.data ?? []}
+        page={page}
+        totalPages={Math.max(1, Math.ceil((vehiclesResult.count ?? 0) / PAGE_SIZE))}
+        filters={{ q, type, status }}
+      />
+    </div>
   );
 }

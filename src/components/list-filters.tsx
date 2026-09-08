@@ -92,6 +92,8 @@ export interface SelectFilter {
 export interface ListFiltersProps {
   /** Đường dẫn gốc của trang (VD "/requisitions"). */
   basePath: string;
+  /** Cho phép hiện ô tìm kiếm (mặc định true). */
+  showSearch?: boolean;
   /** Placeholder ô tìm kiếm. */
   searchPlaceholder?: string;
   /** Các filter dạng dropdown, hiển thị theo đúng thứ tự khai báo. */
@@ -116,6 +118,7 @@ export interface ListFiltersProps {
  */
 export function ListFilters({
   basePath,
+  showSearch = true,
   searchPlaceholder = "Tìm kiếm…",
   filters = [],
   showDateRange = false,
@@ -138,6 +141,15 @@ export function ListFilters({
   });
   const [open, setOpen] = useState(false);
 
+  // Lưu các tham số bổ sung trong URL (ví dụ `tab=reports`) để không bị mất khi lọc/xóa lọc.
+  const filterParamSet = new Set(filters.map((f) => f.param));
+  const extraParams: Record<string, string> = {};
+  for (const [k, v] of Object.entries(initial)) {
+    if (k !== "q" && k !== "from" && k !== "to" && !filterParamSet.has(k) && v != null && v !== "") {
+      extraParams[k] = v;
+    }
+  }
+
   // Đồng bộ state khi URL thay đổi (điều hướng, back/forward).
   const initialKey = JSON.stringify(initial);
   useEffect(() => {
@@ -152,7 +164,7 @@ export function ListFilters({
   }, [initialKey]);
 
   const hasFilter =
-    Boolean(q.trim()) ||
+    (showSearch && Boolean(q.trim())) ||
     Object.values(values).some(Boolean) ||
     Boolean(from || to);
 
@@ -174,7 +186,10 @@ export function ListFilters({
 
   function buildQuery(): string {
     const params = new URLSearchParams();
-    if (q.trim()) params.set("q", q.trim());
+    for (const [k, v] of Object.entries(extraParams)) {
+      if (v) params.set(k, v);
+    }
+    if (showSearch && q.trim()) params.set("q", q.trim());
     for (const f of filters) {
       const v = values[f.param];
       if (v) params.set(f.param, v);
@@ -198,7 +213,13 @@ export function ListFilters({
     const v: Record<string, string> = {};
     for (const f of filters) v[f.param] = "";
     setValues(v);
-    router.push(basePath);
+
+    const params = new URLSearchParams();
+    for (const [k, val] of Object.entries(extraParams)) {
+      if (val) params.set(k, val);
+    }
+    const s = params.toString();
+    router.push(s ? `${basePath}?${s}` : basePath);
     setOpen(false);
   }
 
@@ -237,12 +258,14 @@ export function ListFilters({
         }}
         className="hidden flex-wrap items-center gap-2 md:flex"
       >
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="min-w-[200px] max-w-xs"
-        />
+        {showSearch && (
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="min-w-[200px] max-w-xs"
+          />
+        )}
         {filters.map((f) => (
           <span key={f.param}>{renderSelect(f, false)}</span>
         ))}
@@ -287,7 +310,7 @@ export function ListFilters({
         )}
       </form>
 
-      {/* Mobile: chỉ ô tìm kiếm + nút Lọc */}
+      {/* Mobile: chỉ ô tìm kiếm + nút Lọc (hoặc chỉ nút Lọc nếu tắt tìm kiếm) */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -295,13 +318,20 @@ export function ListFilters({
         }}
         className="flex gap-2 md:hidden"
       >
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="flex-1"
-        />
-        <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+        {showSearch && (
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="flex-1"
+          />
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setOpen(true)}
+          className={!showSearch ? "w-full justify-center" : undefined}
+        >
           <SlidersHorizontal className="size-4" />
           Lọc
         </Button>

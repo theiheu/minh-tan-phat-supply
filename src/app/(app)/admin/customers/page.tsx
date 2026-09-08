@@ -1,5 +1,6 @@
 import { deleteCustomer, saveCustomer } from "@/features/admin/actions";
 import { EntityCrud, type CrudRow } from "@/features/admin/components/entity-crud";
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,24 +43,27 @@ export default async function AdminCustomersPage({
   }));
 
   return (
-    <EntityCrud
-      title="Khách hàng"
-      items={rows}
-      columns={[
-        { key: "name", label: "Tên" },
-        { key: "phone", label: "SĐT" },
-        { key: "address", label: "Địa chỉ" },
-        { key: "notes", label: "Ghi chú" },
-      ]}
-      save={saveCustomer}
-      remove={deleteCustomer}
-      page={page}
-      totalPages={totalPages}
-      basePath="/admin/customers"
-      search={q}
-      searchPlaceholder="Tìm tên, SĐT, địa chỉ…"
-      emptyText={q ? "Không tìm thấy khách hàng phù hợp." : undefined}
-      createMode="modal"
-    />
+    <div className="space-y-4">
+      <SubnavTabs group="admin" />
+      <EntityCrud
+        title="Khách hàng"
+        items={rows}
+        columns={[
+          { key: "name", label: "Tên" },
+          { key: "phone", label: "SĐT" },
+          { key: "address", label: "Địa chỉ" },
+          { key: "notes", label: "Ghi chú" },
+        ]}
+        save={saveCustomer}
+        remove={deleteCustomer}
+        page={page}
+        totalPages={totalPages}
+        basePath="/admin/customers"
+        search={q}
+        searchPlaceholder="Tìm tên, SĐT, địa chỉ…"
+        emptyText={q ? "Không tìm thấy khách hàng phù hợp." : undefined}
+        createMode="modal"
+      />
+    </div>
   );
 }

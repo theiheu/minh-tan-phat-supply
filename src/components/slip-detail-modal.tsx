@@ -268,7 +268,7 @@ export function SlipDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[96vw] sm:max-w-4xl lg:max-w-5xl h-[92svh] max-h-[92svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-4xl lg:max-w-5xl h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
         {loading || !detail ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -277,10 +277,10 @@ export function SlipDetailModal({
         ) : (
           <>
             {/* Header */}
-            <DialogHeader className="shrink-0 pb-3 border-b">
-              <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
-                <div className="flex items-center gap-2.5">
-                  <DialogTitle className="font-mono text-lg font-bold text-primary">
+            <DialogHeader className="shrink-0 pb-3 border-b pr-10 sm:pr-8 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <DialogTitle className="font-mono text-base sm:text-lg font-bold text-primary">
                     {detail.code}
                   </DialogTitle>
                   <Badge variant="neutral" className="text-xs">
@@ -291,8 +291,8 @@ export function SlipDetailModal({
                   </Badge>
                 </div>
                 {detail.pdfUrl && (
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Button variant="outline" size="sm" asChild className="h-7 sm:h-8 gap-1 text-xs px-2 sm:px-3">
                       <a
                         href={`/qr/${detail.type}/${detail.id}`}
                         target="_blank"
@@ -302,7 +302,7 @@ export function SlipDetailModal({
                         In mã QR
                       </a>
                     </Button>
-                    <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+                    <Button variant="outline" size="sm" asChild className="h-7 sm:h-8 gap-1 text-xs px-2 sm:px-3">
                       <a href={detail.pdfUrl} target="_blank" rel="noreferrer">
                         <Printer className="size-3.5" />
                         In phiếu PDF

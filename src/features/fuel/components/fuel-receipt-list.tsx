@@ -44,7 +44,7 @@ export function FuelReceiptList({
   pageSize: number;
   fuelTypes: FuelType[];
   suppliers: { id: string; name: string }[];
-  filters: { from: string; to: string; fuelTypeId: string };
+  filters: { from: string; to: string; q?: string; fuelTypeId: string };
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -84,6 +84,7 @@ export function FuelReceiptList({
 
       <ListFilters
         basePath="/fuel"
+        searchPlaceholder="Tìm mã phiếu, số hóa đơn…"
         title="Lọc phiếu nhập"
         showDateRange
         filters={[
@@ -96,6 +97,7 @@ export function FuelReceiptList({
         ]}
         initial={{
           tab: "receipts",
+          q: filters.q,
           from: filters.from,
           to: filters.to,
           fuelTypeId: filters.fuelTypeId,
@@ -214,6 +216,7 @@ export function FuelReceiptList({
         totalPages={totalPages}
         params={{
           tab: "receipts",
+          q: filters.q || null,
           from: filters.from || null,
           to: filters.to || null,
           fuelTypeId: filters.fuelTypeId || null,

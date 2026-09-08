@@ -134,13 +134,13 @@ export function FuelReceiptDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="fuelTypeId" className="text-xs font-semibold">
                 Loại dầu / Nhiên liệu <span className="text-destructive">*</span>
               </Label>
               <Select value={fuelTypeId} onValueChange={setFuelTypeId} disabled={pending}>
-                <SelectTrigger id="fuelTypeId">
+                <SelectTrigger id="fuelTypeId" className="w-full">
                   <SelectValue placeholder="Chọn loại dầu" />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,7 +153,7 @@ export function FuelReceiptDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="quantity" className="text-xs font-semibold">
                 Số lượng nhập (Lít) <span className="text-destructive">*</span>
               </Label>
@@ -170,7 +170,7 @@ export function FuelReceiptDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="unitPrice" className="text-xs font-semibold">
                 Đơn giá nhập / Lít (VNĐ)
               </Label>
@@ -186,10 +186,10 @@ export function FuelReceiptDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="supplierId" className="text-xs font-semibold">Nhà cung cấp</Label>
               <Select value={supplierId} onValueChange={setSupplierId} disabled={pending}>
-                <SelectTrigger id="supplierId">
+                <SelectTrigger id="supplierId" className="w-full">
                   <SelectValue placeholder="Chọn nhà cung cấp" />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,7 +203,7 @@ export function FuelReceiptDialog({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="invoiceNumber" className="text-xs font-semibold">Số hóa đơn / Phiếu giao hàng</Label>
               <Input
                 id="invoiceNumber"
@@ -215,13 +215,13 @@ export function FuelReceiptDialog({
             </div>
 
             {totalAmount > 0 && (
-              <div className="rounded-lg border bg-muted/30 p-3 sm:col-span-2">
+              <div className="rounded-lg border bg-muted/30 p-3 sm:col-span-2 min-w-0">
                 <p className="text-xs text-muted-foreground">Tổng tiền thanh toán dự tính:</p>
                 <p className="text-lg font-bold text-primary">{formatVnd(totalAmount)}</p>
               </div>
             )}
 
-            <div className="space-y-1.5 sm:col-span-2">
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label className="text-xs font-semibold">Ảnh hóa đơn / Phiếu giao hàng</Label>
               <div className="flex flex-wrap gap-2">
                 {invoiceImages.map((img, idx) => (

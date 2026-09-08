@@ -48,7 +48,7 @@ export function FuelDispenseList({
   fuelTypes: FuelType[];
   vehicles: VehicleSelection[];
   zones: { id: string; name: string }[];
-  filters: { from: string; to: string; vehicleId: string; zoneId: string; fuelTypeId: string };
+  filters: { from: string; to: string; q?: string; vehicleId: string; zoneId: string; fuelTypeId: string };
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -89,6 +89,7 @@ export function FuelDispenseList({
 
       <ListFilters
         basePath="/fuel"
+        searchPlaceholder="Tìm mã phiếu, tài xế…"
         title="Lọc phiếu cấp phát"
         showDateRange
         filters={[
@@ -113,6 +114,7 @@ export function FuelDispenseList({
         ]}
         initial={{
           tab: "dispenses",
+          q: filters.q,
           from: filters.from,
           to: filters.to,
           fuelTypeId: filters.fuelTypeId,
@@ -258,6 +260,7 @@ export function FuelDispenseList({
         totalPages={totalPages}
         params={{
           tab: "dispenses",
+          q: filters.q || null,
           from: filters.from || null,
           to: filters.to || null,
           fuelTypeId: filters.fuelTypeId || null,

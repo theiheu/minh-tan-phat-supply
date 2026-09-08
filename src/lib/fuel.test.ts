@@ -6,6 +6,7 @@ import {
   formatOdo,
   formatConsumptionRate,
   generateVehicleQrToken,
+  getVehicleQrScanUrl,
   parseQrText,
 } from "./fuel";
 
@@ -93,6 +94,19 @@ describe("generateVehicleQrToken", () => {
   });
 });
 
+describe("getVehicleQrScanUrl", () => {
+  it("builds absolute scan url when origin is provided", () => {
+    expect(getVehicleQrScanUrl("VEH_61C12345_A8B9", "https://app.example.com")).toBe(
+      "https://app.example.com/fuel/scan?vehicle=VEH_61C12345_A8B9"
+    );
+  });
+  it("builds relative scan url when origin is omitted", () => {
+    expect(getVehicleQrScanUrl("61C-123.45")).toBe(
+      "/fuel/scan?vehicle=61C-123.45"
+    );
+  });
+});
+
 describe("parseQrText", () => {
   it("detects vehicle QR token", () => {
     const result = parseQrText("VEH_61C12345_HOWO");
@@ -109,6 +123,22 @@ describe("parseQrText", () => {
   it("treats plain text as vehicle code/plate lookup", () => {
     const result = parseQrText("61C-123.45");
     expect(result).toEqual({ type: "vehicle", value: "61C-123.45" });
+  });
+  it("extracts vehicle token from full scan URL with ?vehicle= param", () => {
+    const result = parseQrText("https://minh-tan-phat.vn/fuel/scan?vehicle=VEH_61C12345_HOWO");
+    expect(result).toEqual({ type: "vehicle", value: "VEH_61C12345_HOWO" });
+  });
+  it("extracts vehicle token from scan URL with ?token= param", () => {
+    const result = parseQrText("https://minh-tan-phat.vn/fuel/scan?token=VEH_61C12345_HOWO");
+    expect(result).toEqual({ type: "vehicle", value: "VEH_61C12345_HOWO" });
+  });
+  it("extracts vehicle code from scan URL with ?code= param", () => {
+    const result = parseQrText("http://localhost:3000/fuel/scan?code=61C-123.45");
+    expect(result).toEqual({ type: "vehicle", value: "61C-123.45" });
+  });
+  it("extracts vehicle from path URL", () => {
+    const result = parseQrText("https://minh-tan-phat.vn/qr/vehicle/VEH_61C12345_HOWO");
+    expect(result).toEqual({ type: "vehicle", value: "VEH_61C12345_HOWO" });
   });
   it("returns unknown for empty string", () => {
     const result = parseQrText("");

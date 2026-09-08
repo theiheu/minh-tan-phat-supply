@@ -3,33 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ADMIN_NAV, MAIN_NAV, filterByRole, type NavItem } from "@/lib/nav";
+import { NAV_GROUPS, filterGroupsByRole, isGroupActive } from "@/lib/nav";
 import { roleLabel } from "@/lib/labels";
 import type { Profile } from "@/lib/types";
 import { SignOutButton } from "./sign-out-button";
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
-  const Icon = item.icon;
-  return (
-    <Link
-      href={item.href}
-      className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-        active
-          ? "bg-primary/10 text-primary font-medium"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground",
-      )}
-    >
-      <Icon className="size-4 shrink-0" />
-      <span className="truncate">{item.label}</span>
-    </Link>
-  );
-}
-
 export function Sidebar({ profile }: { profile: Profile }) {
   const pathname = usePathname();
-  const main = filterByRole(MAIN_NAV, profile.role);
-  const admin = filterByRole(ADMIN_NAV, profile.role);
+  const groups = filterGroupsByRole(NAV_GROUPS, profile.role);
+  const mainGroups = groups.filter((g) => g.id !== "admin");
+  const adminGroup = groups.find((g) => g.id === "admin");
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r bg-sidebar">
@@ -37,17 +20,40 @@ export function Sidebar({ profile }: { profile: Profile }) {
         <span className="text-sm font-bold leading-tight">Trại gà Minh Tân Phát</span>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {main.map((item) => (
-          <NavLink key={item.href} item={item} active={pathname.startsWith(item.href)} />
-        ))}
-        {admin.length > 0 && (
+        {mainGroups.map((group) => {
+          const Icon = group.icon;
+          const active = isGroupActive(group, pathname);
+          return (
+            <Link
+              key={group.id}
+              href={group.href}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                active
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4 shrink-0" />
+              <span className="truncate">{group.label}</span>
+            </Link>
+          );
+        })}
+        {adminGroup && (
           <>
-            <div className="px-3 pt-4 pb-1 text-xs font-semibold uppercase text-muted-foreground">
-              Quản trị
-            </div>
-            {admin.map((item) => (
-              <NavLink key={item.href} item={item} active={pathname.startsWith(item.href)} />
-            ))}
+            <div className="my-2 border-t border-sidebar-border" />
+            <Link
+              href={adminGroup.href}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                isGroupActive(adminGroup, pathname)
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+              )}
+            >
+              <adminGroup.icon className="size-4 shrink-0" />
+              <span className="truncate">{adminGroup.label}</span>
+            </Link>
           </>
         )}
       </nav>

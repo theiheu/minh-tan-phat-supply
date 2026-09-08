@@ -587,25 +587,25 @@ function DefectDetailDialog({
 
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2 font-mono text-lg">
-            {row.code}
-            <Badge variant={statusBadgeVariant(row.status)}>
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full max-h-[90vh] sm:max-w-3xl overflow-y-auto p-4 sm:p-6 rounded-2xl min-w-0">
+        <DialogHeader className="pr-10 sm:pr-8 pb-3 border-b min-w-0">
+          <DialogTitle className="flex flex-wrap items-center gap-2 font-mono text-base sm:text-lg min-w-0">
+            <span className="truncate">{row.code}</span>
+            <Badge variant={statusBadgeVariant(row.status)} className="text-xs shrink-0">
               {DEFECT_STATUS[row.status] ?? row.status}
             </Badge>
-            {row.repairRequested ? <Badge variant="warning">Chờ xác nhận sửa</Badge> : null}
+            {row.repairRequested ? <Badge variant="warning" className="text-xs shrink-0">Chờ xác nhận sửa</Badge> : null}
             {row.liveExchange ? (
-              <Badge variant={statusBadgeVariant(row.liveExchange.status)}>
+              <Badge variant={statusBadgeVariant(row.liveExchange.status)} className="text-xs shrink-0">
                 Đổi mới: {EXCHANGE_STATUS[row.liveExchange.status] ?? row.liveExchange.status}
               </Badge>
             ) : null}
           </DialogTitle>
           <DialogDescription asChild>
-            <div className="space-y-0.5 text-sm">
+            <div className="space-y-0.5 text-xs sm:text-sm pt-1">
               <div>
-                Người báo: <span className="text-foreground">{row.reporterName ?? "—"}</span> · Kho nguồn:{" "}
-                <span className="text-foreground">{row.sourceName ?? "—"}</span>
+                Người báo: <span className="text-foreground font-medium">{row.reporterName ?? "—"}</span> · Kho nguồn:{" "}
+                <span className="text-foreground font-medium">{row.sourceName ?? "—"}</span>
               </div>
               <div>Ngày lập: {formatDate(row.createdAt)}</div>
             </div>
@@ -1002,8 +1002,17 @@ function DefectDetailDialog({
           </div>
         )}
 
-        {/* Dev tools */}
-        <div className="flex justify-end border-t pt-2">
+        {/* Dev tools & Footer */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            className="h-8 px-3 text-xs font-medium"
+          >
+            Đóng
+          </Button>
           {isDev ? (
             <DevDocTools kind="defect" id={row.id} code={row.code} docName="phiếu hỏng" canReopen={false} isDev compact />
           ) : (

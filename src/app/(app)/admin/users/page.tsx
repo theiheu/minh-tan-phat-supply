@@ -1,3 +1,4 @@
+import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { UsersManager } from "@/features/auth/components/users-manager";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -50,5 +51,10 @@ export default async function AdminUsersPage({
 
   const rows = [...(supers ?? []), ...(managers ?? [])].slice(start, end).concat(requesterSlice);
 
-  return <UsersManager profiles={rows} zones={zones ?? []} currentRole={current.role} page={page} totalPages={totalPages} />;
+  return (
+    <div className="space-y-4">
+      <SubnavTabs group="admin" />
+      <UsersManager profiles={rows} zones={zones ?? []} currentRole={current.role} page={page} totalPages={totalPages} />
+    </div>
+  );
 }

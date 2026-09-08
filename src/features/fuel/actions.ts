@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
+import { dayRange } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { fuelReceiptSchema, fuelDispenseSchema, type FuelReceiptInput, type FuelDispenseInput } from "./schema";
 import type { FuelOverviewData, FuelReportRow } from "./types";
@@ -26,6 +27,7 @@ export async function getFuelReceipts(opts?: {
   fuelTypeId?: string;
   from?: string;
   to?: string;
+  q?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -46,15 +48,13 @@ export async function getFuelReceipts(opts?: {
   if (opts?.fuelTypeId && opts.fuelTypeId !== "all") {
     query = query.eq("fuel_type_id", opts.fuelTypeId);
   }
-  if (opts?.from) {
-    query = query.gte("created_at", new Date(`${opts.from}T00:00:00+07:00`).toISOString());
+  if (opts?.q && opts.q.trim()) {
+    const term = opts.q.trim();
+    query = query.or(`code.ilike.%${term}%,invoice_number.ilike.%${term}%`);
   }
-  if (opts?.to) {
-    // Exclusive next day start for clean boundary
-    const nextDay = new Date(`${opts.to}T00:00:00+07:00`);
-    nextDay.setDate(nextDay.getDate() + 1);
-    query = query.lt("created_at", nextDay.toISOString());
-  }
+  const { gte, lte } = dayRange(opts?.from ?? null, opts?.to ?? null);
+  if (gte) query = query.gte("created_at", gte);
+  if (lte) query = query.lte("created_at", lte);
 
   const { data, count, error } = await query;
   if (error) throw new Error(error.message);
@@ -101,6 +101,7 @@ export async function getFuelDispenses(opts?: {
   fuelTypeId?: string;
   from?: string;
   to?: string;
+  q?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -121,14 +122,13 @@ export async function getFuelDispenses(opts?: {
   if (opts?.vehicleId && opts.vehicleId !== "all") query = query.eq("vehicle_id", opts.vehicleId);
   if (opts?.zoneId && opts.zoneId !== "all") query = query.eq("zone_id", opts.zoneId);
   if (opts?.fuelTypeId && opts.fuelTypeId !== "all") query = query.eq("fuel_type_id", opts.fuelTypeId);
-  if (opts?.from) {
-    query = query.gte("created_at", new Date(`${opts.from}T00:00:00+07:00`).toISOString());
+  if (opts?.q && opts.q.trim()) {
+    const term = opts.q.trim();
+    query = query.or(`code.ilike.%${term}%,driver_name.ilike.%${term}%`);
   }
-  if (opts?.to) {
-    const nextDay = new Date(`${opts.to}T00:00:00+07:00`);
-    nextDay.setDate(nextDay.getDate() + 1);
-    query = query.lt("created_at", nextDay.toISOString());
-  }
+  const { gte, lte } = dayRange(opts?.from ?? null, opts?.to ?? null);
+  if (gte) query = query.gte("created_at", gte);
+  if (lte) query = query.lte("created_at", lte);
 
   const { data, count, error } = await query;
   if (error) throw new Error(error.message);
@@ -262,16 +262,14 @@ export async function getFuelOverview(): Promise<FuelOverviewData> {
 // ─── Fuel Reports Data ───
 
 export async function getFuelReportData(opts: {
-  from: string;
-  to: string;
+  from?: string;
+  to?: string;
   vehicleId?: string;
   zoneId?: string;
+  fuelTypeId?: string;
 }): Promise<FuelReportRow[]> {
   const supabase = await createClient();
-  const fromIso = new Date(`${opts.from}T00:00:00+07:00`).toISOString();
-  const nextDay = new Date(`${opts.to}T00:00:00+07:00`);
-  nextDay.setDate(nextDay.getDate() + 1);
-  const toIso = nextDay.toISOString();
+  const { gte, lte } = dayRange(opts?.from ?? null, opts?.to ?? null);
 
   let query = supabase
     .from("fuel_dispenses")
@@ -279,12 +277,13 @@ export async function getFuelReportData(opts: {
       "id, code, quantity, usage_diff, consumption_rate, created_at, driver_name, vehicle:vehicles(id,code,name,odo_unit,fuel_norm), zone:zones(name), fuel_type:fuel_types(name,code)"
     )
     .eq("status", "completed")
-    .gte("created_at", fromIso)
-    .lt("created_at", toIso)
     .order("created_at", { ascending: false });
 
-  if (opts.vehicleId && opts.vehicleId !== "all") query = query.eq("vehicle_id", opts.vehicleId);
-  if (opts.zoneId && opts.zoneId !== "all") query = query.eq("zone_id", opts.zoneId);
+  if (gte) query = query.gte("created_at", gte);
+  if (lte) query = query.lte("created_at", lte);
+  if (opts?.vehicleId && opts.vehicleId !== "all") query = query.eq("vehicle_id", opts.vehicleId);
+  if (opts?.zoneId && opts.zoneId !== "all") query = query.eq("zone_id", opts.zoneId);
+  if (opts?.fuelTypeId && opts.fuelTypeId !== "all") query = query.eq("fuel_type_id", opts.fuelTypeId);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
