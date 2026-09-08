@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Droplets, Fuel, PackageMinus, PackagePlus, QrCode } from "lucide-react";
+import { BarChart3, Droplets, PackageMinus, PackagePlus } from "lucide-react";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -13,9 +13,16 @@ import { FuelOverview } from "@/features/fuel/components/fuel-overview";
 import { FuelDispenseList, type FuelDispenseRow } from "@/features/fuel/components/fuel-dispense-list";
 import { FuelReceiptList, type FuelReceiptRow } from "@/features/fuel/components/fuel-receipt-list";
 import { FuelReports } from "@/features/fuel/components/fuel-reports";
+import type { FuelType } from "@/features/fuel/types";
 import { getVehicles } from "@/features/vehicles/actions";
+import type { VehicleSelection } from "@/features/fuel/components/fuel-dispense-dialog";
 
 export const dynamic = "force-dynamic";
+
+interface OptionItem {
+  id: string;
+  name: string;
+}
 
 export default async function FuelPage({
   searchParams,
@@ -60,7 +67,7 @@ export default async function FuelPage({
     supabase.from("suppliers").select("id, name").is("deleted_at", null).order("name"),
   ]);
 
-  const vehicles = (vehiclesRaw ?? []).map((v) => ({
+  const vehicles: VehicleSelection[] = (vehiclesRaw ?? []).map((v) => ({
     id: v.id,
     code: v.code,
     name: v.name,
@@ -71,8 +78,8 @@ export default async function FuelPage({
     zone_id: v.zone_id,
   }));
 
-  const zones = zonesRes.data ?? [];
-  const suppliers = suppliersRes.data ?? [];
+  const zones: OptionItem[] = zonesRes.data ?? [];
+  const suppliers: OptionItem[] = suppliersRes.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -182,10 +189,10 @@ async function OverviewTabContent({
   zones,
   suppliers,
 }: {
-  fuelTypes: any[];
-  vehicles: any[];
-  zones: any[];
-  suppliers: any[];
+  fuelTypes: FuelType[];
+  vehicles: VehicleSelection[];
+  zones: OptionItem[];
+  suppliers: OptionItem[];
 }) {
   const overview = await getFuelOverview();
   return (
@@ -216,9 +223,9 @@ async function DispensesTabContent({
   fuelTypeId: string;
   vehicleId: string;
   zoneId: string;
-  fuelTypes: any[];
-  vehicles: any[];
-  zones: any[];
+  fuelTypes: FuelType[];
+  vehicles: VehicleSelection[];
+  zones: OptionItem[];
 }) {
   const { data, total } = await getFuelDispenses({
     from,
@@ -255,8 +262,8 @@ async function ReceiptsTabContent({
   to: string;
   page: number;
   fuelTypeId: string;
-  fuelTypes: any[];
-  suppliers: any[];
+  fuelTypes: FuelType[];
+  suppliers: OptionItem[];
 }) {
   const { data, total } = await getFuelReceipts({
     from,
@@ -291,9 +298,9 @@ async function ReportsTabContent({
   to: string;
   vehicleId: string;
   zoneId: string;
-  fuelTypes: any[];
-  vehicles: any[];
-  zones: any[];
+  fuelTypes: FuelType[];
+  vehicles: VehicleSelection[];
+  zones: OptionItem[];
 }) {
   const reportData = await getFuelReportData({
     from,

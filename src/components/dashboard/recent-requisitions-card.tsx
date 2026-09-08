@@ -34,10 +34,8 @@ interface RecentRequisitionsCardProps {
 
 export function RecentRequisitionsCard({
   items,
-  totalCount,
 }: RecentRequisitionsCardProps) {
   const openSlipModal = useUIStore((s) => s.openSlipModal);
-  const count = totalCount ?? items.length;
 
   return (
     <Card className="border-2 border-border shadow-xs rounded-xl">
@@ -45,12 +43,9 @@ export function RecentRequisitionsCard({
         <div className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-muted-foreground" />
           <CardTitle className="text-base font-semibold">Phiếu yêu cầu cần xử lý</CardTitle>
-          <Badge variant="neutral" className="ml-1 text-xs">
-            {count} phiếu
-          </Badge>
         </div>
         <Link
-          href="/requisitions?status=pending"
+          href="/requisitions"
           className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
           Xem tất cả
@@ -145,11 +140,20 @@ export function RecentRequisitionsCard({
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      {r.requester?.name ?? "—"}
-                      {r.zone?.name ? ` · ${r.zone.name}` : ""}
-                    </span>
-                    <span className="font-mono text-[11px]">{formatDateTime(r.created_at)}</span>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="font-semibold text-foreground">
+                        {r.requester?.name ?? "—"}
+                      </span>
+                      {r.zone?.name && (
+                        <>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="font-semibold text-foreground">
+                            {r.zone.name}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <span className="font-mono text-[11px] shrink-0">{formatDateTime(r.created_at)}</span>
                   </div>
                   {r.purpose && (
                     <p className="line-clamp-2 text-xs text-muted-foreground">

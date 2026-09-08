@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { CheckCircle2, ChevronLeft, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2, Truck, User } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,11 +44,10 @@ export interface VehicleScanResult {
 }
 
 export function FuelQuickScan({
-  fuelTypes,
+  fuelTypes = [],
 }: {
-  fuelTypes: FuelType[];
+  fuelTypes?: FuelType[];
 }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   // State: 'scanning' | 'dispensing' | 'completed'
@@ -223,7 +221,7 @@ export function FuelQuickScan({
                       {vehicle.code}
                     </span>
                     <Badge variant="success" className="text-xs">
-                      {vehicle.fuel_type_name}
+                      {vehicle.fuel_type_name || fuelTypes[0]?.name || "Dầu Diesel"}
                     </Badge>
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">{vehicle.name}</p>

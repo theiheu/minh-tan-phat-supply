@@ -112,7 +112,7 @@ async function run() {
   console.log("📋 5. Tạo dữ liệu mẫu Phiếu Báo Hỏng & Đổi Mới...");
 
   const v1 = variants[0]?.id;
-  const getProductName = (v: any) => {
+  const getProductName = (v: { products?: { name: string } | { name: string }[] | null }) => {
     if (Array.isArray(v.products)) return v.products[0]?.name ?? "";
     return v.products?.name ?? "";
   };

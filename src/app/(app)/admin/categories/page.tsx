@@ -6,14 +6,24 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 const ICON_OPTIONS = [
-  { value: "feed", label: "Thức ăn" },
-  { value: "medicine", label: "Thuốc" },
-  { value: "tool", label: "Dụng cụ" },
-  { value: "coop", label: "Chuồng trại" },
-  { value: "clean", label: "Vệ sinh" },
-  { value: "ppe", label: "Bảo hộ" },
-  { value: "repair", label: "Sửa chữa" },
-  { value: "other", label: "Khác" },
+  { value: "electric", label: "Điện - Điện tử" },
+  { value: "machinery", label: "Phụ tùng Xe - Máy móc" },
+  { value: "tools_ppe", label: "Dụng cụ - Bảo hộ" },
+  { value: "livestock", label: "Thiết bị Chăn nuôi" },
+  { value: "plumbing_pneumatics", label: "Nước - Khí nén" },
+  { value: "bearings", label: "Vòng bi - Bạc đạn" },
+  { value: "belts_chains", label: "Dây curoa - Nhông xích" },
+  { value: "oil_chemicals", label: "Dầu mỡ - Hóa chất" },
+  { value: "welding_cutting", label: "Hàn - Cắt - Gia công" },
+  { value: "hardware_fasteners", label: "Kim khí - Bulong - Ốc vít" },
+  { value: "packaging_ropes", label: "Đóng gói - Bạt - Dây" },
+  { value: "other", label: "Vật tư Khác" },
+  { value: "tool", label: "Dụng cụ (Cờ lê)" },
+  { value: "repair", label: "Sửa chữa (Búa)" },
+  { value: "ppe", label: "Bảo hộ (Khiên)" },
+  { value: "clean", label: "Vệ sinh (Lấp lánh)" },
+  { value: "medicine", label: "Thuốc thú y (Viên thuốc)" },
+  { value: "coop", label: "Chuồng trại (Ngôi nhà)" },
 ];
 
 const PAGE_SIZE = 20;

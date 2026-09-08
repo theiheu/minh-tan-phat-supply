@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Download, Fuel, TrendingDown, TrendingUp } from "lucide-react";
+import { Download, TrendingDown, TrendingUp } from "lucide-react";
 import * as XLSX from "xlsx";
 import { ListFilters } from "@/components/list-filters";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,6 @@ export function FuelReports({
   reportData,
   vehicles,
   zones,
-  fuelTypes,
   filters,
 }: {
   reportData: FuelReportRow[];

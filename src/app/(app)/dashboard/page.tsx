@@ -119,25 +119,24 @@ async function loadDashboard() {
 
   const [
     products,
-    pendingRequisitions,
+    activeRequisitions,
     pendingReceipts,
     pendingExchanges,
     pendingLiquidations,
     pendingDefects,
-    issuedRequisitions,
     issuedExchanges,
     postedReceipts,
     activities,
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).is("deleted_at", null),
 
-    // Các phiếu chờ duyệt / chờ xử lý
+    // Các phiếu yêu cầu cần xử lý (chưa nhận: draft, pending, approved, issued)
     supabase
       .from("requisitions")
       .select(
         "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
       )
-      .eq("status", "pending")
+      .in("status", ["draft", "pending", "approved", "issued"])
       .order("created_at", { ascending: false }),
 
     supabase
@@ -172,15 +171,7 @@ async function loadDashboard() {
       .eq("status", "staging")
       .order("created_at", { ascending: false }),
 
-    // Các phiếu đã cấp chưa nhận
-    supabase
-      .from("requisitions")
-      .select(
-        "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
-      )
-      .eq("status", "issued")
-      .order("created_at", { ascending: false }),
-
+    // Các phiếu đổi mới đã cấp chưa nhận
     supabase
       .from("exchange_notes")
       .select(
@@ -202,9 +193,13 @@ async function loadDashboard() {
     loadAuditActivities(supabase),
   ]);
 
+  const reqList = activeRequisitions.data ?? [];
+  const pendingReqList = reqList.filter((r) => r.status === "pending" || r.status === "draft");
+  const issuedReqList = reqList.filter((r) => r.status === "issued");
+
   // Gom nhóm danh sách phiếu chờ duyệt
   const pendingItems: ModalDocumentItem[] = [
-    ...(pendingRequisitions.data ?? []).map(
+    ...pendingReqList.map(
       (r): ModalDocumentItem => ({
         id: r.id,
         code: r.code,
@@ -291,7 +286,7 @@ async function loadDashboard() {
 
   // Gom nhóm danh sách phiếu đã cấp chưa nhận
   const issuedItems: ModalDocumentItem[] = [
-    ...(issuedRequisitions.data ?? []).map(
+    ...issuedReqList.map(
       (r): ModalDocumentItem => ({
         id: r.id,
         code: r.code,
@@ -359,8 +354,8 @@ async function loadDashboard() {
 
   return {
     statsData,
-    recentRequisitions: (pendingRequisitions.data ?? []).slice(0, 5),
-    totalPendingRequisitionsCount: pendingRequisitions.data?.length ?? 0,
+    recentRequisitions: reqList,
+    totalPendingRequisitionsCount: reqList.length,
     activities,
   };
 }

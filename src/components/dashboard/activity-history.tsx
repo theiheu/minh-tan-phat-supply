@@ -108,9 +108,6 @@ export function ActivityHistory({ activities, isManager = false }: ActivityHisto
         <div className="flex items-center gap-2">
           <History className="h-4 w-4 text-muted-foreground" />
           <CardTitle className="text-base font-semibold">Lịch sử hoạt động</CardTitle>
-          <Badge variant="neutral" className="ml-1 text-xs">
-            {activities.length} mới nhất
-          </Badge>
         </div>
         {isManager && (
           <Link

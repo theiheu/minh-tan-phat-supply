@@ -4,11 +4,26 @@ import {
   auditActionTone,
   auditEntityHref,
   auditEntityLabel,
+  categoryIcon,
   roleLabel,
   slipStatusLabel,
   statusBadgeVariant,
   variantLabel,
 } from "./labels";
+import {
+  Box,
+  CircleDot,
+  Droplets,
+  Flame,
+  FlaskConical,
+  HardHat,
+  Link,
+  Nut,
+  Package,
+  Tractor,
+  Wheat,
+  Zap,
+} from "lucide-react";
 
 describe("labels helpers", () => {
   it("translates audit actions correctly", () => {
@@ -69,5 +84,22 @@ describe("labels helpers", () => {
     expect(slipStatusLabel("issue", "posted")).toBe("Đã xuất");
     expect(slipStatusLabel("defect", "staging")).toBe("Kho đồ hỏng");
     expect(slipStatusLabel(null, null)).toBe("—");
+  });
+
+  it("maps 12 standard category icons properly", () => {
+    expect(categoryIcon("electric")).toBe(Zap);
+    expect(categoryIcon("machinery")).toBe(Tractor);
+    expect(categoryIcon("tools_ppe")).toBe(HardHat);
+    expect(categoryIcon("livestock")).toBe(Wheat);
+    expect(categoryIcon("plumbing_pneumatics")).toBe(Droplets);
+    expect(categoryIcon("bearings")).toBe(CircleDot);
+    expect(categoryIcon("belts_chains")).toBe(Link);
+    expect(categoryIcon("oil_chemicals")).toBe(FlaskConical);
+    expect(categoryIcon("welding_cutting")).toBe(Flame);
+    expect(categoryIcon("hardware_fasteners")).toBe(Nut);
+    expect(categoryIcon("packaging_ropes")).toBe(Box);
+    expect(categoryIcon("other")).toBe(Package);
+    expect(categoryIcon(null)).toBe(Package);
+    expect(categoryIcon("non_existent")).toBe(Package);
   });
 });

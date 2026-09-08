@@ -283,8 +283,20 @@ export function StatDetailDialog({ type, onClose, items }: StatDetailDialogProps
                         <p className="text-foreground line-clamp-2">{item.purpose}</p>
                       )}
                       <div className="flex flex-wrap items-center justify-between text-muted-foreground text-[11px] pt-1">
-                        <span>{item.actorName ? `Người: ${item.actorName}` : ""}</span>
-                        {item.zoneName && <span>Khu: {item.zoneName}</span>}
+                        <span>
+                          {item.actorName ? (
+                            <>
+                              Người: <span className="font-semibold text-foreground">{item.actorName}</span>
+                            </>
+                          ) : (
+                            ""
+                          )}
+                        </span>
+                        {item.zoneName && (
+                          <span>
+                            Khu: <span className="font-semibold text-foreground">{item.zoneName}</span>
+                          </span>
+                        )}
                         <span className="font-mono">{formatDateTime(item.createdAt)}</span>
                       </div>
                     </div>

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ZoomableImage } from "@/components/image-lightbox";
-import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
+import { formatDateTime, formatVnd } from "@/lib/format";
 import { formatFuelLiters } from "@/lib/fuel";
 import { cancelFuelReceiptAction } from "../actions";
 import type { FuelReceipt, FuelType } from "../types";

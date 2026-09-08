@@ -1,7 +1,26 @@
 // Label map (mục 7.2): enum tiếng Anh (DB) → nhãn tiếng Việt (UI).
 // Không hardcode tiếng Việt trong logic — dùng map này.
 import type { LucideIcon } from "lucide-react";
-import { Hammer, Home, Package, Pill, Shield, Sparkles, Wheat, Wrench } from "lucide-react";
+import {
+  Box,
+  CircleDot,
+  Droplets,
+  Flame,
+  FlaskConical,
+  Hammer,
+  HardHat,
+  Home,
+  Link,
+  Nut,
+  Package,
+  Pill,
+  Shield,
+  Sparkles,
+  Tractor,
+  Wheat,
+  Wrench,
+  Zap,
+} from "lucide-react";
 
 export const REQUISITION_STATUS: Record<string, string> = {
   draft: "Nháp",
@@ -186,8 +205,23 @@ export function slipStatusLabel(entityType: string | null | undefined, status: s
   );
 }
 
-// Icon danh mục (key lưu trong categories.icon: 'feed', 'medicine', ...).
+// Icon danh mục (key lưu trong categories.icon: 'electric', 'machinery', ...).
 export const categoryIcons: Record<string, LucideIcon> = {
+  // 12 danh mục tiêu chuẩn mới
+  electric: Zap,
+  machinery: Tractor,
+  tools_ppe: HardHat,
+  livestock: Wheat,
+  plumbing_pneumatics: Droplets,
+  bearings: CircleDot,
+  belts_chains: Link,
+  oil_chemicals: FlaskConical,
+  welding_cutting: Flame,
+  hardware_fasteners: Nut,
+  packaging_ropes: Box,
+  other: Package,
+
+  // Key cũ & alias dự phòng
   feed: Wheat,
   medicine: Pill,
   tool: Wrench,
@@ -195,7 +229,6 @@ export const categoryIcons: Record<string, LucideIcon> = {
   clean: Sparkles,
   ppe: Shield,
   repair: Hammer,
-  other: Package,
 };
 
 export function categoryIcon(key: string | null | undefined): LucideIcon {

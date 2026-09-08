@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, FileText, Printer, Trash2 } from "lucide-react";
+import { Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ZoomableImage } from "@/components/image-lightbox";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { formatConsumptionRate, formatFuelLiters, formatOdo } from "@/lib/fuel";
 import { cancelFuelDispenseAction } from "../actions";
 import type { FuelDispense, FuelType } from "../types";

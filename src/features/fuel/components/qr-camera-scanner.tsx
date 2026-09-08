@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, CameraOff, Flashlight, RefreshCw, Search } from "lucide-react";
+import { CameraOff, Flashlight, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -13,7 +13,6 @@ export function QrCameraScanner({
   isScanning?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [hasCamera, setHasCamera] = useState(true);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState(false);
   const [hasTorch, setHasTorch] = useState(false);
@@ -35,7 +34,6 @@ export function QrCameraScanner({
       setCameraError(null);
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setHasCamera(false);
         setCameraError("Trình duyệt không hỗ trợ truy cập camera");
         return;
       }
