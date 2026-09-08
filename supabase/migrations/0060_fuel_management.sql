@@ -162,6 +162,9 @@ declare
 begin
   if not public.is_manager() then raise exception 'Chỉ quản lý mới được lập phiếu nhập dầu'; end if;
   if p_quantity is null or p_quantity <= 0 then raise exception 'Số lượng nhập phải lớn hơn 0'; end if;
+  if auth.uid() is not null then
+    p_by := auth.uid();
+  end if;
 
   v_unit_price := coalesce(p_unit_price, 0);
   v_total_amount := p_quantity * v_unit_price;
@@ -223,6 +226,16 @@ declare
   v_target_zone uuid := null;
   v_driver text := null;
 begin
+  if auth.uid() is null and p_by is null then
+    raise exception 'Yêu cầu đăng nhập để cấp phát dầu';
+  end if;
+  if auth.uid() is not null then
+    p_by := auth.uid();
+  end if;
+  if not exists (select 1 from public.profiles where id = p_by and is_active = true) then
+    raise exception 'Tài khoản không hợp lệ hoặc đã bị khóa';
+  end if;
+
   if p_quantity is null or p_quantity <= 0 then raise exception 'Số lượng cấp dầu phải lớn hơn 0'; end if;
 
   -- Kiểm tra và khóa tồn kho
@@ -382,6 +395,10 @@ declare
   v_veh record;
   v_last_dispense record;
 begin
+  if auth.uid() is null then
+    raise exception 'Yêu cầu đăng nhập để xem thông tin phương tiện';
+  end if;
+
   if p_qr_text is null or length(trim(p_qr_text)) = 0 then
     return null;
   end if;
@@ -466,3 +483,20 @@ begin
     on conflict (code) do nothing;
   end if;
 end $$;
+
+-- 12. Permissions
+revoke all on function public.create_fuel_receipt from public;
+grant execute on function public.create_fuel_receipt to authenticated;
+
+revoke all on function public.create_fuel_dispense from public;
+grant execute on function public.create_fuel_dispense to authenticated;
+
+revoke all on function public.cancel_fuel_dispense from public;
+grant execute on function public.cancel_fuel_dispense to authenticated;
+
+revoke all on function public.cancel_fuel_receipt from public;
+grant execute on function public.cancel_fuel_receipt to authenticated;
+
+revoke all on function public.get_vehicle_by_qr from public;
+grant execute on function public.get_vehicle_by_qr to authenticated;
+

@@ -1,22 +1,41 @@
 import { z } from "zod";
 
+const nonNegativeNumber2Decimals = z.coerce
+  .number()
+  .nonnegative("Giá trị không được âm")
+  .refine((val) => Number.isFinite(val), "Số không hợp lệ")
+  .transform((val) => Math.round(val * 100) / 100);
+
 export const vehicleSchema = z.object({
   code: z.string().trim().min(1, "Mã xe / Biển số không được trống").max(50),
   name: z.string().trim().min(1, "Tên xe / thiết bị không được trống").max(200),
   type: z
     .enum(["truck", "excavator", "generator", "car", "forklift", "tractor", "other"])
     .default("truck"),
-  zoneId: z.string().uuid().nullable().optional(),
+  zoneId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
   defaultDriver: z
     .string()
     .trim()
     .max(100)
     .optional()
     .transform((v) => (v ? v : undefined)),
-  fuelTypeId: z.string().uuid().nullable().optional(),
-  currentOdo: z.number().nonnegative().default(0),
+  fuelTypeId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
+  currentOdo: nonNegativeNumber2Decimals.default(0),
   odoUnit: z.enum(["km", "hours"]).default("km"),
-  fuelNorm: z.number().nonnegative().nullable().optional(),
+  fuelNorm: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : v),
+    nonNegativeNumber2Decimals.nullable().optional()
+  ),
   notes: z
     .string()
     .trim()

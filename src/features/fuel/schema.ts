@@ -1,10 +1,27 @@
 import { z } from "zod";
 
+const positiveNumber2Decimals = z.coerce
+  .number()
+  .positive("Số lượng phải lớn hơn 0")
+  .refine((val) => Number.isFinite(val), "Số không hợp lệ")
+  .transform((val) => Math.round(val * 100) / 100);
+
+const nonNegativeNumber2Decimals = z.coerce
+  .number()
+  .nonnegative("Giá trị không được âm")
+  .refine((val) => Number.isFinite(val), "Số không hợp lệ")
+  .transform((val) => Math.round(val * 100) / 100);
+
 export const fuelReceiptSchema = z.object({
-  supplierId: z.string().uuid().nullable().optional(),
+  supplierId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
   fuelTypeId: z.string().uuid("Phải chọn loại dầu"),
-  quantity: z.number().positive("Số lượng phải lớn hơn 0"),
-  unitPrice: z.number().nonnegative("Đơn giá không được âm").default(0),
+  quantity: positiveNumber2Decimals,
+  unitPrice: nonNegativeNumber2Decimals.default(0),
   invoiceNumber: z
     .string()
     .trim()
@@ -23,11 +40,24 @@ export const fuelReceiptSchema = z.object({
 export type FuelReceiptInput = z.infer<typeof fuelReceiptSchema>;
 
 export const fuelDispenseSchema = z.object({
-  vehicleId: z.string().uuid().nullable().optional(),
-  zoneId: z.string().uuid().nullable().optional(),
+  vehicleId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
+  zoneId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
   fuelTypeId: z.string().uuid("Phải chọn loại dầu"),
-  quantity: z.number().positive("Số lượng phải lớn hơn 0"),
-  currentOdo: z.number().nonnegative("Chỉ số odo không được âm").nullable().optional(),
+  quantity: positiveNumber2Decimals,
+  currentOdo: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : v),
+    nonNegativeNumber2Decimals.nullable().optional()
+  ),
   driverName: z
     .string()
     .trim()
@@ -49,7 +79,7 @@ export const fuelTypeSchema = z.object({
   code: z.string().trim().min(1, "Mã không được trống").max(50),
   name: z.string().trim().min(1, "Tên không được trống").max(200),
   unit: z.string().trim().min(1).default("lít"),
-  minStock: z.number().nonnegative().default(0),
+  minStock: nonNegativeNumber2Decimals.default(0),
   description: z
     .string()
     .trim()

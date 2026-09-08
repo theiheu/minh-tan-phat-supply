@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { fuelReceiptSchema, fuelDispenseSchema, type FuelReceiptInput, type FuelDispenseInput } from "./schema";
+import type { FuelOverviewData, FuelReportRow } from "./types";
 
 // ─── Fuel Types ───
 
@@ -29,8 +30,8 @@ export async function getFuelReceipts(opts?: {
   pageSize?: number;
 }) {
   const supabase = await createClient();
-  const page = opts?.page ?? 1;
-  const pageSize = opts?.pageSize ?? 20;
+  const page = Math.max(1, Number(opts?.page ?? 1) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(opts?.pageSize ?? 20) || 20));
 
   let query = supabase
     .from("fuel_receipts")
@@ -42,9 +43,18 @@ export async function getFuelReceipts(opts?: {
     .order("created_at", { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
 
-  if (opts?.fuelTypeId) query = query.eq("fuel_type_id", opts.fuelTypeId);
-  if (opts?.from) query = query.gte("created_at", new Date(`${opts.from}T00:00:00+07:00`).toISOString());
-  if (opts?.to) query = query.lte("created_at", new Date(`${opts.to}T23:59:59+07:00`).toISOString());
+  if (opts?.fuelTypeId && opts.fuelTypeId !== "all") {
+    query = query.eq("fuel_type_id", opts.fuelTypeId);
+  }
+  if (opts?.from) {
+    query = query.gte("created_at", new Date(`${opts.from}T00:00:00+07:00`).toISOString());
+  }
+  if (opts?.to) {
+    // Exclusive next day start for clean boundary
+    const nextDay = new Date(`${opts.to}T00:00:00+07:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    query = query.lt("created_at", nextDay.toISOString());
+  }
 
   const { data, count, error } = await query;
   if (error) throw new Error(error.message);
@@ -57,13 +67,13 @@ export async function createFuelReceiptAction(input: FuelReceiptInput) {
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_fuel_receipt", {
-    p_supplier_id: parsed.supplierId ?? (null as unknown as string),
+    p_supplier_id: (parsed.supplierId ?? null) as unknown as string,
     p_fuel_type_id: parsed.fuelTypeId,
     p_quantity: parsed.quantity,
     p_unit_price: parsed.unitPrice,
-    p_invoice_number: parsed.invoiceNumber ?? (null as unknown as string),
+    p_invoice_number: (parsed.invoiceNumber ?? null) as unknown as string,
     p_invoice_images: parsed.invoiceImages ?? [],
-    p_notes: parsed.notes ?? (null as unknown as string),
+    p_notes: (parsed.notes ?? null) as unknown as string,
     p_by: profile.id,
   });
 
@@ -95,8 +105,8 @@ export async function getFuelDispenses(opts?: {
   pageSize?: number;
 }) {
   const supabase = await createClient();
-  const page = opts?.page ?? 1;
-  const pageSize = opts?.pageSize ?? 20;
+  const page = Math.max(1, Number(opts?.page ?? 1) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(opts?.pageSize ?? 20) || 20));
 
   let query = supabase
     .from("fuel_dispenses")
@@ -108,11 +118,17 @@ export async function getFuelDispenses(opts?: {
     .order("created_at", { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
 
-  if (opts?.vehicleId) query = query.eq("vehicle_id", opts.vehicleId);
-  if (opts?.zoneId) query = query.eq("zone_id", opts.zoneId);
-  if (opts?.fuelTypeId) query = query.eq("fuel_type_id", opts.fuelTypeId);
-  if (opts?.from) query = query.gte("created_at", new Date(`${opts.from}T00:00:00+07:00`).toISOString());
-  if (opts?.to) query = query.lte("created_at", new Date(`${opts.to}T23:59:59+07:00`).toISOString());
+  if (opts?.vehicleId && opts.vehicleId !== "all") query = query.eq("vehicle_id", opts.vehicleId);
+  if (opts?.zoneId && opts.zoneId !== "all") query = query.eq("zone_id", opts.zoneId);
+  if (opts?.fuelTypeId && opts.fuelTypeId !== "all") query = query.eq("fuel_type_id", opts.fuelTypeId);
+  if (opts?.from) {
+    query = query.gte("created_at", new Date(`${opts.from}T00:00:00+07:00`).toISOString());
+  }
+  if (opts?.to) {
+    const nextDay = new Date(`${opts.to}T00:00:00+07:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    query = query.lt("created_at", nextDay.toISOString());
+  }
 
   const { data, count, error } = await query;
   if (error) throw new Error(error.message);
@@ -125,14 +141,14 @@ export async function createFuelDispenseAction(input: FuelDispenseInput) {
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_fuel_dispense", {
-    p_vehicle_id: parsed.vehicleId ?? (null as unknown as string),
-    p_zone_id: parsed.zoneId ?? (null as unknown as string),
+    p_vehicle_id: (parsed.vehicleId ?? null) as unknown as string,
+    p_zone_id: (parsed.zoneId ?? null) as unknown as string,
     p_fuel_type_id: parsed.fuelTypeId,
     p_quantity: parsed.quantity,
-    p_current_odo: parsed.currentOdo ?? (null as unknown as number),
-    p_driver_name: parsed.driverName ?? (null as unknown as string),
+    p_current_odo: (parsed.currentOdo ?? null) as unknown as number,
+    p_driver_name: (parsed.driverName ?? null) as unknown as string,
     p_meter_images: parsed.meterImages ?? [],
-    p_notes: parsed.notes ?? (null as unknown as string),
+    p_notes: (parsed.notes ?? null) as unknown as string,
     p_by: profile.id,
   });
 
@@ -165,64 +181,75 @@ export async function getVehicleByQrAction(qrText: string) {
 
 // ─── Fuel Overview (Dashboard Stats) ───
 
-export async function getFuelOverview() {
+export async function getFuelOverview(): Promise<FuelOverviewData> {
   const supabase = await createClient();
 
-  // Lấy tất cả fuel types với tồn kho
-  const { data: fuelTypes } = await supabase
-    .from("fuel_types")
-    .select("id, code, name, unit, current_stock, min_stock")
-    .eq("is_active", true)
-    .order("name");
+  // Tính ngày bắt đầu tháng và ngày hiện tại theo múi giờ VN (+07:00)
+  const now = new Date();
+  const vnYear = now.getFullYear();
+  const vnMonth = String(now.getMonth() + 1).padStart(2, "0");
+  const vnDay = String(now.getDate()).padStart(2, "0");
 
-  // Tổng xuất trong tháng này
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+  const startOfMonthIso = new Date(`${vnYear}-${vnMonth}-01T00:00:00+07:00`).toISOString();
+  const startOfDayIso = new Date(`${vnYear}-${vnMonth}-${vnDay}T00:00:00+07:00`).toISOString();
 
-  const { data: monthDispenses } = await supabase
-    .from("fuel_dispenses")
-    .select("fuel_type_id, quantity")
-    .eq("status", "completed")
-    .gte("created_at", startOfMonth.toISOString());
+  const [fuelTypesRes, monthDispensesRes, monthReceiptsRes, todayDispensesRes] = await Promise.all([
+    supabase
+      .from("fuel_types")
+      .select("id, code, name, unit, current_stock, min_stock")
+      .eq("is_active", true)
+      .order("name"),
+    supabase
+      .from("fuel_dispenses")
+      .select("fuel_type_id, quantity")
+      .eq("status", "completed")
+      .gte("created_at", startOfMonthIso),
+    supabase
+      .from("fuel_receipts")
+      .select("fuel_type_id, quantity, total_amount")
+      .eq("status", "completed")
+      .gte("created_at", startOfMonthIso),
+    supabase
+      .from("fuel_dispenses")
+      .select("fuel_type_id, quantity")
+      .eq("status", "completed")
+      .gte("created_at", startOfDayIso),
+  ]);
 
-  // Tổng nhập trong tháng này
-  const { data: monthReceipts } = await supabase
-    .from("fuel_receipts")
-    .select("fuel_type_id, quantity, total_amount")
-    .eq("status", "completed")
-    .gte("created_at", startOfMonth.toISOString());
+  if (fuelTypesRes.error) throw new Error(fuelTypesRes.error.message);
+  if (monthDispensesRes.error) throw new Error(monthDispensesRes.error.message);
+  if (monthReceiptsRes.error) throw new Error(monthReceiptsRes.error.message);
+  if (todayDispensesRes.error) throw new Error(todayDispensesRes.error.message);
 
-  // Tổng xuất hôm nay
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+  const fuelTypes = fuelTypesRes.data ?? [];
+  const monthDispenses = monthDispensesRes.data ?? [];
+  const monthReceipts = monthReceiptsRes.data ?? [];
+  const todayDispenses = todayDispensesRes.data ?? [];
 
-  const { data: todayDispenses } = await supabase
-    .from("fuel_dispenses")
-    .select("fuel_type_id, quantity")
-    .eq("status", "completed")
-    .gte("created_at", startOfDay.toISOString());
-
-  // Tính tổng theo loại dầu
   const dispensedThisMonth: Record<string, number> = {};
   const dispensedToday: Record<string, number> = {};
   const receivedThisMonth: Record<string, number> = {};
   let totalReceiptAmount = 0;
 
-  for (const d of monthDispenses ?? []) {
+  for (const d of monthDispenses) {
     dispensedThisMonth[d.fuel_type_id] = (dispensedThisMonth[d.fuel_type_id] ?? 0) + Number(d.quantity);
   }
-  for (const d of todayDispenses ?? []) {
+  for (const d of todayDispenses) {
     dispensedToday[d.fuel_type_id] = (dispensedToday[d.fuel_type_id] ?? 0) + Number(d.quantity);
   }
-  for (const r of monthReceipts ?? []) {
+  for (const r of monthReceipts) {
     receivedThisMonth[r.fuel_type_id] = (receivedThisMonth[r.fuel_type_id] ?? 0) + Number(r.quantity);
     totalReceiptAmount += Number(r.total_amount);
   }
 
   return {
-    fuelTypes: (fuelTypes ?? []).map((ft) => ({
-      ...ft,
+    fuelTypes: fuelTypes.map((ft) => ({
+      id: ft.id,
+      code: ft.code,
+      name: ft.name,
+      unit: ft.unit,
+      current_stock: Number(ft.current_stock),
+      min_stock: Number(ft.min_stock),
       dispensedThisMonth: dispensedThisMonth[ft.id] ?? 0,
       dispensedToday: dispensedToday[ft.id] ?? 0,
       receivedThisMonth: receivedThisMonth[ft.id] ?? 0,
@@ -239,10 +266,12 @@ export async function getFuelReportData(opts: {
   to: string;
   vehicleId?: string;
   zoneId?: string;
-}) {
+}): Promise<FuelReportRow[]> {
   const supabase = await createClient();
   const fromIso = new Date(`${opts.from}T00:00:00+07:00`).toISOString();
-  const toIso = new Date(`${opts.to}T23:59:59+07:00`).toISOString();
+  const nextDay = new Date(`${opts.to}T00:00:00+07:00`);
+  nextDay.setDate(nextDay.getDate() + 1);
+  const toIso = nextDay.toISOString();
 
   let query = supabase
     .from("fuel_dispenses")
@@ -251,13 +280,13 @@ export async function getFuelReportData(opts: {
     )
     .eq("status", "completed")
     .gte("created_at", fromIso)
-    .lte("created_at", toIso)
+    .lt("created_at", toIso)
     .order("created_at", { ascending: false });
 
-  if (opts.vehicleId) query = query.eq("vehicle_id", opts.vehicleId);
-  if (opts.zoneId) query = query.eq("zone_id", opts.zoneId);
+  if (opts.vehicleId && opts.vehicleId !== "all") query = query.eq("vehicle_id", opts.vehicleId);
+  if (opts.zoneId && opts.zoneId !== "all") query = query.eq("zone_id", opts.zoneId);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as unknown as FuelReportRow[];
 }
