@@ -446,6 +446,10 @@ describe("ReportsHub component", () => {
       expect(lastCall.to).toBeDefined();
     });
 
+    // Expand custom date inputs by clicking "Tùy chọn ngày"
+    const customBtn = screen.getByRole("button", { name: /Tùy chọn ngày/i });
+    fireEvent.click(customBtn);
+
     // Custom from date input change
     const fromInput = screen.getByLabelText("Từ ngày");
     fireEvent.change(fromInput, { target: { value: "2026-08-01" } });

@@ -108,11 +108,12 @@ describe("ReportDateFilters component", () => {
     locations: mockLocations,
   };
 
-  it("renders preset buttons, date inputs, and location selector", () => {
+  it("renders preset buttons, date summary badge, and location selector while collapsing custom inputs by default", () => {
     render(<ReportDateFilters {...defaultProps} />);
 
     // Preset buttons
     expect(screen.getByRole("button", { name: "Hôm nay" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Hôm qua" })).toBeDefined();
     expect(screen.getByRole("button", { name: "7 ngày qua" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tháng này" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tháng trước" })).toBeDefined();
@@ -120,11 +121,12 @@ describe("ReportDateFilters component", () => {
     expect(screen.getByRole("button", { name: "Năm nay" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Tùy chọn ngày" })).toBeDefined();
 
-    // Date inputs
-    const fromInput = screen.getByLabelText("Từ ngày") as HTMLInputElement;
-    const toInput = screen.getByLabelText("Đến ngày") as HTMLInputElement;
-    expect(fromInput.value).toBe("2026-09-01");
-    expect(toInput.value).toBe("2026-09-30");
+    // Date summary badge
+    expect(screen.getByText("01/09/2026 – 30/09/2026")).toBeDefined();
+
+    // Custom date inputs are collapsed by default
+    expect(screen.queryByLabelText("Từ ngày")).toBeNull();
+    expect(screen.queryByLabelText("Đến ngày")).toBeNull();
 
     // Location selector
     const locationSelect = screen.getByLabelText("Kho") as HTMLSelectElement;
@@ -132,6 +134,23 @@ describe("ReportDateFilters component", () => {
     expect(screen.getByRole("option", { name: "Tất cả kho" })).toBeDefined();
     expect(screen.getByRole("option", { name: "Kho Chính (KHO_CHINH)" })).toBeDefined();
     expect(screen.getByRole("option", { name: "Kho Hỏng (KHO_HONG)" })).toBeDefined();
+  });
+
+  it("expands custom date inputs when preset is 'custom'", () => {
+    render(
+      <ReportDateFilters
+        {...defaultProps}
+        value={{
+          ...defaultProps.value,
+          preset: "custom",
+        }}
+      />
+    );
+
+    const fromInput = screen.getByLabelText("Từ ngày") as HTMLInputElement;
+    const toInput = screen.getByLabelText("Đến ngày") as HTMLInputElement;
+    expect(fromInput.value).toBe("2026-09-01");
+    expect(toInput.value).toBe("2026-09-30");
   });
 
   it("calls onChange when preset button is clicked", () => {
@@ -197,7 +216,13 @@ describe("ReportDateFilters component", () => {
 
   it("updates from date and switches preset to custom on manual date change", () => {
     const onChange = vi.fn();
-    render(<ReportDateFilters {...defaultProps} onChange={onChange} />);
+    render(
+      <ReportDateFilters
+        {...defaultProps}
+        value={{ ...defaultProps.value, preset: "custom" }}
+        onChange={onChange}
+      />
+    );
 
     const fromInput = screen.getByLabelText("Từ ngày");
     fireEvent.change(fromInput, { target: { value: "2026-09-10" } });
@@ -212,7 +237,13 @@ describe("ReportDateFilters component", () => {
 
   it("updates to date and switches preset to custom on manual date change", () => {
     const onChange = vi.fn();
-    render(<ReportDateFilters {...defaultProps} onChange={onChange} />);
+    render(
+      <ReportDateFilters
+        {...defaultProps}
+        value={{ ...defaultProps.value, preset: "custom" }}
+        onChange={onChange}
+      />
+    );
 
     const toInput = screen.getByLabelText("Đến ngày");
     fireEvent.change(toInput, { target: { value: "2026-09-25" } });

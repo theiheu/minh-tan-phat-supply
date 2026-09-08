@@ -2,6 +2,7 @@ import type { DatePreset } from "../types";
 
 export const DATE_PRESETS: { id: DatePreset; label: string }[] = [
   { id: "today", label: "Hôm nay" },
+  { id: "yesterday", label: "Hôm qua" },
   { id: "7days", label: "7 ngày qua" },
   { id: "this_month", label: "Tháng này" },
   { id: "last_month", label: "Tháng trước" },
@@ -31,6 +32,12 @@ export function getPresetRange(
     case "today": {
       const today = toYmd(now);
       return { from: today, to: today };
+    }
+    case "yesterday": {
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      const ymd = toYmd(yesterday);
+      return { from: ymd, to: ymd };
     }
     case "7days": {
       const start = new Date(

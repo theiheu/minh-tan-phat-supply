@@ -1,5 +1,6 @@
 export type DatePreset =
   | "today"
+  | "yesterday"
   | "7days"
   | "this_month"
   | "last_month"
