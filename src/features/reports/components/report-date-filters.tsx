@@ -90,10 +90,10 @@ export function ReportDateFilters({
         className
       )}
     >
-      {/* Main bar: Preset buttons on left, Date range text & Warehouse select on right */}
-      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+      {/* Main bar: Preset buttons on left, Date range badge & Warehouse select firmly pushed to the right */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         {/* Presets Segmented Group */}
-        <div className="bg-muted/80 p-0.5 rounded-lg inline-flex flex-wrap items-center gap-0.5">
+        <div className="bg-muted/80 p-0.5 rounded-lg inline-flex flex-wrap items-center gap-0.5 shrink-0">
           {DATE_PRESETS.map((p) => {
             const isActive = value.preset === p.id;
             return (
@@ -118,8 +118,8 @@ export function ReportDateFilters({
           })}
         </div>
 
-        {/* Right side: Date Range summary badge & Location selector */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Right side: Date Range summary badge & Location selector (Pushed to the right) */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:ml-auto justify-start sm:justify-end">
           {/* Formatted Date Range summary badge */}
           <div className="inline-flex items-center gap-1.5 rounded-md border bg-background/80 px-2.5 py-1 text-xs text-muted-foreground font-medium shadow-2xs">
             <Calendar className="size-3.5 text-primary/70" aria-hidden="true" />
@@ -136,7 +136,7 @@ export function ReportDateFilters({
                 aria-label="Kho"
                 value={value.locationId ?? ""}
                 onChange={(e) => handleLocationChange(e.target.value)}
-                className="h-7.5 min-w-[150px] max-w-[240px] rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs outline-none focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/50"
+                className="h-8 min-w-[150px] max-w-[240px] rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs outline-none focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/50"
               >
                 <option value="">Tất cả kho</option>
                 {locations.map((loc) => (
@@ -161,7 +161,7 @@ export function ReportDateFilters({
               aria-label="Từ ngày"
               value={value.from}
               onChange={(e) => handleFromChange(e.target.value)}
-              className="h-7.5 w-[135px] px-2 text-xs bg-background"
+              className="h-8 w-[135px] px-2 text-xs bg-background"
             />
           </div>
           <div className="flex items-center gap-1.5">
@@ -171,7 +171,7 @@ export function ReportDateFilters({
               aria-label="Đến ngày"
               value={value.to}
               onChange={(e) => handleToChange(e.target.value)}
-              className="h-7.5 w-[135px] px-2 text-xs bg-background"
+              className="h-8 w-[135px] px-2 text-xs bg-background"
             />
           </div>
         </div>
