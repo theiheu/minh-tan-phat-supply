@@ -312,7 +312,7 @@ export async function quickEmergencyExchange(input: {
   if (!input.images || input.images.length === 0) throw new Error("Vui lòng chụp ít nhất 1 ảnh chứng cứ hỏng");
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("quick_emergency_exchange", {
+  const { data, error } = await (supabase.rpc as any)("quick_emergency_exchange", {
     p_variant_id: input.variantId,
     p_quantity: input.quantity,
     p_damage_detail: input.damageDetail.trim(),
