@@ -225,7 +225,7 @@ export function ReportsHub({
             }`}
           >
             <BarChart3 className="size-3.5 sm:size-4 text-blue-500" aria-hidden="true" />
-            <span>📊 Tổng quan</span>
+            <span>Tổng quan</span>
           </button>
           <button
             type="button"
@@ -239,7 +239,7 @@ export function ReportsHub({
             }`}
           >
             <Boxes className="size-3.5 sm:size-4 text-indigo-500" aria-hidden="true" />
-            <span>📦 Xuất - Nhập - Tồn</span>
+            <span>Xuất - Nhập - Tồn</span>
           </button>
           <button
             type="button"
@@ -253,7 +253,7 @@ export function ReportsHub({
             }`}
           >
             <Home className="size-3.5 sm:size-4 text-amber-500" aria-hidden="true" />
-            <span>🏠 Theo Chuồng</span>
+            <span>Theo Chuồng</span>
           </button>
           <button
             type="button"
@@ -267,7 +267,7 @@ export function ReportsHub({
             }`}
           >
             <Truck className="size-3.5 sm:size-4 text-emerald-500" aria-hidden="true" />
-            <span>🚜 Phương tiện</span>
+            <span>Phương tiện</span>
           </button>
           <button
             type="button"
@@ -281,7 +281,7 @@ export function ReportsHub({
             }`}
           >
             <Handshake className="size-3.5 sm:size-4 text-violet-500" aria-hidden="true" />
-            <span>🤝 Đối tác</span>
+            <span>Đối tác</span>
           </button>
           <button
             type="button"
@@ -295,7 +295,7 @@ export function ReportsHub({
             }`}
           >
             <BookOpen className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
-            <span>📑 Sổ Thẻ kho</span>
+            <span>Sổ Thẻ kho</span>
           </button>
         </nav>
       </div>
