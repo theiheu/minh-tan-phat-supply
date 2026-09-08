@@ -193,7 +193,7 @@ export function XntReportTab({ data, isLoading = false }: XntReportTabProps) {
               )}
             >
               <Filter className="size-3.5" aria-hidden="true" />
-              <span>Chỉ hiện vật tư chênh lệch</span>
+              <span>Chênh lệch</span>
               <Badge
                 variant={onlyChanged ? "secondary" : "outline"}
                 className={cn(

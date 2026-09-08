@@ -146,8 +146,8 @@ describe("XntReportTab component", () => {
     expect(screen.getByText("Bóng sưởi phát sinh")).toBeDefined();
     expect(screen.getByText("Tấm làm mát tĩnh")).toBeDefined();
 
-    // Click toggle button "Chỉ hiện vật tư chênh lệch"
-    const toggleBtn = screen.getByRole("button", { name: /Chỉ hiện vật tư chênh lệch/i });
+    // Click toggle button "Chênh lệch"
+    const toggleBtn = screen.getByRole("button", { name: /Chênh lệch/i });
     fireEvent.click(toggleBtn);
 
     // Only the changed item remains, static item is filtered out
