@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, Warehouse } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -86,34 +87,35 @@ export function ReportDateFilters({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card p-2.5 sm:p-3 shadow-xs space-y-2.5",
+        "rounded-xl border bg-card p-3 shadow-xs space-y-2.5",
         className
       )}
     >
       {/* Main bar: Preset buttons on left, Date range badge & Warehouse select firmly pushed to the right */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        {/* Presets Segmented Group */}
-        <div className="bg-muted/80 p-0.5 rounded-lg inline-flex flex-wrap items-center gap-0.5 shrink-0">
+        {/* Presets buttons - Giữ nguyên thiết kế ban đầu với Button chuẩn */}
+        <div className="flex flex-wrap items-center gap-1.5">
           {DATE_PRESETS.map((p) => {
             const isActive = value.preset === p.id;
             return (
-              <button
+              <Button
                 key={p.id}
                 type="button"
+                size="sm"
+                variant={isActive ? "default" : "outline"}
                 aria-pressed={isActive}
-                onClick={() => handlePresetSelect(p.id)}
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer select-none",
-                  isActive
-                    ? "bg-background text-foreground shadow-xs font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  "h-8 px-2.5 text-xs font-medium transition-colors cursor-pointer",
+                  !isActive &&
+                    "border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
+                onClick={() => handlePresetSelect(p.id)}
               >
                 {p.id === "custom" && (
-                  <Calendar className="mr-1 inline-block size-3 -translate-y-px" aria-hidden="true" />
+                  <Calendar className="mr-1 size-3.5" aria-hidden="true" />
                 )}
                 {p.label}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -152,7 +154,7 @@ export function ReportDateFilters({
 
       {/* Collapsible Custom Date Pickers - Sổ ra khi chọn 'Tùy chọn ngày' */}
       {isCustom && (
-        <div className="flex flex-wrap items-center gap-3 border-t pt-2 text-xs animate-in fade-in duration-150">
+        <div className="flex flex-wrap items-center gap-3 border-t pt-2.5 text-xs animate-in fade-in duration-150">
           <span className="font-medium text-muted-foreground">Khoảng ngày tùy chọn:</span>
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">Từ ngày:</span>
