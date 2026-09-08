@@ -472,25 +472,27 @@ function HeaderTabs({
   ];
   const visible = tabs.filter((t) => !t.manager || isManager);
   return (
-    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       {/* Kiểu tab cũ: khối bo viền, tab active nền đậm; cuộn ngang nếu chật */}
-      <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto rounded-lg border p-0.5">
-        {visible.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className={cn(
-              "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              t.active
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
+      {visible.length > 1 ? (
+        <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-lg border p-0.5">
+          {visible.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className={cn(
+                "shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                t.active
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+      <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
         <DefectDialog
           sourceLocationId={sourceLocationId}
           variants={variants}

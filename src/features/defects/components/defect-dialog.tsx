@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ export function DefectDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className={triggerClassName}>
+        <Button className={cn("w-full sm:w-auto", triggerClassName)}>
           <Plus className="mr-1.5 h-4 w-4" />
           {triggerLabel}
         </Button>
