@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri } from "@/features/pdf/qr";
 import { VehicleQrLabelDocument } from "@/features/pdf/vehicle-qr-label";
-import { requireManager } from "@/lib/auth";
+import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ function safeFilename(code: string): string {
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireManager();
+  await requireProfile();
   const { id } = await params;
   const supabase = await createClient();
   const { data: vehicle, error } = await supabase
@@ -26,7 +26,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   try {
     ensurePdfFonts();
-    // Tem phải chứa đúng token lưu trong vehicles.qr_token, không thêm URL hay tiền tố.
     const qrCode = await generateQrDataUri(vehicle.qr_token, 768);
     const buffer = await renderToBuffer(
       <VehicleQrLabelDocument
