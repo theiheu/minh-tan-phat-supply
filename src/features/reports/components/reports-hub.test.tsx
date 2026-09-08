@@ -259,17 +259,17 @@ describe("ReportsHub component", () => {
     expect(printPdfBtn.getAttribute("href")).toContain("type=stock_ledger");
     expect(printPdfBtn.getAttribute("target")).toBe("_blank");
 
-    // All tabs exist
-    expect(screen.getByRole("tab", { name: /Báo cáo Chung/i })).toBeDefined();
+    // All 6 tabs exist
+    expect(screen.getByRole("tab", { name: /Tổng quan/i })).toBeDefined();
+    expect(screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Theo Chuồng/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Phương tiện/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Đối tác/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Sổ Thẻ kho/i })).toBeDefined();
 
-    // Initial General Tab Content is rendered
+    // Initial Overview Tab Content is rendered
     expect(screen.getByText("Tổng giá trị kho hiện tại")).toBeDefined();
     expect(screen.getByText("120.000.000 đ")).toBeDefined();
-    expect(screen.getByText("Bóng đèn sưởi hồng ngoại")).toBeDefined();
   });
 
   it("switches tabs and fetches corresponding report data", async () => {
@@ -286,7 +286,16 @@ describe("ReportsHub component", () => {
       />
     );
 
-    // 1. Switch to "Theo Chuồng" (zones)
+    // 1. Switch to "Xuất - Nhập - Tồn" (xnt)
+    const xntTab = screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i });
+    fireEvent.click(xntTab);
+
+    await waitFor(() => {
+      expect(screen.getByText("Bóng đèn sưởi hồng ngoại")).toBeDefined();
+      expect(screen.getByText("Tổng cộng (1 mặt hàng)")).toBeDefined();
+    });
+
+    // 2. Switch to "Theo Chuồng" (zones)
     const zonesTab = screen.getByRole("tab", { name: /Theo Chuồng/i });
     fireEvent.click(zonesTab);
 

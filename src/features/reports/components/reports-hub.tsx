@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BarChart3,
   BookOpen,
+  Boxes,
   FileSpreadsheet,
   Handshake,
   Home,
@@ -28,6 +29,7 @@ import type {
   ZoneCostReportData,
 } from "../types";
 import { GeneralReportTab } from "./general-report-tab";
+import { XntReportTab } from "./xnt-report-tab";
 import { PartnersReportTab } from "./partners-report-tab";
 import {
   getPresetRange,
@@ -38,7 +40,7 @@ import { StockCardTab, type StockVariantOption } from "./stock-card-tab";
 import { VehicleReportTab } from "./vehicle-report-tab";
 import { ZoneCostReportTab } from "./zone-cost-report-tab";
 
-export type ReportTab = "general" | "zones" | "vehicles" | "partners" | "stock_card";
+export type ReportTab = "general" | "xnt" | "zones" | "vehicles" | "partners" | "stock_card";
 
 export interface ReportsHubProps {
   initialGeneralData?: GeneralReportData | null;
@@ -58,6 +60,7 @@ export interface ReportsHubProps {
 export function getExportType(tab: ReportTab): string {
   switch (tab) {
     case "general":
+    case "xnt":
       return "stock_ledger";
     case "zones":
       return "zone_cost";
@@ -104,14 +107,16 @@ export function ReportsHub({
   const [stockCardData, setStockCardData] = useState<StockCardData | null>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const isInitialMount = useRef(true);
+  const isInitialMount = useRef<boolean>(true);
 
-  const loadData = useCallback(
+  // Load active tab data from server
+  const loadTabData = useCallback(
     async (tab: ReportTab, range: typeof dateRange, variantId: string) => {
       setIsLoading(true);
       try {
         switch (tab) {
-          case "general": {
+          case "general":
+          case "xnt": {
             const res = await getGeneralReportAction({
               locationId: range.locationId,
               from: range.from,
@@ -174,23 +179,24 @@ export function ReportsHub({
     if (isInitialMount.current) {
       isInitialMount.current = false;
       // Skip fetching general data on mount if already supplied by server component
-      if (activeTab === "general" && initialGeneralData) {
+      if ((activeTab === "general" || activeTab === "xnt") && initialGeneralData) {
         return;
       }
     }
-    loadData(activeTab, dateRange, selectedVariantId);
-  }, [activeTab, dateRange, selectedVariantId, loadData, initialGeneralData]);
 
-  // Export / Print URL generation
-  const exportType = getExportType(activeTab);
+    loadTabData(activeTab, dateRange, selectedVariantId);
+  }, [activeTab, dateRange, selectedVariantId, loadTabData, initialGeneralData]);
+
+  // Check if export is allowed for current tab
   const isExportDisabled = activeTab === "stock_card" && !selectedVariantId;
 
-  const buildReportUrl = (endpoint: "/api/reports/export" | "/api/reports/pdf") => {
+  // Build export URLs
+  const buildReportUrl = (endpoint: string): string => {
     const params = new URLSearchParams();
-    params.set("type", exportType);
+    params.set("type", getExportType(activeTab));
     params.set("from", dateRange.from);
     params.set("to", dateRange.to);
-    if (dateRange.locationId && dateRange.locationId !== "all") {
+    if (dateRange.locationId) {
       params.set("location", dateRange.locationId);
     }
     if (activeTab === "stock_card" && selectedVariantId) {
@@ -219,7 +225,21 @@ export function ReportsHub({
             }`}
           >
             <BarChart3 className="size-3.5 sm:size-4 text-blue-500" aria-hidden="true" />
-            <span>📊 Báo cáo Chung</span>
+            <span>📊 Tổng quan</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "xnt"}
+            onClick={() => setActiveTab("xnt")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "xnt"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <Boxes className="size-3.5 sm:size-4 text-indigo-500" aria-hidden="true" />
+            <span>📦 Xuất - Nhập - Tồn</span>
           </button>
           <button
             type="button"
@@ -350,7 +370,14 @@ export function ReportsHub({
       {/* 4. Tab Contents */}
       <div className="space-y-6">
         {activeTab === "general" && (
-          <GeneralReportTab data={generalData} isLoading={isLoading} />
+          <GeneralReportTab
+            data={generalData}
+            isLoading={isLoading}
+            onNavigateToXnt={() => setActiveTab("xnt")}
+          />
+        )}
+        {activeTab === "xnt" && (
+          <XntReportTab data={generalData} isLoading={isLoading} />
         )}
         {activeTab === "zones" && (
           <ZoneCostReportTab data={zoneCostData} isLoading={isLoading} />
