@@ -439,6 +439,261 @@ export type Database = {
           },
         ]
       }
+      fuel_dispenses: {
+        Row: {
+          code: string
+          consumption_rate: number | null
+          created_at: string
+          current_odo: number | null
+          dispenser_id: string
+          driver_name: string | null
+          fuel_type_id: string
+          id: string
+          meter_images: string[]
+          notes: string | null
+          previous_odo: number | null
+          quantity: number
+          status: string
+          updated_at: string
+          usage_diff: number | null
+          vehicle_id: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          code: string
+          consumption_rate?: number | null
+          created_at?: string
+          current_odo?: number | null
+          dispenser_id: string
+          driver_name?: string | null
+          fuel_type_id: string
+          id?: string
+          meter_images?: string[]
+          notes?: string | null
+          previous_odo?: number | null
+          quantity: number
+          status?: string
+          updated_at?: string
+          usage_diff?: number | null
+          vehicle_id?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          code?: string
+          consumption_rate?: number | null
+          created_at?: string
+          current_odo?: number | null
+          dispenser_id?: string
+          driver_name?: string | null
+          fuel_type_id?: string
+          id?: string
+          meter_images?: string[]
+          notes?: string | null
+          previous_odo?: number | null
+          quantity?: number
+          status?: string
+          updated_at?: string
+          usage_diff?: number | null
+          vehicle_id?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_dispenses_dispenser_id_fkey"
+            columns: ["dispenser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_dispenses_fuel_type_id_fkey"
+            columns: ["fuel_type_id"]
+            isOneToOne: false
+            referencedRelation: "fuel_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_dispenses_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_dispenses_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuel_movements: {
+        Row: {
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          fuel_type_id: string
+          id: string
+          movement_type: Database["public"]["Enums"]["fuel_movement_type"]
+          notes: string | null
+          quantity: number
+          ref_id: string
+          ref_type: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          created_by?: string | null
+          fuel_type_id: string
+          id?: string
+          movement_type: Database["public"]["Enums"]["fuel_movement_type"]
+          notes?: string | null
+          quantity: number
+          ref_id: string
+          ref_type: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          fuel_type_id?: string
+          id?: string
+          movement_type?: Database["public"]["Enums"]["fuel_movement_type"]
+          notes?: string | null
+          quantity?: number
+          ref_id?: string
+          ref_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_movements_fuel_type_id_fkey"
+            columns: ["fuel_type_id"]
+            isOneToOne: false
+            referencedRelation: "fuel_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuel_receipts: {
+        Row: {
+          code: string
+          created_at: string
+          fuel_type_id: string
+          id: string
+          invoice_images: string[]
+          invoice_number: string | null
+          notes: string | null
+          quantity: number
+          received_by: string
+          status: string
+          supplier_id: string | null
+          total_amount: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          fuel_type_id: string
+          id?: string
+          invoice_images?: string[]
+          invoice_number?: string | null
+          notes?: string | null
+          quantity: number
+          received_by: string
+          status?: string
+          supplier_id?: string | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          fuel_type_id?: string
+          id?: string
+          invoice_images?: string[]
+          invoice_number?: string | null
+          notes?: string | null
+          quantity?: number
+          received_by?: string
+          status?: string
+          supplier_id?: string | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_receipts_fuel_type_id_fkey"
+            columns: ["fuel_type_id"]
+            isOneToOne: false
+            referencedRelation: "fuel_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_receipts_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_receipts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuel_types: {
+        Row: {
+          code: string
+          created_at: string
+          current_stock: number
+          description: string | null
+          id: string
+          is_active: boolean
+          min_stock: number
+          name: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock?: number
+          name: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_stock?: number
+          name?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       issue_items: {
         Row: {
           created_at: string
@@ -1708,6 +1963,75 @@ export type Database = {
           },
         ]
       }
+      vehicles: {
+        Row: {
+          code: string
+          created_at: string
+          current_odo: number
+          default_driver: string | null
+          fuel_norm: number | null
+          fuel_type_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          odo_unit: Database["public"]["Enums"]["fuel_calc_unit"]
+          qr_token: string
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_odo?: number
+          default_driver?: string | null
+          fuel_norm?: number | null
+          fuel_type_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          odo_unit?: Database["public"]["Enums"]["fuel_calc_unit"]
+          qr_token: string
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_odo?: number
+          default_driver?: string | null
+          fuel_norm?: number | null
+          fuel_type_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          odo_unit?: Database["public"]["Enums"]["fuel_calc_unit"]
+          qr_token?: string
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_fuel_type_id_fkey"
+            columns: ["fuel_type_id"]
+            isOneToOne: false
+            referencedRelation: "fuel_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       variants: {
         Row: {
           attributes: Json
@@ -1930,6 +2254,14 @@ export type Database = {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
+      cancel_fuel_dispense: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
+      cancel_fuel_receipt: {
+        Args: { p_by: string; p_id: string }
+        Returns: undefined
+      }
       cancel_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       cancel_liquidation: {
         Args: { p_by: string; p_id: string }
@@ -1961,6 +2293,33 @@ export type Database = {
       }
       create_exchange: {
         Args: { p_by: string; p_defect_id: string }
+        Returns: string
+      }
+      create_fuel_dispense: {
+        Args: {
+          p_by: string
+          p_current_odo: number
+          p_driver_name: string
+          p_fuel_type_id: string
+          p_meter_images: string[]
+          p_notes: string
+          p_quantity: number
+          p_vehicle_id: string
+          p_zone_id: string
+        }
+        Returns: string
+      }
+      create_fuel_receipt: {
+        Args: {
+          p_by: string
+          p_fuel_type_id: string
+          p_invoice_images: string[]
+          p_invoice_number: string
+          p_notes: string
+          p_quantity: number
+          p_supplier_id: string
+          p_unit_price: number
+        }
         Returns: string
       }
       create_issue: {
@@ -2082,6 +2441,7 @@ export type Database = {
         Returns: undefined
       }
       get_login_email: { Args: { p_username: string }; Returns: string }
+      get_vehicle_by_qr: { Args: { p_qr_text: string }; Returns: Json }
       is_manager: { Args: never; Returns: boolean }
       is_superuser: { Args: never; Returns: boolean }
       issue_exchange: {
@@ -2211,6 +2571,13 @@ export type Database = {
         | "received"
         | "rejected"
         | "cancelled"
+      fuel_calc_unit: "km" | "hours"
+      fuel_movement_type:
+        | "receipt_in"
+        | "dispense_out"
+        | "adjustment_in"
+        | "adjustment_out"
+        | "cancel_revert"
       liquidation_method: "sale" | "dispose"
       liquidation_status:
         | "pending"
@@ -2247,6 +2614,14 @@ export type Database = {
       requisition_type: "new_supply" | "replacement"
       severity_level: "light" | "medium" | "severe"
       stocktake_status: "draft" | "posted" | "cancelled"
+      vehicle_type:
+        | "truck"
+        | "excavator"
+        | "generator"
+        | "car"
+        | "forklift"
+        | "tractor"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2402,6 +2777,14 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      fuel_calc_unit: ["km", "hours"],
+      fuel_movement_type: [
+        "receipt_in",
+        "dispense_out",
+        "adjustment_in",
+        "adjustment_out",
+        "cancel_revert",
+      ],
       liquidation_method: ["sale", "dispose"],
       liquidation_status: [
         "pending",
@@ -2441,6 +2824,15 @@ export const Constants = {
       requisition_type: ["new_supply", "replacement"],
       severity_level: ["light", "medium", "severe"],
       stocktake_status: ["draft", "posted", "cancelled"],
+      vehicle_type: [
+        "truck",
+        "excavator",
+        "generator",
+        "car",
+        "forklift",
+        "tractor",
+        "other",
+      ],
     },
   },
 } as const
