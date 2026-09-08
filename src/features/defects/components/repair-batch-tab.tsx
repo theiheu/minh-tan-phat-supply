@@ -37,6 +37,9 @@ export interface BatchNote {
   code: string;
   reporterName: string | null;
   createdAt: string;
+  isCollected?: boolean;
+  collectedAt?: string | null;
+  repairRequested?: boolean;
 }
 
 export function RepairBatchTab({
@@ -92,7 +95,7 @@ export function RepairBatchTab({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          Tập kết vật tư hỏng từ nhiều phiếu HONG → tạo <span className="font-medium text-foreground">1 phiếu sửa chữa (SC)</span> đưa đi sửa cùng đơn vị. Theo dõi tại màn{" "}
+          Vật tư tại Kho đồ hỏng → gom tạo <span className="font-medium text-foreground">1 phiếu sửa chữa (SC)</span> đưa đi sửa cùng đơn vị. Theo dõi tại màn{" "}
           <span className="font-medium text-foreground">Sửa chữa</span>.
         </p>
         <Button
@@ -135,8 +138,22 @@ export function RepairBatchTab({
                   />
                   <span className="font-mono font-semibold">{n.code}</span>
                   <Badge variant={someChecked && !allChecked ? "warning" : "neutral"}>
-                    {allChecked ? "Đã chọn" : someChecked ? "Chọn 1 phần" : "Chờ tập kết"}
+                    {allChecked ? "Đã chọn" : someChecked ? "Chọn 1 phần" : "Tại kho đồ hỏng"}
                   </Badge>
+                  {n.isCollected ? (
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300 text-[11px]">
+                      Đã về kho
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-300 text-[11px]">
+                      Chưa về kho
+                    </Badge>
+                  )}
+                  {n.repairRequested && (
+                    <Badge variant="warning" className="text-[11px]">
+                      Chờ xác nhận sửa
+                    </Badge>
+                  )}
                   <span className="ml-auto text-xs text-muted-foreground">
                     {n.reporterName ?? "—"} · {formatDate(n.createdAt)}
                   </span>

@@ -92,12 +92,19 @@ export function ProductDetailDialog({
                 className="size-4 shrink-0 accent-primary"
               />
               {v.images?.[0] ? (
-                <ZoomableImage
-                  src={v.images[0]}
-                  images={v.images}
-                  alt={variantDisplayName(v)}
-                  className="size-10 shrink-0 rounded-md border object-cover"
-                />
+                <div className="relative shrink-0">
+                  <ZoomableImage
+                    src={v.images[0]}
+                    images={v.images}
+                    alt={variantDisplayName(v)}
+                    className="size-10 shrink-0 rounded-md border object-cover"
+                  />
+                  {v.images.length > 1 && (
+                    <span className="absolute bottom-0.5 right-0.5 rounded bg-black/75 px-1 py-0.2 text-[8px] font-semibold text-white pointer-events-none">
+                      +{v.images.length - 1}
+                    </span>
+                  )}
+                </div>
               ) : (
                 <div className="size-10 shrink-0 rounded-md border bg-muted" />
               )}

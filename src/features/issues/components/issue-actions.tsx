@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { cancelIssue, postIssue } from "../actions";
+import { postIssue } from "../actions";
 
 export function IssueActions({ id, status }: { id: string; status: string }) {
   const router = useRouter();
@@ -35,17 +35,6 @@ export function IssueActions({ id, status }: { id: string; status: string }) {
         disabled={pending}
       >
         Xác nhận xuất
-      </Button>
-      <Button
-        size="sm"
-        variant="destructive"
-        onClick={() => {
-          if (!window.confirm("Hủy phiếu xuất này?")) return;
-          run(() => cancelIssue(id), "Đã hủy phiếu xuất");
-        }}
-        disabled={pending}
-      >
-        Hủy
       </Button>
     </div>
   );

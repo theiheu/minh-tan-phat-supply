@@ -67,7 +67,7 @@ describe("labels helpers", () => {
     expect(slipStatusLabel("requisition", "pending")).toBe("Đang chờ");
     expect(slipStatusLabel("requisition", "issued")).toBe("Đã cấp phát");
     expect(slipStatusLabel("issue", "posted")).toBe("Đã xuất");
-    expect(slipStatusLabel("defect", "staging")).toBe("Đang tập kết");
+    expect(slipStatusLabel("defect", "staging")).toBe("Kho đồ hỏng");
     expect(slipStatusLabel(null, null)).toBe("—");
   });
 });

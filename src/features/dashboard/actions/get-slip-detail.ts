@@ -21,6 +21,7 @@ export interface SlipDetailPayload {
   status: string;
   createdAt: string;
   creatorName?: string | null;
+  creatorId?: string | null;
   requesterId?: string | null;
   zoneName?: string | null;
   supplierName?: string | null;
@@ -295,7 +296,7 @@ export async function getSlipDetail(
       const { data: rec, error } = await supabase
         .from("receipts")
         .select(
-          "id, code, notes, status, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, variant_id, quantity, unit_cost, batch_no, expiry_date, variants(attributes, unit, products(name)))",
+          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, variant_id, quantity, unit_cost, batch_no, expiry_date, variants(attributes, unit, products(name)))",
         )
         .eq("id", id)
         .single();
@@ -361,6 +362,7 @@ export async function getSlipDetail(
           status: rec.status,
           createdAt: rec.created_at,
           creatorName: rec.creator?.name,
+          creatorId: rec.created_by,
           supplierName: rec.supplier?.name,
           purposeOrNotes: rec.notes,
           invoiceImages: rec.invoice_images ?? [],
@@ -376,7 +378,7 @@ export async function getSlipDetail(
       const { data: iss, error } = await supabase
         .from("issues")
         .select(
-          "id, code, destination_type, status, notes, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
+          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
         )
         .eq("id", id)
         .single();
@@ -421,6 +423,7 @@ export async function getSlipDetail(
           status: iss.status,
           createdAt: iss.created_at,
           creatorName: iss.creator?.name,
+          creatorId: iss.creator_id,
           destinationType: iss.destination_type,
           zoneName: iss.zone?.name,
           customerName: iss.customer?.name,

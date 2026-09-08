@@ -171,6 +171,8 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         invoiceImages={receipt.invoice_images ?? []}
         status={receipt.status}
         isManager={isPrivileged(profile?.role)}
+        currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
+        creatorId={receipt.created_by}
       />
 
       <Card>

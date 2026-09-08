@@ -41,7 +41,7 @@ export const ISSUE_STATUS: Record<string, string> = {
 };
 
 export const DEFECT_STATUS: Record<string, string> = {
-  staging: "Đang tập kết",
+  staging: "Kho đồ hỏng",
   in_repair: "Đang sửa",
   returned: "Đã nhập lại",
   liquidated: "Đã thanh lý",

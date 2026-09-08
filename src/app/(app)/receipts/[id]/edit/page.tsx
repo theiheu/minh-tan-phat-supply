@@ -2,11 +2,13 @@ import { notFound } from "next/navigation";
 import { ReceiptForm, type ItemDraft } from "@/features/receipts/components/receipt-form";
 import { fetchCompositeVariantIds } from "@/features/products/data";
 import { variantLabel } from "@/lib/labels";
+import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditReceiptPage({ params }: { params: Promise<{ id: string }> }) {
+  const profile = await getCurrentProfile();
   const { id } = await params;
   const supabase = await createClient();
 
@@ -56,6 +58,8 @@ export default async function EditReceiptPage({ params }: { params: Promise<{ id
       initialItems={initialItems}
       suppliers={suppliers ?? []}
       variants={variantOptions}
+      currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
+      creatorId={receipt.created_by}
     />
   );
 }

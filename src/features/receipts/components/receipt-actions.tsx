@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { approveReceipt, cancelReceipt, postReceipt } from "../actions";
+import { approveReceipt, postReceipt } from "../actions";
 
 export function ReceiptActions({ id, status }: { id: string; status: string }) {
   const router = useRouter();
@@ -49,14 +49,6 @@ export function ReceiptActions({ id, status }: { id: string; status: string }) {
         >
           Duyệt đặt hàng
         </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => run(() => cancelReceipt(id), "Đã hủy phiếu đặt hàng", false)}
-          disabled={pending}
-        >
-          Hủy
-        </Button>
       </div>
     );
   }
@@ -73,14 +65,6 @@ export function ReceiptActions({ id, status }: { id: string; status: string }) {
           disabled={pending}
         >
           Duyệt nhập kho
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => run(() => cancelReceipt(id), "Đã hủy phiếu nhập", false)}
-          disabled={pending}
-        >
-          Hủy
         </Button>
       </div>
     );

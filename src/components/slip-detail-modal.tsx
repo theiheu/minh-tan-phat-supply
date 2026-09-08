@@ -27,13 +27,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ZoomableImage } from "@/components/image-lightbox";
+import { canDeleteInvoiceImage } from "@/lib/images";
 import {
   getSlipDetail,
   type SlipDetailPayload,
 } from "@/features/dashboard/actions/get-slip-detail";
 import {
   approveRequisition,
-  cancelRequisition,
   fulfillRequisition,
   receiveRequisition,
   rejectRequisition,
@@ -42,26 +42,23 @@ import {
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import {
   approveReceipt,
-  cancelReceipt,
   postReceipt,
   updateReceiptInvoiceImages,
 } from "@/features/receipts/actions";
 import { uploadReceiptInvoiceImage } from "@/features/receipts/upload";
 import {
-  cancelIssue,
   postIssue,
   updateIssueInvoiceImages,
 } from "@/features/issues/actions";
 import { uploadIssueInvoiceImage } from "@/features/issues/upload";
 import {
   approveExchange,
-  cancelExchange,
   createExchange,
   issueExchange,
   receiveExchange,
   rejectExchange,
 } from "@/features/exchanges/actions";
-import { cancelDefect, requestRepair } from "@/features/defects/actions";
+import { requestRepair } from "@/features/defects/actions";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 import {
   auditEntityLabel,
@@ -402,21 +399,27 @@ export function SlipDetailModal({
                             title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
                             className="size-20 sm:size-24 rounded-lg border-2 object-cover"
                           />
-                          {isManager && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleInvoiceRemove(url);
-                              }}
-                              disabled={pending}
-                              className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
-                              aria-label="Xóa ảnh này"
-                              title="Xóa ảnh hóa đơn này"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          )}
+                          {isManager &&
+                            canDeleteInvoiceImage({
+                              imageUrl: url,
+                              currentUserId: currentUser?.id,
+                              userRole: currentUser?.role,
+                              creatorId: detail.creatorId,
+                            }) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleInvoiceRemove(url);
+                                }}
+                                disabled={pending}
+                                className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
+                                aria-label="Xóa ảnh này"
+                                title="Xóa ảnh hóa đơn này"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            )}
                         </div>
                       ))}
 
@@ -437,7 +440,7 @@ export function SlipDetailModal({
                         </Button>
                         <input
                           type="file"
-                          accept="image/png,image/jpeg,image/webp"
+                          accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"
                           multiple
                           className="sr-only"
                           disabled={uploadingInvoices || pending}
@@ -871,17 +874,6 @@ export function SlipDetailModal({
                         Xác nhận đã nhận
                       </Button>
                     )}
-                    {(isOwner || isManager) && (detail.status === "draft" || detail.status === "pending") && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleAction(() => cancelRequisition(detail.id), "Đã hủy phiếu yêu cầu")}
-                        disabled={pending}
-                        className="h-9 text-xs text-muted-foreground hover:text-destructive"
-                      >
-                        Hủy phiếu
-                      </Button>
-                    )}
                   </>
                 )}
 
@@ -903,15 +895,6 @@ export function SlipDetailModal({
                         >
                           Duyệt đặt hàng
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleAction(() => cancelReceipt(detail.id), "Đã hủy phiếu đặt hàng")}
-                          disabled={pending}
-                          className="h-9 text-xs"
-                        >
-                          Hủy phiếu
-                        </Button>
                       </>
                     )}
                     {detail.status === "approved" && (
@@ -929,15 +912,6 @@ export function SlipDetailModal({
                         >
                           Duyệt nhập kho
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleAction(() => cancelReceipt(detail.id), "Đã hủy phiếu nhập kho")}
-                          disabled={pending}
-                          className="h-9 text-xs"
-                        >
-                          Hủy phiếu
-                        </Button>
                       </>
                     )}
                   </>
@@ -947,25 +921,14 @@ export function SlipDetailModal({
                 {detail.type === "issue" && isManager && (
                   <>
                     {detail.status === "draft" && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAction(() => postIssue(detail.id), "Đã xác nhận xuất kho")}
-                          disabled={pending}
-                          className="h-9 text-xs"
-                        >
-                          Xác nhận xuất kho
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleAction(() => cancelIssue(detail.id), "Đã hủy phiếu xuất")}
-                          disabled={pending}
-                          className="h-9 text-xs"
-                        >
-                          Hủy phiếu
-                        </Button>
-                      </>
+                      <Button
+                        size="sm"
+                        onClick={() => handleAction(() => postIssue(detail.id), "Đã xác nhận xuất kho")}
+                        disabled={pending}
+                        className="h-9 text-xs"
+                      >
+                        Xác nhận xuất kho
+                      </Button>
                     )}
                   </>
                 )}
@@ -1014,17 +977,6 @@ export function SlipDetailModal({
                         Xác nhận đã nhận
                       </Button>
                     )}
-                    {isManager && (detail.status === "pending" || detail.status === "approved") && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleAction(() => cancelExchange(detail.id), "Đã hủy phiếu đổi mới")}
-                        disabled={pending}
-                        className="h-9 text-xs text-muted-foreground hover:text-destructive"
-                      >
-                        Hủy phiếu
-                      </Button>
-                    )}
                   </>
                 )}
 
@@ -1049,15 +1001,6 @@ export function SlipDetailModal({
                           className="h-9 text-xs"
                         >
                           Gửi đi sửa
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleAction(() => cancelDefect(detail.id), "Đã hủy báo hỏng")}
-                          disabled={pending}
-                          className="h-9 text-xs"
-                        >
-                          Hủy báo hỏng
                         </Button>
                       </>
                     )}

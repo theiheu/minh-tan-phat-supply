@@ -15,21 +15,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImagePlus, Printer, QrCode, Trash2, Undo2, Wrench, X, Zap } from "lucide-react";
+import { CheckCircle2, Eye, ImagePlus, Pencil, Printer, QrCode, Trash2, Undo2, Wrench, X, Zap } from "lucide-react";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import {
-  cancelDefect,
-  cancelRepairRequest,
+  deleteDefect,
   requestRepair,
+  toggleDefectCollected,
   updateDefectItemImages,
 } from "@/features/defects/actions";
 import { uploadDefectImage } from "@/features/defects/upload";
 import { sendToRepair } from "@/features/repairs/actions";
 import {
   approveExchange,
-  cancelExchange,
   createExchange,
   issueExchange,
   quickExchange,
@@ -39,9 +38,11 @@ import {
 } from "@/features/exchanges/actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { cn } from "@/lib/utils";
+import { DefectEditDialog } from "./defect-edit-dialog";
 
 export interface DefectItemRow {
   id: string;
+  variantId?: string;
   quantity: number;
   damageDetail: string | null;
   note: string | null;
@@ -61,10 +62,13 @@ export interface DefectListRow {
   id: string;
   code: string;
   status: string;
+  sourceLocationId?: string | null;
   reportedById: string | null;
   reporterName: string | null;
   sourceName: string | null;
   createdAt: string;
+  collectedAt: string | null;
+  isCollected: boolean;
   repairRequested: boolean;
   liveExchange: DefectLiveExchange | null;
   items: DefectItemRow[];
@@ -75,20 +79,80 @@ export function DefectsList({
   currentUserId,
   isManager,
   isDev,
+  variants = [],
+  sourceLocationId = "",
 }: {
   rows: DefectListRow[];
   currentUserId: string | null;
   isManager: boolean;
   isDev: boolean;
+  variants?: { id: string; name: string; detail: string }[];
+  sourceLocationId?: string;
 }) {
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editingRow, setEditingRow] = useState<DefectListRow | null>(null);
+  const [deletingRow, setDeletingRow] = useState<DefectListRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [pendingQuick, startTransition] = useTransition();
+
   const selected = rows.find((r) => r.id === openId) ?? null;
+
+  function handleQuickExchange(defectId: string) {
+    startTransition(async () => {
+      try {
+        const { code } = await quickExchange(defectId);
+        toast.success(`Đã xuất đổi mới và hoàn tất phiếu ${code}`);
+        router.refresh();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Xuất đổi mới thất bại");
+      }
+    });
+  }
+
+  function handleQuickFulfill(exchangeId: string) {
+    startTransition(async () => {
+      try {
+        await quickFulfillExistingExchange(exchangeId);
+        toast.success("Đã xuất cấp đổi mới và hoàn tất phiếu");
+        router.refresh();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Cấp đổi thất bại");
+      }
+    });
+  }
+
+  function handleToggleCollected(defectId: string, collected: boolean) {
+    startTransition(async () => {
+      try {
+        await toggleDefectCollected(defectId, collected);
+        toast.success(collected ? "Đã xác nhận vật tư hỏng đã về kho" : "Đã chuyển về Chưa gửi về kho");
+        router.refresh();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Thao tác thất bại");
+      }
+    });
+  }
+
+  async function handleDelete(row: DefectListRow) {
+    setIsDeleting(true);
+    try {
+      await deleteDefect(row.id);
+      toast.success(`Đã xóa phiếu hỏng ${row.code}`);
+      setDeletingRow(null);
+      if (openId === row.id) setOpenId(null);
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Xóa phiếu thất bại");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[520px] text-sm">
+        <table className="w-full min-w-[600px] text-sm">
           <thead className="border-b border-border bg-table-header">
             <tr className="text-left text-foreground">
               <th className="w-28 whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Mã phiếu</th>
@@ -96,18 +160,22 @@ export function DefectsList({
               <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Người lập phiếu</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Ngày lập</th>
               <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Trạng thái</th>
+              <th className="whitespace-nowrap px-3 py-2.5 text-right font-bold border-b border-border">Tác vụ</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
                   Chưa có phiếu hỏng nào.
                 </td>
               </tr>
             )}
             {rows.map((r) => {
               const allImages = (r.items ?? []).flatMap((i) => i.images ?? []);
+              const canEdit = isManager || (r.reportedById === currentUserId && r.status === "staging" && !r.liveExchange);
+              const canDel = isManager || (r.reportedById === currentUserId && r.status === "staging" && !r.liveExchange);
+
               return (
                 <tr
                   key={r.id}
@@ -156,12 +224,112 @@ export function DefectsList({
                       <Badge variant={statusBadgeVariant(r.status)}>
                         {DEFECT_STATUS[r.status] ?? r.status}
                       </Badge>
+                      {r.isCollected ? (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300">
+                          Đã về kho
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-300">
+                          Chưa về kho
+                        </Badge>
+                      )}
                       {r.repairRequested ? <Badge variant="warning">Chờ xác nhận sửa</Badge> : null}
                       {r.liveExchange ? (
                         <Badge variant={statusBadgeVariant(r.liveExchange.status)}>
                           Đổi mới: {EXCHANGE_STATUS[r.liveExchange.status] ?? r.liveExchange.status}
                         </Badge>
                       ) : null}
+                    </div>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* Quản lý kho / Người tạo: Nút xác nhận đã về kho nhanh nếu chưa về */}
+                      {(isManager || r.reportedById === currentUserId) && r.status === "staging" && !r.isCollected && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          onClick={() => handleToggleCollected(r.id, true)}
+                          disabled={pendingQuick}
+                          className="h-8 px-2 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 gap-1"
+                          title="Xác nhận vật tư hỏng đã gửi/chuyển về kho"
+                        >
+                          <CheckCircle2 className="size-3.5 text-emerald-600" />
+                          <span className="hidden xl:inline">Về kho</span>
+                        </Button>
+                      )}
+
+                      {/* Quản lý kho: Xuất đổi mới nhanh 1 chạm */}
+                      {isManager && r.status === "staging" && (!r.liveExchange || r.liveExchange.status === "rejected" || r.liveExchange.status === "cancelled") && (
+                        <Button
+                          size="sm"
+                          type="button"
+                          onClick={() => handleQuickExchange(r.id)}
+                          disabled={pendingQuick || r.repairRequested}
+                          className="h-8 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm gap-1"
+                          title="Xuất đổi mới ngay (1 chạm)"
+                        >
+                          <Zap className="size-3.5" />
+                          <span className="hidden sm:inline">Đổi mới</span>
+                        </Button>
+                      )}
+
+                      {/* Quản lý kho: Hoàn tất cấp đổi nhanh */}
+                      {isManager && r.liveExchange && (r.liveExchange.status === "pending" || r.liveExchange.status === "approved") && (
+                        <Button
+                          size="sm"
+                          type="button"
+                          onClick={() => handleQuickFulfill(r.liveExchange!.id)}
+                          disabled={pendingQuick}
+                          className="h-8 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-sm gap-1"
+                          title="Xuất cấp & hoàn tất đổi mới ngay"
+                        >
+                          <Zap className="size-3.5" />
+                          <span className="hidden sm:inline">Cấp đổi</span>
+                        </Button>
+                      )}
+
+                      {/* Nút Xem chi tiết */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={() => setOpenId(r.id)}
+                        className="h-8 px-2.5 text-xs gap-1"
+                        title="Xem chi tiết phiếu"
+                      >
+                        <Eye className="size-3.5" />
+                        <span className="hidden sm:inline">Xem</span>
+                      </Button>
+
+                      {/* Nút Sửa */}
+                      {canEdit && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          onClick={() => setEditingRow(r)}
+                          className="h-8 px-2 text-xs gap-1 hover:bg-accent"
+                          title="Chỉnh sửa phiếu hỏng"
+                        >
+                          <Pencil className="size-3.5" />
+                          <span className="hidden md:inline">Sửa</span>
+                        </Button>
+                      )}
+
+                      {/* Nút Xóa */}
+                      {canDel && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          type="button"
+                          onClick={() => setDeletingRow(r)}
+                          className="h-8 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          title="Xóa phiếu hỏng"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -171,6 +339,7 @@ export function DefectsList({
         </table>
       </div>
 
+      {/* Detail Dialog */}
       {selected ? (
         <DefectDetailDialog
           row={selected}
@@ -183,8 +352,75 @@ export function DefectsList({
             setOpenId(null);
             router.refresh();
           }}
+          onEdit={() => {
+            const r = selected;
+            setOpenId(null);
+            setEditingRow(r);
+          }}
+          onDelete={() => {
+            const r = selected;
+            setOpenId(null);
+            setDeletingRow(r);
+          }}
         />
       ) : null}
+
+      {/* Edit Dialog */}
+      {editingRow && (
+        <DefectEditDialog
+          row={editingRow}
+          sourceLocationId={sourceLocationId}
+          variants={variants}
+          open={!!editingRow}
+          onOpenChange={(o) => (!o ? setEditingRow(null) : undefined)}
+          onSuccess={() => {
+            setEditingRow(null);
+            router.refresh();
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deletingRow && (
+        <Dialog open onOpenChange={(o) => (!o ? setDeletingRow(null) : undefined)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-base font-semibold text-destructive flex items-center gap-2">
+                <Trash2 className="size-5" />
+                Xác nhận xóa phiếu hỏng
+              </DialogTitle>
+              <DialogDescription asChild>
+                <div className="space-y-2 pt-2 text-sm">
+                  <p>
+                    Bạn có chắc chắn muốn xóa phiếu hỏng <strong className="font-mono text-foreground">{deletingRow.code}</strong>?
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Hành động này sẽ xóa vĩnh viễn phiếu hỏng và tất cả yêu cầu đổi mới/sửa chữa liên quan.
+                  </p>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDeletingRow(null)}
+                disabled={isDeleting}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(deletingRow)}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Đang xóa…" : "Xóa vĩnh viễn"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -197,6 +433,8 @@ function DefectDetailDialog({
   isOwner,
   onClose,
   onChanged,
+  onEdit,
+  onDelete,
 }: {
   row: DefectListRow;
   currentUserId: string | null;
@@ -205,11 +443,12 @@ function DefectDetailDialog({
   isOwner: boolean;
   onClose: () => void;
   onChanged: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) {
   const [pending, startTransition] = useTransition();
   // Các hành động xử lý
   const canRequestRepair = (isOwner || isManager) && !row.repairRequested;
-  const canCancelRepairRequest = (isOwner || isManager) && row.repairRequested;
   const canExchange = isManager || isOwner;
   // Mở form đưa đi sửa
   const [showRepairForm, setShowRepairForm] = useState(false);
@@ -274,12 +513,6 @@ function DefectDetailDialog({
 
   function doRequestRepair() {
     run(() => requestRepair(row.id), "Đã đề nghị gửi đi sửa", onChanged);
-  }
-  function doCancelRepairRequest() {
-    run(() => cancelRepairRequest(row.id), "Đã hủy đề nghị sửa", onChanged);
-  }
-  function doCancel() {
-    run(() => cancelDefect(row.id), "Đã hủy phiếu", onChanged);
   }
   function doSendToRepair() {
     run(
@@ -352,10 +585,6 @@ function DefectDetailDialog({
     run(() => receiveExchange(exchangeId), "Đã xác nhận nhận đổi mới", onChanged);
   }
 
-  function doCancelExchange(exchangeId: string) {
-    run(() => cancelExchange(exchangeId), "Đã hủy phiếu Đổi Mới", onChanged);
-  }
-
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
@@ -382,6 +611,40 @@ function DefectDetailDialog({
             </div>
           </DialogDescription>
         </DialogHeader>
+
+        {/* Tình trạng tiếp nhận đồ hỏng tại kho */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/20 p-2.5">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">Tiếp nhận đồ hỏng:</span>
+            {row.isCollected ? (
+              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300">
+                Đã về kho {row.collectedAt ? `(${formatDate(row.collectedAt)})` : ""}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-300">
+                Chưa gửi về kho
+              </Badge>
+            )}
+          </div>
+          {(isManager || isOwner) && row.status === "staging" && (
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              onClick={() =>
+                run(
+                  () => toggleDefectCollected(row.id, !row.isCollected),
+                  row.isCollected ? "Đã chuyển về Chưa gửi về kho" : "Đã xác nhận vật tư hỏng đã về kho",
+                  onChanged,
+                )
+              }
+              disabled={pending}
+              className="h-7 text-xs"
+            >
+              {row.isCollected ? "Đánh dấu chưa về kho" : "Xác nhận đã về kho"}
+            </Button>
+          )}
+        </div>
 
         {/* Thông tin phiếu Đổi Mới nếu có */}
         {row.liveExchange && (
@@ -484,7 +747,7 @@ function DefectDetailDialog({
                     </Button>
                     <input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"
                       multiple
                       className="sr-only"
                       disabled={uploadingItemId === it.id}
@@ -574,18 +837,6 @@ function DefectDetailDialog({
                             Từ chối đổi mới
                           </Button>
                         ))}
-                      {(isManager || isOwner) && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => doCancelExchange(row.liveExchange!.id)}
-                          disabled={pending}
-                          className="w-full"
-                        >
-                          <Trash2 className="size-4" aria-hidden />
-                          Hủy phiếu đổi mới
-                        </Button>
-                      )}
                     </>
                   )}
 
@@ -601,18 +852,6 @@ function DefectDetailDialog({
                           className="w-full"
                         >
                           Cấp phát (thu đồ hỏng về kho)
-                        </Button>
-                      )}
-                      {isManager && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => doCancelExchange(row.liveExchange!.id)}
-                          disabled={pending}
-                          className="w-full"
-                        >
-                          <Trash2 className="size-4" aria-hidden />
-                          Hủy phiếu đổi mới
                         </Button>
                       )}
                     </>
@@ -678,17 +917,6 @@ function DefectDetailDialog({
                         Đề nghị gửi đi sửa
                       </Button>
                     )}
-                    {canCancelRepairRequest && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={doCancelRepairRequest}
-                        disabled={pending}
-                        className="w-full"
-                      >
-                        Hủy đề nghị sửa
-                      </Button>
-                    )}
                     {isManager && (
                       <Button
                         type="button"
@@ -701,20 +929,32 @@ function DefectDetailDialog({
                         {row.repairRequested ? "Xác nhận sửa" : "Đưa đi sửa"}
                       </Button>
                     )}
-                    {isManager && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={doCancel}
-                        disabled={pending}
-                        className="w-full"
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                        Hủy phiếu
-                      </Button>
-                    )}
                   </>
                 )
+              )}
+
+              {/* Chỉnh sửa / Xóa phiếu */}
+              {onEdit && (isManager || (isOwner && row.status === "staging" && !row.liveExchange)) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onEdit}
+                  className="w-full"
+                >
+                  <Pencil className="size-4" aria-hidden />
+                  Chỉnh sửa phiếu
+                </Button>
+              )}
+              {onDelete && (isManager || (isOwner && row.status === "staging" && !row.liveExchange)) && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={onDelete}
+                  className="w-full"
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                  Xóa phiếu
+                </Button>
               )}
 
               <Button type="button" variant="outline" asChild className="w-full">

@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { REPAIR_OUTCOME } from "@/lib/labels";
-import { cancelRepair, completeRepair } from "../actions";
+import { completeRepair } from "../actions";
 
 interface RepairItem {
   id: string;
@@ -60,9 +60,6 @@ export function RepairActions({ order }: { order: { id: string; status: string; 
     <div className="flex gap-1">
       <Button size="sm" onClick={() => setOpen(true)}>
         Hoàn tất
-      </Button>
-      <Button size="sm" variant="destructive" onClick={() => run(() => cancelRepair(order.id), "Đã hủy")} disabled={pending}>
-        Hủy
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

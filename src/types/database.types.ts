@@ -218,6 +218,8 @@ export type Database = {
       defect_notes: {
         Row: {
           code: string
+          collected_at: string | null
+          collected_by: string | null
           created_at: string
           id: string
           notes: string | null
@@ -230,6 +232,8 @@ export type Database = {
         }
         Insert: {
           code: string
+          collected_at?: string | null
+          collected_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -242,6 +246,8 @@ export type Database = {
         }
         Update: {
           code?: string
+          collected_at?: string | null
+          collected_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -253,6 +259,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "defect_notes_collected_by_fkey"
+            columns: ["collected_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "defect_notes_repair_requested_by_fkey"
             columns: ["repair_requested_by"]
@@ -2083,6 +2096,10 @@ export type Database = {
           username: string
           zone_id: string
         }[]
+      }
+      mark_defect_collected: {
+        Args: { p_by: string; p_collected: boolean; p_id: string }
+        Returns: undefined
       }
       next_code: { Args: { prefix: string; seq: unknown }; Returns: string }
       post_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }

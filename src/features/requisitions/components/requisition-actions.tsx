@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   approveRequisition,
-  cancelRequisition,
   fulfillRequisition,
   receiveRequisition,
   rejectRequisition,
@@ -65,11 +64,6 @@ export function RequisitionActions({
       {isOwner && status === "draft" && (
         <Button size="sm" onClick={() => run(() => submitRequisition(requisitionId), "Đã gửi")} disabled={pending}>
           Gửi
-        </Button>
-      )}
-      {isOwner && (status === "draft" || status === "pending") && (
-        <Button size="sm" variant="outline" onClick={() => run(() => cancelRequisition(requisitionId), "Đã hủy")} disabled={pending}>
-          Hủy
         </Button>
       )}
       {isManager && status === "pending" && (

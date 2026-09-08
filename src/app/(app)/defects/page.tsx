@@ -85,19 +85,19 @@ export default async function DefectsPage({
       detail: variantLabelFor(v),
     }));
 
-  // ---- Tab: Tập kết sửa (manager) — gom vật tư hỏng staging nhiều HONG → 1 phiếu SC ----
+  // ---- Tab: Kho đồ hỏng (manager) — gom vật tư hỏng staging nhiều HONG → 1 phiếu SC ----
   if (showRepairBatch) {
     const stagingNotes = await supabase
       .from("defect_notes")
       .select(
-        "id, code, reported_by, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
+        "id, code, reported_by, repair_requested_at, collected_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
       )
       .eq("status", "staging")
       .order("created_at", { ascending: false });
 
     const noteRows = stagingNotes.data ?? [];
 
-    // Loại các HONG đang có phiếu Đổi Mới sống
+    // Loại các HONG đang có phiếu Đổi Mới đã nhận hoàn tất
     const noteIds = noteRows.map((d) => d.id);
     const { data: liveEx } =
       noteIds.length > 0
@@ -105,9 +105,9 @@ export default async function DefectsPage({
             .from("exchange_notes")
             .select("linked_defect_id")
             .in("linked_defect_id", noteIds)
-            .in("status", ["pending", "approved", "issued", "received"])
+            .in("status", ["received"])
         : { data: [] as { linked_defect_id: string | null }[] };
-    const liveNoteIds = new Set((liveEx ?? []).map((e) => e.linked_defect_id));
+    const receivedExNoteIds = new Set((liveEx ?? []).map((e) => e.linked_defect_id));
 
     // Loại các dòng đã từng đi sửa (tránh gửi trùng)
     const allItemIds = noteRows.flatMap((d) => (d.defect_note_items ?? []).map((i) => i.id));
@@ -123,8 +123,8 @@ export default async function DefectsPage({
     const batchNotes: BatchNote[] = [];
     const batchItems: BatchItem[] = [];
     for (const d of noteRows) {
-      if (liveNoteIds.has(d.id)) continue;
-      if (d.repair_requested_at) continue; // phiếu đang chờ xác nhận sửa — xử lý ở modal phiếu
+      if (receivedExNoteIds.has(d.id)) continue;
+      const rawDefect = d as unknown as { collected_at?: string | null };
       const items = (d.defect_note_items ?? [])
         .filter((i) => !repairedItemIds.has(i.id))
         .map((i) => {
@@ -150,6 +150,9 @@ export default async function DefectsPage({
         code: d.code,
         reporterName: d.reporter?.name ?? null,
         createdAt: d.created_at,
+        isCollected: Boolean(rawDefect.collected_at),
+        collectedAt: rawDefect.collected_at ?? null,
+        repairRequested: Boolean(d.repair_requested_at),
       });
       batchItems.push(...items);
     }
@@ -186,7 +189,6 @@ export default async function DefectsPage({
   const receivedExDefectIds = new Set(
     (receivedExNotes ?? []).map((e) => e.linked_defect_id).filter(Boolean) as string[],
   );
-  const excludedFromPending = new Set([...activeExDefectIds, ...receivedExDefectIds]);
 
   // Đếm số lượng theo các nhóm tiến trình
   const [
@@ -196,7 +198,7 @@ export default async function DefectsPage({
     { count: totalTerminal },
   ] = await Promise.all([
     supabase.from("defect_notes").select("id", { count: "exact", head: true }),
-    supabase.from("defect_notes").select("id, repair_requested_at").eq("status", "staging"),
+    supabase.from("defect_notes").select("id, repair_requested_at, collected_at").eq("status", "staging"),
     supabase.from("defect_notes").select("id", { count: "exact", head: true }).eq("status", "in_repair"),
     supabase
       .from("defect_notes")
@@ -205,16 +207,14 @@ export default async function DefectsPage({
   ]);
 
   const stagingList = stagingNotesForCount ?? [];
-  const pendingCount = stagingList.filter(
-    (r) => !r.repair_requested_at && !excludedFromPending.has(r.id),
-  ).length;
-  const stagingRepairReqCount = stagingList.filter(
-    (r) => r.repair_requested_at && !activeExDefectIds.has(r.id),
-  ).length;
+  const notCollectedCount = stagingList.filter((r) => !r.collected_at).length;
+  const inWarehouseCount = stagingList.filter((r) => Boolean(r.collected_at)).length;
+  const stagingRepairReqCount = stagingList.filter((r) => r.repair_requested_at).length;
 
   const counts = {
     all: totalAll ?? 0,
-    pending: pendingCount,
+    not_collected: notCollectedCount,
+    in_warehouse: inWarehouseCount,
     exchanging: activeExDefectIds.size,
     repairing: (totalInRepair ?? 0) + stagingRepairReqCount,
     completed: (totalTerminal ?? 0) + receivedExDefectIds.size,
@@ -223,16 +223,15 @@ export default async function DefectsPage({
   let query = supabase
     .from("defect_notes")
     .select(
-      "id, code, status, reported_by, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
+      "id, code, status, reported_by, repair_requested_at, collected_at, collected_by, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false });
 
-  if (tab === "pending") {
-    query = query.eq("status", "staging").is("repair_requested_at", null);
-    if (excludedFromPending.size > 0) {
-      query = query.not("id", "in", `(${Array.from(excludedFromPending).join(",")})`);
-    }
+  if (tab === "not_collected") {
+    query = query.eq("status", "staging").is("collected_at", null);
+  } else if (tab === "in_warehouse") {
+    query = query.eq("status", "staging").not("collected_at", "is", null);
   } else if (tab === "exchanging") {
     if (activeExDefectIds.size > 0) {
       query = query.in("id", Array.from(activeExDefectIds));
@@ -285,43 +284,54 @@ export default async function DefectsPage({
     }
   }
 
-  const rows: DefectListRow[] = (data ?? []).map((d) => ({
-    id: d.id,
-    code: d.code,
-    status: d.status,
-    reportedById: d.reported_by ?? null,
-    reporterName: d.reporter?.name ?? null,
-    sourceName: d.source_location?.name ?? null,
-    createdAt: d.created_at,
-    repairRequested: !!d.repair_requested_at,
-    liveExchange: liveByNote.get(d.id) ?? null,
-    items: (d.defect_note_items ?? []).map((i) => {
-      const variants = i.variants as {
-        attributes?: unknown;
-        unit?: string | null;
-        products?: { name?: string | null } | null;
-      } | null;
-      return {
-        id: i.id,
-        quantity: i.quantity,
-        damageDetail: i.damage_detail,
-        note: i.note,
-        images: i.images ?? [],
-        productName: variants?.products?.name ?? null,
-        variantLabel: variantLabelFor(variants),
-      } satisfies DefectItemRow;
-    }),
-  }));
+  const rows: DefectListRow[] = (data ?? []).map((d) => {
+    const rawDefect = d as unknown as {
+      source_location_id?: string | null;
+      collected_at?: string | null;
+    };
+    return {
+      id: d.id,
+      code: d.code,
+      status: d.status,
+      sourceLocationId: rawDefect.source_location_id ?? null,
+      reportedById: d.reported_by ?? null,
+      reporterName: d.reporter?.name ?? null,
+      sourceName: d.source_location?.name ?? null,
+      createdAt: d.created_at,
+      collectedAt: rawDefect.collected_at ?? null,
+      isCollected: Boolean(rawDefect.collected_at),
+      repairRequested: !!d.repair_requested_at,
+      liveExchange: liveByNote.get(d.id) ?? null,
+      items: (d.defect_note_items ?? []).map((i) => {
+        const variants = i.variants as {
+          attributes?: unknown;
+          unit?: string | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        return {
+          id: i.id,
+          variantId: i.variant_id,
+          quantity: i.quantity,
+          damageDetail: i.damage_detail,
+          note: i.note,
+          images: i.images ?? [],
+          productName: variants?.products?.name ?? null,
+          variantLabel: variantLabelFor(variants),
+        } satisfies DefectItemRow;
+      }),
+    };
+  });
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: DEFECT_STATUS[s] }));
   const locationOptions = (locations ?? []).map((l) => ({ value: l.id, label: l.name }));
 
   const quickFilterTabs = [
     { key: "all", label: "Tất cả", count: counts.all },
-    { key: "pending", label: "Cần xử lý", count: counts.pending, tone: "danger" },
+    { key: "not_collected", label: "Chưa về kho", count: counts.not_collected, tone: "danger" },
+    { key: "in_warehouse", label: "Đã về kho (Chờ xử lý)", count: counts.in_warehouse, tone: "success" },
     { key: "exchanging", label: "Đang đổi mới", count: counts.exchanging, tone: "info" },
     { key: "repairing", label: "Đang sửa", count: counts.repairing, tone: "warning" },
-    { key: "completed", label: "Đã hoàn tất", count: counts.completed, tone: "success" },
+    { key: "completed", label: "Đã hoàn tất", count: counts.completed, tone: "neutral" },
   ];
 
   return (
@@ -334,7 +344,7 @@ export default async function DefectsPage({
       />
 
       {/* Quick filter tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 border-b pb-2">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {quickFilterTabs.map((t) => {
           const isActive = tab === t.key || (t.key === "all" && !sp.tab);
           const nextParams: Record<string, string | undefined> = {
@@ -349,7 +359,7 @@ export default async function DefectsPage({
               key={t.key}
               href={href}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                "shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
                 isActive
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground hover:bg-accent hover:text-foreground border-border",
@@ -396,6 +406,8 @@ export default async function DefectsPage({
         currentUserId={profile?.id ?? null}
         isManager={isManager}
         isDev={isDev}
+        variants={defectVariantOptions}
+        sourceLocationId={sourceLocationId}
       />
 
       <Pagination
@@ -430,7 +442,7 @@ function buildQueryString(params: Record<string, string | undefined>) {
   return q.toString();
 }
 
-/** Header tabs: Phiếu hỏng | Tập kết sửa (+ nút Ghi nhận hỏng). */
+/** Header tabs: Phiếu hỏng | Kho đồ hỏng (+ nút Ghi nhận hỏng). */
 function HeaderTabs({
   view,
   isManager,
@@ -444,7 +456,7 @@ function HeaderTabs({
 }) {
   const tabs = [
     { href: "/defects", label: "Phiếu hỏng", active: view === "defect" },
-    { href: "/defects?view=repair", label: "Tập kết sửa", active: view === "repair", manager: true },
+    { href: "/defects?view=repair", label: "Kho đồ hỏng", active: view === "repair", manager: true },
   ];
   const visible = tabs.filter((t) => !t.manager || isManager);
   return (

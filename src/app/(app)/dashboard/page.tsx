@@ -360,6 +360,7 @@ async function loadDashboard() {
   return {
     statsData,
     recentRequisitions: (pendingRequisitions.data ?? []).slice(0, 5),
+    totalPendingRequisitionsCount: pendingRequisitions.data?.length ?? 0,
     activities,
   };
 }
@@ -369,11 +370,14 @@ export default async function DashboardPage() {
   const isManager = isPrivileged(profile?.role);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <DashboardStatsSection data={data.statsData} />
 
-      <div className="space-y-6">
-        <RecentRequisitionsCard items={data.recentRequisitions} />
+      <div className="space-y-4 sm:space-y-6">
+        <RecentRequisitionsCard
+          items={data.recentRequisitions}
+          totalCount={data.totalPendingRequisitionsCount}
+        />
         <ActivityHistory activities={data.activities} isManager={isManager} />
       </div>
     </div>

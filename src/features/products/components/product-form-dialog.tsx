@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +23,9 @@ import {
 } from "@/components/ui/select";
 import { pairsToJson } from "@/lib/attributes";
 import { createProduct, updateProduct, updateVariant } from "../actions";
-import { uploadProductImage } from "../upload";
 import type { AdminProductRow } from "../types";
 import { VariantFields } from "./variant-fields";
-import { ZoomableImage } from "@/components/image-lightbox";
+import { MultiImagePicker } from "./multi-image-picker";
 
 type CreateMode = "le" | "quy-cach" | "bo";
 
@@ -54,63 +52,6 @@ function blankRow(): DraftRow {
   return { uid: uid(), attributes: [["", ""]], price: "", unit: "", minStock: "0", isTrackableLot: false };
 }
 
-function ImagePicker({
-  label = "Ảnh đại diện",
-  preview,
-  onFile,
-}: {
-  label?: string;
-  preview: string | null;
-  onFile: (file: File | null, preview: string | null) => void;
-}) {
-  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    onFile(file, file ? URL.createObjectURL(file) : null);
-    e.target.value = "";
-  }
-
-  function onRemove(e: React.MouseEvent) {
-    e.stopPropagation();
-    onFile(null, null);
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-semibold">{label}</Label>
-      {preview ? (
-        <div className="relative inline-block">
-          <ZoomableImage
-            src={preview}
-            alt="Ảnh xem trước"
-            title="Ảnh vật tư"
-            className="size-20 rounded-lg border-2 object-cover sm:size-24"
-          />
-          <button
-            type="button"
-            onClick={onRemove}
-            className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
-            aria-label="Xóa ảnh này"
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>
-      ) : (
-        <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/40 px-4 py-4 text-center transition-colors hover:bg-accent">
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={onChange}
-          />
-          <ImagePlus className="size-6 text-muted-foreground" aria-hidden />
-          <span className="text-xs font-semibold">Bấm để tải ảnh lên</span>
-          <span className="text-[11px] text-muted-foreground">PNG, JPEG, WebP</span>
-        </label>
-      )}
-    </div>
-  );
-}
-
 export function ProductFormDialog({
   open,
   onOpenChange,
@@ -132,8 +73,7 @@ export function ProductFormDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
 
   // Dòng biến thể (dùng cho nhiều quy cách / bộ lắp ráp).
   const [rows, setRows] = useState<DraftRow[]>([blankRow()]);
@@ -159,8 +99,7 @@ export function ProductFormDialog({
     setName(product?.name ?? "");
     setDescription(product?.description ?? "");
     setCategoryId(product?.categoryId ?? null);
-    setImageFile(null);
-    setImagePreview(product?.images?.[0] ?? null);
+    setImages(product?.images ?? []);
 
     if (isEdit) {
       // Sửa: không nhảy mode; chỉ điền field nhanh nếu sửa được biến thể đơn.
@@ -260,17 +199,13 @@ export function ProductFormDialog({
     e.preventDefault();
     startTransition(async () => {
       try {
-        let imageUrl = product?.images?.[0];
-        if (imageFile) imageUrl = await uploadProductImage(imageFile);
-        const finalImages = imageUrl ? [imageUrl] : product?.images ?? [];
-
         if (isEdit && product) {
           await updateProduct(product.id, {
             name: name.trim(),
             description,
             categoryId,
             options: (product.options ?? []).join(", "),
-            images: finalImages,
+            images,
           });
           if (canQuickEdit && editVariant) {
             await updateVariant(editVariant.id, {
@@ -319,22 +254,19 @@ export function ProductFormDialog({
             description,
             categoryId,
             options: "",
-            images: finalImages,
+            images,
             variants,
             kit,
           });
           toast.success("Đã tạo vật tư");
         }
-
         onOpenChange(false);
         router.refresh();
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Lưu vật tư thất bại");
+        toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
       }
     });
   }
-
-  const kitIndex = kitUid ? rows.findIndex((r) => r.uid === kitUid) : -1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -393,12 +325,11 @@ export function ProductFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <ImagePicker
-                preview={imagePreview}
-                onFile={(f, p) => {
-                  setImageFile(f);
-                  setImagePreview(p);
-                }}
+              <MultiImagePicker
+                label="Ảnh vật tư"
+                images={images}
+                onChange={setImages}
+                disabled={pending}
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
@@ -417,7 +348,7 @@ export function ProductFormDialog({
                 idPrefix="edit-le"
                 showAttributes={false}
                 pairs={[]}
-                onPairs={() => undefined}
+                onPairs={() => {}}
                 price={lePrice}
                 onPrice={setLePrice}
                 unit={leUnit}
@@ -430,149 +361,118 @@ export function ProductFormDialog({
             </div>
           )}
 
-          {isEdit && !canQuickEdit && (
-            <p className="rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-              Vật tư này có nhiều biến thể / cấu tạo bộ — bấm vào tên vật tư trong danh sách để quản lý biến thể
-              và linh kiện của bộ.
-            </p>
+          {/* Tạo mới theo mode */}
+          {!isEdit && mode === "le" && (
+            <div className="space-y-2 rounded-lg border p-3">
+              <p className="text-xs font-semibold text-muted-foreground">Thông tin dòng tồn kho duy nhất</p>
+              <VariantFields
+                idPrefix="create-le"
+                showAttributes={false}
+                pairs={[]}
+                onPairs={() => {}}
+                price={lePrice}
+                onPrice={setLePrice}
+                unit={leUnit}
+                onUnit={setLeUnit}
+                minStock={leMinStock}
+                onMinStock={setLeMinStock}
+                isTrackableLot={leTrackableLot}
+                onTrackableLot={setLeTrackableLot}
+              />
+            </div>
           )}
 
-          {/* Dòng biến thể khi tạo nhiều quy cách / bộ */}
-          {!isEdit && mode !== "le" && (
-            <div className="space-y-3">
+          {!isEdit && (mode === "quy-cach" || mode === "bo") && (
+            <div className="space-y-3 rounded-lg border p-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{mode === "bo" ? "Dòng biến thể (linh kiện + bộ)" : "Dòng quy cách"}</span>
+                <div>
+                  <p className="text-xs font-semibold">
+                    {mode === "bo" ? "Các dòng trong bộ & linh kiện" : "Danh sách quy cách"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {mode === "bo"
+                      ? "Đánh dấu 1 dòng là Bộ, các dòng còn lại là linh kiện và nhập số lượng của từng linh kiện."
+                      : "Mỗi dòng là 1 quy cách độc lập (tồn kho riêng, giá riêng)."}
+                  </p>
+                </div>
                 <Button type="button" variant="outline" size="sm" onClick={addRow}>
                   + Thêm dòng
                 </Button>
               </div>
 
-              {rows.map((r, index) => {
-                const isParent = r.uid === kitUid;
-                return (
-                  <div key={r.uid} className={`space-y-3 rounded-lg border p-3 ${isParent ? "border-primary/60 bg-primary/5" : ""}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
-                        <span>Dòng {index + 1}</span>
-                        <span className="truncate text-xs font-normal text-muted-foreground">{rowPreview(r)}</span>
-                        {isParent && (
-                          <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                            BỘ LẮP RÁP
-                          </span>
-                        )}
+              <div className="space-y-3">
+                {rows.map((r, idx) => {
+                  const isThisKit = kitUid === r.uid;
+                  return (
+                    <div key={r.uid} className={`rounded-md border p-3 space-y-2.5 ${isThisKit ? "border-primary bg-primary/5" : ""}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold">
+                          Dòng #{idx + 1}: {rowPreview(r)}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {mode === "bo" && (
+                            <label className="flex items-center gap-1 text-xs cursor-pointer">
+                              <input
+                                type="radio"
+                                name="kit-parent"
+                                checked={isThisKit}
+                                onChange={() => setKitUid(r.uid)}
+                              />
+                              Là dòng Bộ
+                            </label>
+                          )}
+                          {rows.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRow(r.uid)}
+                              className="text-destructive h-7 px-2 text-xs"
+                            >
+                              Xóa dòng
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeRow(r.uid)}>
-                        Xóa dòng
-                      </Button>
-                    </div>
 
-                    <VariantFields
-                      idPrefix={`row-${r.uid}`}
-                      pairs={r.attributes}
-                      onPairs={(pairs) => setRow(r.uid, { attributes: pairs })}
-                      price={r.price}
-                      onPrice={(price) => setRow(r.uid, { price })}
-                      unit={r.unit}
-                      onUnit={(unit) => setRow(r.uid, { unit })}
-                      minStock={r.minStock}
-                      onMinStock={(minStock) => setRow(r.uid, { minStock })}
-                      isTrackableLot={r.isTrackableLot}
-                      onTrackableLot={(v) => setRow(r.uid, { isTrackableLot: v })}
-                    />
+                      <VariantFields
+                        idPrefix={`row-${r.uid}`}
+                        showAttributes={true}
+                        pairs={r.attributes}
+                        onPairs={(p) => setRow(r.uid, { attributes: p })}
+                        price={r.price}
+                        onPrice={(v) => setRow(r.uid, { price: v })}
+                        unit={r.unit}
+                        onUnit={(v) => setRow(r.uid, { unit: v })}
+                        minStock={r.minStock}
+                        onMinStock={(v) => setRow(r.uid, { minStock: v })}
+                        isTrackableLot={r.isTrackableLot}
+                        onTrackableLot={(v) => setRow(r.uid, { isTrackableLot: v })}
+                      />
 
-                    {mode === "bo" && (
-                      <div className="flex items-center gap-2 border-t pt-2">
-                        <label className="flex cursor-pointer items-center gap-1.5 text-xs">
-                          <input
-                            type="radio"
-                            name="kit-parent"
-                            checked={isParent}
-                            onChange={() => {
-                              setKitUid(r.uid);
-                              // Mặc định mọi dòng khác là linh kiện với định mức 1.
-                              setKitQty((q) => {
-                                const next = { ...q };
-                                for (const other of rows) {
-                                  if (other.uid !== r.uid && !next[other.uid]) next[other.uid] = "1";
-                                }
-                                return next;
-                              });
-                            }}
-                            className="size-4 accent-primary"
-                          />
-                          Dòng này là Bộ (lắp ráp từ các dòng còn lại)
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Khai linh kiện cho dòng bộ */}
-              {mode === "bo" && kitIndex >= 0 && (
-                <div className="rounded-lg border border-primary/40 p-3">
-                  <p className="mb-2 text-xs font-semibold">Cấu tạo bộ (dòng {kitIndex + 1})</p>
-                  <div className="space-y-1.5">
-                    {rows.map((r, index) => {
-                      if (r.uid === kitUid) return null;
-                      return (
-                        <div key={r.uid} className="flex items-center gap-2 text-sm">
-                          <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                            Dòng {index + 1} · {rowPreview(r)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">SL trong 1 bộ:</span>
+                      {mode === "bo" && !isThisKit && (
+                        <div className="flex items-center gap-2 pt-1 border-t text-xs">
+                          <Label className="text-xs">Số lượng dùng trong 1 Bộ:</Label>
                           <Input
                             type="number"
                             min="0"
-                            className="h-8 w-20"
+                            className="w-24 h-8 text-xs"
+                            placeholder="0 = không dùng"
                             value={kitQty[r.uid] ?? ""}
                             onChange={(e) => kitQtyRow(r.uid, e.target.value)}
                           />
-                          <span className="text-xs text-muted-foreground">(0 = không thuộc bộ)</span>
+                          <span className="text-muted-foreground">{r.unit || "đơn vị"}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    Tồn của bộ tự tính = số bộ còn ráp được theo linh kiện ít nhất. Linh kiện vẫn bán lẻ riêng được —
-                    bán lẻ 1 linh kiện thì số bộ còn ráp được sẽ giảm tương ứng.
-                  </p>
-                </div>
-              )}
-
-              {mode === "quy-cach" && (
-                <p className="text-[11px] text-muted-foreground">
-                  Mỗi dòng là một quy cách đặt hàng riêng (VD Bao 10kg, Bao 25kg).
-                </p>
-              )}
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Vật tư lẻ (tạo) */}
-          {!isEdit && mode === "le" && (
-            <div className="space-y-2 rounded-lg border p-3">
-              <p className="text-xs font-semibold text-muted-foreground">
-                Thông tin vật tư lẻ — nhập thẳng giá & đơn vị, không cần khai biến thể
-              </p>
-              <VariantFields
-                idPrefix="new-le"
-                showAttributes={false}
-                pairs={[]}
-                onPairs={() => undefined}
-                price={lePrice}
-                onPrice={setLePrice}
-                unit={leUnit}
-                onUnit={setLeUnit}
-                minStock={leMinStock}
-                onMinStock={setLeMinStock}
-                isTrackableLot={leTrackableLot}
-                onTrackableLot={setLeTrackableLot}
-              />
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
               Hủy
             </Button>
             <Button type="submit" disabled={pending}>

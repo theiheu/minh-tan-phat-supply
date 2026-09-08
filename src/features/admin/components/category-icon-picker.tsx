@@ -71,7 +71,7 @@ export function CategoryIconPicker({
           {uploading ? "Đang tải…" : isImage ? "Đổi icon (tải ảnh khác)" : "Tải icon từ máy"}
           <input
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml,image/heic,image/heif,.heic,.heif"
             className="hidden"
             onChange={onFile}
           />

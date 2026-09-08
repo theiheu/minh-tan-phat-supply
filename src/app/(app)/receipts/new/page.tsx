@@ -1,6 +1,7 @@
 import { ReceiptForm, type ItemDraft } from "@/features/receipts/components/receipt-form";
 import { fetchCompositeVariantIds } from "@/features/products/data";
 import { variantLabel } from "@/lib/labels";
+import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export default async function NewReceiptPage({
 }: {
   searchParams?: Promise<{ requisition_id?: string }>;
 }) {
+  const profile = await getCurrentProfile();
   const sp = searchParams ? await searchParams : undefined;
   const requisitionId = sp?.requisition_id;
   const supabase = await createClient();
@@ -68,6 +70,7 @@ export default async function NewReceiptPage({
       variants={variantOptions}
       initialItems={initialItems}
       initialNotes={initialNotes}
+      currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
     />
   );
 }

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   approveExchange,
-  cancelExchange,
   issueExchange,
   receiveExchange,
   rejectExchange,
@@ -47,9 +46,6 @@ export function ExchangeDetailActions({
               Duyệt
             </Button>
           )}
-          <Button size="sm" variant="outline" onClick={() => run(() => cancelExchange(exchangeId), "Đã hủy")} disabled={pending}>
-            Hủy
-          </Button>
           {isManager &&
             (rejecting ? (
               <span className="flex items-center gap-2">

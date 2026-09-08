@@ -10,17 +10,22 @@ import { Label } from "@/components/ui/label";
 import { uploadIssueInvoiceImage } from "../upload";
 import { updateIssueInvoiceImages } from "../actions";
 import { ZoomableImage } from "@/components/image-lightbox";
+import { canDeleteInvoiceImage } from "@/lib/images";
 
 export function IssueInvoices({
   issueId,
   issueCode,
   invoiceImages: initialImages = [],
   status,
+  currentUser,
+  creatorId,
 }: {
   issueId: string;
   issueCode: string;
   invoiceImages?: string[];
   status: string;
+  currentUser?: { id: string; role: string; name?: string | null } | null;
+  creatorId?: string | null;
 }) {
   const [images, setImages] = useState<string[]>(initialImages);
   const [uploading, setUploading] = useState(false);
@@ -96,19 +101,26 @@ export function IssueInvoices({
                 title={`Hóa đơn #${idx + 1} (${issueCode})`}
                 className="size-20 rounded-lg border-2 object-cover shadow-sm sm:size-24"
               />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove(url);
-                }}
-                disabled={pending}
-                className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
-                aria-label="Xóa ảnh này"
-                title="Xóa ảnh hóa đơn này"
-              >
-                <X className="size-3.5" />
-              </button>
+              {canDeleteInvoiceImage({
+                imageUrl: url,
+                currentUserId: currentUser?.id,
+                userRole: currentUser?.role,
+                creatorId,
+              }) && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(url);
+                  }}
+                  disabled={pending}
+                  className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
+                  aria-label="Xóa ảnh này"
+                  title="Xóa ảnh hóa đơn này"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
           ))}
 
@@ -128,7 +140,7 @@ export function IssueInvoices({
             </Button>
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"
               multiple
               className="sr-only"
               disabled={uploading || pending}

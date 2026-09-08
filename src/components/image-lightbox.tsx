@@ -34,6 +34,13 @@ export function ImageLightbox({
     }
   }, [open, initialIndex, images.length]);
 
+  const currentSrc = images[currentIndex] || images[0] || "";
+  const [lightboxImgSrc, setLightboxImgSrc] = useState<string | undefined>(() => appAssetUrl(currentSrc));
+
+  useEffect(() => {
+    setLightboxImgSrc(appAssetUrl(currentSrc));
+  }, [currentSrc]);
+
   const close = useCallback((e?: React.SyntheticEvent) => {
     e?.stopPropagation();
     onOpenChange(false);
@@ -93,8 +100,6 @@ export function ImageLightbox({
 
   if (!mounted || !open || images.length === 0) return null;
 
-  const currentSrc = images[currentIndex] || images[0];
-
   return createPortal(
     <div
       role="dialog"
@@ -136,9 +141,14 @@ export function ImageLightbox({
         <div className="relative flex min-h-0 items-center justify-center overflow-hidden bg-muted/50 p-3 sm:p-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={appAssetUrl(currentSrc)}
+            src={lightboxImgSrc || currentSrc}
             alt={title || `Ảnh ${currentIndex + 1}`}
             className="max-h-[60vh] w-auto max-w-full object-contain rounded-lg transition-all"
+            onError={() => {
+              if (lightboxImgSrc !== currentSrc && currentSrc) {
+                setLightboxImgSrc(currentSrc);
+              }
+            }}
           />
 
           {/* Previous / Next buttons */}
@@ -213,6 +223,11 @@ export function ZoomableImage({
   ...props
 }: ZoomableImageProps) {
   const [open, setOpen] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string | undefined>(() => appAssetUrl(src));
+
+  useEffect(() => {
+    setImgSrc(appAssetUrl(src));
+  }, [src]);
 
   if (!src) return null;
 
@@ -232,9 +247,14 @@ export function ZoomableImage({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={appAssetUrl(src)}
+          src={imgSrc || src}
           alt={alt}
           className={cn("transition-opacity group-hover/zoom:opacity-95", className)}
+          onError={() => {
+            if (imgSrc !== src && src) {
+              setImgSrc(src);
+            }
+          }}
           {...props}
         />
         {showZoomIcon && (

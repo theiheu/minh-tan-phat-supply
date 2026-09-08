@@ -13,12 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import {
   approveExchange,
-  cancelExchange,
   issueExchange,
   receiveExchange,
   rejectExchange,
@@ -211,16 +209,6 @@ function ExchangeDetailModal({
                     Duyệt phiếu
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => run(() => cancelExchange(row.id), "Đã hủy phiếu")}
-                  disabled={pending}
-                  className="w-full"
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                  Hủy phiếu
-                </Button>
                 {isManager &&
                   (rejecting ? (
                     <div className="flex items-center gap-2">

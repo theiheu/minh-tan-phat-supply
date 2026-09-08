@@ -157,6 +157,8 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
         issueCode={issue.code}
         invoiceImages={issue.invoice_images ?? []}
         status={issue.status}
+        currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
+        creatorId={issue.creator_id}
       />
 
       <Card>

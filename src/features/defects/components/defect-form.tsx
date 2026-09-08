@@ -322,7 +322,7 @@ export function DefectForm({
                   >
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,image/heic,image/heif,.heic,.heif"
                       multiple
                       className="hidden"
                       disabled={it.uploading}

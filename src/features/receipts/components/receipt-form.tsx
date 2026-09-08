@@ -14,6 +14,7 @@ import { ComboboxInput } from "@/components/combobox-input";
 import { createReceipt, postReceipt, updateReceipt } from "../actions";
 import { uploadReceiptInvoiceImage } from "../upload";
 import { ZoomableImage } from "@/components/image-lightbox";
+import { canDeleteInvoiceImage } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
 export interface ItemDraft {
@@ -43,6 +44,8 @@ export function ReceiptForm({
   initialNotes = "",
   initialInvoiceImages = [],
   initialItems,
+  currentUser,
+  creatorId,
   onSuccess,
   onCancel,
 }: {
@@ -55,6 +58,8 @@ export function ReceiptForm({
   initialNotes?: string;
   initialInvoiceImages?: string[];
   initialItems?: ItemDraft[];
+  currentUser?: { id: string; role: string; name?: string | null } | null;
+  creatorId?: string | null;
   onSuccess?: (id: string) => void;
   onCancel?: () => void;
 }) {
@@ -236,14 +241,22 @@ export function ReceiptForm({
                   title={`Hóa đơn mua hàng #${idx + 1}`}
                   className="size-20 rounded-lg border-2 object-cover sm:size-24"
                 />
-                <button
-                  type="button"
-                  onClick={() => removeInvoiceImage(url)}
-                  className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
-                  aria-label="Xóa ảnh này"
-                >
-                  <X className="size-3.5" />
-                </button>
+                {(!isEditing ||
+                  canDeleteInvoiceImage({
+                    imageUrl: url,
+                    currentUserId: currentUser?.id,
+                    userRole: currentUser?.role,
+                    creatorId,
+                  })) && (
+                  <button
+                    type="button"
+                    onClick={() => removeInvoiceImage(url)}
+                    className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700"
+                    aria-label="Xóa ảnh này"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
               </div>
             ))}
             <Label className="cursor-pointer">
@@ -262,7 +275,7 @@ export function ReceiptForm({
               </Button>
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"
                 multiple
                 className="sr-only"
                 disabled={uploadingInvoices}

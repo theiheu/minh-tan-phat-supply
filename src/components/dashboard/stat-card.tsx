@@ -53,28 +53,28 @@ export function StatCard({
           : undefined
       }
       className={cn(
-        "py-4 text-left select-none",
+        "py-2.5 sm:py-4 text-left select-none",
         isClickable &&
           "cursor-pointer transition-all duration-150 hover:border-primary/50 hover:shadow-md hover:ring-1 hover:ring-primary/20 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         className,
       )}
     >
-      <CardContent className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0">
+      <CardContent className="flex items-center justify-between gap-2 px-3.5 sm:px-6">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div
-            className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${TONES[tone]}`}
+            className={`flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg ${TONES[tone]}`}
           >
-            <Icon className="size-5" />
+            <Icon className="size-4 sm:size-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-2xl font-semibold tabular-nums">{value}</div>
-            <div className="truncate text-sm text-muted-foreground">{label}</div>
-            {hint && <div className="text-[11px] text-muted-foreground/80 mt-0.5">{hint}</div>}
+            <div className="text-lg sm:text-2xl font-bold tabular-nums leading-tight">{value}</div>
+            <div className="truncate text-xs sm:text-sm text-muted-foreground">{label}</div>
+            {hint && <div className="hidden sm:block text-[11px] text-muted-foreground/80 mt-0.5">{hint}</div>}
           </div>
         </div>
         {isClickable && (
-          <div className="text-muted-foreground/50 shrink-0 pr-1">
-            <ChevronRight className="size-4" />
+          <div className="text-muted-foreground/50 shrink-0 pr-0.5 sm:pr-1">
+            <ChevronRight className="size-3.5 sm:size-4" />
           </div>
         )}
       </CardContent>
