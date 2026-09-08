@@ -1227,20 +1227,104 @@ from variants v;
 
 ## 18. Báo cáo & xuất liệu
 
-| Báo cáo | Nguồn | Dạng |
-|---|---|---|
-| Tồn kho | stock_balances join variants/products/locations | bảng + bar |
-| Nhập - Xuất - Tồn | stock_movements theo kỳ | line/bar |
-| Cấp phát theo khu vực | requisitions issued/received join zones | pie/bar |
-| Hỏng - Sửa - Thanh lý | defect/repair/liquidation | bảng + bar |
-| Sắp hết hạn | receipt_items.expiry_date ≤ 30 ngày | bảng |
-| Lịch sử biến động kho | stock_movements | bảng (filter) |
-| Audit log | audit_logs | bảng |
+### 18.1 Tổng quan Hub Báo cáo (`/reports`)
+Trung tâm Báo cáo & Phân tích chuyên sâu (dành riêng cho vai trò `manager` - Quản lý, Chủ trại, Kế toán). Cho phép phân tích toàn diện tình hình kho vận, vật tư tiêu hao theo chuồng, hiệu suất nhiên liệu phương tiện, công nợ/doanh thu đối tác và sổ thẻ kho chi tiết.
 
-**Xuất phiếu PDF:** nút "In/Xuất PDF" trên mỗi phiếu → `@react-pdf/renderer` (server).
-**Xuất báo cáo:** PDF + Excel/CSV (`xlsx`).
+- **Bộ lọc thời gian linh hoạt (Date Presets):**
+  - Hỗ trợ các mốc lọc nhanh: `Hôm nay (today)`, `7 ngày qua (7days)`, `Tháng này (this_month)`, `Tháng trước (last_month)`, `Quý này (this_quarter)`, `Năm nay (this_year)`, `Tùy chọn (custom)`.
+  - Bộ lọc kho lưu trữ: Xem toàn bộ kho (`all`) hoặc lọc theo từng kho cụ thể (`locationId`).
 
-### 18.1 Phiếu xuất mẫu (Print Templates — CHUẨN)
+---
+
+### 18.2 Chi tiết 5 Module Báo cáo Chuyên sâu
+
+#### 1. Báo cáo Chung & Xuất - Nhập - Tồn (General Overview & Stock Ledger)
+- **Thẻ chỉ số tổng quan (4 KPI Cards):**
+  - **Tổng giá trị tồn kho (`totalInventoryValue`):** Định giá toàn bộ tài sản vật tư hiện có trong kho theo giá nhập/giá bán chuẩn.
+  - **Tổng nhập trong kỳ (`totalImportValue`):** Tổng giá trị các lô hàng nhập từ nhà cung cấp theo các phiếu nhập `posted`.
+  - **Chi phí cấp chuồng (`totalIssuedCost`):** Tổng giá trị vật tư đã cấp phát sử dụng nội bộ cho các chuồng và khu vực kỹ thuật.
+  - **Doanh thu xuất bán (`totalSalesRevenue`):** Doanh thu từ việc xuất bán vật tư, phế liệu, phân gà hoặc trang thiết bị thanh lý cho khách ngoài.
+- **Bảng Xuất - Nhập - Tồn (Stock Ledger):**
+  - Cột: `Tên vật tư` | `Biến thể` | `ĐVT` | `Danh mục` | `Tồn đầu kỳ` | `Nhập trong kỳ` | `Xuất trong kỳ` | `Tồn cuối kỳ` | `Đơn giá` | `Giá trị tồn cuối`.
+  - Tính toán chính xác theo công thức kế toán kho: `Tồn cuối = Tồn đầu + Nhập - Xuất`.
+- **Phân bổ chi phí theo Danh mục (`categoryBreakdown`):**
+  - Biểu đồ & bảng tỷ trọng chi phí tiêu hao theo từng danh mục (Chiếu sáng, Cơ điện nước, Thú y, Bao bì...).
+- **Tóm tắt Sự cố & Sửa chữa (`defectsSummary`):**
+  - Thống kê tổng số sự cố hỏng hóc, số thiết bị đã sửa chữa hoàn tất, tổng chi phí sửa chữa và doanh thu thanh lý phế liệu.
+- **Tóm tắt Nhiên liệu (`fuelSummary`):**
+  - Tổng lít dầu nhập bồn, tổng lít cấp phát cho xe/máy, mức tồn bồn dầu hiện tại và ước tính giá trị tồn kho xăng dầu.
+
+#### 2. Báo cáo Chi phí theo Chuồng / Khu vực (Zone Cost Analysis)
+- **Mục tiêu:** Giúp chủ trại kiểm soát định mức vật tư của từng chuồng gà (Chuồng 1, Chuồng 2, Xưởng cơ điện...).
+- **Chỉ số:** `Tổng chi phí vật tư toàn trại (grandTotalCost)`.
+- **Bảng & Biểu đồ cột theo Khu vực (`ZoneCostRow`):**
+  - Thống kê: `Tên khu vực/Chuồng` | `Tổng chi phí (VNĐ)` | `Tỷ trọng chi phí (%)` | `Số lượt cấp phát` | `Số sự cố ghi nhận`.
+- **Modal Xem chi tiết vật tư từng chuồng (`ZoneCostDetailDialog` - `ZoneCostItem`):**
+  - Cho phép bấm "Xem chi tiết" trên từng dòng chuồng để mở bảng danh sách các mặt hàng chuồng đó đã nhận trong kỳ gồm: `Tên vật tư`, `Biến thể`, `ĐVT`, `Số lượng`, `Đơn giá`, `Thành tiền`.
+
+#### 3. Báo cáo Phương tiện & Tiêu hao Nhiên liệu (Vehicle Fuel & Norms)
+- **Mục tiêu:** Quản lý lượng dầu Diesel cấp phát cho xe tải, xe ben, máy xúc, máy phát điện; cảnh báo thất thoát hoặc xe ngốn dầu quá định mức.
+- **Chỉ số:** `Tổng nhiên liệu cấp phát toàn trại (Lít)`.
+- **Bảng phân tích hiệu suất phương tiện (`VehicleUsageRow`):**
+  - Thông tin: `Mã xe` | `Tên phương tiện` | `Biển số` | `Đơn vị đo (Km / Giờ)`.
+  - Phân tích: `Định mức chuẩn (L/100km hoặc L/h)` | `Tổng dầu đã cấp (L)` | `Số lượt cấp` | `Quãng đường/Giờ chạy thực tế` | `Mức tiêu hao thực tế (L/100km hoặc L/h)` | `Chênh lệch so với định mức`.
+  - Cảnh báo vi phạm (`isOverNorm`): Tự động gắn nhãn Badge đỏ **"Vượt định mức"** hoặc Badge xanh **"Đạt định mức"**.
+
+#### 4. Báo cáo Đối tác - NCC & Khách hàng (Partners Report)
+- **Phân hệ Nhà cung cấp (`SupplierReportRow`):**
+  - Thống kê: `Tên NCC` | `Số điện thoại` | `Số phiếu nhập kho` | `Tổng số lượng hàng nhập` | `Tổng giá trị nhập (VNĐ)`.
+  - Hỗ trợ đối chiếu công nợ và khối lượng mua hàng theo từng nhà cung cấp.
+- **Phân hệ Khách hàng (`CustomerReportRow`):**
+  - Thống kê: `Tên khách hàng` | `Số điện thoại` | `Số phiếu xuất bán` | `Tổng số lượng xuất` | `Tổng doanh thu thu về (VNĐ)`.
+  - Hỗ trợ quản lý doanh thu bán lẻ/bán buôn các sản phẩm phụ (phân gà, vỉ trứng, phế liệu).
+
+#### 5. Sổ Thẻ kho chi tiết (Stock Card Ledger)
+- **Mục tiêu:** Minh bạch toàn bộ lịch sử biến động vào-ra của từng mặt hàng/biến thể cụ thể theo từng mốc thời gian.
+- **Bộ chọn:** Chọn mặt hàng/biến thể từ dropdown + chọn kho lưu trữ.
+- **Thống kê biến động (`StockCardData`):**
+  - `Tồn đầu kỳ` | `Tổng nhập trong kỳ` | `Tổng xuất trong kỳ` | `Tồn cuối kỳ`.
+- **Nhật ký thời gian thực (`StockCardEntry`):**
+  - Bảng chi tiết: `Ngày giờ` | `Loại chứng từ (refType)` | `Mã phiếu (refCode)` | `Loại biến động (movementLabel)` | `Diễn giải/Ghi chú` | `Người thực hiện` | `Số lượng nhập` | `Số lượng xuất` | `Tồn lũy kế sau biến động`.
+
+---
+
+### 18.3 Các hàm tính toán thuần túy (Pure Calculation Functions)
+Được triển khai trong `src/features/reports/lib/calculations.ts` với đầy đủ unit test:
+- `calculateStockLedger(variants, balances, movements, openingMovements)`: Tính toán số tồn đầu, nhập, xuất, tồn cuối của từng biến thể trong kỳ.
+- `calculateZoneCosts(issues, defects)`: Gom nhóm chi phí vật tư và số lượng sự cố theo từng khu vực chuồng trại.
+- `calculateVehicleConsumption(vehicles, logs)`: Tính toán quãng đường/giờ máy thực tế, mức tiêu hao trung bình và so sánh với định mức (`normDiff`, `isOverNorm`).
+- `calculateStockCardEntries(openingStock, rawEntries)`: Tính dòng chảy lũy kế (`runningBalance`) qua từng bút toán nhập/xuất/điều chỉnh/kiểm kê.
+- `getDateRangeFromPreset(preset, customFrom?, customTo?)`: Chuyển đổi Preset thành khoảng ngày `from` và `to` chuẩn xác.
+- `parseDateBoundary(dateStr, isStart)`: Chuẩn hóa mốc thời gian đầu ngày (`00:00:00.000`) và cuối ngày (`23:59:59.999`) theo múi giờ Việt Nam (+07:00).
+
+---
+
+### 18.4 API Routes & Xuất dữ liệu (Excel & PDF)
+
+#### 1. Xuất Excel (`GET /api/reports/export`)
+- **Query Params:**
+  - `type`: `stock_ledger` | `zone_cost` | `vehicles` | `partners` | `stock_card` (mặc định: `stock_ledger`).
+  - `from`: Ngày bắt đầu (`YYYY-MM-DD` hoặc ISO string).
+  - `to`: Ngày kết thúc (`YYYY-MM-DD` hoặc ISO string).
+  - `location`: ID kho (tùy chọn, dùng cho `stock_ledger` và `stock_card`).
+  - `variantId`: ID biến thể (bắt buộc khi `type=stock_card`).
+- **Thực thi:** Dùng thư viện `xlsx` (`src/features/reports/lib/excel-export.ts`) tạo file `.xlsx` định dạng chuyên nghiệp (tiêu đề trang tính, thời gian xuất, bảng dữ liệu số định dạng chuẩn, tổng cộng cuối bảng). Tên file trả về: `bao-cao-xnt-...xlsx`, `chi-phi-chuong-...xlsx`, `nhien-lieu-xe-...xlsx`, `doi-tac-...xlsx`, `the-kho-...xlsx`.
+
+#### 2. Xuất PDF Khổ A4 (`GET /api/reports/pdf`)
+- **Query Params:** Tương tự như route xuất Excel (`type`, `from`, `to`, `location`, `variantId`).
+- **Thực thi:** Render server-side bằng `@react-pdf/renderer` với template `SlipDocument`:
+  - Tiêu đề Trại Gà Minh Tân Phát, tên báo cáo, kỳ báo cáo.
+  - Bảng dữ liệu tự co dãn (flex layout), canh lề chuẩn (trái cho tên, phải cho số tiền/số lượng, giữa cho ĐVT).
+  - Khối tổng cộng nổi bật.
+  - Khối chữ ký 3 bên theo chuẩn vận hành: **Người lập báo cáo**, **Kế toán trại**, **Quản lý / Chủ trại duyệt**.
+
+#### 3. Xuất bảng tồn kho PDF theo một kho (`GET /api/reports/stock/pdf`)
+- **Query Params:** `location` (bắt buộc, UUID của kho).
+- **Thực thi:** Đọc view `location_stock` + bảng `variants`, render bảng danh mục hàng đang còn tồn trong kho đó.
+
+---
+
+### 18.5 Phiếu xuất mẫu (Print Templates — CHUẨN)
 > Đây là **chuẩn in ấn** toàn hệ thống. Mọi phiếu in ra giấy (A4) phải theo cấu trúc này. In bằng `@react-pdf/renderer` (server), khổ A4, lề 20mm, font hệ thống.
 
 **Cấu trúc chung (mọi phiếu):**

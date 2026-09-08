@@ -246,16 +246,40 @@ Hệ thống phân chia 2 nhóm đối tượng rõ ràng:
 ---
 
 ### TÌNH HUỐNG 10: CHỦ TRẠI XEM BÁO CÁO CHI PHÍ VẬT TƯ CỦA TỪNG KHU CHUỒNG
-* **Vấn đề:** Cuối tháng, Chủ trại muốn biết tháng này Chuồng Đẻ 3 tiêu tốn bao nhiêu tiền vật tư, tại sao tiền điện/vật tư chuồng đó lại cao hơn Chuồng Đẻ 2?
+* **Vấn đề:** 
+  - Cuối tuần / cuối tháng, Chủ trại cần nắm rõ: Chuồng Đẻ 3 tiêu tốn bao nhiêu tiền vật tư, tại sao tiền điện/vật tư chuồng đó lại cao hơn Chuồng Đẻ 2? Đội xe ben, máy xúc có xe nào chạy ngốn dầu bất thường vượt định mức không?
+  - Kế toán cần số liệu tổng hợp Xuất - Nhập - Tồn kho, công nợ mua hàng nhà cung cấp, doanh thu bán phân gà/phế liệu và kiểm tra chi tiết thẻ kho từng mã vật tư để chốt sổ tài chính và lập báo cáo.
 
 #### Cách thực hiện:
-1. Vào mục **Báo cáo** (`/reports`).
-2. Chọn khoảng thời gian: `Từ 01/xx đến 30/xx`.
-3. Xem các biểu đồ và bảng phân tích:
-   - **Báo cáo Xuất - Nhập - Tồn:** Tổng giá trị tài sản hiện có trong kho.
-   - **Báo cáo theo Khu vực (Zone Cost):** Liệt kê chi tiết Chuồng 1 dùng bao nhiêu, Chuồng 2 dùng bao nhiêu, Xưởng cơ điện dùng bao nhiêu.
-   - **Báo cáo Tiêu hao Nhiên liệu:** Xe nào ngốn nhiều dầu nhất, máy nào vượt định mức.
-4. Bấm **Xuất file Excel (`.xlsx`)** hoặc **In Báo Cáo PDF** để lưu trữ và họp giao ban trại.
+1. **Bước 1: Truy cập & Lọc dữ liệu (`/reports`)**
+   - Đăng nhập tài khoản Quản lý / Kế toán ➜ Chọn mục **Báo cáo** trên thanh điều hướng.
+   - **Chọn khoảng thời gian nhanh (Presets):** Bấm các nút chọn sẵn như `Hôm nay`, `7 ngày qua`, `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay` hoặc chọn `Tùy chọn` để chỉ định chính xác từ ngày... đến ngày...
+   - **Chọn phạm vi kho:** Mặc định xem `Tất cả các kho` hoặc lọc riêng từng kho (Kho Chính, Kho Hỏng, Bồn Dầu...).
+
+2. **Bước 2: Khai thác số liệu qua 5 Tab chuyên sâu**
+   - **Tab 1: Báo cáo Chung (Tổng quan & Xuất - Nhập - Tồn):**
+     - Quan sát 4 thẻ KPI đầu trang: Tổng giá trị tài sản đang tồn trong kho, Tổng tiền nhập hàng trong kỳ, Tổng chi phí vật tư cấp phát cho các chuồng và Doanh thu xuất bán ngoài.
+     - Kiểm tra bảng **Xuất - Nhập - Tồn**: Xem chi tiết Tồn đầu kỳ, Nhập trong kỳ, Xuất trong kỳ, Tồn cuối kỳ và Giá trị tồn của từng mã vật tư.
+     - Xem biểu đồ **Phân bổ chi phí theo danh mục** (Cơ điện, Chiếu sáng, Thú y, Bao bì...) để biết nhóm vật tư nào chiếm tỷ trọng chi phí cao nhất.
+     - Xem tóm tắt **Sự cố & Sửa chữa** (số vụ hỏng, chi phí sửa chữa, tiền thanh lý) và **Bồn xăng dầu** (nhập, cấp, tồn bồn).
+   - **Tab 2: Báo cáo theo Chuồng (Zone Cost):**
+     - Xem biểu đồ cột so sánh trực quan chi phí giữa các khu vực: Chuồng 1, Chuồng 2, Chuồng 3, Xưởng cơ điện...
+     - Xem tổng tiền, tỷ trọng chi phí (%) và số lượt cấp phát của từng chuồng.
+     - **Xem chi tiết vật tư chuồng đã dùng (Drill-down):** Bấm nút **"Xem chi tiết"** tại dòng chuồng cần kiểm tra. Hệ thống hiển thị bảng chi tiết liệt kê chính xác từng món vật tư (bóng đèn, motor, béc tưới, dây điện...), số lượng đã cấp, đơn giá và thành tiền.
+   - **Tab 3: Báo cáo Phương tiện & Nhiên liệu:**
+     - Theo dõi lượng dầu Diesel đã cấp cho toàn bộ xe tải, xe ben, máy xúc, máy phát điện trong kỳ.
+     - So sánh giữa **Mức tiêu hao thực tế (Lít/100km hoặc Lít/giờ)** với **Định mức chuẩn**.
+     - Hệ thống tự động gắn nhãn cảnh báo màu đỏ **"Vượt định mức"** đối với phương tiện tiêu hao nhiên liệu bất thường, giúp chủ trại phát hiện ngay tình trạng thất thoát dầu hoặc xe cần đưa đi bảo dưỡng động cơ.
+   - **Tab 4: Báo cáo Đối tác (Nhà cung cấp & Khách hàng):**
+     - **Nhà cung cấp:** Thống kê số lượng phiếu nhập và tổng tiền mua hàng của từng nhà cung cấp trong kỳ để đối chiếu công nợ và hóa đơn thanh toán.
+     - **Khách hàng:** Thống kê tổng tiền thu về từ từng khách hàng / thương lái mua phân gà, vỉ trứng, phế liệu hoặc mua tài sản thanh lý.
+   - **Tab 5: Sổ Thẻ kho chi tiết (Stock Card):**
+     - Chọn một mặt hàng cụ thể (ví dụ: *Bóng đèn sưởi hồng ngoại 175W*) và chọn kho lưu trữ.
+     - Hệ thống hiển thị nhật ký biến động thời gian thực: Tồn đầu kỳ ➜ Từng lượt Nhập kho (GRN), Xuất cấp (REQ), Đổi mới (DM), Sửa chữa (SC), Kiểm kê cân bằng... kèm ngày giờ, mã phiếu, người thực hiện, lý do và Tồn lũy kế sau mỗi lượt giao dịch.
+
+3. **Bước 3: Xuất bảng tính Excel hoặc In báo cáo PDF**
+   - **Xuất Excel (`.xlsx`):** Bấm nút **"Xuất Excel"** (góc phải trên cùng). Hệ thống tự động tạo file bảng tính Excel chứa dữ liệu của Tab đang chọn với định dạng bảng biểu, canh lề số và dòng tổng cộng rõ ràng.
+   - **In Báo Cáo PDF:** Bấm nút **"In PDF"** để tạo ngay bản in khổ A4 chuẩn nhận diện Trại gà Minh Tân Phát, có tiêu đề, kỳ báo cáo, bảng số liệu và 3 ô ký tên (Người lập báo cáo, Kế toán trại, Quản lý / Chủ trại duyệt) để lưu hồ sơ giấy hoặc phục vụ họp giao ban định kỳ.
 
 ---
 

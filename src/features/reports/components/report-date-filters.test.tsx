@@ -3,8 +3,6 @@ import { describe, it, expect, vi } from "vitest";
 import {
   ReportDateFilters,
   getPresetRange,
-  toYmd,
-  DATE_PRESETS,
   type StockLocationOption,
 } from "./report-date-filters";
 import type { DatePreset } from "../types";

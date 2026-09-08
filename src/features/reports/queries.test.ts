@@ -48,7 +48,8 @@ describe("Report Queries", () => {
                 data: [{ variant_id: "var-1", quantity: 50 }],
                 error: null,
               }),
-              then: (fn: any) => fn({ data: [{ variant_id: "var-1", quantity: 50 }], error: null }),
+              then: (fn: (res: { data: { variant_id: string; quantity: number }[]; error: null }) => unknown) =>
+                fn({ data: [{ variant_id: "var-1", quantity: 50 }], error: null }),
             }),
           };
         }
@@ -59,7 +60,7 @@ describe("Report Queries", () => {
                 data: [],
                 error: null,
               }),
-              then: (fn: any) => fn({ data: [], error: null }),
+              then: (fn: (res: { data: unknown[]; error: null }) => unknown) => fn({ data: [], error: null }),
             }),
           };
         }

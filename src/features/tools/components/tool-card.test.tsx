@@ -50,7 +50,7 @@ describe("ToolCard", () => {
     // 5 days ago
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 5);
-    const pastDateStr = pastDate.toISOString().split("T")[0];
+    const pastDateStr = `${pastDate.getFullYear()}-${String(pastDate.getMonth() + 1).padStart(2, "0")}-${String(pastDate.getDate()).padStart(2, "0")}`;
 
     render(
       <ToolCard

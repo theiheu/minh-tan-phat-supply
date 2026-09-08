@@ -9,7 +9,6 @@ import {
   Search,
   FileText,
   Package,
-  Boxes,
 } from "lucide-react";
 import {
   Card,
@@ -33,7 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SlipCodeButton } from "@/components/slip-code-button";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { StockCardData, StockCardEntry } from "../types";
+import type { StockCardData } from "../types";
 import type { StockLocationOption } from "./report-date-filters";
 
 export interface StockVariantOption {
@@ -110,7 +109,6 @@ export function getMovementBadgeVariant(movementType: string, inQty: number): {
 
 export function StockCardTab({
   variants = [],
-  locations = [],
   data = null,
   onSelectVariant,
   selectedVariantId = "",
@@ -482,7 +480,7 @@ export function StockCardTab({
                           colSpan={8}
                           className="h-32 text-center text-xs text-muted-foreground"
                         >
-                          Không tìm thấy giao dịch nào khớp với từ khóa "{entrySearch}".
+                          {`Không tìm thấy giao dịch nào khớp với từ khóa "${entrySearch}".`}
                         </TableCell>
                       </TableRow>
                     ) : (
