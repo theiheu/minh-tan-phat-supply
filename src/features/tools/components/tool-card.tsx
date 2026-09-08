@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Calendar, CheckCircle2, MapPin, Printer, User, Wrench } from "lucide-react";
+import { AlertTriangle, ArrowDownLeft, Calendar, CheckCircle2, MapPin, Printer, User, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -206,19 +206,26 @@ export function ToolCard({
         </Button>
 
         {!isFullyReturned && (
-          <ToolReturnDialog
-            borrowingId={borrowingId}
-            code={code}
-            variantId={variantId}
-            productName={productName}
-            variantLabel={variantLabel}
-            unit={unit}
-            quantity={quantity}
-            returnedQuantity={returnedQuantity}
-            isManager={isManager}
-            triggerLabel={isManager ? "Xác nhận nhận lại" : "Báo trả dụng cụ"}
-            onSuccess={onReturnSuccess}
-          />
+          isManager ? (
+            <ToolReturnDialog
+              borrowingId={borrowingId}
+              code={code}
+              variantId={variantId}
+              productName={productName}
+              variantLabel={variantLabel}
+              unit={unit}
+              quantity={quantity}
+              returnedQuantity={returnedQuantity}
+              isManager={isManager}
+              triggerLabel="Xác nhận nhận lại"
+              onSuccess={onReturnSuccess}
+            />
+          ) : (
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+              <ArrowDownLeft className="size-3.5 text-primary shrink-0" />
+              <span>Mang dụng cụ về Kho chính để thủ kho nhận lại</span>
+            </div>
+          )
         )}
       </CardFooter>
     </Card>

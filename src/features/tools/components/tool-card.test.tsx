@@ -70,7 +70,7 @@ describe("ToolCard", () => {
     expect(screen.getByText(/Quá hạn 5 ngày/i)).toBeInTheDocument();
   });
 
-  it("displays return action button when items are not fully returned", () => {
+  it("displays return guidance message for regular requester when items are not fully returned", () => {
     render(
       <ToolCard
         borrowingId="b3"
@@ -86,7 +86,10 @@ describe("ToolCard", () => {
     );
 
     expect(screen.getByText(/Đang giữ: 2/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Báo trả dụng cụ/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Mang dụng cụ về Kho chính để thủ kho nhận lại/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Xác nhận nhận lại/i })).not.toBeInTheDocument();
   });
 
   it("displays manager action button label when isManager is true", () => {
@@ -123,7 +126,10 @@ describe("ToolCard", () => {
     );
 
     expect(screen.getByText(/Đã trả đủ/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Báo trả dụng cụ/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Xác nhận nhận lại/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mang dụng cụ về Kho chính để thủ kho nhận lại/i),
+    ).not.toBeInTheDocument();
   });
 });
 
