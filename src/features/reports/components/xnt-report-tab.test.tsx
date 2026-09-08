@@ -107,6 +107,54 @@ describe("XntReportTab component", () => {
     expect(tableScope.queryByText("Bóng đèn sưởi hồng ngoại")).toBeNull();
   });
 
+  it("toggles only items with changes / variance when clicking 'Chỉ hiện vật tư chênh lệch'", () => {
+    const datasetWithStatic: GeneralReportData = {
+      ...mockGeneralData,
+      stockLedger: [
+        {
+          variantId: "var-changed-1",
+          productName: "Bóng sưởi phát sinh",
+          variantLabel: "100W",
+          unit: "bóng",
+          categoryName: "Chiếu sáng",
+          openingQty: 10,
+          inQty: 5,
+          outQty: 0,
+          closingQty: 15,
+          unitPrice: 50000,
+          closingValue: 750000,
+        },
+        {
+          variantId: "var-static-2",
+          productName: "Tấm làm mát tĩnh",
+          variantLabel: "1.8m",
+          unit: "tấm",
+          categoryName: "Làm mát",
+          openingQty: 20,
+          inQty: 0,
+          outQty: 0,
+          closingQty: 20,
+          unitPrice: 120000,
+          closingValue: 2400000,
+        },
+      ],
+    };
+
+    render(<XntReportTab data={datasetWithStatic} />);
+
+    // Initially both rows are displayed
+    expect(screen.getByText("Bóng sưởi phát sinh")).toBeDefined();
+    expect(screen.getByText("Tấm làm mát tĩnh")).toBeDefined();
+
+    // Click toggle button "Chỉ hiện vật tư chênh lệch"
+    const toggleBtn = screen.getByRole("button", { name: /Chỉ hiện vật tư chênh lệch/i });
+    fireEvent.click(toggleBtn);
+
+    // Only the changed item remains, static item is filtered out
+    expect(screen.getByText("Bóng sưởi phát sinh")).toBeDefined();
+    expect(screen.queryByText("Tấm làm mát tĩnh")).toBeNull();
+  });
+
   it("handles pagination when page size is exceeded", () => {
     const largeDataset: GeneralReportData = {
       ...mockGeneralData,

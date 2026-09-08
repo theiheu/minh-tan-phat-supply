@@ -9,6 +9,7 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
+  Filter,
 } from "lucide-react";
 import {
   Card,
@@ -41,12 +42,27 @@ export interface XntReportTabProps {
 
 export function XntReportTab({ data, isLoading = false }: XntReportTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [onlyChanged, setOnlyChanged] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  // Filter stock ledger by search keyword
+  // Count items with inventory changes (chênh lệch/phát sinh nhập xuất)
+  const changedCount = useMemo(() => {
+    return (data?.stockLedger ?? []).filter(
+      (row) => row.inQty > 0 || row.outQty > 0 || row.openingQty !== row.closingQty
+    ).length;
+  }, [data?.stockLedger]);
+
+  // Filter stock ledger by search keyword & onlyChanged toggle
   const filteredLedger = useMemo(() => {
-    const list = data?.stockLedger ?? [];
+    let list = data?.stockLedger ?? [];
+
+    if (onlyChanged) {
+      list = list.filter(
+        (row) => row.inQty > 0 || row.outQty > 0 || row.openingQty !== row.closingQty
+      );
+    }
+
     const term = searchTerm.trim().toLowerCase();
     if (!term) return list;
 
@@ -56,7 +72,7 @@ export function XntReportTab({ data, isLoading = false }: XntReportTabProps) {
         row.variantLabel.toLowerCase().includes(term) ||
         row.categoryName.toLowerCase().includes(term)
     );
-  }, [data?.stockLedger, searchTerm]);
+  }, [data?.stockLedger, onlyChanged, searchTerm]);
 
   // Reset page when search term or page size changes
   const totalPages = Math.max(1, Math.ceil(filteredLedger.length / pageSize));
@@ -159,8 +175,38 @@ export function XntReportTab({ data, isLoading = false }: XntReportTabProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Toggle only items with changes / variance */}
+            <Button
+              type="button"
+              variant={onlyChanged ? "default" : "outline"}
+              size="sm"
+              aria-pressed={onlyChanged}
+              onClick={() => {
+                setOnlyChanged((prev) => !prev);
+                setPage(1);
+              }}
+              className={cn(
+                "h-8 gap-1.5 px-2.5 text-xs font-medium cursor-pointer transition-colors",
+                onlyChanged
+                  ? "bg-primary text-primary-foreground font-semibold"
+                  : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <Filter className="size-3.5" aria-hidden="true" />
+              <span>Chỉ hiện vật tư chênh lệch</span>
+              <Badge
+                variant={onlyChanged ? "secondary" : "outline"}
+                className={cn(
+                  "ml-1 px-1.5 py-0 text-[10px] font-bold",
+                  onlyChanged && "bg-primary-foreground/20 text-primary-foreground"
+                )}
+              >
+                {changedCount}
+              </Badge>
+            </Button>
+
             {/* Search filter */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-60">
               <Search
                 className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
                 aria-hidden="true"
