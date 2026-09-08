@@ -210,7 +210,7 @@ export function ProductQrScannerDialog({
         <DialogContent className="p-0 sm:max-w-md overflow-hidden bg-black text-white border-zinc-800">
           <DialogHeader className="p-3 bg-zinc-900 border-b border-zinc-800 flex-row items-center justify-between space-y-0">
             <DialogTitle className="text-sm font-semibold flex items-center gap-2">
-              <Camera className="size-4 text-emerald-400" />
+              <Camera className="size-4 text-primary" />
               Quét mã QR / Barcode Vật tư
             </DialogTitle>
           </DialogHeader>
@@ -226,8 +226,8 @@ export function ProductQrScannerDialog({
                 <video ref={videoRef} playsInline muted className="size-full object-cover" />
                 {/* Laser scanframe */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="size-48 rounded-xl border-2 border-emerald-500/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] relative">
-                    <div className="absolute inset-x-2 top-1/2 h-0.5 bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+                  <div className="size-48 rounded-xl border-2 border-primary/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] relative">
+                    <div className="absolute inset-x-2 top-1/2 h-0.5 bg-primary shadow-[0_0_8px_var(--primary)] animate-pulse" />
                   </div>
                 </div>
 

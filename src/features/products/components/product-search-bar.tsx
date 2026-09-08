@@ -38,7 +38,7 @@ export function ProductSearchBar({
           title="Quét mã QR / Barcode"
           aria-label="Quét mã QR"
         >
-          <Camera className="size-4 text-emerald-600 dark:text-emerald-400" />
+          <Camera className="size-4 text-primary" />
         </Button>
       </form>
 

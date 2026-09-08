@@ -130,7 +130,7 @@ export function QuickAddBottomSheet({
         </div>
       ) : (
         <div className="space-y-2 pt-2 animate-in fade-in">
-          <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium py-1">
+          <div className="flex items-center justify-center gap-2 text-sm text-primary font-medium py-1">
             <Check className="size-4" />
             Đã thêm vào giỏ thành công!
           </div>

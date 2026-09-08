@@ -283,7 +283,7 @@ export function RequisitionForm({
             onClick={() => setScannerOpen(true)}
             className="h-8 gap-1.5 text-xs shrink-0"
           >
-            <Camera className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            <Camera className="size-3.5 text-primary" />
             <span>Quét QR</span>
           </Button>
         </CardHeader>
