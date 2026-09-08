@@ -5,6 +5,7 @@ import {
   Building2,
   ClipboardCheck,
   ClipboardList,
+  Fuel,
   LayoutDashboard,
   MapPin,
   Package,
@@ -13,6 +14,7 @@ import {
   Settings,
   Tags,
   Trash2,
+  Truck,
   Users,
   Warehouse,
   Wrench,
@@ -37,6 +39,7 @@ export const MAIN_NAV: NavItem[] = [
   { href: "/liquidations", label: "Thanh lý", icon: Trash2, roles: ["manager"] },
   { href: "/stocktake", label: "Kiểm kê", icon: ClipboardCheck, roles: ["manager"] },
   { href: "/transfers", label: "Chuyển kho", icon: ArrowLeftRight, roles: ["manager"] },
+  { href: "/fuel", label: "Kho dầu", icon: Fuel, roles: ["manager"] },
   { href: "/reports", label: "Báo cáo", icon: BarChart3, roles: ["manager"] },
 ];
 
@@ -47,6 +50,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse, roles: ["manager"] },
   { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ["manager"] },
   { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ["manager"] },
+  { href: "/admin/vehicles", label: "Phương tiện / Xe", icon: Truck, roles: ["manager"] },
   { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["manager"] },
 ];
 
