@@ -3,7 +3,6 @@ import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { DefectDialog } from "@/features/defects/components/defect-dialog";
-import { QuickExchangeDialog } from "@/features/exchanges/components/quick-exchange-dialog";
 import {
   DefectsList,
   type DefectItemRow,
@@ -492,7 +491,6 @@ function HeaderTabs({
         ))}
       </div>
       <div className="flex items-center gap-2">
-        <QuickExchangeDialog variants={variants} />
         <DefectDialog
           sourceLocationId={sourceLocationId}
           variants={variants}

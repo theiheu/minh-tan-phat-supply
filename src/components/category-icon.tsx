@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { categoryIcon } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { appAssetUrl } from "@/lib/images";
@@ -12,7 +15,7 @@ export function isImageIcon(value?: string | null): boolean {
 
 /**
  * Hiển thị icon danh mục dùng chung (server + client):
- * - Giá trị là ảnh (URL / data-URL) → render <img>.
+ * - Giá trị là ảnh (URL / data-URL) → render <img>. Nếu tải lỗi → tự động fallback về icon Lucide.
  * - Ngược lại → tra key trong map lucide (mặc định Package nếu lạ/rỗng).
  */
 export function CategoryIcon({
@@ -26,7 +29,13 @@ export function CategoryIcon({
   /** Class riêng cho <img> (mặc định = className + object-contain). */
   imgClassName?: string;
 }) {
-  if (isImageIcon(value)) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [value]);
+
+  if (isImageIcon(value) && !imgError) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
@@ -34,6 +43,7 @@ export function CategoryIcon({
         alt=""
         draggable={false}
         className={cn("shrink-0 object-contain", imgClassName ?? className)}
+        onError={() => setImgError(true)}
       />
     );
   }

@@ -70,6 +70,21 @@ describe("ImageLightbox", () => {
 
     expect(onParentClick).not.toHaveBeenCalled();
   });
+  it("shows fallback UI when image fails to load in lightbox", () => {
+    render(
+      <ImageLightbox
+        open={true}
+        onOpenChange={vi.fn()}
+        images={["https://example.com/broken.jpg"]}
+        title="Ảnh lỗi"
+      />
+    );
+
+    const img = screen.getByAltText("Ảnh lỗi");
+    fireEvent.error(img);
+
+    expect(screen.getByText("Không thể tải hình ảnh")).toBeInTheDocument();
+  });
 });
 
 describe("ZoomableImage", () => {
@@ -91,5 +106,59 @@ describe("ZoomableImage", () => {
 
     expect(onParentClick).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog", { name: "Ảnh vật tư" })).toBeInTheDocument();
+  });
+
+  it("shows fallback placeholder when image fails to load", () => {
+    render(
+      <ZoomableImage
+        src="https://example.com/broken.jpg"
+        alt="Ảnh hỏng"
+      />
+    );
+
+    const img = screen.getByAltText("Ảnh hỏng");
+    fireEvent.error(img);
+
+    const fallback = screen.getByRole("img", { name: "Ảnh hỏng" });
+    expect(fallback).toBeInTheDocument();
+    expect(fallback).toHaveAttribute("title", "Không thể tải ảnh: Ảnh hỏng");
+  });
+
+  it("renders custom fallback node when provided and image fails", () => {
+    render(
+      <ZoomableImage
+        src="https://example.com/broken.jpg"
+        alt="Ảnh tùy biến"
+        fallback={<div data-testid="custom-fallback">Lỗi tải ảnh</div>}
+      />
+    );
+
+    const img = screen.getByAltText("Ảnh tùy biến");
+    fireEvent.error(img);
+
+    expect(screen.getByTestId("custom-fallback")).toBeInTheDocument();
+    expect(screen.getByText("Lỗi tải ảnh")).toBeInTheDocument();
+  });
+
+  it("resets error state when src changes", () => {
+    const { rerender } = render(
+      <ZoomableImage
+        src="https://example.com/broken1.jpg"
+        alt="Ảnh thay đổi"
+      />
+    );
+
+    const img = screen.getByAltText("Ảnh thay đổi");
+    fireEvent.error(img);
+    expect(screen.getByRole("img", { name: "Ảnh thay đổi" })).toBeInTheDocument();
+
+    rerender(
+      <ZoomableImage
+        src="https://example.com/new-valid.jpg"
+        alt="Ảnh mới"
+      />
+    );
+
+    expect(screen.getByAltText("Ảnh mới")).toBeInTheDocument();
   });
 });

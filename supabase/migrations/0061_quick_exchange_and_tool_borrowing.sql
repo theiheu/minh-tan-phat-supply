@@ -1,4 +1,4 @@
--- 0061_quick_exchange_and_tool_borrowing.sql — Đổi mới 1-1 cấp tốc & Mượn/Trả dụng cụ
+-- 0061_quick_exchange_and_tool_borrowing.sql — Mượn/Trả dụng cụ dùng chung
 
 -- 1. Thêm movement types cho mượn/trả dụng cụ
 alter type public.movement_type add value if not exists 'tool_borrow_out';
@@ -51,64 +51,7 @@ create policy "tool_borrowing_items_select" on public.tool_borrowing_items for s
     select 1 from public.tool_borrowings b where b.id = borrowing_id and b.borrower_id = auth.uid()
   ));
 
--- 3. RPC quick_emergency_exchange
-create or replace function public.quick_emergency_exchange(
-  p_variant_id uuid,
-  p_quantity int,
-  p_damage_detail text,
-  p_images text[],
-  p_zone_id uuid,
-  p_by uuid
-) returns jsonb language plpgsql security definer set search_path = public as $$
-declare
-  v_defect_id uuid;
-  v_exchange_id uuid;
-  v_defect_code text;
-  v_exchange_code text;
-  v_main_loc uuid;
-begin
-  if auth.uid() is null then raise exception 'Chưa đăng nhập'; end if;
-  if p_quantity <= 0 then raise exception 'Số lượng phải lớn hơn 0'; end if;
-  if p_images is null or array_length(p_images, 1) is null or array_length(p_images, 1) = 0 then
-    raise exception 'Bắt buộc phải có ít nhất 1 ảnh hiện trường hỏng';
-  end if;
-
-  select id into v_main_loc from public.stock_locations where code = 'KHO_CHINH';
-
-  -- 1. Tạo phiếu báo hỏng ở trạng thái staging
-  v_defect_code := public.next_code('HONG', 'public.defect_notes_seq'::regclass);
-  insert into public.defect_notes (code, source_location_id, reported_by, status)
-  values (v_defect_code, v_main_loc, p_by, 'staging')
-  returning id into v_defect_id;
-
-  insert into public.defect_note_items (defect_note_id, variant_id, quantity, damage_detail, images, note)
-  values (v_defect_id, p_variant_id, p_quantity, p_damage_detail, p_images, 'Đổi mới khẩn cấp 1-1');
-
-  insert into public.audit_logs (actor_id, action, entity_type, entity_id, after)
-  values (p_by, 'defect.create', 'defect', v_defect_id, jsonb_build_object('status', 'staging', 'emergency', true));
-
-  -- 2. Tạo phiếu Đổi Mới và duyệt thẳng (approved)
-  v_exchange_code := public.next_code('DM', 'public.exchange_notes_seq'::regclass);
-  insert into public.exchange_notes (code, linked_defect_id, created_by, approved_by, approved_at, status)
-  values (v_exchange_code, v_defect_id, p_by, p_by, now(), 'approved')
-  returning id into v_exchange_id;
-
-  insert into public.exchange_note_items (exchange_note_id, variant_id, quantity)
-  values (v_exchange_id, p_variant_id, p_quantity);
-
-  insert into public.audit_logs (actor_id, action, entity_type, entity_id, after)
-  values (p_by, 'exchange.create_emergency', 'exchange', v_exchange_id, jsonb_build_object('status', 'approved'));
-
-  return jsonb_build_object(
-    'defect_id', v_defect_id,
-    'defect_code', v_defect_code,
-    'exchange_id', v_exchange_id,
-    'exchange_code', v_exchange_code
-  );
-end;
-$$;
-
--- 4. RPC create_tool_borrowing
+-- 3. RPC create_tool_borrowing
 create or replace function public.create_tool_borrowing(
   p_items jsonb,
   p_zone_id uuid,

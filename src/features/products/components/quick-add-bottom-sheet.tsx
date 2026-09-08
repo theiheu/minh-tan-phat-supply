@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Check, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Check, ImageOff, Minus, Plus, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,12 @@ export function QuickAddBottomSheet({
 }: QuickAddBottomSheetProps) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [image]);
 
   const stock = variant.stock ?? 0;
 
@@ -53,13 +58,20 @@ export function QuickAddBottomSheet({
   return (
     <div className="space-y-4 p-4 bg-background rounded-t-2xl border-t shadow-2xl">
       <div className="flex items-start gap-3">
-        {image ? (
+        {image && !imgError ? (
           <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border bg-muted">
-            <Image src={image} alt={productName} fill className="object-cover" />
+            <Image
+              src={image}
+              alt={productName}
+              fill
+              className="object-cover"
+              onError={() => setImgError(true)}
+            />
           </div>
         ) : (
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground text-xs font-medium">
-            Ảnh vật tư
+          <div className="flex size-16 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed bg-muted text-muted-foreground text-xs font-medium">
+            <ImageOff className="size-4 opacity-70" aria-hidden />
+            <span className="text-[10px]">Ảnh vật tư</span>
           </div>
         )}
 

@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, ImageOff, ZoomIn } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
 
 /**
@@ -15,7 +15,12 @@ export function ProductImageGallery({ images, alt }: { images: string[]; alt: st
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [failedIndices, setFailedIndices] = useState<Set<number>>(() => new Set());
   const count = images.length;
+
+  useEffect(() => {
+    setFailedIndices(new Set());
+  }, [images]);
 
   function syncIndex() {
     const el = scrollerRef.current;
@@ -47,13 +52,26 @@ export function ProductImageGallery({ images, alt }: { images: string[]; alt: st
         >
           {images.map((src, i) => (
             <div key={i} className="relative h-full w-full shrink-0 snap-center">
-              <Image
-                src={src}
-                alt={alt}
-                fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-cover"
-              />
+              {failedIndices.has(i) ? (
+                <div className="flex h-full w-full items-center justify-center bg-muted/60 text-muted-foreground select-none">
+                  <ImageOff className="size-8 text-muted-foreground/60" aria-hidden />
+                </div>
+              ) : (
+                <Image
+                  src={src}
+                  alt={alt}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover"
+                  onError={() => {
+                    setFailedIndices((prev) => {
+                      const next = new Set(prev);
+                      next.add(i);
+                      return next;
+                    });
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>

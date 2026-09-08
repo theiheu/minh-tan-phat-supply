@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, X, ZoomIn } from "lucide-react";
 import { appAssetUrl } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +36,11 @@ export function ImageLightbox({
 
   const currentSrc = images[currentIndex] || images[0] || "";
   const [lightboxImgSrc, setLightboxImgSrc] = useState<string | undefined>(() => appAssetUrl(currentSrc));
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setLightboxImgSrc(appAssetUrl(currentSrc));
+    setHasError(false);
   }, [currentSrc]);
 
   const close = useCallback((e?: React.SyntheticEvent) => {
@@ -138,18 +140,28 @@ export function ImageLightbox({
         </div>
 
         {/* Main Image View */}
-        <div className="relative flex min-h-0 items-center justify-center overflow-hidden bg-muted/50 p-3 sm:p-5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightboxImgSrc || currentSrc}
-            alt={title || `Ảnh ${currentIndex + 1}`}
-            className="max-h-[60vh] w-auto max-w-full object-contain rounded-lg transition-all"
-            onError={() => {
-              if (lightboxImgSrc !== currentSrc && currentSrc) {
-                setLightboxImgSrc(currentSrc);
-              }
-            }}
-          />
+        <div className="relative flex min-h-[220px] items-center justify-center overflow-hidden bg-muted/50 p-3 sm:p-5">
+          {hasError ? (
+            <div className="flex h-56 w-full max-w-md flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 bg-background/50 p-6 text-center text-muted-foreground animate-in fade-in-50 duration-200 select-none">
+              <ImageOff className="size-10 text-muted-foreground/60" aria-hidden />
+              <p className="text-sm font-medium text-foreground/80">Không thể tải hình ảnh</p>
+              {title && <p className="text-xs text-muted-foreground line-clamp-1">{title}</p>}
+            </div>
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={lightboxImgSrc || currentSrc}
+              alt={title || `Ảnh ${currentIndex + 1}`}
+              className="max-h-[60vh] w-auto max-w-full object-contain rounded-lg transition-all"
+              onError={() => {
+                if (lightboxImgSrc !== currentSrc && currentSrc) {
+                  setLightboxImgSrc(currentSrc);
+                } else {
+                  setHasError(true);
+                }
+              }}
+            />
+          )}
 
           {/* Previous / Next buttons */}
           {images.length > 1 && (
@@ -208,6 +220,7 @@ export interface ZoomableImageProps extends Omit<React.ImgHTMLAttributes<HTMLIma
   className?: string;
   wrapperClassName?: string;
   showZoomIcon?: boolean;
+  fallback?: React.ReactNode;
   onClick?: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
@@ -219,17 +232,38 @@ export function ZoomableImage({
   className,
   wrapperClassName,
   showZoomIcon = false,
+  fallback,
   onClick,
   ...props
 }: ZoomableImageProps) {
   const [open, setOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | undefined>(() => appAssetUrl(src));
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     setImgSrc(appAssetUrl(src));
+    setHasError(false);
   }, [src]);
 
   if (!src) return null;
+
+  if (hasError) {
+    if (fallback) return <>{fallback}</>;
+    return (
+      <span
+        className={cn(
+          "relative inline-flex shrink-0 items-center justify-center rounded-md border border-dashed border-border/80 bg-muted/60 text-muted-foreground select-none",
+          wrapperClassName,
+          className
+        )}
+        title={alt ? `Không thể tải ảnh: ${alt}` : "Không thể tải ảnh"}
+        role="img"
+        aria-label={alt || "Ảnh bị lỗi không hiển thị"}
+      >
+        <ImageOff className="size-4 shrink-0 text-muted-foreground/70" aria-hidden />
+      </span>
+    );
+  }
 
   const allImages = images && images.length > 0 ? images : [src];
   const initialIndex = Math.max(0, allImages.indexOf(src));
@@ -250,9 +284,12 @@ export function ZoomableImage({
           src={imgSrc || src}
           alt={alt}
           className={cn("transition-opacity group-hover/zoom:opacity-95", className)}
-          onError={() => {
+          onError={(e) => {
+            props.onError?.(e);
             if (imgSrc !== src && src) {
               setImgSrc(src);
+            } else {
+              setHasError(true);
             }
           }}
           {...props}

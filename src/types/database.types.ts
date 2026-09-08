@@ -2308,17 +2308,6 @@ export type Database = {
         }
         Returns: string
       }
-      quick_emergency_exchange: {
-        Args: {
-          p_by: string
-          p_damage_detail: string
-          p_images: string[]
-          p_quantity: number
-          p_variant_id: string
-          p_zone_id?: string | null
-        }
-        Returns: Json
-      }
       return_tool_borrowing: {
         Args: {
           p_borrowing_id: string

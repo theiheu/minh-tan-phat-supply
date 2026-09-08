@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, ArrowDownLeft, Calendar, CheckCircle2, MapPin, Printer, User, Wrench } from "lucide-react";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -87,11 +88,15 @@ export function ToolCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2.5">
             {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <ZoomableImage
                 src={imageUrl}
                 alt={productName}
                 className="size-8 rounded-lg object-cover shrink-0 mt-0.5 border"
+                fallback={
+                  <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary mt-0.5 border">
+                    <Wrench className="size-4" />
+                  </div>
+                }
               />
             ) : (
               <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary mt-0.5">

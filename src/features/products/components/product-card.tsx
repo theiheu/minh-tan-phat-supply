@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { History, Zap } from "lucide-react";
+import { History } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CategoryIcon } from "@/components/category-icon";
-import { variantLabel } from "@/lib/labels";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import { ProductDetailDialog } from "./product-detail-dialog";
 import { ProductHistoryDialog } from "./product-history-dialog";
 import { ProductImageGallery } from "./product-image-gallery";
-import { QuickExchangeDialog } from "@/features/exchanges/components/quick-exchange-dialog";
 
 export function ProductCard({
   product,
@@ -70,30 +68,6 @@ export function ProductCard({
           <Badge variant={badge.variant} className="absolute top-2 left-2">
             {badge.label}
           </Badge>
-          {/* Nút đổi mới khẩn cấp 1-1 */}
-          <QuickExchangeDialog
-            variants={variants.map((v) => ({
-              id: v.id,
-              name: product.name,
-              detail: variantLabel(v.attributes, v.unit),
-            }))}
-            defaultVariantId={defaultVariant?.id ?? variants[0]?.id}
-            trigger={
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon-xs"
-                aria-label="Đổi khẩn cấp 1-1"
-                title="Đổi khẩn cấp 1-1"
-                className="absolute top-2 right-10 size-7 bg-red-600 text-white shadow-sm hover:bg-red-700 active:bg-red-800"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                <Zap className="size-3.5 fill-white" aria-hidden />
-              </Button>
-            }
-          />
           {/* Nút lịch sử cấp/xuất — không mở dialog chi tiết khi bấm. */}
           <Button
             type="button"
