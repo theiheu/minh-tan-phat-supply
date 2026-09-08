@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getGeneralReportAction,
   getPartnersReportAction,
@@ -204,11 +203,87 @@ export function ReportsHub({
   const pdfUrl = buildReportUrl("/api/reports/pdf");
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      {/* 1. Subnav Tabs - Top Navigation (styled like /fuel) */}
+      <div className="overflow-x-auto border-b pb-0.5 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+        <nav role="tablist" className="-mb-px flex min-w-max space-x-2 sm:space-x-6">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "general"}
+            onClick={() => setActiveTab("general")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "general"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <BarChart3 className="size-3.5 sm:size-4 text-blue-500" aria-hidden="true" />
+            <span>📊 Báo cáo Chung</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "zones"}
+            onClick={() => setActiveTab("zones")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "zones"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <Home className="size-3.5 sm:size-4 text-amber-500" aria-hidden="true" />
+            <span>🏠 Theo Chuồng</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "vehicles"}
+            onClick={() => setActiveTab("vehicles")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "vehicles"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <Truck className="size-3.5 sm:size-4 text-emerald-500" aria-hidden="true" />
+            <span>🚜 Phương tiện</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "partners"}
+            onClick={() => setActiveTab("partners")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "partners"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <Handshake className="size-3.5 sm:size-4 text-violet-500" aria-hidden="true" />
+            <span>🤝 Đối tác</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "stock_card"}
+            onClick={() => setActiveTab("stock_card")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "stock_card"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <BookOpen className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
+            <span>📑 Sổ Thẻ kho</span>
+          </button>
+        </nav>
+      </div>
+
+      {/* 2. Header & Quick Action Buttons */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Trung tâm Báo cáo & Thống kê
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -264,7 +339,7 @@ export function ReportsHub({
         </div>
       </div>
 
-      {/* 2. Global Date & Location Filter Bar */}
+      {/* 3. Global Date & Location Filter Bar (Placed below tabs) */}
       <ReportDateFilters
         value={dateRange}
         onChange={setDateRange}
@@ -272,79 +347,21 @@ export function ReportsHub({
         showLocation={true}
       />
 
-      {/* 3. Main Report Hub Tabs */}
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as ReportTab)}
-        className="space-y-6"
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="grid h-auto w-full grid-cols-2 p-1 sm:inline-flex sm:w-auto sm:flex-row">
-            <TabsTrigger
-              value="general"
-              onClick={() => setActiveTab("general")}
-              className="gap-1.5 py-1.5 text-xs"
-            >
-              <BarChart3 className="size-3.5 text-blue-500" aria-hidden="true" />
-              <span>📊 Báo cáo Chung</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="zones"
-              onClick={() => setActiveTab("zones")}
-              className="gap-1.5 py-1.5 text-xs"
-            >
-              <Home className="size-3.5 text-amber-500" aria-hidden="true" />
-              <span>🏠 Theo Chuồng</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="vehicles"
-              onClick={() => setActiveTab("vehicles")}
-              className="gap-1.5 py-1.5 text-xs"
-            >
-              <Truck className="size-3.5 text-emerald-500" aria-hidden="true" />
-              <span>🚜 Phương tiện</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="partners"
-              onClick={() => setActiveTab("partners")}
-              className="gap-1.5 py-1.5 text-xs"
-            >
-              <Handshake className="size-3.5 text-violet-500" aria-hidden="true" />
-              <span>🤝 Đối tác</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="stock_card"
-              onClick={() => setActiveTab("stock_card")}
-              className="gap-1.5 py-1.5 text-xs"
-            >
-              <BookOpen className="size-3.5 text-primary" aria-hidden="true" />
-              <span>📑 Sổ Thẻ kho</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Tab 1: General Overview & XNT */}
-        <TabsContent value="general" className="space-y-6">
+      {/* 4. Tab Contents */}
+      <div className="space-y-6">
+        {activeTab === "general" && (
           <GeneralReportTab data={generalData} isLoading={isLoading} />
-        </TabsContent>
-
-        {/* Tab 2: Zone Cost Analysis */}
-        <TabsContent value="zones" className="space-y-6">
+        )}
+        {activeTab === "zones" && (
           <ZoneCostReportTab data={zoneCostData} isLoading={isLoading} />
-        </TabsContent>
-
-        {/* Tab 3: Vehicle Fuel Consumption */}
-        <TabsContent value="vehicles" className="space-y-6">
+        )}
+        {activeTab === "vehicles" && (
           <VehicleReportTab data={vehicleData} isLoading={isLoading} />
-        </TabsContent>
-
-        {/* Tab 4: Suppliers & Customers Analytics */}
-        <TabsContent value="partners" className="space-y-6">
+        )}
+        {activeTab === "partners" && (
           <PartnersReportTab data={partnersData} isLoading={isLoading} />
-        </TabsContent>
-
-        {/* Tab 5: Detailed Stock Card Ledger */}
-        <TabsContent value="stock_card" className="space-y-6">
+        )}
+        {activeTab === "stock_card" && (
           <StockCardTab
             variants={variants}
             locations={locations}
@@ -353,8 +370,8 @@ export function ReportsHub({
             onSelectVariant={setSelectedVariantId}
             isLoading={isLoading}
           />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </div>
   );
 }
