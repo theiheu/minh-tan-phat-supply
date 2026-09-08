@@ -158,9 +158,9 @@ export function FuelDispenseDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default">
-          <Plus className="mr-1.5 size-4" />
-          Cấp phát dầu
+        <Button size="sm" variant="default" className="text-xs sm:text-sm h-9">
+          <Plus className="mr-1.5 size-3.5 sm:size-4" />
+          Cấp dầu
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">

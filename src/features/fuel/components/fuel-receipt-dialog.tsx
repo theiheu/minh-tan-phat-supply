@@ -120,9 +120,9 @@ export function FuelReceiptDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-1.5 size-4" />
-          Nhập dầu mới
+        <Button size="sm" variant="outline" className="text-xs sm:text-sm h-9">
+          <Plus className="mr-1.5 size-3.5 sm:size-4" />
+          Nhập dầu
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">

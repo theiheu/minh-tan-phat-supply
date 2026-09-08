@@ -82,52 +82,52 @@ export default async function FuelPage({
   const suppliers: OptionItem[] = suppliersRes.data ?? [];
 
   return (
-    <div className="space-y-6">
-      {/* Subnav Tabs */}
-      <div className="flex border-b">
-        <nav className="-mb-px flex space-x-6">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Subnav Tabs - Optimized for mobile scroll & compact font */}
+      <div className="overflow-x-auto border-b pb-0.5 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+        <nav className="-mb-px flex min-w-max space-x-2 sm:space-x-6">
           <Link
             href="/fuel?tab=overview"
-            className={`inline-flex items-center gap-1.5 border-b-2 py-3 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "overview"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <Droplets className="size-4" />
+            <Droplets className="size-3.5 sm:size-4" />
             Tổng quan & Tồn kho
           </Link>
           <Link
             href={`/fuel?tab=dispenses&from=${from}&to=${to}`}
-            className={`inline-flex items-center gap-1.5 border-b-2 py-3 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "dispenses"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <PackageMinus className="size-4" />
+            <PackageMinus className="size-3.5 sm:size-4" />
             Cấp phát dầu (Xuất)
           </Link>
           <Link
             href={`/fuel?tab=receipts&from=${from}&to=${to}`}
-            className={`inline-flex items-center gap-1.5 border-b-2 py-3 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "receipts"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <PackagePlus className="size-4" />
+            <PackagePlus className="size-3.5 sm:size-4" />
             Nhập kho dầu
           </Link>
           <Link
             href={`/fuel?tab=reports&from=${from}&to=${to}`}
-            className={`inline-flex items-center gap-1.5 border-b-2 py-3 text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "reports"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <BarChart3 className="size-4" />
+            <BarChart3 className="size-3.5 sm:size-4" />
             Báo cáo & Tiêu hao
           </Link>
         </nav>

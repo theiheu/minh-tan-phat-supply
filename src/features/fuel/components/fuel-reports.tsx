@@ -162,16 +162,16 @@ export function FuelReports({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Báo cáo & Phân tích tiêu hao</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Báo cáo & Phân tích tiêu hao</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             So sánh định mức tiêu thụ nhiên liệu của từng phương tiện và phân bổ theo khu vực.
           </p>
         </div>
-        <Button onClick={exportExcel} variant="outline" className="gap-1.5">
-          <Download className="size-4" />
-          Xuất file Excel (.xlsx)
+        <Button onClick={exportExcel} variant="outline" size="sm" className="gap-1.5 text-xs sm:text-sm h-9">
+          <Download className="size-3.5 sm:size-4" />
+          Xuất Excel (.xlsx)
         </Button>
       </div>
 

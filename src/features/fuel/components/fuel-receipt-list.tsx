@@ -68,10 +68,10 @@ export function FuelReceiptList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Nhập kho dầu (Từ NCC)</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Nhập kho dầu (Từ NCC)</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Quản lý các đợt nhập dầu từ nhà cung cấp, hóa đơn GTGT và giá nhập.
           </p>
         </div>

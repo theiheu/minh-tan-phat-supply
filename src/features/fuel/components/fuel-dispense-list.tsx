@@ -72,10 +72,10 @@ export function FuelDispenseList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Cấp phát dầu (Xuất kho)</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Cấp phát dầu (Xuất kho)</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Lịch sử cấp phát nhiên liệu cho từng phương tiện, máy móc và công trình.
           </p>
         </div>
