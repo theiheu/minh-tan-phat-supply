@@ -97,6 +97,12 @@ export const STOCKTAKE_STATUS: Record<string, string> = {
   cancelled: "Đã hủy",
 };
 
+export const TOOL_BORROWING_STATUS: Record<string, string> = {
+  borrowed: "Đang mượn",
+  returned: "Đã trả đủ",
+  cancelled: "Đã hủy",
+};
+
 export const SEVERITY_LEVEL: Record<string, string> = {
   light: "Nhẹ",
   medium: "Vừa",

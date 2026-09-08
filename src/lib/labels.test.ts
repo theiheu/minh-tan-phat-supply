@@ -8,6 +8,7 @@ import {
   roleLabel,
   slipStatusLabel,
   statusBadgeVariant,
+  TOOL_BORROWING_STATUS,
   variantLabel,
 } from "./labels";
 import {
@@ -101,5 +102,11 @@ describe("labels helpers", () => {
     expect(categoryIcon("other")).toBe(Package);
     expect(categoryIcon(null)).toBe(Package);
     expect(categoryIcon("non_existent")).toBe(Package);
+  });
+
+  it("translates tool borrowing statuses correctly", () => {
+    expect(TOOL_BORROWING_STATUS.borrowed).toBe("Đang mượn");
+    expect(TOOL_BORROWING_STATUS.returned).toBe("Đã trả đủ");
+    expect(TOOL_BORROWING_STATUS.cancelled).toBe("Đã hủy");
   });
 });
