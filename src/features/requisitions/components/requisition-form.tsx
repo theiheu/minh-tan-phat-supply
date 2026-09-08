@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Minus, Package, Plus, Trash2 } from "lucide-react";
+import { Camera, Minus, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import { isPrivileged } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { createRequisition, submitRequisition } from "../actions";
 import { ZoomableImage } from "@/components/image-lightbox";
+import { ProductQrScannerDialog } from "@/features/products/components/product-qr-scanner-dialog";
 
 export function RequisitionForm({
   zones,
@@ -66,6 +67,7 @@ export function RequisitionForm({
   const [typingOther, setTypingOther] = useState(false);
   const [zoneId, setZoneId] = useState(defaultZoneId ?? "");
   const [purpose, setPurpose] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function resetToSelf() {
@@ -226,8 +228,18 @@ export function RequisitionForm({
       </Card>
 
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader className="pb-3 border-b border-border/60">
+        <CardHeader className="pb-3 border-b border-border/60 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base font-semibold">Vật tư yêu cầu</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setScannerOpen(true)}
+            className="h-8 gap-1.5 text-xs shrink-0"
+          >
+            <Camera className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Quét QR</span>
+          </Button>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
@@ -346,6 +358,8 @@ export function RequisitionForm({
           {pending ? "Đang xử lý…" : "Gửi yêu cầu"}
         </Button>
       </div>
+
+      <ProductQrScannerDialog open={scannerOpen} onOpenChange={setScannerOpen} />
     </div>
   );
 }

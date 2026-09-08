@@ -1,11 +1,10 @@
 import { LayoutGrid } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CategoryIcon } from "@/components/category-icon";
 import { Pagination } from "@/components/pagination";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ProductCard } from "@/features/products/components/product-card";
+import { ProductSearchBar } from "@/features/products/components/product-search-bar";
 import type { VariantWithStock } from "@/features/products/types";
 import { materialLabel } from "@/lib/attributes";
 import { createClient } from "@/lib/supabase/server";
@@ -115,14 +114,8 @@ export default async function ProductsPage({
     <div className="space-y-4">
       <SubnavTabs group="requisitions" />
 
-      {/* Ô tìm kiếm — căn giữa, giữ query param category khi tìm trong danh mục đang chọn. */}
-      <form method="get" className="mx-auto flex w-full max-w-xl gap-2">
-        <Input type="search" name="q" defaultValue={q} placeholder="Tìm vật tư…" className="flex-1" />
-        {categoryId ? <input type="hidden" name="category" value={categoryId} /> : null}
-        <Button type="submit" variant="outline" className="shrink-0">
-          Tìm
-        </Button>
-      </form>
+      {/* Ô tìm kiếm kèm nút quét QR/Barcode */}
+      <ProductSearchBar defaultValue={q} categoryId={categoryId} />
 
       {/* Danh mục dạng ô vuông:
           - Mobile (<lg): 2 hàng, dài quá thì cuộn ngang toàn màn hình mượt mà.
