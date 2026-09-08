@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { useOfflineQueueStore, type OfflineRequisition } from "@/stores/offline-queue-store";
+import { useOfflineQueueStore } from "@/stores/offline-queue-store";
 import { createRequisition } from "@/features/requisitions/actions";
 import { OfflineStatusBar } from "./offline-status-bar";
 
@@ -11,7 +11,6 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
   const [isSyncing, setIsSyncing] = useState(false);
   const isSyncingRef = useRef(false);
 
-  const queue = useOfflineQueueStore((s) => s.queue);
   const dequeue = useOfflineQueueStore((s) => s.dequeue);
   const updateStatus = useOfflineQueueStore((s) => s.updateStatus);
 

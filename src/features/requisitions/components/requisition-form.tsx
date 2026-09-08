@@ -20,6 +20,7 @@ import { SearchSelect } from "@/components/search-select";
 import type { Zone } from "@/lib/types";
 import { isPrivileged } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
+import { useOfflineQueueStore } from "@/stores/offline-queue-store";
 import { createRequisition, submitRequisition } from "../actions";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { ProductQrScannerDialog } from "@/features/products/components/product-qr-scanner-dialog";
@@ -115,6 +116,30 @@ export function RequisitionForm({
     if (!zoneId) return toast.error("Chọn khu vực");
     if (!purpose.trim()) return toast.error("Nhập mục đích");
 
+    const enqueueOffline = () => {
+      useOfflineQueueStore.getState().enqueue({
+        zoneId,
+        purpose: purpose.trim(),
+        requesterId,
+        items: items.map((i) => ({
+          variantId: i.variantId,
+          quantity: i.quantity,
+          name: i.name,
+          label: i.label,
+          unit: i.unit,
+        })),
+      });
+      clear();
+      toast.info("Đang ngoại tuyến. Phiếu yêu cầu đã được lưu trên máy và sẽ tự động gửi khi có mạng.");
+      router.push("/requisitions");
+      router.refresh();
+    };
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      enqueueOffline();
+      return;
+    }
+
     startTransition(async () => {
       try {
         const id = await createRequisition({
@@ -133,7 +158,27 @@ export function RequisitionForm({
         }
         router.refresh();
       } catch (err) {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          enqueueOffline();
+          return;
+        }
+
         const msg = err instanceof Error ? err.message : "Tạo phiếu thất bại";
+        const lower = msg.toLowerCase();
+        if (
+          lower.includes("fetch") ||
+          lower.includes("network") ||
+          lower.includes("timeout") ||
+          lower.includes("aborted") ||
+          lower.includes("connection") ||
+          lower.includes("offline") ||
+          lower.includes("failed to fetch") ||
+          lower.includes("load failed")
+        ) {
+          enqueueOffline();
+          return;
+        }
+
         if (msg.includes("giỏ hàng") || msg.includes("variant_id")) {
           toast.error(msg, {
             action: {
