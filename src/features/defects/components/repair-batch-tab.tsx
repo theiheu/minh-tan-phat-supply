@@ -107,8 +107,8 @@ export function RepairBatchTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground flex-1">
           Vật tư tại Kho đồ hỏng → gom tạo <span className="font-medium text-foreground">1 phiếu sửa chữa (SC)</span> đưa đi sửa cùng đơn vị. Theo dõi tại màn{" "}
           <span className="font-medium text-foreground">Sửa chữa</span>.
         </p>
@@ -116,6 +116,7 @@ export function RepairBatchTab({
           type="button"
           onClick={() => (selectedItems.length === 0 ? toast.error("Tích chọn ít nhất 1 dòng vật tư hỏng") : setOpenForm(true))}
           disabled={pending}
+          className="w-full sm:w-auto shrink-0"
         >
           <Wrench className="size-4" aria-hidden />
           Tạo phiếu sửa ({selectedItems.length} dòng · {totalQty} món)
