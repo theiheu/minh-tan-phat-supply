@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchSelect } from "@/components/search-select";
 import { SlipCodeButton } from "@/components/slip-code-button";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -109,32 +110,22 @@ export function getMovementBadgeVariant(movementType: string, inQty: number): {
 
 export function StockCardTab({
   variants = [],
+  locations: _locations,
   data = null,
   onSelectVariant,
   selectedVariantId = "",
   isLoading = false,
 }: StockCardTabProps) {
-  const [variantSearch, setVariantSearch] = useState("");
   const [entrySearch, setEntrySearch] = useState("");
 
-  // Filter variants list for selector
-  const filteredVariants = useMemo(() => {
-    const term = variantSearch.trim().toLowerCase();
-    if (!term) return variants;
-
-    return variants.filter((v) => {
-      const name = (v.productName || v.name || v.label || "").toLowerCase();
-      const label = (v.variantLabel || "").toLowerCase();
-      const sku = (v.sku || "").toLowerCase();
-      const unit = (v.unit || "").toLowerCase();
-      return (
-        name.includes(term) ||
-        label.includes(term) ||
-        sku.includes(term) ||
-        unit.includes(term)
-      );
-    });
-  }, [variants, variantSearch]);
+  // Map variants to SearchSelect options
+  const variantOptions = useMemo(() => {
+    return variants.map((v) => ({
+      value: v.id,
+      label: formatVariantOptionLabel(v),
+      hint: v.sku || undefined,
+    }));
+  }, [variants]);
 
   // Filter ledger entries by search term
   const filteredEntries = useMemo(() => {
@@ -172,42 +163,20 @@ export function StockCardTab({
                 Chọn vật tư xem thẻ kho
               </h2>
               <p className="text-xs text-muted-foreground">
-                Tra cứu lịch sử biến động nhập, xuất và tồn lũy kế theo từng mặt hàng
+                Gõ tên, mã hoặc quy cách để tra cứu lịch sử biến động nhập, xuất và tồn lũy kế
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {/* Quick search input to filter variant dropdown */}
-            <div className="relative min-w-[200px]">
-              <Search
-                className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                type="text"
-                placeholder="Lọc vật tư…"
-                aria-label="Tìm kiếm vật tư"
-                value={variantSearch}
-                onChange={(e) => setVariantSearch(e.target.value)}
-                className="h-9 pl-8 text-xs"
-              />
-            </div>
-
-            {/* Variant Select element */}
-            <select
-              aria-label="Chọn vật tư"
+          <div className="w-full sm:w-[360px] md:w-[460px]">
+            <SearchSelect
               value={selectedVariantId}
-              onChange={(e) => onSelectVariant(e.target.value)}
-              className="h-9 min-w-[260px] max-w-full rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/50"
-            >
-              <option value="">-- Chọn vật tư / biến thể --</option>
-              {filteredVariants.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {formatVariantOptionLabel(v)}
-                </option>
-              ))}
-            </select>
+              onChange={onSelectVariant}
+              options={variantOptions}
+              placeholder="-- Chọn hoặc gõ tìm vật tư / biến thể --"
+              searchPlaceholder="Tìm kiếm tên, biến thể, mã vật tư…"
+              emptyText="Không tìm thấy vật tư nào."
+            />
           </div>
         </div>
       </Card>

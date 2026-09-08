@@ -1,7 +1,16 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 import { StockCardTab, type StockVariantOption } from "./stock-card-tab";
 import type { StockCardData } from "../types";
+
+beforeAll(() => {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
+});
 
 const mockVariants: StockVariantOption[] = [
   {
@@ -98,7 +107,7 @@ describe("StockCardTab component", () => {
     expect(screen.queryByRole("table")).toBeNull();
   });
 
-  it("renders variant selector with formatted options and triggers onSelectVariant on change", () => {
+  it("renders variant combobox selector and triggers onSelectVariant on change", () => {
     const handleSelect = vi.fn();
     render(
       <StockCardTab
@@ -109,8 +118,14 @@ describe("StockCardTab component", () => {
       />
     );
 
-    const select = screen.getByLabelText("Chọn vật tư");
-    expect(select).toBeDefined();
+    const combobox = screen.getByRole("combobox");
+    expect(combobox).toBeDefined();
+    expect(
+      screen.getByText("-- Chọn hoặc gõ tìm vật tư / biến thể --")
+    ).toBeDefined();
+
+    // Click to open combobox
+    fireEvent.click(combobox);
 
     // Check formatted option text: "Tên sản phẩm - Tên biến thể (ĐVT)"
     expect(
@@ -124,30 +139,24 @@ describe("StockCardTab component", () => {
     ).toBeDefined();
 
     // Select variant
-    fireEvent.change(select, { target: { value: "var-2" } });
+    const option = screen.getByText("Dung dịch sát trùng chuồng - Can 5L (can)");
+    fireEvent.click(option);
     expect(handleSelect).toHaveBeenCalledWith("var-2");
   });
 
-  it("filters variant options when searching in variant selector", () => {
-    const handleSelect = vi.fn();
+  it("displays selected variant label in the combobox trigger", () => {
     render(
       <StockCardTab
         variants={mockVariants}
         data={null}
-        onSelectVariant={handleSelect}
-        selectedVariantId=""
+        onSelectVariant={vi.fn()}
+        selectedVariantId="var-1"
       />
     );
 
-    const searchInput = screen.getByLabelText("Tìm kiếm vật tư");
-    fireEvent.change(searchInput, { target: { value: "sát trùng" } });
-
     expect(
-      screen.getByText("Dung dịch sát trùng chuồng - Can 5L (can)")
+      screen.getByText("Bóng đèn sưởi hồng ngoại - 150W (bóng)")
     ).toBeDefined();
-    expect(
-      screen.queryByText("Bóng đèn sưởi hồng ngoại - 150W (bóng)")
-    ).toBeNull();
   });
 
   it("renders 4 Summary KPI cards with correct stock metrics", () => {

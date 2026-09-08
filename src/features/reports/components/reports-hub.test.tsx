@@ -1,5 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+beforeAll(() => {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
+});
 import type {
   GeneralReportData,
   PartnersReportData,
@@ -325,9 +334,11 @@ describe("ReportsHub component", () => {
       screen.getByText("Vui lòng chọn một vật tư để xem sổ thẻ kho")
     ).toBeDefined();
 
-    // Select a variant
-    const variantSelect = screen.getByLabelText("Chọn vật tư");
-    fireEvent.change(variantSelect, { target: { value: "var-1" } });
+    // Select a variant via combobox
+    const combobox = screen.getByText("-- Chọn hoặc gõ tìm vật tư / biến thể --");
+    fireEvent.click(combobox);
+    const option = screen.getByText("Bóng đèn sưởi hồng ngoại - 100W (bóng)");
+    fireEvent.click(option);
 
     await waitFor(() => {
       expect(getStockCardAction).toHaveBeenCalledWith({
@@ -387,9 +398,11 @@ describe("ReportsHub component", () => {
     const disabledBtn = screen.getByRole("button", { name: /Xuất Excel \(\.xlsx\)/i });
     expect(disabledBtn.hasAttribute("disabled")).toBe(true);
 
-    // Select variant -> enabled link with type=stock_card & variantId=var-1
-    const variantSelect = screen.getByLabelText("Chọn vật tư");
-    fireEvent.change(variantSelect, { target: { value: "var-1" } });
+    // Select variant via combobox -> enabled link with type=stock_card & variantId=var-1
+    const combobox = screen.getByText("-- Chọn hoặc gõ tìm vật tư / biến thể --");
+    fireEvent.click(combobox);
+    const option = screen.getByText("Bóng đèn sưởi hồng ngoại - 100W (bóng)");
+    fireEvent.click(option);
 
     await waitFor(() => {
       exportBtn = screen.getByRole("link", { name: /Xuất Excel \(\.xlsx\)/i });
