@@ -15,7 +15,7 @@ export async function createToolBorrowing(input: ToolBorrowingInput) {
   const parsed = toolBorrowingSchema.parse(input);
   const supabase = await createClient();
 
-  const { data, error } = await (supabase.rpc as any)("create_tool_borrowing", {
+  const { data, error } = await supabase.rpc("create_tool_borrowing", {
     p_items: parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
     p_zone_id: parsed.zoneId || null,
     p_purpose: parsed.purpose.trim(),
@@ -35,7 +35,7 @@ export async function returnToolBorrowing(input: ToolReturnInput) {
   const parsed = toolReturnSchema.parse(input);
   const supabase = await createClient();
 
-  const { error } = await (supabase.rpc as any)("return_tool_borrowing", {
+  const { error } = await supabase.rpc("return_tool_borrowing", {
     p_borrowing_id: parsed.borrowingId,
     p_items: parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
     p_notes: parsed.notes || "",
@@ -52,7 +52,7 @@ export async function cancelToolBorrowing(borrowingId: string) {
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const { error } = await (supabase.rpc as any)("cancel_tool_borrowing", {
+  const { error } = await supabase.rpc("cancel_tool_borrowing", {
     p_borrowing_id: borrowingId,
     p_by: profile.id,
   });

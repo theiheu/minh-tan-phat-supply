@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-input";
 import {
   Dialog,
   DialogContent,
@@ -81,6 +82,7 @@ export function DefectsList({
   isDev,
   variants = [],
   sourceLocationId = "",
+  suppliers = [],
 }: {
   rows: DefectListRow[];
   currentUserId: string | null;
@@ -88,6 +90,7 @@ export function DefectsList({
   isDev: boolean;
   variants?: { id: string; name: string; detail: string }[];
   sourceLocationId?: string;
+  suppliers?: { id: string; name: string; phone?: string | null }[];
 }) {
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -347,6 +350,7 @@ export function DefectsList({
           isManager={isManager}
           isDev={isDev}
           isOwner={currentUserId === selected.reportedById}
+          suppliers={suppliers}
           onClose={() => setOpenId(null)}
           onChanged={() => {
             setOpenId(null);
@@ -431,6 +435,7 @@ function DefectDetailDialog({
   isManager,
   isDev,
   isOwner,
+  suppliers = [],
   onClose,
   onChanged,
   onEdit,
@@ -441,6 +446,7 @@ function DefectDetailDialog({
   isManager: boolean;
   isDev: boolean;
   isOwner: boolean;
+  suppliers?: { id: string; name: string; phone?: string | null }[];
   onClose: () => void;
   onChanged: () => void;
   onEdit?: () => void;
@@ -455,6 +461,16 @@ function DefectDetailDialog({
   const [vendor, setVendor] = useState("");
   const [sentAt, setSentAt] = useState("");
   const [expectedReturnAt, setExpectedReturnAt] = useState("");
+
+  const supplierOptions: ComboboxInputOption[] = useMemo(
+    () =>
+      suppliers.map((s) => ({
+        value: s.name,
+        label: s.name,
+        hint: s.phone ?? undefined,
+      })),
+    [suppliers],
+  );
 
   // Thao tác đổi mới
   const [rejectingExchange, setRejectingExchange] = useState(false);
@@ -975,8 +991,26 @@ function DefectDetailDialog({
               <div className="rounded-lg border bg-muted/40 p-3">
                 <div className="space-y-2.5">
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-medium">Đơn vị sửa chữa</Label>
-                    <Input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="Công ty sửa chữa…" />
+                    <Label className="text-sm font-medium">Đơn vị sửa chữa (Nhà cung cấp)</Label>
+                    <ComboboxInput
+                      value={vendor}
+                      onChange={setVendor}
+                      options={supplierOptions}
+                      placeholder="Chọn hoặc tìm nhà cung cấp…"
+                      emptyText="Không tìm thấy nhà cung cấp."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Chưa có đơn vị phù hợp?{" "}
+                      <Link
+                        href="/admin/suppliers"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-primary hover:underline"
+                      >
+                        Tạo nhà cung cấp mới
+                      </Link>{" "}
+                      (mở tab mới).
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-2.5">
                     <div className="space-y-1.5">
@@ -984,7 +1018,9 @@ function DefectDetailDialog({
                       <Input type="date" value={sentAt} onChange={(e) => setSentAt(e.target.value)} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-sm font-medium">Dự kiến về</Label>
+                      <Label className="text-sm font-medium">
+                        Dự kiến về <span className="text-xs font-normal text-muted-foreground">(không bắt buộc)</span>
+                      </Label>
                       <Input type="date" value={expectedReturnAt} onChange={(e) => setExpectedReturnAt(e.target.value)} />
                     </div>
                   </div>

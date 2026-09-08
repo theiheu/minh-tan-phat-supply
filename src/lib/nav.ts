@@ -40,6 +40,7 @@ export interface NavGroup {
 export const REQUISITION_NAV_ITEMS: NavItem[] = [
   { href: "/products", label: "Chọn vật tư", icon: PackageOpen },
   { href: "/requisitions", label: "Phiếu yêu cầu", icon: ClipboardList },
+  { href: "/tools", label: "Dụng cụ", icon: Wrench },
 ];
 
 export const WAREHOUSE_NAV_ITEMS: NavItem[] = [

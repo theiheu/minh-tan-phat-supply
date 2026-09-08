@@ -2082,6 +2082,128 @@ export type Database = {
           },
         ]
       }
+      tool_borrowing_items: {
+        Row: {
+          borrowing_id: string
+          id: string
+          notes: string | null
+          quantity: number
+          returned_quantity: number
+          variant_id: string
+        }
+        Insert: {
+          borrowing_id: string
+          id?: string
+          notes?: string | null
+          quantity: number
+          returned_quantity?: number
+          variant_id: string
+        }
+        Update: {
+          borrowing_id?: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          returned_quantity?: number
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_borrowing_items_borrowing_id_fkey"
+            columns: ["borrowing_id"]
+            isOneToOne: false
+            referencedRelation: "tool_borrowings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_borrowings: {
+        Row: {
+          borrowed_at: string
+          borrower_id: string
+          code: string
+          created_at: string
+          expected_return_date: string | null
+          id: string
+          issued_by: string | null
+          notes: string | null
+          purpose: string
+          received_back_by: string | null
+          returned_at: string | null
+          status: Database["public"]["Enums"]["tool_borrowing_status"]
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          borrowed_at?: string
+          borrower_id: string
+          code: string
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          issued_by?: string | null
+          notes?: string | null
+          purpose: string
+          received_back_by?: string | null
+          returned_at?: string | null
+          status?: Database["public"]["Enums"]["tool_borrowing_status"]
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          borrowed_at?: string
+          borrower_id?: string
+          code?: string
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          issued_by?: string | null
+          notes?: string | null
+          purpose?: string
+          received_back_by?: string | null
+          returned_at?: string | null
+          status?: Database["public"]["Enums"]["tool_borrowing_status"]
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_borrowings_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_received_back_by_fkey"
+            columns: ["received_back_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zones: {
         Row: {
           created_at: string
@@ -2169,6 +2291,43 @@ export type Database = {
       }
     }
     Functions: {
+      cancel_tool_borrowing: {
+        Args: {
+          p_borrowing_id: string
+          p_by: string
+        }
+        Returns: undefined
+      }
+      create_tool_borrowing: {
+        Args: {
+          p_borrower_id?: string | null
+          p_expected_return_date?: string | null
+          p_items: Json
+          p_purpose: string
+          p_zone_id?: string | null
+        }
+        Returns: string
+      }
+      quick_emergency_exchange: {
+        Args: {
+          p_by: string
+          p_damage_detail: string
+          p_images: string[]
+          p_quantity: number
+          p_variant_id: string
+          p_zone_id?: string | null
+        }
+        Returns: Json
+      }
+      return_tool_borrowing: {
+        Args: {
+          p_borrowing_id: string
+          p_by: string
+          p_items: Json
+          p_notes?: string | null
+        }
+        Returns: undefined
+      }
       _effective_demand: {
         Args: { p_requisition: string }
         Returns: {
@@ -2600,6 +2759,8 @@ export type Database = {
         | "issue_out"
         | "exchange_out"
         | "defect_collect_in"
+        | "tool_borrow_out"
+        | "tool_return_in"
       receipt_status: "draft" | "approved" | "posted" | "cancelled"
       repair_outcome: "returned_to_stock" | "liquidation"
       repair_status: "in_repair" | "returned" | "cancelled"
@@ -2614,6 +2775,7 @@ export type Database = {
       requisition_type: "new_supply" | "replacement"
       severity_level: "light" | "medium" | "severe"
       stocktake_status: "draft" | "posted" | "cancelled"
+      tool_borrowing_status: "borrowed" | "returned" | "cancelled"
       vehicle_type:
         | "truck"
         | "excavator"
@@ -2808,6 +2970,8 @@ export const Constants = {
         "issue_out",
         "exchange_out",
         "defect_collect_in",
+        "tool_borrow_out",
+        "tool_return_in",
       ],
       receipt_status: ["draft", "approved", "posted", "cancelled"],
       repair_outcome: ["returned_to_stock", "liquidation"],
@@ -2824,6 +2988,7 @@ export const Constants = {
       requisition_type: ["new_supply", "replacement"],
       severity_level: ["light", "medium", "severe"],
       stocktake_status: ["draft", "posted", "cancelled"],
+      tool_borrowing_status: ["borrowed", "returned", "cancelled"],
       vehicle_type: [
         "truck",
         "excavator",

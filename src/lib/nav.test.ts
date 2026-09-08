@@ -54,6 +54,7 @@ describe("nav", () => {
     expect(isGroupActive(reqGroup, "/products")).toBe(true);
     expect(isGroupActive(reqGroup, "/requisitions")).toBe(true);
     expect(isGroupActive(reqGroup, "/requisitions/new")).toBe(true);
+    expect(isGroupActive(reqGroup, "/tools")).toBe(true);
     expect(isGroupActive(reqGroup, "/receipts")).toBe(false);
 
     expect(isGroupActive(whGroup, "/receipts")).toBe(true);
@@ -74,6 +75,7 @@ describe("nav", () => {
     expect(findTitle("/dashboard")).toBe("Trang chủ");
     expect(findTitle("/products")).toBe("Chọn vật tư");
     expect(findTitle("/requisitions")).toBe("Phiếu yêu cầu");
+    expect(findTitle("/tools")).toBe("Dụng cụ");
     expect(findTitle("/receipts")).toBe("Phiếu nhập");
     expect(findTitle("/issues")).toBe("Phiếu xuất");
     expect(findTitle("/transfers")).toBe("Chuyển kho");
@@ -83,5 +85,12 @@ describe("nav", () => {
     expect(findTitle("/liquidations")).toBe("Thanh lý");
     expect(findTitle("/fuel")).toBe("Kho dầu");
     expect(findTitle("/admin/products")).toBe("Vật tư");
+  });
+
+  it("includes /tools navigation item for all authenticated roles", () => {
+    const requesterItems = filterByRole(ALL_NAV_ITEMS, "requester");
+    const managerItems = filterByRole(ALL_NAV_ITEMS, "manager");
+    expect(requesterItems.some((i) => i.href === "/tools")).toBe(true);
+    expect(managerItems.some((i) => i.href === "/tools")).toBe(true);
   });
 });

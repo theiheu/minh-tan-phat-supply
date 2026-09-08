@@ -20,7 +20,7 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockImplementation(() =>
     Promise.resolve({
-      rpc: (...args: any[]) => mockRpc(...args),
+      rpc: (...args: unknown[]) => mockRpc(...args),
     }),
   ),
 }));

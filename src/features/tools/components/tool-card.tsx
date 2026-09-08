@@ -86,9 +86,18 @@ export function ToolCard({
       <CardHeader className="p-4 pb-2 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2.5">
-            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary mt-0.5">
-              <Wrench className="size-4" />
-            </div>
+            {imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imageUrl}
+                alt={productName}
+                className="size-8 rounded-lg object-cover shrink-0 mt-0.5 border"
+              />
+            ) : (
+              <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-primary mt-0.5">
+                <Wrench className="size-4" />
+              </div>
+            )}
             <div>
               <div className="font-semibold text-base leading-snug line-clamp-1">{productName}</div>
               {variantLabel && (
@@ -158,8 +167,13 @@ export function ToolCard({
             <span>Mượn: {formatDate(borrowedAt)}</span>
           </div>
 
-          {/* Expected Return Date */}
-          {expectedReturnDate && (
+          {/* Expected Return Date or Returned Date */}
+          {isFullyReturned && returnedAt ? (
+            <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="size-3.5 shrink-0" />
+              <span>Đã trả: {formatDate(returnedAt)}</span>
+            </div>
+          ) : expectedReturnDate ? (
             <div
               className={cn(
                 "flex items-center gap-1.5",
@@ -169,7 +183,12 @@ export function ToolCard({
               <Calendar className="size-3.5 shrink-0" />
               <span>Hẹn trả: {formatDate(expectedReturnDate)}</span>
             </div>
-          )}
+          ) : issuedByName ? (
+            <div className="flex items-center gap-1.5 truncate">
+              <User className="size-3.5 shrink-0 text-muted-foreground/80" />
+              <span className="truncate">Cấp: {issuedByName}</span>
+            </div>
+          ) : null}
         </div>
       </CardContent>
 
