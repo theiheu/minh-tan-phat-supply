@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireProfile } from "@/lib/auth";
+import { requireManager, requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -188,4 +188,112 @@ export async function cancelExchange(id: string) {
 
   revalidatePath("/defects");
   revalidatePath(`/defects/exchange/${id}`);
+}
+
+/**
+ * Xuất đổi mới nhanh (1 chạm) cho Quản lý kho:
+ * Tự động tạo phiếu -> duyệt -> cấp phát (trừ kho chính + thu đồ hỏng) -> hoàn tất nhận hàng.
+ */
+export async function quickExchange(defectId: string): Promise<{ id: string; code: string }> {
+  const profile = await requireManager();
+  const supabase = await createClient();
+
+  // 1. Tạo phiếu đổi mới
+  const { data: id, error: createErr } = await supabase.rpc("create_exchange", {
+    p_defect_id: defectId,
+    p_by: profile.id,
+  });
+  if (createErr) throw new Error(createErr.message);
+  if (!id) throw new Error("Không tạo được phiếu Đổi Mới");
+
+  const exchangeId = id as string;
+
+  // 2. Duyệt phiếu
+  const { error: approveErr } = await supabase.rpc("approve_exchange", {
+    p_id: exchangeId,
+    p_by: profile.id,
+  });
+  if (approveErr) throw new Error(approveErr.message);
+
+  // 3. Cấp phát (xuất kho & thu hồi đồ hỏng)
+  const { error: issueErr } = await supabase.rpc("issue_exchange", {
+    p_id: exchangeId,
+    p_by: profile.id,
+  });
+  if (issueErr) throw new Error(issueErr.message);
+
+  // 4. Hoàn tất nhận hàng
+  const { error: receiveErr } = await supabase.rpc("receive_exchange", {
+    p_id: exchangeId,
+    p_by: profile.id,
+  });
+  if (receiveErr) throw new Error(receiveErr.message);
+
+  const meta = await exchangeMeta(supabase, exchangeId);
+  const code = meta?.code ?? "DM-????";
+
+  const reporterId = await linkedReporterId(supabase, exchangeId);
+  await safeNotify(
+    [reporterId],
+    "exchange",
+    `Phiếu Đổi Mới ${code} đã hoàn tất`,
+    "Quản lý đã xuất cấp đổi mới vật tư cho bạn.",
+    `/defects/exchange/${exchangeId}`,
+  );
+
+  revalidatePath("/defects");
+  revalidatePath("/products");
+  return { id: exchangeId, code };
+}
+
+/**
+ * Xử lý & hoàn tất nhanh phiếu đổi mới đã tồn tại (pending / approved / issued).
+ */
+export async function quickFulfillExistingExchange(exchangeId: string): Promise<void> {
+  const profile = await requireManager();
+  const supabase = await createClient();
+
+  const { data: note } = await supabase
+    .from("exchange_notes")
+    .select("status")
+    .eq("id", exchangeId)
+    .single();
+  if (!note) throw new Error("Không tìm thấy phiếu Đổi Mới");
+
+  if (note.status === "pending") {
+    const { error: approveErr } = await supabase.rpc("approve_exchange", {
+      p_id: exchangeId,
+      p_by: profile.id,
+    });
+    if (approveErr) throw new Error(approveErr.message);
+  }
+
+  if (note.status === "pending" || note.status === "approved") {
+    const { error: issueErr } = await supabase.rpc("issue_exchange", {
+      p_id: exchangeId,
+      p_by: profile.id,
+    });
+    if (issueErr) throw new Error(issueErr.message);
+  }
+
+  if (note.status === "pending" || note.status === "approved" || note.status === "issued") {
+    const { error: receiveErr } = await supabase.rpc("receive_exchange", {
+      p_id: exchangeId,
+      p_by: profile.id,
+    });
+    if (receiveErr) throw new Error(receiveErr.message);
+  }
+
+  const meta = await exchangeMeta(supabase, exchangeId);
+  const reporterId = await linkedReporterId(supabase, exchangeId);
+  await safeNotify(
+    [reporterId],
+    "exchange",
+    `Phiếu Đổi Mới ${meta?.code ?? ""} đã hoàn tất`,
+    "Quản lý đã xuất cấp đổi mới vật tư cho bạn.",
+    `/defects/exchange/${exchangeId}`,
+  );
+
+  revalidatePath("/defects");
+  revalidatePath("/products");
 }

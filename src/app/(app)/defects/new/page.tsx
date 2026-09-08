@@ -1,15 +1,12 @@
 import { DefectForm } from "@/features/defects/components/defect-form";
 import { fetchCompositeVariantIds } from "@/features/products/data";
-import { getCurrentProfile } from "@/lib/auth";
 import { variantLabel } from "@/lib/labels";
-import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewDefectPage() {
   const supabase = await createClient();
-  const profile = await getCurrentProfile();
 
   const [mainLocations, { data: variants }, compositeIds] = await Promise.all([
     supabase.from("stock_locations").select("id, code, name").eq("type", "main").eq("is_active", true).order("code"),
@@ -35,7 +32,6 @@ export default async function NewDefectPage() {
     <div className="mx-auto w-full max-w-3xl space-y-1">
       <DefectForm
         sourceLocationId={sourceLocationId}
-        isManager={isPrivileged(profile?.role)}
         variants={variantOptions}
       />
     </div>

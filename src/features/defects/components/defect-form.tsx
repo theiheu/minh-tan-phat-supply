@@ -43,14 +43,12 @@ const INTENTS: { key: Intent; label: string; hint: string }[] = [
 
 export function DefectForm({
   sourceLocationId,
-  isManager = false,
   variants,
   onSuccess,
   onCancel,
 }: {
   /** Kho nguồn mặc định — server đã resolve = Kho chính. */
   sourceLocationId: string;
-  isManager?: boolean;
   variants: { id: string; name: string; detail: string }[];
   onSuccess?: (id: string) => void;
   onCancel?: () => void;
@@ -114,16 +112,12 @@ export function DefectForm({
         });
 
         if (intent === "exchange") {
-          const { id, code } = await createExchange(noteId);
+          const { code } = await createExchange(noteId);
           toast.success(`Đã ghi nhận hỏng + tạo phiếu Đổi Mới ${code}`);
           if (onSuccess) {
-            onSuccess(id);
+            onSuccess(noteId);
           } else {
-            if (isManager) {
-              router.push(`/defects/exchange/${id}`);
-            } else {
-              router.push("/defects");
-            }
+            router.push("/defects");
           }
           router.refresh();
           return;

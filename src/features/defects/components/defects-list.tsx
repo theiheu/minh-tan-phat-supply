@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ImagePlus, Printer, QrCode, Trash2, Undo2, Wrench, X } from "lucide-react";
+import { ImagePlus, Printer, QrCode, Trash2, Undo2, Wrench, X, Zap } from "lucide-react";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
@@ -27,8 +27,18 @@ import {
 } from "@/features/defects/actions";
 import { uploadDefectImage } from "@/features/defects/upload";
 import { sendToRepair } from "@/features/repairs/actions";
-import { createExchange } from "@/features/exchanges/actions";
+import {
+  approveExchange,
+  cancelExchange,
+  createExchange,
+  issueExchange,
+  quickExchange,
+  quickFulfillExistingExchange,
+  receiveExchange,
+  rejectExchange,
+} from "@/features/exchanges/actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
+import { cn } from "@/lib/utils";
 
 export interface DefectItemRow {
   id: string;
@@ -40,6 +50,13 @@ export interface DefectItemRow {
   variantLabel: string;
 }
 
+export interface DefectLiveExchange {
+  id: string;
+  code: string;
+  status: string;
+  rejectionReason: string | null;
+}
+
 export interface DefectListRow {
   id: string;
   code: string;
@@ -49,7 +66,7 @@ export interface DefectListRow {
   sourceName: string | null;
   createdAt: string;
   repairRequested: boolean;
-  liveExchange: { code: string; status: string } | null;
+  liveExchange: DefectLiveExchange | null;
   items: DefectItemRow[];
 }
 
@@ -72,13 +89,13 @@ export function DefectsList({
     <div className="space-y-4">
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full min-w-[520px] text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-              <th className="w-28 whitespace-nowrap px-3 py-2.5 font-medium">Mã phiếu</th>
-              <th className="w-16 whitespace-nowrap px-3 py-2.5 text-center font-medium">Hình ảnh</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Người lập phiếu</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Ngày lập</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Trạng thái</th>
+          <thead className="border-b border-border bg-table-header">
+            <tr className="text-left text-foreground">
+              <th className="w-28 whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Mã phiếu</th>
+              <th className="w-16 whitespace-nowrap px-3 py-2.5 text-center font-bold border-b border-border">Hình ảnh</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Người lập phiếu</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Ngày lập</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Trạng thái</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -200,8 +217,16 @@ function DefectDetailDialog({
   const [sentAt, setSentAt] = useState("");
   const [expectedReturnAt, setExpectedReturnAt] = useState("");
 
+  // Thao tác đổi mới
+  const [rejectingExchange, setRejectingExchange] = useState(false);
+  const [exchangeRejectReason, setExchangeRejectReason] = useState("");
+
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
   const empty = !currentUserId;
+
+  const hasActiveExchange = Boolean(
+    row.liveExchange && ["pending", "approved", "issued"].includes(row.liveExchange.status),
+  );
 
   async function handleAddImage(itemId: string, currentImages: string[], e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -272,17 +297,63 @@ function DefectDetailDialog({
   function doExchange() {
     startTransition(async () => {
       try {
-        const { id, code } = await createExchange(row.id);
+        const { code } = await createExchange(row.id);
         toast.success(`Đã tạo phiếu Đổi Mới ${code}`);
         setShowRepairForm(false);
         onChanged();
-        if (isManager) {
-          window.location.href = `/defects/exchange/${id}`;
-        }
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Tạo phiếu Đổi Mới thất bại");
       }
     });
+  }
+
+  function doQuickExchange() {
+    startTransition(async () => {
+      try {
+        const { code } = await quickExchange(row.id);
+        toast.success(`Đã xuất đổi mới và hoàn tất phiếu ${code}`);
+        setShowRepairForm(false);
+        onChanged();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Xuất đổi mới thất bại");
+      }
+    });
+  }
+
+  function doQuickFulfillExistingExchange(exchangeId: string) {
+    run(
+      () => quickFulfillExistingExchange(exchangeId),
+      "Đã xuất cấp đổi mới và hoàn tất phiếu",
+      onChanged,
+    );
+  }
+
+  function doApproveExchange(exchangeId: string) {
+    run(() => approveExchange(exchangeId), "Đã duyệt phiếu Đổi Mới", onChanged);
+  }
+
+  function doRejectExchange(exchangeId: string) {
+    if (!exchangeRejectReason.trim()) {
+      toast.error("Vui lòng nhập lý do từ chối");
+      return;
+    }
+    run(() => rejectExchange(exchangeId, exchangeRejectReason.trim()), "Đã từ chối phiếu Đổi Mới", () => {
+      setRejectingExchange(false);
+      setExchangeRejectReason("");
+      onChanged();
+    });
+  }
+
+  function doIssueExchange(exchangeId: string) {
+    run(() => issueExchange(exchangeId), "Đã cấp phát đổi mới (thu đồ hỏng về kho)", onChanged);
+  }
+
+  function doReceiveExchange(exchangeId: string) {
+    run(() => receiveExchange(exchangeId), "Đã xác nhận nhận đổi mới", onChanged);
+  }
+
+  function doCancelExchange(exchangeId: string) {
+    run(() => cancelExchange(exchangeId), "Đã hủy phiếu Đổi Mới", onChanged);
   }
 
   return (
@@ -311,6 +382,39 @@ function DefectDetailDialog({
             </div>
           </DialogDescription>
         </DialogHeader>
+
+        {/* Thông tin phiếu Đổi Mới nếu có */}
+        {row.liveExchange && (
+          <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">Phiếu đổi mới:</span>
+                <span className="font-mono font-medium text-primary">{row.liveExchange.code}</span>
+              </div>
+              <Badge variant={statusBadgeVariant(row.liveExchange.status)}>
+                {EXCHANGE_STATUS[row.liveExchange.status] ?? row.liveExchange.status}
+              </Badge>
+            </div>
+            {row.liveExchange.rejectionReason && (
+              <p className="rounded-md bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+                <span className="font-semibold">Lý do từ chối: </span>
+                {row.liveExchange.rejectionReason}
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {row.liveExchange.status === "pending" && "Phiếu đang chờ quản lý duyệt cấp đổi mới."}
+              {row.liveExchange.status === "approved" &&
+                "Phiếu đã duyệt. Quản lý sẽ cấp phát vật tư mới và thu hồi vật tư hỏng về kho."}
+              {row.liveExchange.status === "issued" &&
+                "Vật tư mới đã được cấp phát. Đang chờ người nhận xác nhận đã nhận hàng."}
+              {row.liveExchange.status === "received" && "Đã hoàn tất quy trình đổi mới vật tư."}
+              {row.liveExchange.status === "rejected" &&
+                "Yêu cầu đổi mới đã bị từ chối. Bạn có thể tạo lại yêu cầu hoặc chuyển đi sửa chữa."}
+              {row.liveExchange.status === "cancelled" &&
+                "Phiếu đổi mới đã bị hủy. Bạn có thể tạo lại yêu cầu hoặc chọn phương án khác."}
+            </p>
+          </div>
+        )}
 
         {/* Vật tư hỏng */}
         <div className="space-y-2">
@@ -394,69 +498,225 @@ function DefectDetailDialog({
         </div>
 
         {/* Thao tác */}
-        {row.status === "staging" && !row.liveExchange && !empty && (
+        {!empty && (
           <div className="space-y-3 border-t pt-4">
             <h4 className="text-sm font-semibold">Xử lý phiếu</h4>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {canExchange && (
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={doExchange}
-                  disabled={pending || row.repairRequested}
-                  className="w-full sm:col-span-2"
-                >
-                  {row.repairRequested
-                    ? "Phiếu đang chờ xác nhận sửa"
-                    : "Tạo phiếu Đổi Mới (cấp mới + thu đồ hỏng)"}
-                </Button>
+              {/* Trường hợp 1: Đang có phiếu Đổi Mới hoạt động (pending, approved, issued) */}
+              {hasActiveExchange && row.liveExchange ? (
+                <>
+                  {/* Quản lý có nút 1-chạm để hoàn tất ngay nếu ở pending / approved */}
+                  {isManager && (row.liveExchange.status === "pending" || row.liveExchange.status === "approved") && (
+                    <Button
+                      type="button"
+                      size="lg"
+                      onClick={() => doQuickFulfillExistingExchange(row.liveExchange!.id)}
+                      disabled={pending}
+                      className="w-full sm:col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm"
+                    >
+                      <Zap className="mr-1.5 size-4" />
+                      Xuất & hoàn tất đổi mới ngay (1 chạm)
+                    </Button>
+                  )}
+
+                  {/* Trạng thái pending */}
+                  {row.liveExchange.status === "pending" && (
+                    <>
+                      {isManager && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => doApproveExchange(row.liveExchange!.id)}
+                          disabled={pending}
+                          className="w-full"
+                        >
+                          Duyệt đổi mới
+                        </Button>
+                      )}
+                      {isManager &&
+                        (rejectingExchange ? (
+                          <div className="flex w-full items-center gap-2 sm:col-span-2">
+                            <Input
+                              value={exchangeRejectReason}
+                              onChange={(e) => setExchangeRejectReason(e.target.value)}
+                              placeholder="Nhập lý do từ chối…"
+                              className="h-9 text-sm"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => doRejectExchange(row.liveExchange!.id)}
+                              disabled={pending || !exchangeRejectReason.trim()}
+                            >
+                              Xác nhận
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setRejectingExchange(false);
+                                setExchangeRejectReason("");
+                              }}
+                            >
+                              Hủy
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => setRejectingExchange(true)}
+                            disabled={pending}
+                            className="w-full"
+                          >
+                            Từ chối đổi mới
+                          </Button>
+                        ))}
+                      {(isManager || isOwner) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => doCancelExchange(row.liveExchange!.id)}
+                          disabled={pending}
+                          className="w-full"
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                          Hủy phiếu đổi mới
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Trạng thái approved */}
+                  {row.liveExchange.status === "approved" && (
+                    <>
+                      {isManager && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => doIssueExchange(row.liveExchange!.id)}
+                          disabled={pending}
+                          className="w-full"
+                        >
+                          Cấp phát (thu đồ hỏng về kho)
+                        </Button>
+                      )}
+                      {isManager && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => doCancelExchange(row.liveExchange!.id)}
+                          disabled={pending}
+                          className="w-full"
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                          Hủy phiếu đổi mới
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Trạng thái issued */}
+                  {row.liveExchange.status === "issued" && (
+                    <Button
+                      type="button"
+                      size="lg"
+                      onClick={() => doReceiveExchange(row.liveExchange!.id)}
+                      disabled={pending}
+                      className="w-full sm:col-span-2"
+                    >
+                      Xác nhận đã nhận đổi mới
+                    </Button>
+                  )}
+                </>
+              ) : (
+                /* Trường hợp 2: Chưa có phiếu đổi mới hoặc phiếu đổi mới đã hủy/từ chối */
+                row.status === "staging" && (
+                  <>
+                    {/* Quản lý: Xuất đổi mới ngay 1 chạm */}
+                    {isManager && (
+                      <Button
+                        type="button"
+                        size="lg"
+                        onClick={doQuickExchange}
+                        disabled={pending || row.repairRequested}
+                        className="w-full sm:col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm"
+                      >
+                        <Zap className="mr-1.5 size-4" />
+                        Xuất đổi mới ngay (1 chạm)
+                      </Button>
+                    )}
+                    {/* Tạo theo quy trình từng bước / Đề nghị đổi mới */}
+                    {canExchange && (
+                      <Button
+                        type="button"
+                        variant={isManager ? "outline" : "default"}
+                        size={isManager ? "default" : "lg"}
+                        onClick={doExchange}
+                        disabled={pending || row.repairRequested}
+                        className={cn("w-full", !isManager && "sm:col-span-2")}
+                      >
+                        {row.repairRequested
+                          ? "Phiếu đang chờ xác nhận sửa"
+                          : row.liveExchange?.status === "rejected" || row.liveExchange?.status === "cancelled"
+                            ? "Tạo lại phiếu Đổi Mới"
+                            : isManager
+                              ? "Tạo phiếu Đổi Mới (duyệt/cấp sau)"
+                              : "Đề nghị đổi mới vật tư"}
+                      </Button>
+                    )}
+                    {canRequestRepair && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={doRequestRepair}
+                        disabled={pending || row.items.length === 0}
+                        className="w-full"
+                      >
+                        Đề nghị gửi đi sửa
+                      </Button>
+                    )}
+                    {canCancelRepairRequest && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={doCancelRepairRequest}
+                        disabled={pending}
+                        className="w-full"
+                      >
+                        Hủy đề nghị sửa
+                      </Button>
+                    )}
+                    {isManager && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setShowRepairForm((v) => !v)}
+                        disabled={row.items.length === 0}
+                        className="w-full"
+                      >
+                        <Wrench className="size-4" aria-hidden />
+                        {row.repairRequested ? "Xác nhận sửa" : "Đưa đi sửa"}
+                      </Button>
+                    )}
+                    {isManager && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={doCancel}
+                        disabled={pending}
+                        className="w-full"
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                        Hủy phiếu
+                      </Button>
+                    )}
+                  </>
+                )
               )}
-              {canRequestRepair && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={doRequestRepair}
-                  disabled={pending || row.items.length === 0}
-                  className="w-full"
-                >
-                  Đề nghị gửi đi sửa
-                </Button>
-              )}
-              {canCancelRepairRequest && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={doCancelRepairRequest}
-                  disabled={pending}
-                  className="w-full"
-                >
-                  Hủy đề nghị sửa
-                </Button>
-              )}
-              {isManager && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowRepairForm((v) => !v)}
-                  disabled={row.items.length === 0}
-                  className="w-full"
-                >
-                  <Wrench className="size-4" aria-hidden />
-                  {row.repairRequested ? "Xác nhận sửa" : "Đưa đi sửa"}
-                </Button>
-              )}
-              {isManager && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={doCancel}
-                  disabled={pending}
-                  className="w-full"
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                  Hủy phiếu
-                </Button>
-              )}
+
               <Button type="button" variant="outline" asChild className="w-full">
                 <Link href={`/qr/defect/${row.id}`} target="_blank">
                   <QrCode className="size-4" aria-hidden />
@@ -470,6 +730,7 @@ function DefectDetailDialog({
                 </Link>
               </Button>
             </div>
+
             {showRepairForm && isManager && (
               <div className="rounded-lg border bg-muted/40 p-3">
                 <div className="space-y-2.5">

@@ -57,13 +57,13 @@ export function ExchangesList({
     <div className="space-y-4">
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full min-w-[560px] text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Mã phiếu</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Phiếu hỏng</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Người lập HONG</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Ngày lập</th>
-              <th className="whitespace-nowrap px-3 py-2.5 font-medium">Trạng thái</th>
+          <thead className="border-b border-border bg-table-header">
+            <tr className="text-left text-foreground">
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Mã phiếu</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Phiếu hỏng</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Người lập HONG</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Ngày lập</th>
+              <th className="whitespace-nowrap px-3 py-2.5 font-bold border-b border-border">Trạng thái</th>
             </tr>
           </thead>
           <tbody className="divide-y">

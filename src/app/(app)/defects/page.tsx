@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { DefectDialog } from "@/features/defects/components/defect-dialog";
-import { ExchangesList } from "@/features/exchanges/components/exchanges-list";
 import {
   DefectsList,
   type DefectItemRow,
@@ -30,7 +29,16 @@ export const dynamic = "force-dynamic";
 export default async function DefectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; location?: string; q?: string; from?: string; to?: string; page?: string; view?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    location?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+    view?: string;
+    tab?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const status = sp.status ?? null;
@@ -40,11 +48,11 @@ export default async function DefectsPage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
   const view = sp.view ?? "defect";
+  const tab = sp.tab ?? "all";
 
   const profile = await getCurrentProfile();
   const isManager = isPrivileged(profile?.role);
   const isDev = isSuperuser(profile?.role);
-  const showExchange = isManager && view === "exchange";
   const showRepairBatch = isManager && view === "repair";
 
   const supabase = await createClient();
@@ -159,86 +167,121 @@ export default async function DefectsPage({
     );
   }
 
-  // ---- Chế độ quản lý phiếu Đổi Mới (manager) ----
-  if (showExchange) {
-    const { data: exRows, count: exCount } = await supabase
-      .from("exchange_notes")
-      .select(
-        "id, code, status, rejection_reason, created_at, defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, reporter:profiles!defect_notes_reported_by_fkey(name)), note_items:exchange_note_items(id, quantity, variants(attributes, unit, products(name)))",
-        { count: "exact" },
-      )
-      .order("created_at", { ascending: false })
-      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-    const rows = (exRows ?? []).map((r) => ({
-      id: r.id,
-      code: r.code,
-      status: r.status,
-      createdAt: r.created_at,
-      defectCode: (r.defect as { code?: string | null } | null)?.code ?? null,
-      reporterName:
-        (r.defect as { reporter?: { name?: string | null } | null } | null)?.reporter?.name ?? null,
-      rejectionReason: r.rejection_reason ?? null,
-      items: (r.note_items ?? []).map((i) => {
-        const variants = i.variants as {
-          attributes?: unknown;
-          unit?: string | null;
-          products?: { name?: string | null } | null;
-        } | null;
-        return {
-          id: i.id,
-          quantity: i.quantity,
-          productName: variants?.products?.name ?? null,
-          variantLabel: variantLabelFor(variants),
-        };
-      }),
-    }));
-    return (
-      <div className="space-y-4">
-        <HeaderTabs
-          view={view}
-          isManager={isManager}
-          sourceLocationId={sourceLocationId}
-          variants={defectVariantOptions}
-        />
-        <p className="text-sm text-muted-foreground">
-          Phiếu Đổi Mới: đổi vật tư hỏng (đã có ảnh/chứng cứ ở phiếu HONG) lấy vật tư mới.
-        </p>
-        <ExchangesList rows={rows} isManager={isManager} />
-        <Pagination basePath="/defects" page={page} totalPages={Math.max(1, Math.ceil((exCount ?? 0) / PAGE_SIZE))} params={{ view }} />
-      </div>
-    );
-  }
-
   // ---- Chế độ Phiếu hỏng (mặc định) ----
+  // Lấy các phiếu đổi mới đang sống (pending, approved, issued) và đã nhận để phân loại tiến trình
+  const [{ data: liveExNotes }, { data: receivedExNotes }] = await Promise.all([
+    supabase
+      .from("exchange_notes")
+      .select("linked_defect_id, status")
+      .in("status", ["pending", "approved", "issued"]),
+    supabase
+      .from("exchange_notes")
+      .select("linked_defect_id")
+      .eq("status", "received"),
+  ]);
+
+  const activeExDefectIds = new Set(
+    (liveExNotes ?? []).map((e) => e.linked_defect_id).filter(Boolean) as string[],
+  );
+  const receivedExDefectIds = new Set(
+    (receivedExNotes ?? []).map((e) => e.linked_defect_id).filter(Boolean) as string[],
+  );
+  const excludedFromPending = new Set([...activeExDefectIds, ...receivedExDefectIds]);
+
+  // Đếm số lượng theo các nhóm tiến trình
+  const [
+    { count: totalAll },
+    { data: stagingNotesForCount },
+    { count: totalInRepair },
+    { count: totalTerminal },
+  ] = await Promise.all([
+    supabase.from("defect_notes").select("id", { count: "exact", head: true }),
+    supabase.from("defect_notes").select("id, repair_requested_at").eq("status", "staging"),
+    supabase.from("defect_notes").select("id", { count: "exact", head: true }).eq("status", "in_repair"),
+    supabase
+      .from("defect_notes")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["returned", "liquidated", "cancelled"]),
+  ]);
+
+  const stagingList = stagingNotesForCount ?? [];
+  const pendingCount = stagingList.filter(
+    (r) => !r.repair_requested_at && !excludedFromPending.has(r.id),
+  ).length;
+  const stagingRepairReqCount = stagingList.filter(
+    (r) => r.repair_requested_at && !activeExDefectIds.has(r.id),
+  ).length;
+
+  const counts = {
+    all: totalAll ?? 0,
+    pending: pendingCount,
+    exchanging: activeExDefectIds.size,
+    repairing: (totalInRepair ?? 0) + stagingRepairReqCount,
+    completed: (totalTerminal ?? 0) + receivedExDefectIds.size,
+  };
+
   let query = supabase
     .from("defect_notes")
     .select(
       "id, code, status, reported_by, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
       { count: "exact" },
     )
-    .order("created_at", { ascending: false })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-  if (status && STATUSES.includes(status as DefectStatus)) query = query.eq("status", status as DefectStatus);
+    .order("created_at", { ascending: false });
+
+  if (tab === "pending") {
+    query = query.eq("status", "staging").is("repair_requested_at", null);
+    if (excludedFromPending.size > 0) {
+      query = query.not("id", "in", `(${Array.from(excludedFromPending).join(",")})`);
+    }
+  } else if (tab === "exchanging") {
+    if (activeExDefectIds.size > 0) {
+      query = query.in("id", Array.from(activeExDefectIds));
+    } else {
+      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+  } else if (tab === "repairing") {
+    query = query.or("status.eq.in_repair,repair_requested_at.not.is.null");
+  } else if (tab === "completed") {
+    if (receivedExDefectIds.size > 0) {
+      query = query.or(
+        `status.in.(returned,liquidated,cancelled),id.in.(${Array.from(receivedExDefectIds).join(",")})`,
+      );
+    } else {
+      query = query.in("status", ["returned", "liquidated", "cancelled"]);
+    }
+  } else if (status && STATUSES.includes(status as DefectStatus)) {
+    query = query.eq("status", status as DefectStatus);
+  }
+
   if (location) query = query.eq("source_location_id", location);
   if (q) query = query.ilike("code", `%${q}%`);
   const { gte, lte } = dayRange(from, to);
   if (gte) query = query.gte("created_at", gte);
   if (lte) query = query.lte("created_at", lte);
 
+  query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
   const { data, count } = await query;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
-  // Phiếu HONG nào đang có phiếu Đổi Mới sống → đánh dấu để modal hiển thị đúng.
+  // Phiếu HONG nào đang có phiếu Đổi Mới → lấy thông tin phiếu đổi mới mới nhất để modal hiển thị và thao tác.
   const noteIds = (data ?? []).map((d) => d.id);
-  const liveByNote = new Map<string, { code: string; status: string }>();
+  const liveByNote = new Map<string, { id: string; code: string; status: string; rejectionReason: string | null }>();
   if (noteIds.length > 0) {
     const { data: exNotes } = await supabase
       .from("exchange_notes")
-      .select("id, code, status, linked_defect_id")
+      .select("id, code, status, linked_defect_id, rejection_reason")
       .in("linked_defect_id", noteIds)
-      .in("status", ["pending", "approved", "issued", "received"]);
+      .order("created_at", { ascending: false });
     for (const e of exNotes ?? []) {
-      if (e.linked_defect_id) liveByNote.set(e.linked_defect_id, { code: e.code, status: e.status });
+      if (e.linked_defect_id && !liveByNote.has(e.linked_defect_id)) {
+        liveByNote.set(e.linked_defect_id, {
+          id: e.id,
+          code: e.code,
+          status: e.status,
+          rejectionReason: e.rejection_reason ?? null,
+        });
+      }
     }
   }
 
@@ -273,6 +316,14 @@ export default async function DefectsPage({
   const statusOptions = STATUSES.map((s) => ({ value: s, label: DEFECT_STATUS[s] }));
   const locationOptions = (locations ?? []).map((l) => ({ value: l.id, label: l.name }));
 
+  const quickFilterTabs = [
+    { key: "all", label: "Tất cả", count: counts.all },
+    { key: "pending", label: "Cần xử lý", count: counts.pending, tone: "danger" },
+    { key: "exchanging", label: "Đang đổi mới", count: counts.exchanging, tone: "info" },
+    { key: "repairing", label: "Đang sửa", count: counts.repairing, tone: "warning" },
+    { key: "completed", label: "Đã hoàn tất", count: counts.completed, tone: "success" },
+  ];
+
   return (
     <div className="space-y-4">
       <HeaderTabs
@@ -281,6 +332,53 @@ export default async function DefectsPage({
         sourceLocationId={sourceLocationId}
         variants={defectVariantOptions}
       />
+
+      {/* Quick filter tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b pb-2">
+        {quickFilterTabs.map((t) => {
+          const isActive = tab === t.key || (t.key === "all" && !sp.tab);
+          const nextParams: Record<string, string | undefined> = {
+            ...sp,
+            tab: t.key === "all" ? undefined : t.key,
+            page: undefined,
+          };
+          const qs = buildQueryString(nextParams);
+          const href = qs ? `/defects?${qs}` : "/defects";
+          return (
+            <Link
+              key={t.key}
+              href={href}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground hover:bg-accent hover:text-foreground border-border",
+              )}
+            >
+              <span>{t.label}</span>
+              {t.count !== undefined && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.2 text-[10px] font-semibold",
+                    isActive
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : t.tone === "danger" && t.count > 0
+                        ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+                        : t.tone === "info" && t.count > 0
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+                          : t.tone === "warning" && t.count > 0
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                            : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {t.count}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
       <ListFilters
         basePath="/defects"
         searchPlaceholder="Tìm mã phiếu hỏng…"
@@ -304,7 +402,7 @@ export default async function DefectsPage({
         basePath="/defects"
         page={page}
         totalPages={totalPages}
-        params={{ q, status, location, from, to }}
+        params={{ q, status, location, from, to, tab: tab !== "all" ? tab : undefined }}
       />
     </div>
   );
@@ -324,7 +422,15 @@ function variantLabelFor(variants: {
   return variants?.unit ?? "—";
 }
 
-/** Header tabs: Phiếu hỏng | Phiếu đổi mới | Tập kết sửa (+ nút Ghi nhận hỏng). */
+function buildQueryString(params: Record<string, string | undefined>) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v && v.trim()) q.set(k, v.trim());
+  }
+  return q.toString();
+}
+
+/** Header tabs: Phiếu hỏng | Tập kết sửa (+ nút Ghi nhận hỏng). */
 function HeaderTabs({
   view,
   isManager,
@@ -338,12 +444,6 @@ function HeaderTabs({
 }) {
   const tabs = [
     { href: "/defects", label: "Phiếu hỏng", active: view === "defect" },
-    {
-      href: "/defects?view=exchange",
-      label: "Phiếu đổi mới",
-      active: view === "exchange",
-      manager: true,
-    },
     { href: "/defects?view=repair", label: "Tập kết sửa", active: view === "repair", manager: true },
   ];
   const visible = tabs.filter((t) => !t.manager || isManager);
@@ -368,7 +468,6 @@ function HeaderTabs({
       </div>
       <DefectDialog
         sourceLocationId={sourceLocationId}
-        isManager={isManager}
         variants={variants}
       />
     </div>

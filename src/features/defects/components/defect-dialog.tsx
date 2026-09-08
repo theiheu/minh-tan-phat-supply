@@ -16,13 +16,11 @@ import { DefectForm } from "./defect-form";
 
 export function DefectDialog({
   sourceLocationId,
-  isManager = false,
   variants,
   triggerLabel = "Ghi nhận hỏng",
   triggerClassName,
 }: {
   sourceLocationId: string;
-  isManager?: boolean;
   variants: { id: string; name: string; detail: string }[];
   triggerLabel?: string;
   triggerClassName?: string;
@@ -48,7 +46,6 @@ export function DefectDialog({
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pr-1">
           <DefectForm
             sourceLocationId={sourceLocationId}
-            isManager={isManager}
             variants={variants}
             onSuccess={() => {
               setOpen(false);

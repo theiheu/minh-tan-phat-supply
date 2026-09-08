@@ -39,8 +39,8 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
       />
       <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <SheetContent side="left" className="w-72 gap-0 p-0">
-          <SheetHeader className="border-b">
-            <SheetTitle>Menu</SheetTitle>
+          <SheetHeader className="flex h-14 items-center justify-between border-b px-4">
+            <SheetTitle className="text-sm font-bold leading-tight">Trại gà Minh Tân Phát</SheetTitle>
           </SheetHeader>
           <div className="space-y-1 overflow-y-auto p-3">
             {items.map((item) => {
