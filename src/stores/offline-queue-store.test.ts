@@ -20,7 +20,21 @@ describe("useOfflineQueueStore", () => {
     expect(queue.length).toBe(1);
     expect(queue[0].clientTempId).toBe(id);
     expect(queue[0].status).toBe("pending");
+    expect(queue[0].submitAfterCreate).toBe(true);
     expect(queue[0].items[0].name).toBe("Bóng đèn");
+  });
+
+  it("supports setting submitAfterCreate to false", () => {
+    const id = useOfflineQueueStore.getState().enqueue({
+      items: [{ variantId: "v1", quantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
+      zoneId: "z1",
+      purpose: "Lưu nháp",
+      submitAfterCreate: false,
+    });
+
+    expect(id).toBeDefined();
+    const queue = useOfflineQueueStore.getState().queue;
+    expect(queue[0].submitAfterCreate).toBe(false);
   });
 
   it("dequeues an item by clientTempId", () => {

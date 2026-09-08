@@ -15,6 +15,7 @@ export interface OfflineRequisition {
   zoneId: string;
   purpose: string;
   requesterId?: string;
+  submitAfterCreate?: boolean;
   createdAt: string;
   retryCount: number;
   lastError?: string | null;
@@ -26,6 +27,7 @@ export interface EnqueueInput {
   zoneId: string;
   purpose: string;
   requesterId?: string;
+  submitAfterCreate?: boolean;
 }
 
 export type OfflineRequisitionPayload = EnqueueInput;
@@ -54,6 +56,7 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
           zoneId: input.zoneId,
           purpose: input.purpose,
           requesterId: input.requesterId,
+          submitAfterCreate: input.submitAfterCreate ?? true,
           createdAt: new Date().toISOString(),
           retryCount: 0,
           status: "pending",

@@ -19,14 +19,14 @@ describe("OfflineStatusBar", () => {
     expect(screen.getByText(/Đang ngoại tuyến/i)).toBeInTheDocument();
   });
 
-  it("renders queue count when pending items exist", () => {
+  it("renders syncing message when isSyncing is true", () => {
     useOfflineQueueStore.getState().enqueue({
       items: [{ variantId: "v1", quantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
       zoneId: "z1",
       purpose: "Chuồng 1",
     });
 
-    render(<OfflineStatusBar isOnline={true} onSyncNow={() => {}} />);
-    expect(screen.getByText(/1 phiếu.*chờ đồng bộ/i)).toBeInTheDocument();
+    render(<OfflineStatusBar isOnline={true} isSyncing={true} onSyncNow={() => {}} />);
+    expect(screen.getByText("Đang đồng bộ phiếu yêu cầu lên máy chủ...")).toBeInTheDocument();
   });
 });

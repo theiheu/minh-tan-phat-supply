@@ -116,11 +116,12 @@ export function RequisitionForm({
     if (!zoneId) return toast.error("Chọn khu vực");
     if (!purpose.trim()) return toast.error("Nhập mục đích");
 
-    const enqueueOffline = () => {
+    const enqueueOffline = (submit: boolean) => {
       useOfflineQueueStore.getState().enqueue({
         zoneId,
         purpose: purpose.trim(),
         requesterId,
+        submitAfterCreate: submit,
         items: items.map((i) => ({
           variantId: i.variantId,
           quantity: i.quantity,
@@ -136,7 +137,7 @@ export function RequisitionForm({
     };
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      enqueueOffline();
+      enqueueOffline(submitAfterCreate);
       return;
     }
 
@@ -159,7 +160,7 @@ export function RequisitionForm({
         router.refresh();
       } catch (err) {
         if (typeof navigator !== "undefined" && !navigator.onLine) {
-          enqueueOffline();
+          enqueueOffline(submitAfterCreate);
           return;
         }
 
@@ -175,7 +176,7 @@ export function RequisitionForm({
           lower.includes("failed to fetch") ||
           lower.includes("load failed")
         ) {
-          enqueueOffline();
+          enqueueOffline(submitAfterCreate);
           return;
         }
 

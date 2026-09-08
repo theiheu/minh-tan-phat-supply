@@ -61,7 +61,7 @@ describe("RequisitionForm", () => {
   it("renders Quét QR button in Vật tư yêu cầu section and opens scanner dialog", () => {
     render(
       <RequisitionForm
-        zones={[{ id: "z-1", name: "Khu vực A", created_at: "", updated_at: "", deleted_at: null }]}
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
       />
     );
 
@@ -90,7 +90,7 @@ describe("RequisitionForm", () => {
 
     render(
       <RequisitionForm
-        zones={[{ id: "z-1", name: "Khu vực A", created_at: "", updated_at: "", deleted_at: null }]}
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
         defaultZoneId="z-1"
         currentUser={{ id: "usr-1", role: "staff", name: "Nguyễn Văn A" }}
       />
@@ -118,9 +118,49 @@ describe("RequisitionForm", () => {
       },
     ]);
     expect(useCartStore.getState().items.length).toBe(0);
+    expect(queue[0].submitAfterCreate).toBe(true);
     expect(toast.info).toHaveBeenCalledWith(
       "Đang ngoại tuyến. Phiếu yêu cầu đã được lưu trên máy và sẽ tự động gửi khi có mạng."
     );
+    expect(mockPush).toHaveBeenCalledWith("/requisitions");
+  });
+
+  it("enqueues draft requisition with submitAfterCreate false when clicking Lưu nháp while offline", async () => {
+    Object.defineProperty(navigator, "onLine", {
+      value: false,
+      configurable: true,
+      writable: true,
+    });
+
+    useCartStore.getState().addItem({
+      variantId: "var-123",
+      quantity: 2,
+      name: "Ốc vít M4",
+      label: "M4x20",
+      unit: "Con",
+    });
+
+    render(
+      <RequisitionForm
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
+        defaultZoneId="z-1"
+        currentUser={{ id: "usr-1", role: "staff", name: "Nguyễn Văn A" }}
+      />
+    );
+
+    const purposeInput = screen.getByPlaceholderText("Mục đích sử dụng vật tư…");
+    fireEvent.change(purposeInput, { target: { value: "Lưu nháp sửa máy" } });
+
+    const draftBtn = screen.getByRole("button", { name: "Lưu nháp" });
+    fireEvent.click(draftBtn);
+
+    expect(createRequisition).not.toHaveBeenCalled();
+
+    const queue = useOfflineQueueStore.getState().queue;
+    expect(queue.length).toBe(1);
+    expect(queue[0].submitAfterCreate).toBe(false);
+    expect(queue[0].purpose).toBe("Lưu nháp sửa máy");
+    expect(useCartStore.getState().items.length).toBe(0);
     expect(mockPush).toHaveBeenCalledWith("/requisitions");
   });
 
@@ -137,7 +177,7 @@ describe("RequisitionForm", () => {
 
     render(
       <RequisitionForm
-        zones={[{ id: "z-2", name: "Khu vực B", created_at: "", updated_at: "", deleted_at: null }]}
+        zones={[{ id: "z-2", name: "Khu vực B", description: null, created_at: "", updated_at: "", deleted_at: null }]}
         defaultZoneId="z-2"
         currentUser={{ id: "usr-2", role: "staff", name: "Trần Văn B" }}
       />
@@ -177,7 +217,7 @@ describe("RequisitionForm", () => {
 
     render(
       <RequisitionForm
-        zones={[{ id: "z-1", name: "Khu vực A", created_at: "", updated_at: "", deleted_at: null }]}
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
         defaultZoneId="z-1"
         currentUser={{ id: "usr-1", role: "staff", name: "Nguyễn Văn A" }}
       />

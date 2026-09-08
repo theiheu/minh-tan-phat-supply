@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { useOfflineQueueStore } from "@/stores/offline-queue-store";
-import { createRequisition } from "@/features/requisitions/actions";
+import { createRequisition, submitRequisition } from "@/features/requisitions/actions";
 import { OfflineStatusBar } from "./offline-status-bar";
 
 export function OfflineSyncProvider({ children }: { children: React.ReactNode }) {
@@ -27,35 +27,41 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
 
     let successCount = 0;
 
-    for (const item of pendingItems) {
-      updateStatus(item.clientTempId, "syncing");
-      try {
-        await createRequisition({
-          zoneId: item.zoneId,
-          purpose: item.purpose,
-          requesterId: item.requesterId,
-          items: item.items.map((i) => ({
-            variantId: i.variantId,
-            quantity: i.quantity,
-          })),
-        });
+    try {
+      for (const item of pendingItems) {
+        updateStatus(item.clientTempId, "syncing");
+        try {
+          const reqId = await createRequisition({
+            zoneId: item.zoneId,
+            purpose: item.purpose,
+            requesterId: item.requesterId,
+            items: item.items.map((i) => ({
+              variantId: i.variantId,
+              quantity: i.quantity,
+            })),
+          });
 
-        dequeue(item.clientTempId);
-        successCount++;
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Lỗi đồng bộ";
-        updateStatus(item.clientTempId, "failed", errorMsg);
+          if (item.submitAfterCreate !== false) {
+            await submitRequisition(reqId);
+          }
+
+          dequeue(item.clientTempId);
+          successCount++;
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : "Lỗi đồng bộ";
+          updateStatus(item.clientTempId, "failed", errorMsg);
+        }
       }
-    }
 
-    if (successCount > 0) {
-      toast.success(`Đã tự động gửi thành công ${successCount} phiếu yêu cầu ngoại tuyến lên hệ thống!`, {
-        duration: 5000,
-      });
+      if (successCount > 0) {
+        toast.success(`Đã tự động gửi thành công ${successCount} phiếu yêu cầu ngoại tuyến lên hệ thống!`, {
+          duration: 5000,
+        });
+      }
+    } finally {
+      isSyncingRef.current = false;
+      setIsSyncing(false);
     }
-
-    isSyncingRef.current = false;
-    setIsSyncing(false);
   }, [dequeue, updateStatus]);
 
   useEffect(() => {

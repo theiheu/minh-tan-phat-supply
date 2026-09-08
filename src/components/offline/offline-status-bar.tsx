@@ -28,11 +28,13 @@ export function OfflineStatusBar({
             <RefreshCw className={`size-4 shrink-0 text-amber-600 dark:text-amber-400 ${isSyncing ? "animate-spin" : ""}`} />
           )}
           <span className="truncate">
-            {!isOnline
-              ? pendingCount > 0
-                ? `Đang ngoại tuyến — có ${pendingCount} phiếu yêu cầu chờ đồng bộ`
-                : "Đang ngoại tuyến — các phiếu tạo sẽ được lưu an toàn trên máy"
-              : `Có ${pendingCount} phiếu yêu cầu chờ đồng bộ lên máy chủ`}
+            {isSyncing
+              ? "Đang đồng bộ phiếu yêu cầu lên máy chủ..."
+              : !isOnline
+                ? pendingCount > 0
+                  ? `Đang ngoại tuyến — có ${pendingCount} phiếu yêu cầu chờ đồng bộ`
+                  : "Đang ngoại tuyến — các phiếu tạo sẽ được lưu an toàn trên máy"
+                : `Có ${pendingCount} phiếu yêu cầu chờ đồng bộ lên máy chủ`}
           </span>
         </div>
 

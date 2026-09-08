@@ -2,11 +2,12 @@ import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { OfflineSyncProvider } from "./offline-sync-provider";
 import { useOfflineQueueStore } from "@/stores/offline-queue-store";
-import { createRequisition } from "@/features/requisitions/actions";
+import { createRequisition, submitRequisition } from "@/features/requisitions/actions";
 import { toast } from "sonner";
 
 vi.mock("@/features/requisitions/actions", () => ({
   createRequisition: vi.fn(),
+  submitRequisition: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -33,14 +34,16 @@ describe("OfflineSyncProvider", () => {
     expect(screen.getByTestId("child-content")).toBeInTheDocument();
   });
 
-  it("syncs pending queue items automatically on mount when online", async () => {
-    (createRequisition as Mock).mockResolvedValue({ id: "req-1" });
+  it("syncs pending queue items automatically on mount when online and submits requisition when submitAfterCreate is true", async () => {
+    (createRequisition as Mock).mockResolvedValue("req-1");
+    (submitRequisition as Mock).mockResolvedValue(undefined);
 
     useOfflineQueueStore.getState().enqueue({
       items: [{ variantId: "v1", quantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
       zoneId: "z1",
       purpose: "Sửa điện",
       requesterId: "user-1",
+      submitAfterCreate: true,
     });
 
     await act(async () => {
@@ -59,6 +62,38 @@ describe("OfflineSyncProvider", () => {
         requesterId: "user-1",
         items: [{ variantId: "v1", quantity: 2 }],
       });
+      expect(submitRequisition).toHaveBeenCalledTimes(1);
+      expect(submitRequisition).toHaveBeenCalledWith("req-1");
+      expect(useOfflineQueueStore.getState().queue.length).toBe(0);
+      expect(toast.success).toHaveBeenCalledWith(
+        expect.stringContaining("Đã tự động gửi thành công 1 phiếu yêu cầu ngoại tuyến"),
+        expect.any(Object)
+      );
+    });
+  });
+
+  it("does not call submitRequisition when submitAfterCreate is false", async () => {
+    (createRequisition as Mock).mockResolvedValue("req-draft");
+    (submitRequisition as Mock).mockResolvedValue(undefined);
+
+    useOfflineQueueStore.getState().enqueue({
+      items: [{ variantId: "v1", quantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
+      zoneId: "z1",
+      purpose: "Lưu nháp sửa điện",
+      submitAfterCreate: false,
+    });
+
+    await act(async () => {
+      render(
+        <OfflineSyncProvider>
+          <div>Content</div>
+        </OfflineSyncProvider>
+      );
+    });
+
+    await vi.waitFor(() => {
+      expect(createRequisition).toHaveBeenCalledTimes(1);
+      expect(submitRequisition).not.toHaveBeenCalled();
       expect(useOfflineQueueStore.getState().queue.length).toBe(0);
       expect(toast.success).toHaveBeenCalledWith(
         expect.stringContaining("Đã tự động gửi thành công 1 phiếu yêu cầu ngoại tuyến"),
@@ -93,7 +128,8 @@ describe("OfflineSyncProvider", () => {
   });
 
   it("triggers sync on online event", async () => {
-    (createRequisition as Mock).mockResolvedValue({ id: "req-1" });
+    (createRequisition as Mock).mockResolvedValue("req-1");
+    (submitRequisition as Mock).mockResolvedValue(undefined);
 
     await act(async () => {
       render(
@@ -114,6 +150,7 @@ describe("OfflineSyncProvider", () => {
 
     await vi.waitFor(() => {
       expect(createRequisition).toHaveBeenCalledTimes(1);
+      expect(submitRequisition).toHaveBeenCalledTimes(1);
       expect(useOfflineQueueStore.getState().queue.length).toBe(0);
     });
   });
