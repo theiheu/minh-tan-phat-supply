@@ -4,7 +4,7 @@ import convert from "heic-convert";
 
 vi.mock("heic-convert", () => {
   return {
-    default: vi.fn(async ({ buffer, format, quality }) => {
+    default: vi.fn(async ({ buffer }) => {
       // Simulate conversion returning JPEG buffer
       if (buffer[0] === 0xde && buffer[1] === 0xad) {
         throw new Error("Corrupt HEIC file");

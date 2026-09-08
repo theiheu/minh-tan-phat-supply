@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Download, ExternalLink, Image as ImageIcon, Loader2, Printer, QrCode } from "lucide-react";
+import { Download, Image as ImageIcon, Loader2, Printer, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
