@@ -1,7 +1,6 @@
 "use client";
 
 import { Calendar, Warehouse } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -87,45 +86,44 @@ export function ReportDateFilters({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2.5 rounded-lg border bg-card p-3 shadow-xs",
+        "rounded-xl border bg-card p-2.5 sm:p-3 shadow-xs space-y-2.5",
         className
       )}
     >
-      {/* Top bar: Presets, Date summary badge & Location */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Presets buttons */}
-        <div className="flex flex-wrap items-center gap-1.5">
+      {/* Main bar: Preset buttons on left, Date range text & Warehouse select on right */}
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+        {/* Presets Segmented Group */}
+        <div className="bg-muted/80 p-0.5 rounded-lg inline-flex flex-wrap items-center gap-0.5">
           {DATE_PRESETS.map((p) => {
             const isActive = value.preset === p.id;
             return (
-              <Button
+              <button
                 key={p.id}
                 type="button"
-                size="sm"
-                variant={isActive ? "default" : "outline"}
                 aria-pressed={isActive}
-                className={cn(
-                  "h-8 px-2.5 text-xs font-medium transition-colors cursor-pointer",
-                  !isActive &&
-                    "border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
                 onClick={() => handlePresetSelect(p.id)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer select-none",
+                  isActive
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
               >
                 {p.id === "custom" && (
-                  <Calendar className="mr-1 size-3.5" aria-hidden="true" />
+                  <Calendar className="mr-1 inline-block size-3 -translate-y-px" aria-hidden="true" />
                 )}
                 {p.label}
-              </Button>
+              </button>
             );
           })}
         </div>
 
         {/* Right side: Date Range summary badge & Location selector */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Formatted Date Range summary badge */}
-          <div className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs text-muted-foreground font-medium">
-            <Calendar className="size-3 text-muted-foreground" aria-hidden="true" />
-            <span>
+          <div className="inline-flex items-center gap-1.5 rounded-md border bg-background/80 px-2.5 py-1 text-xs text-muted-foreground font-medium shadow-2xs">
+            <Calendar className="size-3.5 text-primary/70" aria-hidden="true" />
+            <span className="tabular-nums">
               {formatDate(value.from)} – {formatDate(value.to)}
             </span>
           </div>
@@ -133,12 +131,12 @@ export function ReportDateFilters({
           {/* Location selector */}
           {showLocation && (
             <div className="flex items-center gap-1.5">
-              <Warehouse className="size-3.5 text-muted-foreground" aria-hidden="true" />
+              <Warehouse className="size-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
               <select
                 aria-label="Kho"
                 value={value.locationId ?? ""}
                 onChange={(e) => handleLocationChange(e.target.value)}
-                className="h-8 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/50"
+                className="h-7.5 min-w-[150px] max-w-[240px] rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-2xs outline-none focus-visible:border-ring focus-visible:ring-[2px] focus-visible:ring-ring/50"
               >
                 <option value="">Tất cả kho</option>
                 {locations.map((loc) => (
@@ -154,7 +152,7 @@ export function ReportDateFilters({
 
       {/* Collapsible Custom Date Pickers - Sổ ra khi chọn 'Tùy chọn ngày' */}
       {isCustom && (
-        <div className="flex flex-wrap items-center gap-3 border-t pt-2.5 text-xs animate-in fade-in duration-150">
+        <div className="flex flex-wrap items-center gap-3 border-t pt-2 text-xs animate-in fade-in duration-150">
           <span className="font-medium text-muted-foreground">Khoảng ngày tùy chọn:</span>
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">Từ ngày:</span>
@@ -163,7 +161,7 @@ export function ReportDateFilters({
               aria-label="Từ ngày"
               value={value.from}
               onChange={(e) => handleFromChange(e.target.value)}
-              className="h-8 w-[135px] px-2 text-xs"
+              className="h-7.5 w-[135px] px-2 text-xs bg-background"
             />
           </div>
           <div className="flex items-center gap-1.5">
@@ -173,7 +171,7 @@ export function ReportDateFilters({
               aria-label="Đến ngày"
               value={value.to}
               onChange={(e) => handleToChange(e.target.value)}
-              className="h-8 w-[135px] px-2 text-xs"
+              className="h-7.5 w-[135px] px-2 text-xs bg-background"
             />
           </div>
         </div>
