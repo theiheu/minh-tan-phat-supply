@@ -125,19 +125,34 @@ alter table public.fuel_dispenses enable row level security;
 alter table public.fuel_movements enable row level security;
 
 -- Policies: Cho phép mọi tài khoản đã đăng nhập xem dữ liệu
+drop policy if exists "fuel_types_select" on public.fuel_types;
 create policy "fuel_types_select" on public.fuel_types for select to authenticated using (true);
+
+drop policy if exists "fuel_types_all_mgr" on public.fuel_types;
 create policy "fuel_types_all_mgr" on public.fuel_types for all to authenticated using (public.is_manager());
 
+drop policy if exists "vehicles_select" on public.vehicles;
 create policy "vehicles_select" on public.vehicles for select to authenticated using (true);
+
+drop policy if exists "vehicles_all_mgr" on public.vehicles;
 create policy "vehicles_all_mgr" on public.vehicles for all to authenticated using (public.is_manager());
 
+drop policy if exists "fuel_receipts_select" on public.fuel_receipts;
 create policy "fuel_receipts_select" on public.fuel_receipts for select to authenticated using (true);
+
+drop policy if exists "fuel_receipts_all_mgr" on public.fuel_receipts;
 create policy "fuel_receipts_all_mgr" on public.fuel_receipts for all to authenticated using (public.is_manager());
 
+drop policy if exists "fuel_dispenses_select" on public.fuel_dispenses;
 create policy "fuel_dispenses_select" on public.fuel_dispenses for select to authenticated using (true);
+
+drop policy if exists "fuel_dispenses_all_mgr" on public.fuel_dispenses;
 create policy "fuel_dispenses_all_mgr" on public.fuel_dispenses for all to authenticated using (public.is_manager());
 
+drop policy if exists "fuel_movements_select" on public.fuel_movements;
 create policy "fuel_movements_select" on public.fuel_movements for select to authenticated using (true);
+
+drop policy if exists "fuel_movements_all_mgr" on public.fuel_movements;
 create policy "fuel_movements_all_mgr" on public.fuel_movements for all to authenticated using (public.is_manager());
 
 -- 10. Stored Procedures / RPCs
@@ -160,7 +175,9 @@ declare
   v_unit_price numeric;
   v_total_amount numeric;
 begin
-  if not public.is_manager() then raise exception 'Chỉ quản lý mới được lập phiếu nhập dầu'; end if;
+  if not public.is_manager() and auth.role() is distinct from 'service_role' and current_user != 'postgres' then
+    raise exception 'Chỉ quản lý mới được lập phiếu nhập dầu';
+  end if;
   if p_quantity is null or p_quantity <= 0 then raise exception 'Số lượng nhập phải lớn hơn 0'; end if;
   if auth.uid() is not null then
     p_by := auth.uid();
@@ -226,13 +243,13 @@ declare
   v_target_zone uuid := null;
   v_driver text := null;
 begin
-  if auth.uid() is null and p_by is null then
+  if auth.uid() is null and p_by is null and auth.role() is distinct from 'service_role' and current_user != 'postgres' then
     raise exception 'Yêu cầu đăng nhập để cấp phát dầu';
   end if;
   if auth.uid() is not null then
     p_by := auth.uid();
   end if;
-  if not exists (select 1 from public.profiles where id = p_by and is_active = true) then
+  if p_by is not null and not exists (select 1 from public.profiles where id = p_by and is_active = true) then
     raise exception 'Tài khoản không hợp lệ hoặc đã bị khóa';
   end if;
 
@@ -395,7 +412,7 @@ declare
   v_veh record;
   v_last_dispense record;
 begin
-  if auth.uid() is null then
+  if auth.uid() is null and auth.role() is distinct from 'service_role' and current_user != 'postgres' then
     raise exception 'Yêu cầu đăng nhập để xem thông tin phương tiện';
   end if;
 
