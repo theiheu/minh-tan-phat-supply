@@ -297,3 +297,58 @@ export async function quickFulfillExistingExchange(exchangeId: string): Promise<
   revalidatePath("/defects");
   revalidatePath("/products");
 }
+
+export async function quickEmergencyExchange(input: {
+  variantId: string;
+  quantity: number;
+  damageDetail: string;
+  images: string[];
+  zoneId?: string;
+}) {
+  const profile = await requireProfile();
+  if (!input.variantId) throw new Error("Vui lòng chọn vật tư cần đổi");
+  if (input.quantity <= 0) throw new Error("Số lượng phải lớn hơn 0");
+  if (!input.damageDetail.trim()) throw new Error("Vui lòng nhập mô tả hư hỏng");
+  if (!input.images || input.images.length === 0) throw new Error("Vui lòng chụp ít nhất 1 ảnh chứng cứ hỏng");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("quick_emergency_exchange", {
+    p_variant_id: input.variantId,
+    p_quantity: input.quantity,
+    p_damage_detail: input.damageDetail.trim(),
+    p_images: input.images,
+    p_zone_id: input.zoneId || profile.zone_id || null,
+    p_by: profile.id,
+  });
+
+  if (error) throw new Error(error.message);
+
+  // Notify managers
+  const { data: managers } = await supabase
+    .from("profiles")
+    .select("id")
+    .in("role", ["manager", "superuser"])
+    .eq("is_active", true);
+
+  const managerIds = (managers ?? []).map((m) => m.id);
+  const result = data as { defect_id: string; exchange_id: string; exchange_code: string };
+
+  try {
+    await Promise.all(
+      managerIds.map((uid) =>
+        supabase.rpc("create_notification", {
+          p_user_id: uid,
+          p_type: "exchange",
+          p_title: `🚨 ĐỔI KHẨN CẤP 1-1: ${result.exchange_code}`,
+          p_body: `Yêu cầu đổi khẩn cấp: ${input.damageDetail}`,
+          p_link: `/defects/exchange/${result.exchange_id}`,
+        }),
+      ),
+    );
+  } catch {}
+
+  revalidatePath("/defects");
+  revalidatePath("/products");
+  return result;
+}
+

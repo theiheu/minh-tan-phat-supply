@@ -120,4 +120,17 @@ describe("ProductCard", () => {
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+
+  it("renders emergency exchange trigger button and opens quick exchange dialog without opening detail dialog", () => {
+    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+
+    const emergencyBtn = screen.getByRole("button", { name: "Đổi khẩn cấp 1-1" });
+    expect(emergencyBtn).toBeInTheDocument();
+
+    fireEvent.click(emergencyBtn);
+
+    expect(screen.getByRole("heading", { name: "Đổi mới 1-1 khẩn cấp" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Thêm vào giỏ" })).not.toBeInTheDocument();
+  });
 });
+

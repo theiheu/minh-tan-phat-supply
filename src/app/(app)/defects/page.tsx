@@ -3,6 +3,7 @@ import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { DefectDialog } from "@/features/defects/components/defect-dialog";
+import { QuickExchangeDialog } from "@/features/exchanges/components/quick-exchange-dialog";
 import {
   DefectsList,
   type DefectItemRow,
@@ -58,7 +59,7 @@ export default async function DefectsPage({
 
   const supabase = await createClient();
 
-  const [{ data: locations }, mainLocations, { data: allVariants }, compositeIds] = await Promise.all([
+  const [{ data: locations }, mainLocations, { data: allVariants }, compositeIds, { data: suppliersData }] = await Promise.all([
     supabase
       .from("stock_locations")
       .select("id, name")
@@ -72,7 +73,14 @@ export default async function DefectsPage({
       .order("code"),
     supabase.from("variants").select("id, attributes, unit, products(name)").order("id"),
     fetchCompositeVariantIds(supabase),
+    supabase.from("suppliers").select("id, name, phone").is("deleted_at", null).order("name"),
   ]);
+
+  const suppliers = (suppliersData ?? []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    phone: s.phone ?? null,
+  }));
 
   const main = mainLocations.data ?? [];
   const sourceLocationId =
@@ -167,7 +175,7 @@ export default async function DefectsPage({
           sourceLocationId={sourceLocationId}
           variants={defectVariantOptions}
         />
-        <RepairBatchTab notes={batchNotes} items={batchItems} />
+        <RepairBatchTab notes={batchNotes} items={batchItems} suppliers={suppliers} />
       </div>
     );
   }
@@ -412,6 +420,7 @@ export default async function DefectsPage({
         isDev={isDev}
         variants={defectVariantOptions}
         sourceLocationId={sourceLocationId}
+        suppliers={suppliers}
       />
 
       <Pagination
@@ -482,10 +491,13 @@ function HeaderTabs({
           </Link>
         ))}
       </div>
-      <DefectDialog
-        sourceLocationId={sourceLocationId}
-        variants={variants}
-      />
+      <div className="flex items-center gap-2">
+        <QuickExchangeDialog variants={variants} />
+        <DefectDialog
+          sourceLocationId={sourceLocationId}
+          variants={variants}
+        />
+      </div>
     </div>
   );
 }
