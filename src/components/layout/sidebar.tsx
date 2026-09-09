@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -31,11 +32,18 @@ export function Sidebar({ profile }: { profile: Profile }) {
         )}
       >
         <div
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-[11px] font-black tracking-tight text-primary-foreground shadow-sm ring-1 ring-primary/20"
+          className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/80 bg-background shadow-xs ring-1 ring-primary/20"
           aria-label="Trại gà Minh Tân Phát"
           title={collapsed ? "Trại gà Minh Tân Phát" : undefined}
         >
-          MTP
+          <Image
+            src="/brand/logo.jpg"
+            alt="Logo Trại gà Minh Tân Phát"
+            width={36}
+            height={36}
+            className="size-full object-cover"
+            priority
+          />
         </div>
         {!collapsed && (
           <div className="min-w-0 leading-none">

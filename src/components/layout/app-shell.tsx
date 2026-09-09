@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CartDrawer } from "@/features/products/components/cart-drawer";
@@ -43,7 +44,25 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
       <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <SheetContent side="left" className="flex h-full w-72 flex-col gap-0 p-0">
           <SheetHeader className="flex h-14 shrink-0 items-center justify-between border-b px-4">
-            <SheetTitle className="text-sm font-bold leading-tight">Trại gà Minh Tân Phát</SheetTitle>
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/80 bg-background shadow-xs ring-1 ring-primary/20">
+                <Image
+                  src="/brand/logo.jpg"
+                  alt="Logo Trại gà Minh Tân Phát"
+                  width={32}
+                  height={32}
+                  className="size-full object-cover"
+                />
+              </div>
+              <div className="min-w-0 leading-none text-left">
+                <div className="text-[8px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  TRẠI GÀ
+                </div>
+                <SheetTitle className="mt-0.5 truncate text-xs font-black tracking-wide text-foreground">
+                  MINH TÂN PHÁT
+                </SheetTitle>
+              </div>
+            </div>
           </SheetHeader>
           <div className="flex-1 space-y-1 overflow-y-auto p-3">
             {mainGroups.map((group) => {

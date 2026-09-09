@@ -51,20 +51,20 @@ describe("desktop sidebar collapse", () => {
     expect(screen.getByRole("button", { name: "Mở rộng thanh bên" })).toBeDefined();
   });
 
-  it("renders a polished MTP badge with two-line brand name when expanded", () => {
+  it("renders the farm logo badge with two-line brand name when expanded", () => {
     render(<Sidebar profile={profile} />);
 
-    expect(screen.getByText("MTP")).toBeDefined();
+    expect(screen.getByAltText("Logo Trại gà Minh Tân Phát")).toBeDefined();
     expect(screen.getByText("TRẠI GÀ")).toBeDefined();
     expect(screen.getByText("MINH TÂN PHÁT")).toBeDefined();
     expect(screen.queryByText("Trại gà Minh Tân Phát")).toBeNull();
   });
 
-  it("keeps only the MTP badge when collapsed", () => {
+  it("keeps only the logo badge when collapsed", () => {
     useUIStore.setState({ sidebarCollapsed: true });
     render(<Sidebar profile={profile} />);
 
-    expect(screen.getByText("MTP")).toBeDefined();
+    expect(screen.getByAltText("Logo Trại gà Minh Tân Phát")).toBeDefined();
     expect(screen.queryByText("TRẠI GÀ")).toBeNull();
     expect(screen.queryByText("MINH TÂN PHÁT")).toBeNull();
   });
