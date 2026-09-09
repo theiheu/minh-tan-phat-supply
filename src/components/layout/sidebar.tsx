@@ -32,15 +32,15 @@ export function Sidebar({ profile }: { profile: Profile }) {
         )}
       >
         <div
-          className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg"
+          className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden"
           aria-label="Trại gà Minh Tân Phát"
           title={collapsed ? "Trại gà Minh Tân Phát" : undefined}
         >
           <Image
             src="/brand/logo.jpg"
             alt="Logo Trại gà Minh Tân Phát"
-            width={36}
-            height={36}
+            width={44}
+            height={44}
             className="size-full object-contain"
             priority
           />

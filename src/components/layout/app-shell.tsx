@@ -45,12 +45,12 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
         <SheetContent side="left" className="flex h-full w-72 flex-col gap-0 p-0">
           <SheetHeader className="flex h-14 shrink-0 items-center justify-between border-b px-4">
             <div className="flex items-center gap-2.5">
-              <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+              <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden">
                 <Image
                   src="/brand/logo.jpg"
                   alt="Logo Trại gà Minh Tân Phát"
-                  width={32}
-                  height={32}
+                  width={40}
+                  height={40}
                   className="size-full object-contain"
                 />
               </div>
