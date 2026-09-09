@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ClipboardList, Menu } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ClipboardList, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ export function Topbar() {
   const pathname = usePathname();
   const title = findTitle(pathname);
   const setMobileDrawerOpen = useUIStore((s) => s.setMobileDrawerOpen);
+  const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed);
   const toggleCart = useUIStore((s) => s.toggleCart);
   const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
 
@@ -31,6 +33,20 @@ export function Topbar() {
         aria-label="Mở menu"
       >
         <Menu className="size-5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="hidden lg:inline-flex"
+        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+        aria-label={sidebarCollapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+        title={sidebarCollapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
+      >
+        {sidebarCollapsed ? (
+          <ChevronRight className="size-5" />
+        ) : (
+          <ChevronLeft className="size-5" />
+        )}
       </Button>
       {sectionRoot && (
         <Link

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface UIState {
   isCartOpen: boolean;
@@ -13,15 +14,23 @@ interface UIState {
   closeSlipModal: () => void;
 }
 
-export const useUIStore = create<UIState>()((set) => ({
-  isCartOpen: false,
-  sidebarCollapsed: false,
-  mobileDrawerOpen: false,
-  slipModal: null,
-  setCartOpen: (open) => set({ isCartOpen: open }),
-  toggleCart: () => set((s) => ({ isCartOpen: !s.isCartOpen })),
-  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-  setMobileDrawerOpen: (open) => set({ mobileDrawerOpen: open }),
-  openSlipModal: (type, id) => set({ slipModal: { type, id } }),
-  closeSlipModal: () => set({ slipModal: null }),
-}));
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      isCartOpen: false,
+      sidebarCollapsed: false,
+      mobileDrawerOpen: false,
+      slipModal: null,
+      setCartOpen: (open) => set({ isCartOpen: open }),
+      toggleCart: () => set((s) => ({ isCartOpen: !s.isCartOpen })),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+      setMobileDrawerOpen: (open) => set({ mobileDrawerOpen: open }),
+      openSlipModal: (type, id) => set({ slipModal: { type, id } }),
+      closeSlipModal: () => set({ slipModal: null }),
+    }),
+    {
+      name: "mtp-ui-preferences",
+      partialize: (state) => ({ sidebarCollapsed: state.sidebarCollapsed }),
+    },
+  ),
+);
