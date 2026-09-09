@@ -51,13 +51,12 @@ describe("desktop sidebar collapse", () => {
     expect(screen.getByRole("button", { name: "Mở rộng thanh bên" })).toBeDefined();
   });
 
-  it("renders the farm logo badge with two-line brand name when expanded", () => {
+  it("renders the farm logo without outer border/ring box", () => {
     render(<Sidebar profile={profile} />);
 
-    expect(screen.getByAltText("Logo Trại gà Minh Tân Phát")).toBeDefined();
-    expect(screen.getByText("TRẠI GÀ")).toBeDefined();
-    expect(screen.getByText("MINH TÂN PHÁT")).toBeDefined();
-    expect(screen.queryByText("Trại gà Minh Tân Phát")).toBeNull();
+    const logoContainer = screen.getByLabelText("Trại gà Minh Tân Phát");
+    expect(logoContainer.className).not.toContain("border");
+    expect(logoContainer.className).not.toContain("ring-1");
   });
 
   it("keeps only the logo badge when collapsed", () => {
