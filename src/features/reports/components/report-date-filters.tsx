@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Calendar, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ export interface ReportDateFiltersProps {
   }) => void;
   locations?: StockLocationOption[];
   showLocation?: boolean; // Default true
+  actions?: ReactNode;
   className?: string;
 }
 
@@ -39,6 +41,7 @@ export function ReportDateFilters({
   onChange,
   locations = [],
   showLocation = true,
+  actions,
   className,
 }: ReportDateFiltersProps) {
   const isCustom = value.preset === "custom";
@@ -148,6 +151,17 @@ export function ReportDateFilters({
                 ))}
               </select>
             </div>
+          )}
+
+          {actions ? (
+            <div
+              data-testid="report-filter-toolbar"
+              className="flex items-center gap-1 border-l pl-2"
+            >
+              {actions}
+            </div>
+          ) : (
+            <div data-testid="report-filter-toolbar" />
           )}
         </div>
       </div>

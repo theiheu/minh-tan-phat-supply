@@ -300,62 +300,78 @@ export function ReportsHub({
         </nav>
       </div>
 
-      {/* 2. Quick Action Buttons (Ẩn trên tab Tổng quan vì đã tách riêng XNT) */}
-      {activeTab !== "general" && (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {/* Excel Export Button */}
-          {isExportDisabled ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              className="h-8 gap-1.5 text-xs text-muted-foreground"
-              title="Vui lòng chọn một vật tư trước khi xuất Excel"
-            >
-              <FileSpreadsheet className="size-3.5" aria-hidden="true" />
-              <span>Xuất Excel (.xlsx)</span>
-            </Button>
-          ) : (
-            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
-              <a href={exportUrl} download>
-                <FileSpreadsheet
-                  className="size-3.5 text-emerald-600 dark:text-emerald-400"
-                  aria-hidden="true"
-                />
-                <span>Xuất Excel (.xlsx)</span>
-              </a>
-            </Button>
-          )}
-
-          {/* PDF Print Button */}
-          {isExportDisabled ? (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              className="h-8 gap-1.5 text-xs text-muted-foreground"
-              title="Vui lòng chọn một vật tư trước khi in PDF"
-            >
-              <Printer className="size-3.5" aria-hidden="true" />
-              <span>In Báo Cáo PDF</span>
-            </Button>
-          ) : (
-            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
-              <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                <Printer className="size-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span>In Báo Cáo PDF</span>
-              </a>
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* 3. Global Date & Location Filter Bar (Placed below tabs) */}
+      {/* 2. Filters + compact export actions on the same row */}
       <ReportDateFilters
         value={dateRange}
         onChange={setDateRange}
         locations={locations}
         showLocation={true}
+        actions={
+          activeTab !== "general" ? (
+            <>
+              {isExportDisabled ? (
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled
+                  aria-label="Xuất Excel (.xlsx)"
+                  title="Vui lòng chọn một vật tư trước khi xuất Excel"
+                  className="h-8 w-8 text-muted-foreground sm:w-auto sm:px-2.5"
+                >
+                  <FileSpreadsheet className="size-3.5" aria-hidden="true" />
+                  <span className="hidden text-xs sm:inline">Excel</span>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 gap-1.5 p-0 shadow-xs sm:w-auto sm:px-2.5"
+                >
+                  <a href={exportUrl} download aria-label="Xuất Excel (.xlsx)" title="Xuất Excel (.xlsx)">
+                    <FileSpreadsheet
+                      className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                      aria-hidden="true"
+                    />
+                    <span className="hidden text-xs sm:inline">Excel</span>
+                  </a>
+                </Button>
+              )}
+
+              {isExportDisabled ? (
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled
+                  aria-label="In Báo Cáo PDF"
+                  title="Vui lòng chọn một vật tư trước khi in PDF"
+                  className="h-8 w-8 text-muted-foreground sm:w-auto sm:px-2.5"
+                >
+                  <Printer className="size-3.5" aria-hidden="true" />
+                  <span className="hidden text-xs sm:inline">PDF</span>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 gap-1.5 p-0 shadow-xs sm:w-auto sm:px-2.5"
+                >
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="In Báo Cáo PDF"
+                    title="In Báo Cáo PDF"
+                  >
+                    <Printer className="size-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                    <span className="hidden text-xs sm:inline">PDF</span>
+                  </a>
+                </Button>
+              )}
+            </>
+          ) : null
+        }
       />
 
       {/* 4. Tab Contents */}

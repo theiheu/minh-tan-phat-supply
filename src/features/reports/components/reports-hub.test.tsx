@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 beforeAll(() => {
@@ -239,6 +239,10 @@ describe("ReportsHub component", () => {
     expect(screen.queryByRole("link", { name: /Xuất Excel \(\.xlsx\)/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /In Báo Cáo PDF/i })).toBeNull();
 
+    // Filter row has no export controls on Overview
+    const filterToolbar = screen.getByTestId("report-filter-toolbar");
+    expect(within(filterToolbar).queryByRole("link")).toBeNull();
+
     // All 6 tabs exist
     expect(screen.getByRole("tab", { name: /Tổng quan/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i })).toBeDefined();
@@ -258,6 +262,17 @@ describe("ReportsHub component", () => {
       expect(exportExcelBtn.getAttribute("href")).toContain("type=stock_ledger");
       expect(exportExcelBtn.getAttribute("href")).toContain("from=2026-09-01");
       expect(exportExcelBtn.getAttribute("href")).toContain("to=2026-09-30");
+
+      // Export actions share the same compact filter toolbar
+      const filterToolbar = screen.getByTestId("report-filter-toolbar");
+      const toolbarExcel = within(filterToolbar).getByRole("link", {
+        name: /Xuất Excel \(\.xlsx\)/i,
+      });
+      const toolbarPdf = within(filterToolbar).getByRole("link", {
+        name: /In Báo Cáo PDF/i,
+      });
+      expect(toolbarExcel.textContent).toContain("Excel");
+      expect(toolbarPdf.textContent).toContain("PDF");
 
       const printPdfBtn = screen.getByRole("link", {
         name: /In Báo Cáo PDF/i,
