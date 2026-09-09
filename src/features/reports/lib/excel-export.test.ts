@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import {
   BRAND_EXCEL_TITLE,
   buildPartnersExcel,
+  buildRequisitionsExcel,
   buildStockCardExcel,
   buildStockLedgerExcel,
   buildVehicleExcel,
@@ -13,6 +14,7 @@ import {
 import type {
   GeneralReportData,
   PartnersReportData,
+  RequisitionReportRow,
   StockCardData,
   VehicleReportData,
   ZoneCostReportData,
@@ -384,6 +386,52 @@ describe("excel-export engine", () => {
       expect(lastRow[5]).toBe(100);
       expect(lastRow[6]).toBe(80);
       expect(lastRow[7]).toBe(70);
+    });
+  });
+
+  describe("buildRequisitionsExcel", () => {
+    const mockRequisitions: RequisitionReportRow[] = [
+      {
+        id: "req-1",
+        code: "REQ-20260901-0001",
+        createdAt: "2026-09-01T10:00:00Z",
+        requesterName: "Nguyễn Văn A",
+        zoneName: "Chuồng Đẻ 1",
+        purpose: "Thay bóng sưởi định kỳ",
+        requisitionType: "replacement",
+        status: "approved",
+        statusLabel: "Đã duyệt",
+        items: [
+          {
+            productName: "Bóng đèn sưởi hồng ngoại",
+            variantLabel: "150W",
+            unit: "bóng",
+            quantity: 20,
+          },
+        ],
+      },
+    ];
+
+    it("generates valid workbook with summary and detail sheets for requisitions", () => {
+      const buffer = buildRequisitionsExcel(mockRequisitions, range, {
+        status: "Đã duyệt",
+        zoneName: "Chuồng Đẻ 1",
+      });
+      expect(buffer).toBeInstanceOf(Uint8Array);
+
+      const wb = XLSX.read(buffer, { type: "array" });
+      expect(wb.SheetNames).toContain("Yeu_Cau_Vat_Tu");
+      expect(wb.SheetNames).toContain("Chi_Tiet_Vat_Tu");
+
+      const wsSummary = wb.Sheets["Yeu_Cau_Vat_Tu"];
+      const rows = XLSX.utils.sheet_to_json<string[]>(wsSummary, { header: 1 });
+      expect(rows[0][0]).toBe(BRAND_EXCEL_TITLE);
+      expect(rows[1][0]).toBe("BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ");
+      expect(rows[2][0]).toContain("Kỳ báo cáo");
+      expect(rows[2][0]).toContain("Trạng thái: Đã duyệt");
+      expect(rows[2][0]).toContain("Khu vực: Chuồng Đẻ 1");
+      expect(rows[5][1]).toBe("REQ-20260901-0001");
+      expect(rows[5][3]).toBe("Nguyễn Văn A");
     });
   });
 });

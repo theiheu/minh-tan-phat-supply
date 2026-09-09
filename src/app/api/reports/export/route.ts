@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getDateRangeFromPreset } from "@/features/reports/lib/calculations";
 import {
   buildPartnersExcel,
+  buildRequisitionsExcel,
   buildStockCardExcel,
   buildStockLedgerExcel,
   buildVehicleExcel,
@@ -10,11 +11,13 @@ import {
 import {
   fetchGeneralReportData,
   fetchPartnersReportData,
+  fetchRequisitionsReportData,
   fetchStockCardData,
   fetchVehicleReportData,
   fetchZoneCostReportData,
 } from "@/features/reports/queries";
 import { requireManager } from "@/lib/auth";
+import { REQUISITION_STATUS } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,19 +32,52 @@ export async function GET(req: NextRequest) {
     let to = searchParams.get("to");
     const location = searchParams.get("location") || undefined;
     const variantId = searchParams.get("variantId") || undefined;
+    const status = searchParams.get("status") || undefined;
+    const zone = searchParams.get("zone") || undefined;
+    const q = searchParams.get("q") || undefined;
 
-    // Fallback date range to current month if not specified
-    if (!from || !to) {
+    // Fallback date range to current month if not specified (except requisitions which can filter all-time if not specified)
+    if (type !== "requisitions" && (!from || !to)) {
       const defaultRange = getDateRangeFromPreset("this_month");
       from = from || defaultRange.from;
       to = to || defaultRange.to;
     }
 
-    const range = { from, to };
+    const fromStr = from || "";
+    const toStr = to || "";
+    const range = { from: fromStr, to: toStr };
     let buffer: Uint8Array;
     let filename: string;
 
     switch (type) {
+      case "requisitions": {
+        let zoneName: string | undefined;
+        if (zone && zone !== "all") {
+          const supabase = await createClient();
+          const { data: z } = await supabase
+            .from("zones")
+            .select("name")
+            .eq("id", zone)
+            .maybeSingle();
+          if (z?.name) zoneName = z.name;
+        }
+
+        const data = await fetchRequisitionsReportData({
+          status,
+          zoneId: zone,
+          q,
+          from: from || null,
+          to: to || null,
+        });
+
+        buffer = buildRequisitionsExcel(data, { from, to }, {
+          status: status ? REQUISITION_STATUS[status] || status : undefined,
+          zoneName,
+        });
+        filename = `bao-cao-yeu-cau-vat-tu-${from || "tat-ca"}-den-${to || "tat-ca"}.xlsx`;
+        break;
+      }
+
       case "stock_ledger": {
         let locationName: string | undefined;
         if (location && location !== "all") {
@@ -54,30 +90,30 @@ export async function GET(req: NextRequest) {
           if (loc?.name) locationName = loc.name;
         }
 
-        const data = await fetchGeneralReportData({ locationId: location, from, to });
+        const data = await fetchGeneralReportData({ locationId: location, from: fromStr, to: toStr });
         buffer = buildStockLedgerExcel(data, range, locationName);
-        filename = `bao-cao-xnt-${from}-den-${to}.xlsx`;
+        filename = `bao-cao-xnt-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
       case "zone_cost": {
-        const data = await fetchZoneCostReportData({ from, to });
+        const data = await fetchZoneCostReportData({ from: fromStr, to: toStr });
         buffer = buildZoneCostExcel(data, range);
-        filename = `chi-phi-chuong-${from}-den-${to}.xlsx`;
+        filename = `chi-phi-chuong-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
       case "vehicles": {
-        const data = await fetchVehicleReportData({ from, to });
+        const data = await fetchVehicleReportData({ from: fromStr, to: toStr });
         buffer = buildVehicleExcel(data, range);
-        filename = `nhien-lieu-xe-${from}-den-${to}.xlsx`;
+        filename = `nhien-lieu-xe-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
       case "partners": {
-        const data = await fetchPartnersReportData({ from, to });
+        const data = await fetchPartnersReportData({ from: fromStr, to: toStr });
         buffer = buildPartnersExcel(data, range);
-        filename = `doi-tac-${from}-den-${to}.xlsx`;
+        filename = `doi-tac-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
@@ -90,11 +126,11 @@ export async function GET(req: NextRequest) {
         const data = await fetchStockCardData({
           variantId,
           locationId: location,
-          from,
-          to,
+          from: fromStr,
+          to: toStr,
         });
         buffer = buildStockCardExcel(data, range);
-        filename = `the-kho-${from}-den-${to}.xlsx`;
+        filename = `the-kho-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 

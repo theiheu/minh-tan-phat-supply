@@ -1,4 +1,6 @@
+import { FileSpreadsheet, Printer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -68,20 +70,53 @@ export default async function RequisitionsPage({
   const statusOptions = STATUSES.map((s) => ({ value: s, label: REQUISITION_STATUS[s] }));
   const zoneOptions = (zones ?? []).map((z) => ({ value: z.id, label: z.name }));
 
+  const exportQuery = new URLSearchParams();
+  exportQuery.set("type", "requisitions");
+  if (from) exportQuery.set("from", from);
+  if (to) exportQuery.set("to", to);
+  if (status) exportQuery.set("status", status);
+  if (zone) exportQuery.set("zone", zone);
+  if (q) exportQuery.set("q", q);
+
+  const exportUrl = `/api/reports/export?${exportQuery.toString()}`;
+  const pdfUrl = `/api/reports/pdf?${exportQuery.toString()}`;
+
   return (
     <div className="space-y-4">
       <SubnavTabs group="requisitions" />
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Danh sách phiếu yêu cầu vật tư từ các khu vực hoạt động.
         </p>
-        <RequisitionDialog
-          zones={zones ?? []}
-          defaultZoneId={profile?.zone_id ?? null}
-          currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
-          accounts={accounts ?? []}
-        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Excel Export Button */}
+          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
+            <a href={exportUrl} download>
+              <FileSpreadsheet
+                className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                aria-hidden="true"
+              />
+              <span>Xuất Excel (.xlsx)</span>
+            </a>
+          </Button>
+
+          {/* PDF Print Button */}
+          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
+            <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+              <Printer className="size-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+              <span>In Báo Cáo PDF</span>
+            </a>
+          </Button>
+
+          <RequisitionDialog
+            zones={zones ?? []}
+            defaultZoneId={profile?.zone_id ?? null}
+            currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
+            accounts={accounts ?? []}
+          />
+        </div>
       </div>
 
       <ListFilters

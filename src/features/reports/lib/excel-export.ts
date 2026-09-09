@@ -3,6 +3,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import type {
   GeneralReportData,
   PartnersReportData,
+  RequisitionReportRow,
   StockCardData,
   VehicleReportData,
   ZoneCostReportData,
@@ -480,6 +481,106 @@ export function buildStockCardExcel(
 
   const wsCard = createFormattedSheet(sheetRows);
   XLSX.utils.book_append_sheet(wb, wsCard, "The_Kho");
+
+  return workbookToBinaryBuffer(wb);
+}
+
+/**
+ * 6. Requisitions Report (Báo cáo yêu cầu vật tư) Excel workbook.
+ */
+export function buildRequisitionsExcel(
+  requisitions: RequisitionReportRow[],
+  range?: { from?: string | null; to?: string | null },
+  filterInfo?: { status?: string | null; zoneName?: string | null }
+): Uint8Array {
+  const wb = XLSX.utils.book_new();
+
+  const periodText =
+    (range?.from && range?.to
+      ? `Kỳ báo cáo: Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`
+      : "Tất cả thời gian") +
+    (filterInfo?.status ? ` - Trạng thái: ${filterInfo.status}` : "") +
+    (filterInfo?.zoneName ? ` - Khu vực: ${filterInfo.zoneName}` : "");
+
+  const rows: (string | number | null | undefined)[][] = [
+    [BRAND_EXCEL_TITLE],
+    ["BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ"],
+    [periodText],
+    [],
+    [
+      "STT",
+      "Mã phiếu",
+      "Ngày yêu cầu",
+      "Người yêu cầu",
+      "Khu vực / Chuồng",
+      "Mục đích sử dụng",
+      "Loại yêu cầu",
+      "Trạng thái",
+      "Danh sách vật tư yêu cầu",
+    ],
+  ];
+
+  requisitions.forEach((req, idx) => {
+    const itemsSummary = req.items
+      .map((it) => `${it.productName}${it.variantLabel ? ` (${it.variantLabel})` : ""}: ${it.quantity} ${it.unit}`)
+      .join("; ");
+
+    rows.push([
+      idx + 1,
+      req.code,
+      formatDate(req.createdAt),
+      req.requesterName || "—",
+      req.zoneName || "—",
+      req.purpose,
+      req.requisitionType === "replacement" ? "Thay thế đổi mới" : "Cấp mới định kỳ",
+      req.statusLabel,
+      itemsSummary || "—",
+    ]);
+  });
+
+  const ws = createFormattedSheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, "Yeu_Cau_Vat_Tu");
+
+  // Sheet 2: Chi tiết từng dòng vật tư
+  const detailRows: (string | number | null | undefined)[][] = [
+    [BRAND_EXCEL_TITLE],
+    ["CHI TIẾT VẬT TƯ YÊU CẦU THEO PHIẾU"],
+    [periodText],
+    [],
+    [
+      "STT",
+      "Mã phiếu",
+      "Ngày yêu cầu",
+      "Người yêu cầu",
+      "Khu vực / Chuồng",
+      "Trạng thái",
+      "Tên vật tư",
+      "Biến thể",
+      "Đơn vị tính",
+      "Số lượng yêu cầu",
+    ],
+  ];
+
+  let detailIdx = 1;
+  requisitions.forEach((req) => {
+    req.items.forEach((item) => {
+      detailRows.push([
+        detailIdx++,
+        req.code,
+        formatDate(req.createdAt),
+        req.requesterName || "—",
+        req.zoneName || "—",
+        req.statusLabel,
+        item.productName,
+        item.variantLabel || "—",
+        item.unit || "—",
+        item.quantity,
+      ]);
+    });
+  });
+
+  const detailWs = createFormattedSheet(detailRows);
+  XLSX.utils.book_append_sheet(wb, detailWs, "Chi_Tiet_Vat_Tu");
 
   return workbookToBinaryBuffer(wb);
 }

@@ -1,4 +1,5 @@
-import { variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS, variantLabel } from "@/lib/labels";
+import { dayRange } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import {
   calculateStockCardEntries,
@@ -15,6 +16,8 @@ import {
 import type {
   GeneralReportData,
   PartnersReportData,
+  RequisitionReportItem,
+  RequisitionReportRow,
   StockCardData,
   StockLedgerRow,
   VehicleReportData,
@@ -804,4 +807,103 @@ export async function fetchStockCardData(params: {
     closingStock: calculated.closingStock,
     entries: calculated.entries,
   };
+}
+
+/**
+ * 6. Fetches Requisitions Report Data filtered by status, zone, keyword, and date range.
+ */
+export async function fetchRequisitionsReportData(params: {
+  status?: string | null;
+  zoneId?: string | null;
+  q?: string | null;
+  from?: string | null;
+  to?: string | null;
+}): Promise<RequisitionReportRow[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("requisitions")
+    .select(
+      `
+      id,
+      code,
+      purpose,
+      status,
+      requisition_type,
+      created_at,
+      requester:profiles!requisitions_requester_id_fkey(name),
+      zone:zones!requisitions_zone_id_fkey(name),
+      items:requisition_items(
+        quantity,
+        variants(
+          unit,
+          attributes,
+          products(name)
+        )
+      )
+    `
+    )
+    .order("created_at", { ascending: false });
+
+  if (params.status && params.status !== "all") {
+    query = query.eq("status", params.status as never);
+  }
+  if (params.zoneId && params.zoneId !== "all") {
+    query = query.eq("zone_id", params.zoneId);
+  }
+  if (params.q) {
+    query = query.or(`code.ilike.%${params.q}%,purpose.ilike.%${params.q}%`);
+  }
+  const { gte, lte } = dayRange(params.from ?? null, params.to ?? null);
+  if (gte) query = query.gte("created_at", gte);
+  if (lte) query = query.lte("created_at", lte);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("fetchRequisitionsReportData error:", error);
+    throw new Error(error.message);
+  }
+
+  interface RawRequisitionQueryResult {
+    id: string;
+    code: string;
+    purpose: string;
+    status: string;
+    requisition_type: string;
+    created_at: string;
+    requester?: { name?: string } | null;
+    zone?: { name?: string } | null;
+    items?: Array<{
+      quantity: number;
+      variants?: {
+        unit: string | null;
+        attributes: Record<string, string> | null;
+        products?: { name: string } | null;
+      } | null;
+    }> | null;
+  }
+
+  return ((data ?? []) as unknown as RawRequisitionQueryResult[]).map((r) => {
+    const rawItems = r.items ?? [];
+
+    const items: RequisitionReportItem[] = rawItems.map((it) => ({
+      productName: it.variants?.products?.name || "Vật tư",
+      variantLabel: it.variants ? variantLabel(it.variants.attributes, it.variants.unit) : "",
+      unit: it.variants?.unit || "—",
+      quantity: it.quantity,
+    }));
+
+    return {
+      id: r.id,
+      code: r.code,
+      createdAt: r.created_at,
+      requesterName: (r.requester as { name?: string } | null)?.name || "—",
+      zoneName: (r.zone as { name?: string } | null)?.name || "—",
+      purpose: r.purpose,
+      requisitionType: r.requisition_type,
+      status: r.status,
+      statusLabel: REQUISITION_STATUS[r.status] || r.status,
+      items,
+    };
+  });
 }

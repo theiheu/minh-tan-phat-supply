@@ -6,11 +6,13 @@ import { getDateRangeFromPreset } from "@/features/reports/lib/calculations";
 import {
   fetchGeneralReportData,
   fetchPartnersReportData,
+  fetchRequisitionsReportData,
   fetchStockCardData,
   fetchVehicleReportData,
   fetchZoneCostReportData,
 } from "@/features/reports/queries";
 import { requireManager } from "@/lib/auth";
+import { REQUISITION_STATUS } from "@/lib/labels";
 import { formatDate, formatDateTime, formatNumber, formatVnd } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,13 +31,19 @@ export async function GET(req: NextRequest) {
     let to = searchParams.get("to");
     const location = searchParams.get("location") || undefined;
     const variantId = searchParams.get("variantId") || undefined;
+    const status = searchParams.get("status") || undefined;
+    const zone = searchParams.get("zone") || undefined;
+    const q = searchParams.get("q") || undefined;
 
-    // Fallback date range to current month if not provided
-    if (!from || !to) {
+    // Fallback date range to current month if not provided (except for requisitions)
+    if (type !== "requisitions" && (!from || !to)) {
       const defaultRange = getDateRangeFromPreset("this_month");
       from = from || defaultRange.from;
       to = to || defaultRange.to;
     }
+
+    const fromStr = from || "";
+    const toStr = to || "";
 
     const nowIso = new Date().toISOString();
     let title = "";
@@ -46,9 +54,73 @@ export async function GET(req: NextRequest) {
     let totals: SlipTotals[] = [];
 
     switch (type) {
+      case "requisitions": {
+        title = "BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ";
+        filename = `bao-cao-yeu-cau-vat-tu-${from || "tat-ca"}-den-${to || "tat-ca"}.pdf`;
+
+        let zoneName: string | undefined;
+        if (zone && zone !== "all") {
+          const supabase = await createClient();
+          const { data: z } = await supabase
+            .from("zones")
+            .select("name")
+            .eq("id", zone)
+            .maybeSingle();
+          if (z?.name) zoneName = z.name;
+        }
+
+        const data = await fetchRequisitionsReportData({
+          status,
+          zoneId: zone,
+          q,
+          from,
+          to,
+        });
+
+        const periodLabel = from && to ? `Từ ngày ${formatDate(from)} đến ngày ${formatDate(to)}` : "Tất cả thời gian";
+        fields = [
+          { label: "Kỳ báo cáo", value: periodLabel },
+          ...(status ? [{ label: "Trạng thái", value: REQUISITION_STATUS[status] || status }] : []),
+          ...(zoneName ? [{ label: "Khu vực", value: zoneName }] : []),
+        ];
+
+        columns = [
+          { label: "Mã phiếu", flex: 1.1 },
+          { label: "Ngày", flex: 0.8 },
+          { label: "Người yêu cầu", flex: 1.1 },
+          { label: "Khu vực / Chuồng", flex: 1.1 },
+          { label: "Mục đích sử dụng", flex: 1.3 },
+          { label: "Vật tư yêu cầu", flex: 2.2 },
+          { label: "Trạng thái", flex: 0.9, align: "center" },
+        ];
+
+        rows = data.map((r) => {
+          const itemsSummary = r.items
+            .map((it) => `${it.productName}${it.variantLabel ? ` (${it.variantLabel})` : ""}: ${it.quantity} ${it.unit}`)
+            .join(", ");
+
+          return [
+            r.code,
+            formatDate(r.createdAt),
+            r.requesterName || "—",
+            r.zoneName || "—",
+            r.purpose,
+            itemsSummary || "—",
+            r.statusLabel,
+          ];
+        });
+
+        totals = [
+          {
+            left: "TỔNG SỐ PHIẾU YÊU CẦU",
+            right: `${data.length} phiếu`,
+          },
+        ];
+        break;
+      }
       case "stock_ledger": {
         title = "BÁO CÁO XUẤT - NHẬP - TỒN KHO";
-        filename = `bao-cao-xnt-${from}-den-${to}.pdf`;
+        filename = `bao-cao-xnt-${fromStr}-den-${toStr}.pdf`;
 
         let locationName: string | undefined;
         if (location && location !== "all") {
@@ -61,12 +133,12 @@ export async function GET(req: NextRequest) {
           if (loc?.name) locationName = loc.name;
         }
 
-        const data = await fetchGeneralReportData({ locationId: location, from, to });
+        const data = await fetchGeneralReportData({ locationId: location, from: fromStr, to: toStr });
 
         fields = [
           {
             label: "Kỳ báo cáo",
-            value: `Từ ngày ${formatDate(from)} đến ngày ${formatDate(to)}`,
+            value: `Từ ngày ${formatDate(fromStr)} đến ngày ${formatDate(toStr)}`,
           },
           ...(locationName ? [{ label: "Kho", value: locationName }] : []),
         ];
@@ -104,14 +176,14 @@ export async function GET(req: NextRequest) {
 
       case "zone_cost": {
         title = "BÁO CÁO CHI PHÍ VẬT TƯ THEO KHU VỰC";
-        filename = `chi-phi-chuong-${from}-den-${to}.pdf`;
+        filename = `chi-phi-chuong-${fromStr}-den-${toStr}.pdf`;
 
-        const data = await fetchZoneCostReportData({ from, to });
+        const data = await fetchZoneCostReportData({ from: fromStr, to: toStr });
 
         fields = [
           {
             label: "Kỳ báo cáo",
-            value: `Từ ngày ${formatDate(from)} đến ngày ${formatDate(to)}`,
+            value: `Từ ngày ${formatDate(fromStr)} đến ngày ${formatDate(toStr)}`,
           },
         ];
 
@@ -142,14 +214,14 @@ export async function GET(req: NextRequest) {
 
       case "vehicles": {
         title = "BÁO CÁO TIÊU THỤ NHIÊN LIỆU PHƯƠNG TIỆN";
-        filename = `nhien-lieu-xe-${from}-den-${to}.pdf`;
+        filename = `nhien-lieu-xe-${fromStr}-den-${toStr}.pdf`;
 
-        const data = await fetchVehicleReportData({ from, to });
+        const data = await fetchVehicleReportData({ from: fromStr, to: toStr });
 
         fields = [
           {
             label: "Kỳ báo cáo",
-            value: `Từ ngày ${formatDate(from)} đến ngày ${formatDate(to)}`,
+            value: `Từ ngày ${formatDate(fromStr)} đến ngày ${formatDate(toStr)}`,
           },
         ];
 
@@ -186,14 +258,14 @@ export async function GET(req: NextRequest) {
 
       case "partners": {
         title = "BÁO CÁO ĐỐI TÁC CUNG CẤP & KHÁCH HÀNG";
-        filename = `doi-tac-${from}-den-${to}.pdf`;
+        filename = `doi-tac-${fromStr}-den-${toStr}.pdf`;
 
-        const data = await fetchPartnersReportData({ from, to });
+        const data = await fetchPartnersReportData({ from: fromStr, to: toStr });
 
         fields = [
           {
             label: "Kỳ báo cáo",
-            value: `Từ ngày ${formatDate(from)} đến ngày ${formatDate(to)}`,
+            value: `Từ ngày ${formatDate(fromStr)} đến ngày ${formatDate(toStr)}`,
           },
         ];
 
@@ -252,8 +324,8 @@ export async function GET(req: NextRequest) {
         const data = await fetchStockCardData({
           variantId,
           locationId: location,
-          from,
-          to,
+          from: fromStr,
+          to: toStr,
         });
 
         title = "THẺ KHO (SỔ KHO CHI TIẾT)";

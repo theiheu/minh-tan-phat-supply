@@ -151,3 +151,28 @@ export interface StockCardData {
   closingStock: number;
   entries: StockCardEntry[];
 }
+
+export interface RequisitionReportItem {
+  productName: string;
+  variantLabel: string;
+  unit: string;
+  quantity: number;
+}
+
+export interface RequisitionReportRow {
+  id: string;
+  code: string;
+  createdAt: string;
+  requesterName: string;
+  zoneName: string;
+  purpose: string;
+  requisitionType: string;
+  status: string;
+  statusLabel: string;
+  items: RequisitionReportItem[];
+}
+
+export interface RequisitionsReportData {
+  totalCount: number;
+  requisitions: RequisitionReportRow[];
+}
