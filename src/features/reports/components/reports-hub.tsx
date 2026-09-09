@@ -300,53 +300,55 @@ export function ReportsHub({
         </nav>
       </div>
 
-      {/* 2. Quick Action Buttons */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {/* Excel Export Button */}
-        {isExportDisabled ? (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            className="h-8 gap-1.5 text-xs text-muted-foreground"
-            title="Vui lòng chọn một vật tư trước khi xuất Excel"
-          >
-            <FileSpreadsheet className="size-3.5" aria-hidden="true" />
-            <span>Xuất Excel (.xlsx)</span>
-          </Button>
-        ) : (
-          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
-            <a href={exportUrl} download>
-              <FileSpreadsheet
-                className="size-3.5 text-emerald-600 dark:text-emerald-400"
-                aria-hidden="true"
-              />
+      {/* 2. Quick Action Buttons (Ẩn trên tab Tổng quan vì đã tách riêng XNT) */}
+      {activeTab !== "general" && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* Excel Export Button */}
+          {isExportDisabled ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="h-8 gap-1.5 text-xs text-muted-foreground"
+              title="Vui lòng chọn một vật tư trước khi xuất Excel"
+            >
+              <FileSpreadsheet className="size-3.5" aria-hidden="true" />
               <span>Xuất Excel (.xlsx)</span>
-            </a>
-          </Button>
-        )}
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
+              <a href={exportUrl} download>
+                <FileSpreadsheet
+                  className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                  aria-hidden="true"
+                />
+                <span>Xuất Excel (.xlsx)</span>
+              </a>
+            </Button>
+          )}
 
-        {/* PDF Print Button */}
-        {isExportDisabled ? (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            className="h-8 gap-1.5 text-xs text-muted-foreground"
-            title="Vui lòng chọn một vật tư trước khi in PDF"
-          >
-            <Printer className="size-3.5" aria-hidden="true" />
-            <span>In Báo Cáo PDF</span>
-          </Button>
-        ) : (
-          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
-            <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-              <Printer className="size-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          {/* PDF Print Button */}
+          {isExportDisabled ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="h-8 gap-1.5 text-xs text-muted-foreground"
+              title="Vui lòng chọn một vật tư trước khi in PDF"
+            >
+              <Printer className="size-3.5" aria-hidden="true" />
               <span>In Báo Cáo PDF</span>
-            </a>
-          </Button>
-        )}
-      </div>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs shadow-xs">
+              <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                <Printer className="size-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <span>In Báo Cáo PDF</span>
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* 3. Global Date & Location Filter Bar (Placed below tabs) */}
       <ReportDateFilters

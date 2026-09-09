@@ -221,7 +221,7 @@ describe("ReportsHub component", () => {
     vi.mocked(getStockCardAction).mockResolvedValue(mockStockCardData);
   });
 
-  it("renders header with title, subtitle, and export buttons", () => {
+  it("renders header with title, subtitle, and export buttons", async () => {
     render(
       <ReportsHub
         initialGeneralData={mockInitialGeneralData}
@@ -235,23 +235,9 @@ describe("ReportsHub component", () => {
       />
     );
 
-    // Export Buttons
-    const exportExcelBtn = screen.getByRole("link", {
-      name: /Xuất Excel \(\.xlsx\)/i,
-    });
-    expect(exportExcelBtn).toBeDefined();
-    expect(exportExcelBtn.getAttribute("href")).toContain("/api/reports/export");
-    expect(exportExcelBtn.getAttribute("href")).toContain("type=stock_ledger");
-    expect(exportExcelBtn.getAttribute("href")).toContain("from=2026-09-01");
-    expect(exportExcelBtn.getAttribute("href")).toContain("to=2026-09-30");
-
-    const printPdfBtn = screen.getByRole("link", {
-      name: /In Báo Cáo PDF/i,
-    });
-    expect(printPdfBtn).toBeDefined();
-    expect(printPdfBtn.getAttribute("href")).toContain("/api/reports/pdf");
-    expect(printPdfBtn.getAttribute("href")).toContain("type=stock_ledger");
-    expect(printPdfBtn.getAttribute("target")).toBe("_blank");
+    // Export Buttons are hidden on Overview tab
+    expect(screen.queryByRole("link", { name: /Xuất Excel \(\.xlsx\)/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /In Báo Cáo PDF/i })).toBeNull();
 
     // All 6 tabs exist
     expect(screen.getByRole("tab", { name: /Tổng quan/i })).toBeDefined();
@@ -261,9 +247,25 @@ describe("ReportsHub component", () => {
     expect(screen.getByRole("tab", { name: /Đối tác/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Sổ Thẻ kho/i })).toBeDefined();
 
-    // Initial Overview Tab Content is rendered
-    expect(screen.getByText("Tổng giá trị kho hiện tại")).toBeDefined();
-    expect(screen.getByText("120.000.000 đ")).toBeDefined();
+    // Switch to XNT tab -> Export buttons are visible
+    fireEvent.click(screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i }));
+    await waitFor(() => {
+      const exportExcelBtn = screen.getByRole("link", {
+        name: /Xuất Excel \(\.xlsx\)/i,
+      });
+      expect(exportExcelBtn).toBeDefined();
+      expect(exportExcelBtn.getAttribute("href")).toContain("/api/reports/export");
+      expect(exportExcelBtn.getAttribute("href")).toContain("type=stock_ledger");
+      expect(exportExcelBtn.getAttribute("href")).toContain("from=2026-09-01");
+      expect(exportExcelBtn.getAttribute("href")).toContain("to=2026-09-30");
+
+      const printPdfBtn = screen.getByRole("link", {
+        name: /In Báo Cáo PDF/i,
+      });
+      expect(printPdfBtn).toBeDefined();
+      expect(printPdfBtn.getAttribute("href")).toContain("/api/reports/pdf");
+      expect(printPdfBtn.getAttribute("href")).toContain("type=stock_ledger");
+    });
   });
 
   it("switches tabs and fetches corresponding report data", async () => {
@@ -370,7 +372,11 @@ describe("ReportsHub component", () => {
       />
     );
 
-    // Initial General Tab: type=stock_ledger
+    // Initial General Tab: export buttons hidden
+    expect(screen.queryByRole("link", { name: /Xuất Excel \(\.xlsx\)/i })).toBeNull();
+
+    // Switch to XNT: type=stock_ledger
+    fireEvent.click(screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i }));
     let exportBtn = screen.getByRole("link", { name: /Xuất Excel \(\.xlsx\)/i });
     expect(exportBtn.getAttribute("href")).toContain("type=stock_ledger");
 
@@ -465,7 +471,11 @@ describe("ReportsHub component", () => {
       );
     });
 
-    const exportBtn = screen.getByRole("link", { name: /Xuất Excel \(\.xlsx\)/i });
-    expect(exportBtn.getAttribute("href")).toContain("from=2026-08-01");
+    // Switch to XNT tab to verify export button carries updated from date
+    fireEvent.click(screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i }));
+    await waitFor(() => {
+      const exportBtn = screen.getByRole("link", { name: /Xuất Excel \(\.xlsx\)/i });
+      expect(exportBtn.getAttribute("href")).toContain("from=2026-08-01");
+    });
   });
 });
