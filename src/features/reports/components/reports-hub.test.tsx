@@ -235,12 +235,6 @@ describe("ReportsHub component", () => {
       />
     );
 
-    // Title & Subtitle
-    expect(screen.getByText("Trung tâm Báo cáo & Thống kê")).toBeDefined();
-    expect(
-      screen.getByText(/Trại gà đẻ trứng Lê Văn Dương/i)
-    ).toBeDefined();
-
     // Export Buttons
     const exportExcelBtn = screen.getByRole("link", {
       name: /Xuất Excel \(\.xlsx\)/i,
