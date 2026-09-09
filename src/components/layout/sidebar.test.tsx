@@ -43,12 +43,30 @@ describe("desktop sidebar collapse", () => {
       </>,
     );
 
-    expect(screen.getByText("Trại gà Minh Tân Phát")).toBeDefined();
+    expect(screen.getByText("MINH TÂN PHÁT")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Thu gọn thanh bên" }));
 
     expect(useUIStore.getState().sidebarCollapsed).toBe(true);
-    expect(screen.queryByText("Trại gà Minh Tân Phát")).toBeNull();
+    expect(screen.queryByText("MINH TÂN PHÁT")).toBeNull();
     expect(screen.getByRole("button", { name: "Mở rộng thanh bên" })).toBeDefined();
+  });
+
+  it("renders a polished MTP badge with two-line brand name when expanded", () => {
+    render(<Sidebar profile={profile} />);
+
+    expect(screen.getByText("MTP")).toBeDefined();
+    expect(screen.getByText("TRẠI GÀ")).toBeDefined();
+    expect(screen.getByText("MINH TÂN PHÁT")).toBeDefined();
+    expect(screen.queryByText("Trại gà Minh Tân Phát")).toBeNull();
+  });
+
+  it("keeps only the MTP badge when collapsed", () => {
+    useUIStore.setState({ sidebarCollapsed: true });
+    render(<Sidebar profile={profile} />);
+
+    expect(screen.getByText("MTP")).toBeDefined();
+    expect(screen.queryByText("TRẠI GÀ")).toBeNull();
+    expect(screen.queryByText("MINH TÂN PHÁT")).toBeNull();
   });
 
   it("persists collapsed preference to localStorage", () => {

@@ -27,15 +27,25 @@ export function Sidebar({ profile }: { profile: Profile }) {
       <div
         className={cn(
           "flex h-14 items-center border-b",
-          collapsed ? "justify-center px-2" : "gap-2 px-4",
+          collapsed ? "justify-center px-2" : "gap-2.5 px-3",
         )}
       >
-        {collapsed ? (
-          <span className="text-sm font-black text-primary" aria-label="Trại gà Minh Tân Phát">
-            MTP
-          </span>
-        ) : (
-          <span className="text-sm font-bold leading-tight">Trại gà Minh Tân Phát</span>
+        <div
+          className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-[11px] font-black tracking-tight text-primary-foreground shadow-sm ring-1 ring-primary/20"
+          aria-label="Trại gà Minh Tân Phát"
+          title={collapsed ? "Trại gà Minh Tân Phát" : undefined}
+        >
+          MTP
+        </div>
+        {!collapsed && (
+          <div className="min-w-0 leading-none">
+            <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              TRẠI GÀ
+            </div>
+            <div className="mt-1 truncate text-sm font-black tracking-wide text-sidebar-foreground">
+              MINH TÂN PHÁT
+            </div>
+          </div>
         )}
       </div>
       <nav className={cn("flex-1 space-y-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
