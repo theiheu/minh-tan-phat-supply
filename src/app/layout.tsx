@@ -6,6 +6,15 @@ import { MobileInstallPrompt } from "@/components/layout/mobile-install-prompt";
 export const metadata: Metadata = {
   title: "Quản lý Kho Trại Gà Minh Tân Phát",
   description: "Hệ thống quản lý vật tư trại gà: tồn kho, phiếu yêu cầu, nhập kho, vật tư hỏng, kiểm kê, báo cáo.",
+  icons: {
+    icon: [
+      { url: "/brand/logo.png", sizes: "any", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/brand/logo.png", type: "image/png" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

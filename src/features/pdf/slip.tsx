@@ -28,6 +28,13 @@ export interface SlipField {
 }
 
 /** Dòng tổng cộng cuối bảng — 1 dòng riêng có borderTop, `left` sát lề trái, `right` sát lề phải. */
+
+export interface SlipRowGroup {
+  items: (string | number | null | undefined)[][];
+  mergeColumns?: number[]; // indices of columns to merge
+}
+export type SlipRowItem = (string | number | null | undefined)[] | SlipRowGroup;
+
 export interface SlipTotals {
   left?: string;
   right?: string;
@@ -39,34 +46,34 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#000",
     paddingTop: 16,
-    paddingBottom: 52,
-    paddingHorizontal: 32,
+    paddingBottom: 48,
+    paddingHorizontal: 18,
   },
   // Khung ngoài viền mỏng — fixed + absolute để lặp lại trên mọi trang.
   frame: {
     position: "absolute",
-    top: 10,
-    left: 10,
-    right: 10,
-    bottom: 10,
+    top: 8,
+    left: 8,
+    right: 8,
+    bottom: 8,
     borderWidth: 1,
     borderColor: "#000",
   },
   footerText: {
     position: "absolute",
-    bottom: 18,
+    bottom: 16,
     fontSize: 8.5,
     color: "#000",
   },
-  footerLeft: { left: 32 },
-  footerRight: { right: 32 },
+  footerLeft: { left: 18 },
+  footerRight: { right: 18 },
 
   // --- Header thương hiệu ---
-  brandRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  logo: { width: 76, height: 60, marginRight: 12, objectFit: "contain" },
-  brandBlock: { flex: 1 },
-  brandName: { fontSize: 13, fontWeight: "bold", marginBottom: 2 },
-  brandLine: { fontSize: 8.5, color: "#222", marginBottom: 1 },
+  brandRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  logo: { width: 72, height: 72, marginRight: 14, objectFit: "contain" },
+  brandBlock: { flex: 1, justifyContent: "center" },
+  brandName: { fontSize: 13.5, fontWeight: "bold", marginBottom: 3 },
+  brandLine: { fontSize: 9, color: "#222", marginBottom: 1.5 },
   codeBlock: { alignItems: "flex-end", justifyContent: "center" },
   qrImage: { width: 50, height: 50, marginBottom: 2 },
   codeText: { fontSize: 10.5, fontWeight: "bold", textAlign: "right" },
@@ -92,13 +99,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#000",
+    backgroundColor: "#F8FAFC",
   },
   headerText: { fontSize: 9.5, fontWeight: "bold" },
-  bodyRow: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: "#555" },
+  bodyRow: { flexDirection: "row" },
   bodyRowLast: { flexDirection: "row" },
-  cell: { paddingVertical: 4, paddingHorizontal: 5, borderRightWidth: 0.5, borderRightColor: "#000" },
-  cellNoBorder: { paddingVertical: 4, paddingHorizontal: 5 },
-  cellStt: { flex: 0.45, paddingVertical: 4, paddingHorizontal: 5, borderRightWidth: 0.5, borderRightColor: "#000" },
+  cell: { paddingVertical: 10, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: "#000" },
+  cellNoBorder: { paddingVertical: 10, paddingHorizontal: 6 },
+  cellStt: { flex: 0.45, paddingVertical: 10, paddingHorizontal: 6, borderRightWidth: 0.5, borderRightColor: "#000" },
   cellText: { fontSize: 9.5 },
   cellAlignLeft: { textAlign: "left" },
   cellAlignRight: { textAlign: "right" },
@@ -109,13 +117,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderTopWidth: 1,
     borderTopColor: "#000",
-    paddingVertical: 4,
-    paddingHorizontal: 5,
+    paddingVertical: 9,
+    paddingHorizontal: 6,
   },
   totalsLeft: { fontWeight: "bold", fontSize: 9.5 },
   totalsRight: { fontWeight: "bold", fontSize: 9.5 },
 
-  amountRow: { paddingVertical: 4, paddingHorizontal: 5 },
+  amountRow: { paddingVertical: 8, paddingHorizontal: 6 },
   amountText: { fontSize: 9.5 },
 
   // --- Chữ ký ---
@@ -144,14 +152,14 @@ export function SlipDocument(props: {
   fields?: SlipField[]; // cột trái (Bên nhận hàng…)
   rightPanel?: { heading?: string; fields: SlipField[] }; // ô phải (Thông tin xe…)
   columns: SlipColumn[];
-  rows: (string | number | null | undefined)[][]; // không kèm STT — STT tự đánh
+  rows: SlipRowItem[]; // không kèm STT — STT tự đánh
   signers?: string[];
   totals?: SlipTotals[]; // dòng "TỔNG CỘNG" cuối bảng (có viền trên)
   amountInWords?: string; // "Thành tiền bằng chữ: …" (có money-words cung cấp)
   qrCode?: string; // Data URI ảnh mã QR ở góc phải trên cùng
+  orientation?: "portrait" | "landscape";
 }): JSX.Element {
-  const {
-    title,
+  const { title, orientation = "portrait",
     code,
     createdAt,
     fields = [],
@@ -179,17 +187,9 @@ export function SlipDocument(props: {
     </View>
   );
 
-  const bodyCell = (col: SlipColumn, value: string | number | null | undefined, index: number, last: boolean) => (
-    <View key={`c${index}`} style={[last ? styles.cellNoBorder : styles.cell, { flex: col.flex }]}>
-      <Text style={[styles.cellText, ALIGN_STYLES[col.align ?? "left"]]}>
-        {value == null ? "" : String(value)}
-      </Text>
-    </View>
-  );
-
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" orientation={orientation} style={styles.page}>
         {/* Khung viền + footer lặp lại trên mọi trang */}
         <View fixed style={styles.frame} />
         {code ? (
@@ -263,18 +263,47 @@ export function SlipDocument(props: {
             {columns.map((col, i) => headerCell(col, i, i === columns.length - 1))}
           </View>
 
-          {rows.map((row, rowIndex) => {
-            const isLast = rowIndex === rows.length - 1;
-            return (
-              <View key={`r${rowIndex}`} wrap={false} style={isLast ? styles.bodyRowLast : styles.bodyRow}>
-                <View style={styles.cellStt}>
-                  <Text style={[styles.cellText, styles.cellAlignCenter]}>{rowIndex + 1}</Text>
+          {rows.map((rowItem, rowIndex) => {
+            const isGroup = rowItem !== null && typeof rowItem === "object" && !Array.isArray(rowItem) && "items" in rowItem;
+            const group = isGroup ? rowItem : { items: [rowItem], mergeColumns: [] };
+            
+            const { items, mergeColumns = [] } = group as import("./slip").SlipRowGroup;
+            
+            return items.map((item, iIndex) => {
+              const isFirstItem = iIndex === 0;
+              const isLastItem = iIndex === items.length - 1;
+              const isLastRowOverall = rowIndex === rows.length - 1 && isLastItem;
+
+              return (
+                <View key={`r${rowIndex}_i${iIndex}`} wrap={false} style={isLastRowOverall ? styles.bodyRowLast : styles.bodyRow}>
+                  <View style={[styles.cellStt, 
+                    !isLastRowOverall && (!isFirstItem || !isLastItem) ? { borderBottomWidth: isLastItem ? 0.5 : 0, borderBottomColor: "#555" } : undefined,
+                    !isLastRowOverall && isFirstItem && isLastItem ? { borderBottomWidth: 0.5, borderBottomColor: "#555" } : undefined
+                  ]}>
+                    <Text style={[styles.cellText, styles.cellAlignCenter]}>
+                      {isFirstItem ? rowIndex + 1 : ""}
+                    </Text>
+                  </View>
+                  {columns.map((col, cIndex) => {
+                    const isLastCol = cIndex === columns.length - 1;
+                    const isMerged = mergeColumns.includes(cIndex);
+                    
+                    const hideBottomBorder = isMerged ? !isLastItem : false;
+                    const drawBottomBorder = !isLastRowOverall && !hideBottomBorder;
+
+                    const borderStyle = drawBottomBorder ? { borderBottomWidth: 0.5, borderBottomColor: "#555" } : {};
+                    
+                    return (
+                      <View key={`c${cIndex}`} style={[isLastCol ? styles.cellNoBorder : styles.cell, { flex: col.flex }, borderStyle]}>
+                        <Text style={[styles.cellText, ALIGN_STYLES[col.align ?? "left"]]}>
+                          {isMerged && !isFirstItem ? "" : (item[cIndex] == null ? "" : String(item[cIndex]))}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
-                {columns.map((col, i) =>
-                  bodyCell(col, row[i], i, i === columns.length - 1),
-                )}
-              </View>
-            );
+              );
+            });
           })}
 
           {hasTotals

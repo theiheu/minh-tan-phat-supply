@@ -1,5 +1,8 @@
-import * as XLSX from "xlsx";
-import { formatDate, formatDateTime } from "@/lib/format";
+import ExcelJS from "exceljs";
+import path from "node:path";
+import fs from "node:fs";
+import { BRAND } from "@/features/pdf/brand";
+import { formatDate, formatDateLong, formatDateTime, formatNumber, formatVnd } from "@/lib/format";
 import type {
   GeneralReportData,
   PartnersReportData,
@@ -10,6 +13,7 @@ import type {
 } from "../types";
 
 export const BRAND_EXCEL_TITLE = "TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG - MINH TÂN PHÁT";
+export const REPORT_SIGNERS = ["Người lập báo cáo", "Kế toán trại", "Quản lý / Chủ trại duyệt"];
 
 /**
  * Formats report period subtitle string.
@@ -18,569 +22,848 @@ export function formatReportPeriod(range: { from: string; to: string }): string 
   return `Kỳ báo cáo: Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`;
 }
 
-/**
- * Calculates auto-fitted column widths for a sheet given rows of data.
- */
-export function calculateColumnWidths(
-  rows: (string | number | null | undefined)[][]
-): { wch: number }[] {
-  if (rows.length === 0) return [];
-  const colCount = Math.max(...rows.map((r) => r?.length ?? 0));
-  const colWidths: number[] = new Array(colCount).fill(10);
+export interface ExcelReportColumn {
+  header: string;
+  width?: number;
+  align?: "left" | "center" | "right";
+  numFmt?: string;
+  colSpan?: number; // defaults to 1. E.g. 2 means spans 2 physical Excel columns (e.g. B & C)
+}
 
-  for (const row of rows) {
-    if (!row) continue;
-    for (let c = 0; c < row.length; c++) {
-      const val = row[c];
-      const str = val == null ? "" : String(val);
-      // Give padding to cell content, bound between 10 and 60 chars
-      const len = Math.min(Math.max(str.length + 3, 10), 60);
-      if (len > colWidths[c]) {
-        colWidths[c] = len;
-      }
-    }
-  }
+export interface ExcelReportField {
+  label: string;
+  value?: string | number | null;
+}
 
-  return colWidths.map((w) => ({ wch: w }));
+export interface ExcelReportTotal {
+  left: string;
+  right: string;
+}
+
+export interface GenerateExcelReportOptions {
+  title: string;
+  sheetName: string;
+  fields?: ExcelReportField[];
+  columns: ExcelReportColumn[];
+  rows: (string | number | null | undefined)[][];
+  totals?: ExcelReportTotal[];
+  merges?: { startRow: number; endRow: number; cols: number[] }[];
+  signers?: string[];
+  orientation?: "portrait" | "landscape";
+  secondarySheet?: {
+    sheetName: string;
+    title: string;
+    periodText?: string;
+    columns: ExcelReportColumn[];
+    rows: (string | number | null | undefined)[][];
+  };
 }
 
 /**
- * Formats number cells with standard thousands separators in worksheet.
+ * Creates a fully styled Excel workbook matching the exact PDF template
+ * with support for colSpan (e.g. Tên vật tư merger cột B & C), Logo, Header, Borders, Totals, Signatures.
  */
-export function applyNumberFormats(ws: XLSX.WorkSheet): void {
-  for (const cellAddress in ws) {
-    if (cellAddress.startsWith("!")) continue;
-    const cell = ws[cellAddress];
-    if (cell && cell.t === "n") {
-      if (Number.isInteger(cell.v)) {
-        cell.z = "#,##0";
+export async function generateStyledExcelReport(options: GenerateExcelReportOptions): Promise<Uint8Array> {
+  const {
+    title,
+    sheetName,
+    fields = [],
+    columns,
+    rows,
+    totals = [],
+    merges = [],
+    signers = REPORT_SIGNERS,
+    orientation = "landscape",
+    secondarySheet,
+  } = options;
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = BRAND.name;
+
+  const ws = wb.addWorksheet(sheetName, {
+    pageSetup: {
+      orientation,
+      paperSize: 9, // A4
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 },
+    },
+    views: [{ showGridLines: true }],
+  });
+
+  // Calculate physical column mapping and spans
+  let currentPhysicalCol = 1;
+  const colPositions = columns.map((c) => {
+    const span = c.colSpan || 1;
+    const startCol = currentPhysicalCol;
+    const endCol = startCol + span - 1;
+    currentPhysicalCol += span;
+    return { ...c, startCol, endCol, span };
+  });
+  const totalPhysicalCols = currentPhysicalCol - 1;
+
+  // Set physical column widths (Thu hẹp cột B bằng đúng cột A, dãn cột C rộng rãi cho tên vật tư)
+  const physicalColWidths: { width: number }[] = [];
+  colPositions.forEach((c) => {
+    if (c.span > 1) {
+      if (c.startCol === 2 && c.endCol === 3) {
+        physicalColWidths.push({ width: 7 }); // Cột B: bằng đúng chiều rộng cột A (7)
+        physicalColWidths.push({ width: Math.max(34, (c.width || 44) - 7) }); // Cột C: dãn rộng cho tên vật tư
       } else {
-        cell.z = "#,##0.##";
+        const partWidth = Math.round((c.width || 30) / c.span);
+        for (let i = 0; i < c.span; i++) {
+          physicalColWidths.push({ width: partWidth });
+        }
       }
+    } else {
+      physicalColWidths.push({ width: c.width || 15 });
+    }
+  });
+  ws.columns = physicalColWidths;
+
+  // 1. Logo thương hiệu ở góc trái trên cùng (Merge cột A:B, dòng 1-3, kích thước 72x72 chuẩn)
+  ws.mergeCells(1, 1, 3, 2);
+  const logoPngPath = path.join(process.cwd(), "public", "brand", "logo.png");
+  const logoJpgPath = path.join(process.cwd(), "public", "brand", "logo.jpg");
+  const logoPath = fs.existsSync(logoPngPath) ? logoPngPath : logoJpgPath;
+  if (fs.existsSync(logoPath)) {
+    const ext = logoPath.endsWith(".png") ? "png" : "jpeg";
+    const imageId = wb.addImage({
+      filename: logoPath,
+      extension: ext,
+    });
+    ws.addImage(imageId, {
+      tl: { nativeCol: 0, nativeColOff: 190500, nativeRow: 0, nativeRowOff: 127000 } as any,
+      ext: { width: 72, height: 72 },
+    });
+  }
+
+  // Row heights cho phần header
+  ws.getRow(1).height = 26;
+  ws.getRow(2).height = 24;
+  ws.getRow(3).height = 24;
+  ws.getRow(4).height = 10;
+  ws.getRow(5).height = 26;
+  ws.getRow(6).height = 18;
+  ws.getRow(7).height = 10;
+
+  // 2. Thông tin thương hiệu (Cột C trở đi, Dòng 1-3)
+  const brandEndCol = Math.max(3, totalPhysicalCols);
+  ws.mergeCells(1, 3, 1, brandEndCol);
+  const b1 = ws.getCell(1, 3);
+  b1.value = BRAND.name;
+  b1.font = { name: "Arial", size: 12, bold: true, color: { argb: "FF000000" } };
+  b1.alignment = { horizontal: "left", vertical: "middle" };
+
+  ws.mergeCells(2, 3, 2, brandEndCol);
+  const b2 = ws.getCell(2, 3);
+  b2.value = BRAND.address;
+  b2.font = { name: "Arial", size: 9, color: { argb: "FF333333" } };
+  b2.alignment = { horizontal: "left", vertical: "middle" };
+
+  ws.mergeCells(3, 3, 3, brandEndCol);
+  const b3 = ws.getCell(3, 3);
+  b3.value = BRAND.phone;
+  b3.font = { name: "Arial", size: 9, color: { argb: "FF333333" } };
+  b3.alignment = { horizontal: "left", vertical: "middle" };
+
+  // 3. Tiêu đề báo cáo ở giữa (Dòng 5)
+  ws.mergeCells(5, 1, 5, totalPhysicalCols);
+  const titleCell = ws.getCell(5, 1);
+  titleCell.value = title;
+  titleCell.font = { name: "Arial", size: 15, bold: true, color: { argb: "FF000000" } };
+  titleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+  // 4. Ngày tháng ở giữa (Dòng 6)
+  ws.mergeCells(6, 1, 6, totalPhysicalCols);
+  const dateCell = ws.getCell(6, 1);
+  dateCell.value = formatDateLong(new Date().toISOString());
+  dateCell.font = { name: "Arial", size: 9.5, italic: true, color: { argb: "FF333333" } };
+  dateCell.alignment = { horizontal: "center", vertical: "middle" };
+
+  // 5. Khối thông tin bộ lọc bên trái (Dòng 8+)
+  let metaRow = 8;
+  fields.forEach((field) => {
+    ws.getRow(metaRow).height = 18;
+    ws.mergeCells(metaRow, 1, metaRow, 2);
+    const lbl = ws.getCell(metaRow, 1);
+    lbl.value = `${field.label}:`;
+    lbl.font = { name: "Arial", size: 9.5, bold: true };
+    lbl.alignment = { horizontal: "left", vertical: "middle" };
+
+    const endValCol = Math.max(3, Math.min(8, totalPhysicalCols));
+    ws.mergeCells(metaRow, 3, metaRow, endValCol);
+    const val = ws.getCell(metaRow, 3);
+    val.value = field.value == null ? "—" : String(field.value);
+    val.font = { name: "Arial", size: 9.5 };
+    val.alignment = { horizontal: "left", vertical: "middle" };
+    metaRow++;
+  });
+
+  // Dòng trống trước bảng
+  ws.getRow(metaRow).height = 8;
+  metaRow++;
+
+  // 6. Tiêu đề các cột bảng (Áp dụng colSpan nếu có, ví dụ merger BC)
+  const tableHeaderRow = metaRow;
+  ws.getRow(tableHeaderRow).height = 32;
+
+  colPositions.forEach((col) => {
+    if (col.span > 1) {
+      ws.mergeCells(tableHeaderRow, col.startCol, tableHeaderRow, col.endCol);
+    }
+    const cell = ws.getCell(tableHeaderRow, col.startCol);
+    cell.value = col.header;
+    cell.font = { name: "Arial", size: 9.5, bold: true, color: { argb: "FF000000" } };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+
+    for (let c = col.startCol; c <= col.endCol; c++) {
+      const hCell = ws.getCell(tableHeaderRow, c);
+      hCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF1F5F9" },
+      };
+      hCell.border = {
+        top: { style: "medium", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "medium", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+      };
+    }
+  });
+
+  // 7. Dữ liệu bảng (Áp dụng colSpan cho từng dòng nếu có)
+  let currentRow = tableHeaderRow + 1;
+
+  const isMultiRowMerged = (rowIndex: number, logicalColIndex: number) => {
+    return merges.some(
+      (m) =>
+        rowIndex >= m.startRow &&
+        rowIndex <= m.endRow &&
+        m.cols.includes(logicalColIndex + 1) &&
+        m.endRow > m.startRow
+    );
+  };
+
+  rows.forEach((row) => {
+    ws.getRow(currentRow).height = 30;
+
+    row.forEach((val, colIdx) => {
+      const col = colPositions[colIdx];
+      if (!col) return;
+
+      if (col.span > 1 && !isMultiRowMerged(currentRow, colIdx)) {
+        ws.mergeCells(currentRow, col.startCol, currentRow, col.endCol);
+      }
+
+      const cell = ws.getCell(currentRow, col.startCol);
+      cell.value = val == null ? "—" : val;
+      cell.font = { name: "Arial", size: 9.5, color: { argb: "FF000000" } };
+      cell.alignment = {
+        horizontal: col.align || "left",
+        vertical: "middle",
+        wrapText: true,
+      };
+
+      for (let c = col.startCol; c <= col.endCol; c++) {
+        const dCell = ws.getCell(currentRow, c);
+        dCell.border = {
+          top: { style: "thin", color: { argb: "FF555555" } },
+          left: { style: "thin", color: { argb: "FF000000" } },
+          bottom: { style: "thin", color: { argb: "FF555555" } },
+          right: { style: "thin", color: { argb: "FF000000" } },
+        };
+      }
+
+      if (typeof val === "number") {
+        cell.numFmt = col.numFmt || "#,##0";
+      }
+    });
+
+    currentRow++;
+  });
+
+  // 8. Áp dụng Merge Rows nếu có (cho phiếu nhiều vật tư)
+  merges.forEach((m) => {
+    m.cols.forEach((logicalColNum) => {
+      const col = colPositions[logicalColNum - 1];
+      if (!col) return;
+      ws.mergeCells(m.startRow, col.startCol, m.endRow, col.endCol);
+    });
+  });
+
+  // 9. Hàng Tổng Cộng cuối bảng
+  totals.forEach((total) => {
+    ws.getRow(currentRow).height = 26;
+    const midCol = Math.max(1, Math.floor(totalPhysicalCols / 2));
+
+    ws.mergeCells(currentRow, 1, currentRow, midCol);
+    const leftCell = ws.getCell(currentRow, 1);
+    leftCell.value = total.left;
+    leftCell.font = { name: "Arial", size: 9.5, bold: true, color: { argb: "FF000000" } };
+    leftCell.alignment = { horizontal: "left", vertical: "middle" };
+
+    ws.mergeCells(currentRow, midCol + 1, currentRow, totalPhysicalCols);
+    const rightCell = ws.getCell(currentRow, midCol + 1);
+    rightCell.value = total.right;
+    rightCell.font = { name: "Arial", size: 9.5, bold: true, color: { argb: "FF000000" } };
+    rightCell.alignment = { horizontal: "right", vertical: "middle" };
+
+    for (let c = 1; c <= totalPhysicalCols; c++) {
+      const cell = ws.getCell(currentRow, c);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF8FAFC" },
+      };
+      cell.border = {
+        top: { style: "medium", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "medium", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+      };
+    }
+    currentRow++;
+  });
+
+  // 10. Khối Chữ Ký
+  if (signers && signers.length > 0) {
+    currentRow += 2;
+    const signTitleRow = currentRow;
+    ws.getRow(signTitleRow).height = 20;
+
+    const s1End = Math.max(2, Math.floor(totalPhysicalCols / 3));
+    const s2Start = s1End + 1;
+    const s2End = Math.max(s2Start, Math.floor((totalPhysicalCols * 2) / 3));
+    const s3Start = s2End + 1;
+    const s3End = totalPhysicalCols;
+
+    if (signers[0]) {
+      ws.mergeCells(signTitleRow, 2, signTitleRow, s1End);
+      const s1 = ws.getCell(signTitleRow, 2);
+      s1.value = signers[0];
+      s1.font = { name: "Arial", size: 10, bold: true };
+      s1.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    if (signers[1]) {
+      ws.mergeCells(signTitleRow, s2Start, signTitleRow, s2End);
+      const s2 = ws.getCell(signTitleRow, s2Start);
+      s2.value = signers[1];
+      s2.font = { name: "Arial", size: 10, bold: true };
+      s2.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    if (signers[2]) {
+      ws.mergeCells(signTitleRow, s3Start, signTitleRow, s3End);
+      const s3 = ws.getCell(signTitleRow, s3Start);
+      s3.value = signers[2];
+      s3.font = { name: "Arial", size: 10, bold: true };
+      s3.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    const signSubRow = signTitleRow + 1;
+    ws.getRow(signSubRow).height = 16;
+
+    if (signers[0]) {
+      ws.mergeCells(signSubRow, 2, signSubRow, s1End);
+      const h1 = ws.getCell(signSubRow, 2);
+      h1.value = "(Ký, ghi rõ họ tên)";
+      h1.font = { name: "Arial", size: 8, italic: true, color: { argb: "FF475569" } };
+      h1.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    if (signers[1]) {
+      ws.mergeCells(signSubRow, s2Start, signSubRow, s2End);
+      const h2 = ws.getCell(signSubRow, s2Start);
+      h2.value = "(Ký, ghi rõ họ tên)";
+      h2.font = { name: "Arial", size: 8, italic: true, color: { argb: "FF475569" } };
+      h2.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    if (signers[2]) {
+      ws.mergeCells(signSubRow, s3Start, signSubRow, s3End);
+      const h3 = ws.getCell(signSubRow, s3Start);
+      h3.value = "(Ký, ghi rõ họ tên)";
+      h3.font = { name: "Arial", size: 8, italic: true, color: { argb: "FF475569" } };
+      h3.alignment = { horizontal: "center", vertical: "middle" };
     }
   }
+
+  // 11. Sheet phụ thứ 2 (nếu có yêu cầu chi tiết)
+  if (secondarySheet) {
+    const sCols = secondarySheet.columns.length;
+    const detailWs = wb.addWorksheet(secondarySheet.sheetName, {
+      pageSetup: {
+        orientation,
+        paperSize: 9,
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0,
+      },
+      views: [{ showGridLines: true }],
+    });
+    detailWs.columns = secondarySheet.columns.map((c) => ({ width: c.width || 15 }));
+
+    detailWs.getRow(1).height = 24;
+    detailWs.mergeCells(1, 1, 1, sCols);
+    const dTitle = detailWs.getCell(1, 1);
+    dTitle.value = secondarySheet.title;
+    dTitle.font = { name: "Arial", size: 14, bold: true };
+    dTitle.alignment = { horizontal: "center", vertical: "middle" };
+
+    if (secondarySheet.periodText) {
+      detailWs.getRow(2).height = 18;
+      detailWs.mergeCells(2, 1, 2, sCols);
+      const dPeriod = detailWs.getCell(2, 1);
+      dPeriod.value = secondarySheet.periodText;
+      dPeriod.font = { name: "Arial", size: 9.5, italic: true };
+      dPeriod.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    detailWs.getRow(4).height = 32;
+    secondarySheet.columns.forEach((header, colIdx) => {
+      const cell = detailWs.getCell(4, colIdx + 1);
+      cell.value = header.header;
+      cell.font = { name: "Arial", size: 9.5, bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF1F5F9" },
+      };
+      cell.border = {
+        top: { style: "medium", color: { argb: "FF000000" } },
+        left: { style: "thin", color: { argb: "FF000000" } },
+        bottom: { style: "medium", color: { argb: "FF000000" } },
+        right: { style: "thin", color: { argb: "FF000000" } },
+      };
+    });
+
+    let dRowIdx = 5;
+    secondarySheet.rows.forEach((row) => {
+      detailWs.getRow(dRowIdx).height = 30;
+      row.forEach((val, colIdx) => {
+        const col = secondarySheet.columns[colIdx];
+        const cell = detailWs.getCell(dRowIdx, colIdx + 1);
+        cell.value = val == null ? "—" : val;
+        cell.font = { name: "Arial", size: 9.5 };
+        cell.alignment = { horizontal: col?.align || "left", vertical: "middle", wrapText: true };
+        cell.border = {
+          top: { style: "thin", color: { argb: "FFCBD5E1" } },
+          left: { style: "thin", color: { argb: "FF000000" } },
+          bottom: { style: "thin", color: { argb: "FFCBD5E1" } },
+          right: { style: "thin", color: { argb: "FF000000" } },
+        };
+        if (typeof val === "number") {
+          cell.numFmt = col?.numFmt || "#,##0";
+        }
+      });
+      dRowIdx++;
+    });
+  }
+
+  const buffer = await wb.xlsx.writeBuffer();
+  return new Uint8Array(buffer);
 }
 
-/**
- * Helper to create and configure a formatted worksheet from an array of rows.
- */
-function createFormattedSheet(
-  rows: (string | number | null | undefined)[][]
-): XLSX.WorkSheet {
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!cols"] = calculateColumnWidths(rows);
-  applyNumberFormats(ws);
-  return ws;
-}
-
-/**
- * Converts a SheetJS workbook to an immutable Uint8Array binary buffer.
- */
-function workbookToBinaryBuffer(wb: XLSX.WorkBook): Uint8Array {
-  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
-  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
-}
-
-/**
- * 1. Stock Ledger (Xuất - Nhập - Tồn kho) Excel workbook.
- */
-export function buildStockLedgerExcel(
+// ---------------------------------------------------------------------------------
+// 1. Stock Ledger (Xuất - Nhập - Tồn kho) Excel workbook
+// ---------------------------------------------------------------------------------
+export async function buildStockLedgerExcel(
   data: GeneralReportData,
   range: { from: string; to: string },
   locationName?: string
-): Uint8Array {
-  const wb = XLSX.utils.book_new();
-
-  // Sheet 1: Báo cáo xuất nhập tồn
-  const periodText = formatReportPeriod(range) + (locationName ? ` - Kho: ${locationName}` : "");
-
-  let totalOpening = 0;
-  let totalIn = 0;
-  let totalOut = 0;
-  let totalClosing = 0;
-  let totalClosingValue = 0;
-
-  const dataRows: (string | number | null | undefined)[][] = data.stockLedger.map((r, idx) => {
-    totalOpening += r.openingQty;
-    totalIn += r.inQty;
-    totalOut += r.outQty;
-    totalClosing += r.closingQty;
-    totalClosingValue += r.closingValue;
-
-    return [
-      idx + 1,
-      r.productName,
-      r.variantLabel,
-      r.unit,
-      r.categoryName,
-      r.openingQty,
-      r.inQty,
-      r.outQty,
-      r.closingQty,
-      r.unitPrice,
-      r.closingValue,
-    ];
-  });
-
-  const sheet1Rows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["BÁO CÁO XUẤT - NHẬP - TỒN KHO"],
-    [periodText],
-    [],
-    [
-      "STT",
-      "Tên vật tư",
-      "Quy cách / Biến thể",
-      "ĐVT",
-      "Danh mục",
-      "Tồn đầu kỳ",
-      "Nhập trong kỳ",
-      "Xuất trong kỳ",
-      "Tồn cuối kỳ",
-      "Đơn giá (VNĐ)",
-      "Giá trị tồn (VNĐ)",
-    ],
-    ...dataRows,
-    [
-      "TỔNG CỘNG",
-      "",
-      "",
-      "",
-      "",
-      totalOpening,
-      totalIn,
-      totalOut,
-      totalClosing,
-      "",
-      data.totalInventoryValue || totalClosingValue,
-    ],
+): Promise<Uint8Array> {
+  const periodLabel = `Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`;
+  const fields: ExcelReportField[] = [
+    { label: "Kỳ báo cáo", value: periodLabel },
+    ...(locationName ? [{ label: "Kho", value: locationName }] : []),
   ];
 
-  const wsLedger = createFormattedSheet(sheet1Rows);
-  XLSX.utils.book_append_sheet(wb, wsLedger, "Xuat_Nhap_Ton");
+  const columns: ExcelReportColumn[] = [
+    { header: "STT", width: 7, align: "center" },
+    { header: "Tên vật tư", width: 38, align: "left", colSpan: 2 }, // Merger cột BC
+    { header: "Biến thể", width: 22, align: "left" },
+    { header: "ĐVT", width: 10, align: "center" },
+    { header: "Tồn đầu", width: 14, align: "right", numFmt: "#,##0" },
+    { header: "Nhập", width: 14, align: "right", numFmt: "#,##0" },
+    { header: "Xuất", width: 14, align: "right", numFmt: "#,##0" },
+    { header: "Tồn cuối", width: 14, align: "right", numFmt: "#,##0" },
+    { header: "Giá trị tồn", width: 24, align: "right" },
+  ];
 
-  // Sheet 2: Cơ cấu theo danh mục
-  if (data.categoryBreakdown && data.categoryBreakdown.length > 0) {
-    let totalCatCost = 0;
-    const catRows = data.categoryBreakdown.map((c, idx) => {
-      totalCatCost += c.cost;
-      return [idx + 1, c.categoryName, c.cost, c.percentage];
-    });
+  const rows = data.stockLedger.map((r, idx) => [
+    idx + 1,
+    r.productName,
+    r.variantLabel,
+    r.unit,
+    r.openingQty,
+    r.inQty,
+    r.outQty,
+    r.closingQty,
+    formatVnd(r.closingValue),
+  ]);
 
-    const sheet2Rows: (string | number | null | undefined)[][] = [
-      [BRAND_EXCEL_TITLE],
-      ["CƠ CẤU GIÁ TRỊ TỒN KHO THEO DANH MỤC"],
-      [formatReportPeriod(range)],
-      [],
-      ["STT", "Tên danh mục", "Giá trị tồn (VNĐ)", "Tỷ trọng (%)"],
-      ...catRows,
-      ["TỔNG CỘNG", "", totalCatCost, 100],
-    ];
+  const totals: ExcelReportTotal[] = [
+    {
+      left: "TỔNG GIÁ TRỊ TỒN KHO",
+      right: formatVnd(data.totalInventoryValue),
+    },
+  ];
 
-    const wsCat = createFormattedSheet(sheet2Rows);
-    XLSX.utils.book_append_sheet(wb, wsCat, "Co_Cau_Danh_Muc");
-  }
-
-  return workbookToBinaryBuffer(wb);
+  return generateStyledExcelReport({
+    title: "BÁO CÁO XUẤT - NHẬP - TỒN KHO",
+    sheetName: "Xuat_Nhap_Ton",
+    fields,
+    columns,
+    rows,
+    totals,
+  });
 }
 
-/**
- * 2. Zone Cost (Chi phí vật tư theo khu vực) Excel workbook.
- */
-export function buildZoneCostExcel(
+// ---------------------------------------------------------------------------------
+// 2. Zone Cost (Chi phí theo khu vực / chuồng) Excel workbook
+// ---------------------------------------------------------------------------------
+export async function buildZoneCostExcel(
   data: ZoneCostReportData,
   range: { from: string; to: string }
-): Uint8Array {
-  const wb = XLSX.utils.book_new();
+): Promise<Uint8Array> {
+  const periodLabel = `Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`;
+  const fields: ExcelReportField[] = [{ label: "Kỳ báo cáo", value: periodLabel }];
 
-  // Sheet 1: Tổng hợp chi phí theo khu vực
-  let totalIssues = 0;
-  let totalDefects = 0;
-
-  const zoneRows = data.zones.map((z, idx) => {
-    totalIssues += z.issueCount;
-    totalDefects += z.defectCount;
-    return [idx + 1, z.zoneName, z.issueCount, z.defectCount, z.totalCost, z.percentage];
-  });
-
-  const sheet1Rows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["BÁO CÁO CHI PHÍ VẬT TƯ THEO KHU VỰC"],
-    [formatReportPeriod(range)],
-    [],
-    [
-      "STT",
-      "Khu vực / Chuồng",
-      "Số phiếu xuất",
-      "Số biên bản hỏng",
-      "Tổng chi phí (VNĐ)",
-      "Tỷ trọng (%)",
-    ],
-    ...zoneRows,
-    ["TỔNG CỘNG", "", totalIssues, totalDefects, data.grandTotalCost, 100],
+  const columns: ExcelReportColumn[] = [
+    { header: "STT", width: 7, align: "center" },
+    { header: "Khu vực / Chuồng", width: 38, align: "left", colSpan: 2 }, // Merger cột BC
+    { header: "Số phiếu xuất", width: 18, align: "right", numFmt: "#,##0" },
+    { header: "Số BB hỏng", width: 18, align: "right", numFmt: "#,##0" },
+    { header: "Tổng chi phí", width: 26, align: "right" },
+    { header: "Tỷ trọng", width: 16, align: "right" },
   ];
 
-  const wsSummary = createFormattedSheet(sheet1Rows);
-  XLSX.utils.book_append_sheet(wb, wsSummary, "Chi_Phi_Khu_Vuc");
+  const rows = data.zones.map((z, idx) => [
+    idx + 1,
+    z.zoneName,
+    z.issueCount,
+    z.defectCount,
+    formatVnd(z.totalCost),
+    `${z.percentage}%`,
+  ]);
 
-  // Sheet 2: Chi tiết vật tư xuất theo khu vực
-  const itemRows: (string | number | null | undefined)[][] = [];
-  let itemStt = 1;
-  let sumItemQty = 0;
+  const totals: ExcelReportTotal[] = [
+    {
+      left: "TỔNG CHI PHÍ TẤT CẢ KHU VỰC",
+      right: formatVnd(data.grandTotalCost),
+    },
+  ];
 
-  for (const zone of data.zones) {
-    for (const item of zone.items) {
-      sumItemQty += item.quantity;
-      itemRows.push([
-        itemStt++,
-        zone.zoneName,
-        item.productName,
-        item.variantLabel,
-        item.unit,
-        item.quantity,
-        item.unitPrice,
-        item.totalAmount,
-      ]);
-    }
-  }
-
-  if (itemRows.length > 0) {
-    const sheet2Rows: (string | number | null | undefined)[][] = [
-      [BRAND_EXCEL_TITLE],
-      ["CHI TIẾT VẬT TƯ XUẤT THEO KHU VỰC"],
-      [formatReportPeriod(range)],
-      [],
-      [
-        "STT",
-        "Khu vực / Chuồng",
-        "Tên vật tư",
-        "Quy cách / Biến thể",
-        "ĐVT",
-        "Số lượng",
-        "Đơn giá (VNĐ)",
-        "Thành tiền (VNĐ)",
-      ],
-      ...itemRows,
-      ["TỔNG CỘNG", "", "", "", "", sumItemQty, "", data.grandTotalCost],
-    ];
-
-    const wsDetail = createFormattedSheet(sheet2Rows);
-    XLSX.utils.book_append_sheet(wb, wsDetail, "Chi_Tiet_Vat_Tu");
-  }
-
-  return workbookToBinaryBuffer(wb);
+  return generateStyledExcelReport({
+    title: "BÁO CÁO CHI PHÍ VẬT TƯ THEO KHU VỰC",
+    sheetName: "Chi_Phi_Khu_Vuc",
+    fields,
+    columns,
+    rows,
+    totals,
+  });
 }
 
-/**
- * 3. Vehicle & Equipment Fuel (Tiêu thụ nhiên liệu phương tiện) Excel workbook.
- */
-export function buildVehicleExcel(
+// ---------------------------------------------------------------------------------
+// 3. Vehicle Fuel Report (Tiêu thụ nhiên liệu xe / máy móc) Excel workbook
+// ---------------------------------------------------------------------------------
+export async function buildVehicleExcel(
   data: VehicleReportData,
   range: { from: string; to: string }
-): Uint8Array {
-  const wb = XLSX.utils.book_new();
+): Promise<Uint8Array> {
+  const periodLabel = `Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`;
+  const fields: ExcelReportField[] = [{ label: "Kỳ báo cáo", value: periodLabel }];
 
-  let totalDispenses = 0;
-  let totalUsageDiff = 0;
-
-  const vehicleRows = data.vehicles.map((v, idx) => {
-    totalDispenses += v.dispenseCount;
-    totalUsageDiff += v.totalUsageDiff;
-
-    return [
-      idx + 1,
-      v.code,
-      v.name,
-      v.odoUnit === "hours" ? "Giờ" : "Km",
-      v.fuelNorm != null ? v.fuelNorm : "—",
-      v.totalLiters,
-      v.dispenseCount,
-      v.totalUsageDiff,
-      v.avgRate != null ? v.avgRate : "—",
-      v.normDiff != null ? v.normDiff : "—",
-      v.isOverNorm ? "Vượt định mức" : "Bình thường",
-    ];
-  });
-
-  const sheet1Rows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["BÁO CÁO TIÊU THỤ NHIÊN LIỆU PHƯƠNG TIỆN & MÁY MÓC"],
-    [formatReportPeriod(range)],
-    [],
-    [
-      "STT",
-      "Mã phương tiện",
-      "Tên phương tiện / Biển số",
-      "Đơn vị đo",
-      "Định mức",
-      "Tổng cấp (Lít)",
-      "Số lần cấp",
-      "Mức sử dụng (km/h)",
-      "Tiêu hao TB",
-      "Chênh lệch định mức",
-      "Trạng thái định mức",
-    ],
-    ...vehicleRows,
-    [
-      "TỔNG CỘNG",
-      "",
-      "",
-      "",
-      "",
-      data.totalLitersAllVehicles,
-      totalDispenses,
-      totalUsageDiff,
-      "",
-      "",
-      "",
-    ],
+  const columns: ExcelReportColumn[] = [
+    { header: "STT", width: 7, align: "center" },
+    { header: "Mã xe", width: 14, align: "center" },
+    { header: "Tên phương tiện", width: 38, align: "left", colSpan: 2 },
+    { header: "Đơn vị", width: 10, align: "center" },
+    { header: "Định mức", width: 15, align: "right" },
+    { header: "Đã cấp (lít)", width: 16, align: "right", numFmt: "#,##0" },
+    { header: "Số lần", width: 14, align: "right", numFmt: "#,##0" },
+    { header: "Tiêu hao TB", width: 16, align: "right" },
+    { header: "Trạng thái", width: 20, align: "center" },
   ];
 
-  const wsVehicles = createFormattedSheet(sheet1Rows);
-  XLSX.utils.book_append_sheet(wb, wsVehicles, "Nhien_Lieu_Phuong_Tien");
+  const rows = data.vehicles.map((v, idx) => [
+    idx + 1,
+    v.code,
+    v.name,
+    v.odoUnit === "hours" ? "Giờ" : "Km",
+    v.fuelNorm != null ? String(v.fuelNorm) : "—",
+    v.totalLiters,
+    v.dispenseCount,
+    v.avgRate != null ? `${v.avgRate}` : "—",
+    v.isOverNorm ? "Vượt định mức" : "Bình thường",
+  ]);
 
-  return workbookToBinaryBuffer(wb);
+  const totals: ExcelReportTotal[] = [
+    {
+      left: "TỔNG TIÊU THỤ NHIÊN LIỆU",
+      right: `${formatNumber(data.totalLitersAllVehicles)} Lít`,
+    },
+  ];
+
+  return generateStyledExcelReport({
+    title: "BÁO CÁO TIÊU THỤ NHIÊN LIỆU PHƯƠNG TIỆN",
+    sheetName: "Nhien_Lieu_Xe",
+    fields,
+    columns,
+    rows,
+    totals,
+  });
 }
 
-/**
- * 4. Partners (Nhà cung cấp & Khách hàng) Excel workbook.
- */
-export function buildPartnersExcel(
+// ---------------------------------------------------------------------------------
+// 4. Partners Report (Đối tác cung cấp & khách hàng) Excel workbook
+// ---------------------------------------------------------------------------------
+export async function buildPartnersExcel(
   data: PartnersReportData,
   range: { from: string; to: string }
-): Uint8Array {
-  const wb = XLSX.utils.book_new();
+): Promise<Uint8Array> {
+  const periodLabel = `Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`;
+  const fields: ExcelReportField[] = [{ label: "Kỳ báo cáo", value: periodLabel }];
 
-  // Sheet 1: Nhà cung cấp
-  let totalReceiptCount = 0;
-  let totalSupplierQty = 0;
-  let totalSupplierAmt = 0;
-
-  const supplierRows = data.suppliers.map((s, idx) => {
-    totalReceiptCount += s.receiptCount;
-    totalSupplierQty += s.totalQuantity;
-    totalSupplierAmt += s.totalAmount;
-
-    return [
-      idx + 1,
-      s.supplierName,
-      s.phone || "—",
-      s.receiptCount,
-      s.totalQuantity,
-      s.totalAmount,
-    ];
-  });
-
-  const sheet1Rows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["BÁO CÁO NHÀ CUNG CẤP VẬT TƯ"],
-    [formatReportPeriod(range)],
-    [],
-    [
-      "STT",
-      "Tên nhà cung cấp",
-      "Số điện thoại",
-      "Số phiếu nhập",
-      "Tổng số lượng",
-      "Tổng giá trị nhập (VNĐ)",
-    ],
-    ...supplierRows,
-    ["TỔNG CỘNG", "", "", totalReceiptCount, totalSupplierQty, totalSupplierAmt],
+  const columns: ExcelReportColumn[] = [
+    { header: "STT", width: 7, align: "center" },
+    { header: "Đối tác", width: 40, align: "left", colSpan: 2 }, // Merger cột BC
+    { header: "Phân loại", width: 18, align: "center" },
+    { header: "Số ĐT", width: 18, align: "center" },
+    { header: "Số giao dịch", width: 16, align: "right", numFmt: "#,##0" },
+    { header: "Tổng SL", width: 16, align: "right", numFmt: "#,##0" },
+    { header: "Tổng giá trị", width: 26, align: "right" },
   ];
 
-  const wsSuppliers = createFormattedSheet(sheet1Rows);
-  XLSX.utils.book_append_sheet(wb, wsSuppliers, "Nha_Cung_Cap");
+  const supplierRows = data.suppliers.map((s, idx) => [
+    idx + 1,
+    s.supplierName,
+    "Nhà cung cấp",
+    s.phone || "—",
+    s.receiptCount,
+    s.totalQuantity,
+    formatVnd(s.totalAmount),
+  ]);
 
-  // Sheet 2: Khách hàng
-  let totalIssueCount = 0;
-  let totalCustomerQty = 0;
-  let totalCustomerRevenue = 0;
+  const offset = data.suppliers.length;
+  const customerRows = data.customers.map((c, idx) => [
+    offset + idx + 1,
+    c.customerName,
+    "Khách hàng",
+    c.phone || "—",
+    c.issueCount,
+    c.totalQuantity,
+    formatVnd(c.totalRevenue),
+  ]);
 
-  const customerRows = data.customers.map((c, idx) => {
-    totalIssueCount += c.issueCount;
-    totalCustomerQty += c.totalQuantity;
-    totalCustomerRevenue += c.totalRevenue;
+  const rows = [...supplierRows, ...customerRows];
 
-    return [
-      idx + 1,
-      c.customerName,
-      c.phone || "—",
-      c.issueCount,
-      c.totalQuantity,
-      c.totalRevenue,
-    ];
-  });
+  const totalSupplierAmt = data.suppliers.reduce((sum, s) => sum + s.totalAmount, 0);
+  const totalCustomerRevenue = data.customers.reduce((sum, c) => sum + c.totalRevenue, 0);
 
-  const sheet2Rows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["BÁO CÁO KHÁCH HÀNG MUA VẬT TƯ / HÀNG HOÁ"],
-    [formatReportPeriod(range)],
-    [],
-    [
-      "STT",
-      "Tên khách hàng",
-      "Số điện thoại",
-      "Số phiếu xuất",
-      "Tổng số lượng",
-      "Tổng doanh thu (VNĐ)",
-    ],
-    ...customerRows,
-    ["TỔNG CỘNG", "", "", totalIssueCount, totalCustomerQty, totalCustomerRevenue],
+  const totals: ExcelReportTotal[] = [
+    {
+      left: "Tổng mua từ Nhà cung cấp",
+      right: formatVnd(totalSupplierAmt),
+    },
+    {
+      left: "Tổng bán cho Khách hàng",
+      right: formatVnd(totalCustomerRevenue),
+    },
   ];
 
-  const wsCustomers = createFormattedSheet(sheet2Rows);
-  XLSX.utils.book_append_sheet(wb, wsCustomers, "Khach_Hang");
-
-  return workbookToBinaryBuffer(wb);
+  return generateStyledExcelReport({
+    title: "BÁO CÁO ĐỐI TÁC CUNG CẤP & KHÁCH HÀNG",
+    sheetName: "Doi_Tac",
+    fields,
+    columns,
+    rows,
+    totals,
+  });
 }
 
-/**
- * 5. Stock Card (Thẻ kho / Sổ chi tiết vật tư) Excel workbook.
- */
-export function buildStockCardExcel(
+// ---------------------------------------------------------------------------------
+// 5. Stock Card (Thẻ kho chi tiết) Excel workbook
+// ---------------------------------------------------------------------------------
+export async function buildStockCardExcel(
   data: StockCardData,
   range: { from: string; to: string }
-): Uint8Array {
-  const wb = XLSX.utils.book_new();
+): Promise<Uint8Array> {
+  const periodLabel = `Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`;
+  const fields: ExcelReportField[] = [
+    { label: "Kỳ báo cáo", value: periodLabel },
+    { label: "Vật tư", value: `${data.productName} (${data.variantLabel})` },
+    { label: "Đơn vị tính", value: data.unit },
+    { label: "Kho", value: data.locationName },
+    { label: "Tồn đầu kỳ", value: formatNumber(data.openingStock) },
+    { label: "Tồn cuối kỳ", value: formatNumber(data.closingStock) },
+  ];
 
-  const entryRows = data.entries.map((e, idx) => [
+  const columns: ExcelReportColumn[] = [
+    { header: "STT", width: 7, align: "center" },
+    { header: "Ngày ghi sổ", width: 22, align: "center" },
+    { header: "Mã CT", width: 15, align: "center" },
+    { header: "Loại biến động", width: 26, align: "left", colSpan: 2 },
+    { header: "Người thực hiện", width: 24, align: "left" },
+    { header: "Nhập", width: 14, align: "right" },
+    { header: "Xuất", width: 14, align: "right" },
+    { header: "Tồn", width: 14, align: "right", numFmt: "#,##0" },
+  ];
+
+  const rows = data.entries.map((e, idx) => [
     idx + 1,
     formatDateTime(e.createdAt),
     e.refCode || "—",
     e.movementLabel,
     e.actorName,
-    e.inQty > 0 ? e.inQty : 0,
-    e.outQty > 0 ? e.outQty : 0,
+    e.inQty > 0 ? e.inQty : "—",
+    e.outQty > 0 ? e.outQty : "—",
     e.runningBalance,
-    e.notes || "",
   ]);
 
-  const sheetRows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["THẺ KHO (SỔ KHO CHI TIẾT VẬT TƯ)"],
-    [formatReportPeriod(range)],
-    [`Vật tư: ${data.productName} - ${data.variantLabel} | ĐVT: ${data.unit} | Kho: ${data.locationName}`],
-    [
-      `Tồn đầu kỳ: ${data.openingStock} | Tổng nhập: ${data.totalIn} | Tổng xuất: ${data.totalOut} | Tồn cuối kỳ: ${data.closingStock}`,
-    ],
-    [],
-    [
-      "STT",
-      "Thời gian ghi sổ",
-      "Mã chứng từ",
-      "Loại biến động",
-      "Người thực hiện",
-      "Số lượng nhập",
-      "Số lượng xuất",
-      "Tồn sau biến động",
-      "Ghi chú",
-    ],
-    ...entryRows,
-    ["TỔNG CỘNG", "", "", "", "", data.totalIn, data.totalOut, data.closingStock, ""],
+  const totals: ExcelReportTotal[] = [
+    { left: "Tổng nhập trong kỳ", right: formatNumber(data.totalIn) },
+    { left: "Tổng xuất trong kỳ", right: formatNumber(data.totalOut) },
+    { left: "Tồn cuối kỳ", right: formatNumber(data.closingStock) },
   ];
 
-  const wsCard = createFormattedSheet(sheetRows);
-  XLSX.utils.book_append_sheet(wb, wsCard, "The_Kho");
-
-  return workbookToBinaryBuffer(wb);
+  return generateStyledExcelReport({
+    title: "THẺ KHO (SỔ KHO CHI TIẾT)",
+    sheetName: "The_Kho",
+    fields,
+    columns,
+    rows,
+    totals,
+  });
 }
 
-/**
- * 6. Requisitions Report (Báo cáo yêu cầu vật tư) Excel workbook.
- */
-export function buildRequisitionsExcel(
+// ---------------------------------------------------------------------------------
+// 6. Requisitions Report (Báo cáo yêu cầu vật tư) Excel workbook
+// ---------------------------------------------------------------------------------
+export async function buildRequisitionsExcel(
   requisitions: RequisitionReportRow[],
   range?: { from?: string | null; to?: string | null },
   filterInfo?: { status?: string | null; zoneName?: string | null }
-): Uint8Array {
-  const wb = XLSX.utils.book_new();
+): Promise<Uint8Array> {
+  const periodLabel =
+    range?.from && range?.to
+      ? `Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`
+      : "Tất cả thời gian";
 
-  const periodText =
-    (range?.from && range?.to
-      ? `Kỳ báo cáo: Từ ngày ${formatDate(range.from)} đến ngày ${formatDate(range.to)}`
-      : "Tất cả thời gian") +
-    (filterInfo?.status ? ` - Trạng thái: ${filterInfo.status}` : "") +
-    (filterInfo?.zoneName ? ` - Khu vực: ${filterInfo.zoneName}` : "");
-
-  const rows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ"],
-    [periodText],
-    [],
-    [
-      "STT",
-      "Mã phiếu",
-      "Ngày yêu cầu",
-      "Người yêu cầu",
-      "Khu vực / Chuồng",
-      "Mục đích sử dụng",
-      "Loại yêu cầu",
-      "Trạng thái",
-      "Danh sách vật tư yêu cầu",
-    ],
+  const fields: ExcelReportField[] = [
+    { label: "Kỳ báo cáo", value: periodLabel },
+    ...(filterInfo?.status ? [{ label: "Trạng thái", value: filterInfo.status }] : []),
+    ...(filterInfo?.zoneName ? [{ label: "Khu vực", value: filterInfo.zoneName }] : []),
   ];
+
+  const columns: ExcelReportColumn[] = [
+    { header: "STT", width: 7, align: "center" },
+    { header: "Mã phiếu", width: 7, align: "center" }, // Chiều rộng B bằng A (7)
+    { header: "Ngày", width: 14, align: "center" },
+    { header: "Người yêu cầu", width: 22, align: "left" },
+    { header: "Khu vực", width: 18, align: "left" },
+    { header: "Vật tư yêu cầu", width: 44, align: "left", colSpan: 2 },
+    { header: "Loại", width: 20, align: "left" },
+    { header: "SL", width: 9, align: "center" },
+    { header: "ĐVT", width: 9, align: "center" },
+    { header: "Mục đích sử dụng", width: 32, align: "left" },
+    { header: "Trạng thái", width: 16, align: "center" },
+  ];
+
+  const rows: (string | number | null | undefined)[][] = [];
+  const merges: { startRow: number; endRow: number; cols: number[] }[] = [];
+
+  const tableHeaderRowIndex = 8 + fields.length + 1; // 1-based header row
+  let currentRowIndex = tableHeaderRowIndex + 1; // 1-based first data row
 
   requisitions.forEach((req, idx) => {
-    const itemsSummary = req.items
-      .map((it) => `${it.productName}${it.variantLabel ? ` (${it.variantLabel})` : ""}: ${it.quantity} ${it.unit}`)
-      .join("; ");
+    const items =
+      req.items.length > 0
+        ? req.items
+        : [{ productName: "—", variantLabel: "", quantity: 0, unit: "" }];
 
-    rows.push([
-      idx + 1,
-      req.code,
-      formatDate(req.createdAt),
-      req.requesterName || "—",
-      req.zoneName || "—",
-      req.purpose,
-      req.requisitionType === "replacement" ? "Thay thế đổi mới" : "Cấp mới định kỳ",
-      req.statusLabel,
-      itemsSummary || "—",
-    ]);
-  });
+    const startRow = currentRowIndex;
 
-  const ws = createFormattedSheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "Yeu_Cau_Vat_Tu");
-
-  // Sheet 2: Chi tiết từng dòng vật tư
-  const detailRows: (string | number | null | undefined)[][] = [
-    [BRAND_EXCEL_TITLE],
-    ["CHI TIẾT VẬT TƯ YÊU CẦU THEO PHIẾU"],
-    [periodText],
-    [],
-    [
-      "STT",
-      "Mã phiếu",
-      "Ngày yêu cầu",
-      "Người yêu cầu",
-      "Khu vực / Chuồng",
-      "Trạng thái",
-      "Tên vật tư",
-      "Biến thể",
-      "Đơn vị tính",
-      "Số lượng yêu cầu",
-    ],
-  ];
-
-  let detailIdx = 1;
-  requisitions.forEach((req) => {
-    req.items.forEach((item) => {
-      detailRows.push([
-        detailIdx++,
+    items.forEach((item) => {
+      rows.push([
+        idx + 1,
         req.code,
         formatDate(req.createdAt),
         req.requesterName || "—",
         req.zoneName || "—",
-        req.statusLabel,
-        item.productName,
+        item.productName || "—",
         item.variantLabel || "—",
+        item.quantity > 0 ? item.quantity : "—",
         item.unit || "—",
-        item.quantity,
+        req.purpose || "—",
+        req.statusLabel,
+      ]);
+      currentRowIndex++;
+    });
+
+    const endRow = currentRowIndex - 1;
+
+    if (items.length > 1) {
+      merges.push({
+        startRow,
+        endRow,
+        cols: [1, 2, 3, 4, 5, 10, 11], // 1-based logical col indices for STT, Mã, Ngày, Người, Khu vực, Mục đích, Trạng thái
+      });
+    }
+  });
+
+  const totals: ExcelReportTotal[] = [
+    {
+      left: "TỔNG SỐ PHIẾU YÊU CẦU",
+      right: `${requisitions.length} phiếu`,
+    },
+  ];
+
+  // Secondary flat detail sheet for pivot/filtering
+  const detailRows: (string | number | null | undefined)[][] = [];
+  let itemCounter = 1;
+  requisitions.forEach((req) => {
+    const items =
+      req.items.length > 0
+        ? req.items
+        : [{ productName: "—", variantLabel: "", quantity: 0, unit: "" }];
+
+    items.forEach((item) => {
+      detailRows.push([
+        itemCounter++,
+        req.code,
+        formatDate(req.createdAt),
+        req.requesterName || "—",
+        req.zoneName || "—",
+        item.productName || "—",
+        item.variantLabel || "—",
+        item.quantity > 0 ? item.quantity : "—",
+        item.unit || "—",
+        req.purpose || "—",
+        req.statusLabel,
       ]);
     });
   });
 
-  const detailWs = createFormattedSheet(detailRows);
-  XLSX.utils.book_append_sheet(wb, detailWs, "Chi_Tiet_Vat_Tu");
-
-  return workbookToBinaryBuffer(wb);
+  return generateStyledExcelReport({
+    title: "BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ",
+    sheetName: "Yeu_Cau_Vat_Tu",
+    fields,
+    columns,
+    rows,
+    totals,
+    merges,
+    secondarySheet: {
+      sheetName: "Chi_Tiet_Vat_Tu",
+      title: "CHI TIẾT VẬT TƯ YÊU CẦU THEO PHIẾU",
+      periodText: periodLabel,
+      columns,
+      rows: detailRows,
+    },
+  });
 }

@@ -1,7 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse, type NextRequest } from "next/server";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
-import { SlipDocument, type SlipColumn, type SlipField, type SlipTotals } from "@/features/pdf/slip";
+import { SlipDocument, type SlipColumn, type SlipField, type SlipTotals, type SlipRowItem } from "@/features/pdf/slip";
 import { getDateRangeFromPreset } from "@/features/reports/lib/calculations";
 import {
   fetchGeneralReportData,
@@ -48,14 +48,16 @@ export async function GET(req: NextRequest) {
     const nowIso = new Date().toISOString();
     let title = "";
     let filename = "";
+    let orientation: "portrait" | "landscape" = "portrait";
     let fields: SlipField[] = [];
     let columns: SlipColumn[] = [];
-    let rows: (string | number | null | undefined)[][] = [];
+    let rows: SlipRowItem[] = [];
     let totals: SlipTotals[] = [];
 
     switch (type) {
       case "requisitions": {
         title = "BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ";
+        orientation = "landscape";
         filename = `bao-cao-yeu-cau-vat-tu-${from || "tat-ca"}-den-${to || "tat-ca"}.pdf`;
 
         let zoneName: string | undefined;
@@ -85,29 +87,35 @@ export async function GET(req: NextRequest) {
         ];
 
         columns = [
-          { label: "Mã phiếu", flex: 1.1 },
-          { label: "Ngày", flex: 0.8 },
+          { label: "Mã phiếu", flex: 0.65 },
+          { label: "Ngày", flex: 0.65 },
           { label: "Người yêu cầu", flex: 1.1 },
-          { label: "Khu vực / Chuồng", flex: 1.1 },
-          { label: "Mục đích sử dụng", flex: 1.3 },
-          { label: "Vật tư yêu cầu", flex: 2.2 },
-          { label: "Trạng thái", flex: 0.9, align: "center" },
+          { label: "Khu vực", flex: 0.9 },
+          { label: "Vật tư yêu cầu", flex: 2.8 },
+          { label: "Loại", flex: 1.1 },
+          { label: "SL", flex: 0.45, align: "center" },
+          { label: "ĐVT", flex: 0.45, align: "center" },
+          { label: "Mục đích sử dụng", flex: 1.7 },
+          { label: "Trạng thái", flex: 0.95, align: "center" },
         ];
 
         rows = data.map((r) => {
-          const itemsSummary = r.items
-            .map((it) => `${it.productName}${it.variantLabel ? ` (${it.variantLabel})` : ""}: ${it.quantity} ${it.unit}`)
-            .join(", ");
-
-          return [
-            r.code,
-            formatDate(r.createdAt),
-            r.requesterName || "—",
-            r.zoneName || "—",
-            r.purpose,
-            itemsSummary || "—",
-            r.statusLabel,
-          ];
+          const itemsData = r.items.length > 0 ? r.items : [{ productName: "—", variantLabel: "", quantity: 0, unit: "" }];
+          return {
+            items: itemsData.map((it) => [
+              r.code,
+              formatDate(r.createdAt),
+              r.requesterName || "—",
+              r.zoneName || "—",
+              it.productName || "—",
+              it.variantLabel || "—",
+              it.quantity > 0 ? formatNumber(it.quantity) : "—",
+              it.unit || "—",
+              r.purpose,
+              r.statusLabel,
+            ]),
+            mergeColumns: [0, 1, 2, 3, 8, 9],
+          };
         });
 
         totals = [
@@ -392,6 +400,7 @@ export async function GET(req: NextRequest) {
 
     const buffer = await renderToBuffer(
       <SlipDocument
+        orientation={orientation}
         title={title}
         createdAt={nowIso}
         fields={fields}

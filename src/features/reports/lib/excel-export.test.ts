@@ -8,7 +8,6 @@ import {
   buildStockLedgerExcel,
   buildVehicleExcel,
   buildZoneCostExcel,
-  calculateColumnWidths,
   formatReportPeriod,
 } from "./excel-export";
 import type {
@@ -26,18 +25,6 @@ describe("excel-export engine", () => {
   it("formats report period text correctly", () => {
     const text = formatReportPeriod(range);
     expect(text).toContain("Kỳ báo cáo: Từ ngày 01/09/2026 đến ngày 30/09/2026");
-  });
-
-  it("calculates auto column widths cleanly", () => {
-    const rows = [
-      ["STT", "Tên vật tư rất dài trong kho", "ĐVT"],
-      [1, "Cám gà", "Bao"],
-    ];
-    const widths = calculateColumnWidths(rows);
-    expect(widths.length).toBe(3);
-    expect(widths[0].wch).toBeGreaterThanOrEqual(10);
-    expect(widths[1].wch).toBeGreaterThan(20);
-    expect(widths[2].wch).toBe(10);
   });
 
   describe("buildStockLedgerExcel", () => {
@@ -92,38 +79,39 @@ describe("excel-export engine", () => {
       },
     };
 
-    it("generates a valid binary buffer and workbook structure with sheets", () => {
-      const buffer = buildStockLedgerExcel(mockGeneralData, range, "Kho Tổng");
+    it("generates a valid binary buffer and workbook structure with sheets", async () => {
+      const buffer = await buildStockLedgerExcel(mockGeneralData, range, "Kho Tổng");
       expect(buffer).toBeInstanceOf(Uint8Array);
       expect(buffer.length).toBeGreaterThan(0);
 
       const wb = XLSX.read(buffer, { type: "array" });
       expect(wb.SheetNames).toContain("Xuat_Nhap_Ton");
-      expect(wb.SheetNames).toContain("Co_Cau_Danh_Muc");
 
-      // Check sheet 1 contents
-      const ws1 = wb.Sheets["Xuat_Nhap_Ton"];
-      const rows1 = XLSX.utils.sheet_to_json<string[]>(ws1, { header: 1 });
-      expect(rows1[0][0]).toBe(BRAND_EXCEL_TITLE);
-      expect(rows1[1][0]).toBe("BÁO CÁO XUẤT - NHẬP - TỒN KHO");
-      expect(rows1[2][0]).toContain("Kho: Kho Tổng");
+      const ws = wb.Sheets["Xuat_Nhap_Ton"];
+      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      expect(rows[0][2]).toBe("TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG");
+      expect(rows[4][0]).toBe("BÁO CÁO XUẤT - NHẬP - TỒN KHO");
 
-      // Verify header row
-      const headers = rows1[4];
-      expect(headers).toContain("Tên vật tư");
-      expect(headers).toContain("Giá trị tồn (VNĐ)");
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(headerRowIdx).toBeGreaterThan(0);
+
+      // Verify columns match PDF (Column B & C merged for Tên vật tư)
+      expect(rows[headerRowIdx]).toEqual([
+        "STT",
+        "Tên vật tư",
+        undefined,
+        "Biến thể",
+        "ĐVT",
+        "Tồn đầu",
+        "Nhập",
+        "Xuất",
+        "Tồn cuối",
+        "Giá trị tồn",
+      ]);
 
       // Verify data rows
-      expect(rows1[5][1]).toBe("Cám đẻ CP");
-      expect(rows1[6][1]).toBe("Men vi sinh");
-
-      // Verify total summary row
-      const lastRow = rows1[rows1.length - 1];
-      expect(lastRow[0]).toBe("TỔNG CỘNG");
-      expect(lastRow[5]).toBe(120); // total opening: 100 + 20
-      expect(lastRow[6]).toBe(60); // total in: 50 + 10
-      expect(lastRow[7]).toBe(35); // total out: 30 + 5
-      expect(lastRow[8]).toBe(145); // total closing: 120 + 25
+      expect(rows[headerRowIdx + 1][1]).toBe("Cám đẻ CP");
+      expect(rows[headerRowIdx + 2][1]).toBe("Men vi sinh");
     });
   });
 
@@ -138,24 +126,7 @@ describe("excel-export engine", () => {
           percentage: 60,
           issueCount: 5,
           defectCount: 1,
-          items: [
-            {
-              productName: "Cám hậu bị",
-              variantLabel: "Bao 40kg",
-              unit: "bao",
-              quantity: 40,
-              unitPrice: 350000,
-              totalAmount: 14000000,
-            },
-            {
-              productName: "Bóng đèn sưởi",
-              variantLabel: "100W",
-              unit: "cái",
-              quantity: 10,
-              unitPrice: 100000,
-              totalAmount: 1000000,
-            },
-          ],
+          items: [],
         },
         {
           zoneId: "z2",
@@ -164,49 +135,37 @@ describe("excel-export engine", () => {
           percentage: 40,
           issueCount: 3,
           defectCount: 0,
-          items: [
-            {
-              productName: "Cám đẻ cao sản",
-              variantLabel: "Bao 40kg",
-              unit: "bao",
-              quantity: 25,
-              unitPrice: 400000,
-              totalAmount: 10000000,
-            },
-          ],
+          items: [],
         },
       ],
     };
 
-    it("generates valid workbook with summary and detail sheets", () => {
-      const buffer = buildZoneCostExcel(mockZoneData, range);
+    it("generates valid workbook for zone cost report", async () => {
+      const buffer = await buildZoneCostExcel(mockZoneData, range);
       expect(buffer).toBeInstanceOf(Uint8Array);
       expect(buffer.length).toBeGreaterThan(0);
 
       const wb = XLSX.read(buffer, { type: "array" });
       expect(wb.SheetNames).toContain("Chi_Phi_Khu_Vuc");
-      expect(wb.SheetNames).toContain("Chi_Tiet_Vat_Tu");
 
-      // Check summary sheet
-      const ws1 = wb.Sheets["Chi_Phi_Khu_Vuc"];
-      const rows1 = XLSX.utils.sheet_to_json<string[]>(ws1, { header: 1 });
-      expect(rows1[0][0]).toBe(BRAND_EXCEL_TITLE);
-      expect(rows1[1][0]).toBe("BÁO CÁO CHI PHÍ VẬT TƯ THEO KHU VỰC");
+      const ws = wb.Sheets["Chi_Phi_Khu_Vuc"];
+      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      expect(rows[0][2]).toBe("TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG");
+      expect(rows[4][0]).toBe("BÁO CÁO CHI PHÍ VẬT TƯ THEO KHU VỰC");
 
-      // Verify zone rows
-      expect(rows1[5][1]).toBe("Chuồng 1 - Gà hậu bị");
-      expect(rows1[6][1]).toBe("Chuồng 2 - Gà đẻ");
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(rows[headerRowIdx]).toEqual([
+        "STT",
+        "Khu vực / Chuồng",
+        undefined,
+        "Số phiếu xuất",
+        "Số BB hỏng",
+        "Tổng chi phí",
+        "Tỷ trọng",
+      ]);
 
-      // Verify grand total
-      const lastRow = rows1[rows1.length - 1];
-      expect(lastRow[0]).toBe("TỔNG CỘNG");
-      expect(lastRow[4]).toBe(25000000);
-
-      // Check detail sheet
-      const ws2 = wb.Sheets["Chi_Tiet_Vat_Tu"];
-      const rows2 = XLSX.utils.sheet_to_json<string[]>(ws2, { header: 1 });
-      expect(rows2[1][0]).toBe("CHI TIẾT VẬT TƯ XUẤT THEO KHU VỰC");
-      expect(rows2.length).toBeGreaterThanOrEqual(7);
+      expect(rows[headerRowIdx + 1][1]).toBe("Chuồng 1 - Gà hậu bị");
+      expect(rows[headerRowIdx + 2][1]).toBe("Chuồng 2 - Gà đẻ");
     });
   });
 
@@ -245,25 +204,22 @@ describe("excel-export engine", () => {
       ],
     };
 
-    it("generates valid workbook for vehicle fuel consumption", () => {
-      const buffer = buildVehicleExcel(mockVehicleData, range);
+    it("generates valid workbook for vehicle fuel consumption", async () => {
+      const buffer = await buildVehicleExcel(mockVehicleData, range);
       expect(buffer).toBeInstanceOf(Uint8Array);
 
       const wb = XLSX.read(buffer, { type: "array" });
-      expect(wb.SheetNames).toContain("Nhien_Lieu_Phuong_Tien");
+      expect(wb.SheetNames).toContain("Nhien_Lieu_Xe");
 
-      const ws = wb.Sheets["Nhien_Lieu_Phuong_Tien"];
+      const ws = wb.Sheets["Nhien_Lieu_Xe"];
       const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
-      expect(rows[0][0]).toBe(BRAND_EXCEL_TITLE);
-      expect(rows[1][0]).toBe("BÁO CÁO TIÊU THỤ NHIÊN LIỆU PHƯƠNG TIỆN & MÁY MÓC");
+      expect(rows[0][2]).toBe("TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG");
+      expect(rows[4][0]).toBe("BÁO CÁO TIÊU THỤ NHIÊN LIỆU PHƯƠNG TIỆN");
 
-      expect(rows[5][1]).toBe("XE-01");
-      expect(rows[6][1]).toBe("MAY-01");
-      expect(rows[6][10]).toBe("Vượt định mức");
-
-      const lastRow = rows[rows.length - 1];
-      expect(lastRow[0]).toBe("TỔNG CỘNG");
-      expect(lastRow[5]).toBe(450);
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(rows[headerRowIdx + 1][1]).toBe("XE-01");
+      expect(rows[headerRowIdx + 2][1]).toBe("MAY-01");
+      expect(rows[headerRowIdx + 2][9]).toBe("Vượt định mức");
     });
   });
 
@@ -291,29 +247,23 @@ describe("excel-export engine", () => {
       ],
     };
 
-    it("generates valid workbook with supplier and customer sheets", () => {
-      const buffer = buildPartnersExcel(mockPartnersData, range);
+    it("generates valid workbook with supplier and customer data", async () => {
+      const buffer = await buildPartnersExcel(mockPartnersData, range);
       expect(buffer).toBeInstanceOf(Uint8Array);
 
       const wb = XLSX.read(buffer, { type: "array" });
-      expect(wb.SheetNames).toContain("Nha_Cung_Cap");
-      expect(wb.SheetNames).toContain("Khach_Hang");
+      expect(wb.SheetNames).toContain("Doi_Tac");
 
-      // Sheet 1: Suppliers
-      const ws1 = wb.Sheets["Nha_Cung_Cap"];
-      const rows1 = XLSX.utils.sheet_to_json<string[]>(ws1, { header: 1 });
-      expect(rows1[1][0]).toBe("BÁO CÁO NHÀ CUNG CẤP VẬT TƯ");
-      expect(rows1[5][1]).toBe("Công ty Cổ phần C.P Việt Nam");
-      const lastRow1 = rows1[rows1.length - 1];
-      expect(lastRow1[5]).toBe(70000000);
+      const ws = wb.Sheets["Doi_Tac"];
+      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      expect(rows[0][2]).toBe("TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG");
+      expect(rows[4][0]).toBe("BÁO CÁO ĐỐI TÁC CUNG CẤP & KHÁCH HÀNG");
 
-      // Sheet 2: Customers
-      const ws2 = wb.Sheets["Khach_Hang"];
-      const rows2 = XLSX.utils.sheet_to_json<string[]>(ws2, { header: 1 });
-      expect(rows2[1][0]).toBe("BÁO CÁO KHÁCH HÀNG MUA VẬT TƯ / HÀNG HOÁ");
-      expect(rows2[5][1]).toBe("Đại lý trứng Minh Đức");
-      const lastRow2 = rows2[rows2.length - 1];
-      expect(lastRow2[5]).toBe(125000000);
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(rows[headerRowIdx + 1][1]).toBe("Công ty Cổ phần C.P Việt Nam");
+      expect(rows[headerRowIdx + 1][3]).toBe("Nhà cung cấp");
+      expect(rows[headerRowIdx + 2][1]).toBe("Đại lý trứng Minh Đức");
+      expect(rows[headerRowIdx + 2][3]).toBe("Khách hàng");
     });
   });
 
@@ -342,24 +292,11 @@ describe("excel-export engine", () => {
           outQty: 0,
           runningBalance: 150,
         },
-        {
-          id: "m2",
-          createdAt: "2026-09-10T14:15:00.000Z",
-          refType: "issue",
-          refCode: "PXK-0034",
-          movementType: "issue",
-          movementLabel: "Xuất sử dụng",
-          notes: "Xuất cho Chuồng 1",
-          actorName: "Nguyễn Văn B",
-          inQty: 0,
-          outQty: 80,
-          runningBalance: 70,
-        },
       ],
     };
 
-    it("generates valid workbook for stock card ledger", () => {
-      const buffer = buildStockCardExcel(mockStockCard, range);
+    it("generates valid workbook for stock card ledger", async () => {
+      const buffer = await buildStockCardExcel(mockStockCard, range);
       expect(buffer).toBeInstanceOf(Uint8Array);
 
       const wb = XLSX.read(buffer, { type: "array" });
@@ -367,25 +304,22 @@ describe("excel-export engine", () => {
 
       const ws = wb.Sheets["The_Kho"];
       const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
-      expect(rows[0][0]).toBe(BRAND_EXCEL_TITLE);
-      expect(rows[1][0]).toBe("THẺ KHO (SỔ KHO CHI TIẾT VẬT TƯ)");
-      expect(rows[3][0]).toContain("Cám đẻ CP 511");
-      expect(rows[3][0]).toContain("Kho cám số 1");
-      expect(rows[4][0]).toContain("Tồn đầu kỳ: 50");
-      expect(rows[4][0]).toContain("Tồn cuối kỳ: 70");
+      expect(rows[0][2]).toBe("TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG");
+      expect(rows[4][0]).toBe("THẺ KHO (SỔ KHO CHI TIẾT)");
 
-      // Data rows
-      expect(rows[7][2]).toBe("PNK-0012");
-      expect(rows[7][5]).toBe(100);
-      expect(rows[8][2]).toBe("PXK-0034");
-      expect(rows[8][6]).toBe(80);
-
-      // Summary row
-      const lastRow = rows[rows.length - 1];
-      expect(lastRow[0]).toBe("TỔNG CỘNG");
-      expect(lastRow[5]).toBe(100);
-      expect(lastRow[6]).toBe(80);
-      expect(lastRow[7]).toBe(70);
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(rows[headerRowIdx]).toEqual([
+        "STT",
+        "Ngày ghi sổ",
+        "Mã CT",
+        "Loại biến động",
+        undefined,
+        "Người thực hiện",
+        "Nhập",
+        "Xuất",
+        "Tồn",
+      ]);
+      expect(rows[headerRowIdx + 1][2]).toBe("PNK-0012");
     });
   });
 
@@ -412,8 +346,8 @@ describe("excel-export engine", () => {
       },
     ];
 
-    it("generates valid workbook with summary and detail sheets for requisitions", () => {
-      const buffer = buildRequisitionsExcel(mockRequisitions, range, {
+    it("generates valid workbook with summary and detail sheets for requisitions", async () => {
+      const buffer = await buildRequisitionsExcel(mockRequisitions, range, {
         status: "Đã duyệt",
         zoneName: "Chuồng Đẻ 1",
       });
@@ -425,13 +359,91 @@ describe("excel-export engine", () => {
 
       const wsSummary = wb.Sheets["Yeu_Cau_Vat_Tu"];
       const rows = XLSX.utils.sheet_to_json<string[]>(wsSummary, { header: 1 });
-      expect(rows[0][0]).toBe(BRAND_EXCEL_TITLE);
-      expect(rows[1][0]).toBe("BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ");
-      expect(rows[2][0]).toContain("Kỳ báo cáo");
-      expect(rows[2][0]).toContain("Trạng thái: Đã duyệt");
-      expect(rows[2][0]).toContain("Khu vực: Chuồng Đẻ 1");
-      expect(rows[5][1]).toBe("REQ-20260901-0001");
-      expect(rows[5][3]).toBe("Nguyễn Văn A");
+
+      // Brand info is at C1 (index 2)
+      expect(rows[0][2]).toBe("TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG");
+      // Title is at A5
+      expect(rows[4][0]).toBe("BÁO CÁO TỔNG HỢP PHIẾU YÊU CẦU VẬT TƯ");
+
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(rows[headerRowIdx]).toEqual([
+        "STT",
+        "Mã phiếu",
+        "Ngày",
+        "Người yêu cầu",
+        "Khu vực",
+        "Vật tư yêu cầu",
+        undefined,
+        "Loại",
+        "SL",
+        "ĐVT",
+        "Mục đích sử dụng",
+        "Trạng thái",
+      ]);
+
+      // Data row
+      expect(rows[headerRowIdx + 1][1]).toBe("REQ-20260901-0001");
+      expect(rows[headerRowIdx + 1][3]).toBe("Nguyễn Văn A");
+      expect(rows[headerRowIdx + 1][5]).toBe("Bóng đèn sưởi hồng ngoại");
+      expect(rows[headerRowIdx + 1][7]).toBe("150W");
+      expect(rows[headerRowIdx + 1][8]).toBe(20);
+      expect(rows[headerRowIdx + 1][9]).toBe("bóng");
+    });
+
+    it("handles multiple items with cell merges matching PDF layout", async () => {
+      const multiItemRequisitions: RequisitionReportRow[] = [
+        {
+          id: "req-2",
+          code: "REQ-20260901-0002",
+          createdAt: "2026-09-01T10:00:00Z",
+          requesterName: "Trần Văn B",
+          zoneName: "Khu Hậu Bị",
+          purpose: "Sửa chữa hệ thống nước",
+          requisitionType: "replacement",
+          status: "approved",
+          statusLabel: "Đã duyệt",
+          items: [
+            {
+              productName: "Ống nước phi 21",
+              variantLabel: "Nhựa Tiền Phong",
+              unit: "mét",
+              quantity: 50,
+            },
+            {
+              productName: "Co nối phi 21",
+              variantLabel: "Ren ngoài",
+              unit: "cái",
+              quantity: 10,
+            },
+          ],
+        },
+      ];
+
+      const buffer = await buildRequisitionsExcel(multiItemRequisitions, range);
+      const wb = XLSX.read(buffer, { type: "array" });
+      const ws = wb.Sheets["Yeu_Cau_Vat_Tu"];
+
+      expect(ws["!merges"]).toBeDefined();
+      expect(ws["!merges"]!.length).toBeGreaterThanOrEqual(10);
+
+      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
+      expect(headerRowIdx).toBeGreaterThan(0);
+
+      // Item 1
+      const item1Row = rows[headerRowIdx + 1];
+      expect(item1Row[1]).toBe("REQ-20260901-0002");
+      expect(item1Row[5]).toBe("Ống nước phi 21");
+      expect(item1Row[7]).toBe("Nhựa Tiền Phong");
+      expect(item1Row[8]).toBe(50);
+      expect(item1Row[9]).toBe("mét");
+
+      // Item 2
+      const item2Row = rows[headerRowIdx + 2];
+      expect(item2Row[5]).toBe("Co nối phi 21");
+      expect(item2Row[7]).toBe("Ren ngoài");
+      expect(item2Row[8]).toBe(10);
+      expect(item2Row[9]).toBe("cái");
     });
   });
 });

@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
           to: to || null,
         });
 
-        buffer = buildRequisitionsExcel(data, { from, to }, {
+        buffer = await buildRequisitionsExcel(data, { from, to }, {
           status: status ? REQUISITION_STATUS[status] || status : undefined,
           zoneName,
         });
@@ -91,28 +91,28 @@ export async function GET(req: NextRequest) {
         }
 
         const data = await fetchGeneralReportData({ locationId: location, from: fromStr, to: toStr });
-        buffer = buildStockLedgerExcel(data, range, locationName);
+        buffer = await buildStockLedgerExcel(data, range, locationName);
         filename = `bao-cao-xnt-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
       case "zone_cost": {
         const data = await fetchZoneCostReportData({ from: fromStr, to: toStr });
-        buffer = buildZoneCostExcel(data, range);
+        buffer = await buildZoneCostExcel(data, range);
         filename = `chi-phi-chuong-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
       case "vehicles": {
         const data = await fetchVehicleReportData({ from: fromStr, to: toStr });
-        buffer = buildVehicleExcel(data, range);
+        buffer = await buildVehicleExcel(data, range);
         filename = `nhien-lieu-xe-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 
       case "partners": {
         const data = await fetchPartnersReportData({ from: fromStr, to: toStr });
-        buffer = buildPartnersExcel(data, range);
+        buffer = await buildPartnersExcel(data, range);
         filename = `doi-tac-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
@@ -129,7 +129,7 @@ export async function GET(req: NextRequest) {
           from: fromStr,
           to: toStr,
         });
-        buffer = buildStockCardExcel(data, range);
+        buffer = await buildStockCardExcel(data, range);
         filename = `the-kho-${fromStr}-den-${toStr}.xlsx`;
         break;
       }

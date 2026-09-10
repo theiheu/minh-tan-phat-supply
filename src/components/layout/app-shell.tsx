@@ -47,7 +47,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
             <div className="flex items-center gap-2.5">
               <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden">
                 <Image
-                  src="/brand/logo.jpg"
+                  src="/brand/logo.png"
                   alt="Logo Trại gà Minh Tân Phát"
                   width={40}
                   height={40}

@@ -37,7 +37,7 @@ export function Sidebar({ profile }: { profile: Profile }) {
           title={collapsed ? "Trại gà Minh Tân Phát" : undefined}
         >
           <Image
-            src="/brand/logo.jpg"
+            src="/brand/logo.png"
             alt="Logo Trại gà Minh Tân Phát"
             width={44}
             height={44}
