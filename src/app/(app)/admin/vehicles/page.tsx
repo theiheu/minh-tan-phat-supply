@@ -1,4 +1,5 @@
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { VehicleList, type VehicleListRow } from "@/features/vehicles/components/vehicle-list";
 import { VEHICLE_TYPE_LABELS } from "@/features/vehicles/schema";
 import { requireManager } from "@/lib/auth";
@@ -23,7 +24,7 @@ export default async function AdminVehiclesPage({
 
   let vehiclesQuery = supabase
     .from("vehicles")
-    .select("id, code, name, type, zone_id, default_driver, fuel_type_id, current_odo, odo_unit, fuel_norm, qr_token, notes, is_active, zone:zones!vehicles_zone_id_fkey(name), fuel_type:fuel_types!vehicles_fuel_type_id_fkey(name)", { count: "exact" })
+    .select("id, code, name, type, zone_id, sub_zone_id, default_driver, fuel_type_id, current_odo, odo_unit, fuel_norm, qr_token, notes, is_active, zone:zones!vehicles_zone_id_fkey(name), sub_zone:sub_zones!vehicles_sub_zone_id_fkey(name), fuel_type:fuel_types!vehicles_fuel_type_id_fkey(name)", { count: "exact" })
     .order("code")
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
@@ -31,10 +32,11 @@ export default async function AdminVehiclesPage({
   if (type) vehiclesQuery = vehiclesQuery.eq("type", type as "other" | "truck" | "excavator" | "generator" | "car" | "forklift" | "tractor");
   if (status) vehiclesQuery = vehiclesQuery.eq("is_active", status === "active");
 
-  const [vehiclesResult, fuelTypesResult, zonesResult] = await Promise.all([
+  const [vehiclesResult, fuelTypesResult, zonesResult, subZonesResult] = await Promise.all([
     vehiclesQuery,
     supabase.from("fuel_types").select("id, name").eq("is_active", true).order("name"),
     supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
   ]);
 
   if (vehiclesResult.error) throw new Error(`Không thể tải danh sách phương tiện: ${vehiclesResult.error.message}`);
@@ -47,7 +49,8 @@ export default async function AdminVehiclesPage({
     name: vehicle.name,
     type: vehicle.type,
     zoneId: vehicle.zone_id,
-    zoneName: vehicle.zone?.name ?? null,
+    subZoneId: vehicle.sub_zone_id,
+    zoneName: vehicle.zone ? formatZoneLabel(vehicle.zone.name, vehicle.sub_zone?.name) : null,
     defaultDriver: vehicle.default_driver,
     fuelTypeId: vehicle.fuel_type_id,
     fuelTypeName: vehicle.fuel_type?.name ?? null,
@@ -66,6 +69,7 @@ export default async function AdminVehiclesPage({
         vehicles={rows}
         fuelTypes={fuelTypesResult.data ?? []}
         zones={zonesResult.data ?? []}
+        subZones={subZonesResult.data ?? []}
         page={page}
         totalPages={Math.max(1, Math.ceil((vehiclesResult.count ?? 0) / PAGE_SIZE))}
         filters={{ q, type, status }}

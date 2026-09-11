@@ -12,15 +12,30 @@ URL="http://127.0.0.1:3000/login"
 cd "$PROD_DIR"
 
 echo "==> [1/6] Kéo code main mới..."
-git fetch origin
-git pull --ff-only origin main
+git fetch origin || true
+git pull --ff-only origin main || true
 
 echo "==> [2/6] Cài dependencies..."
-bun install --frozen-lockfile
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm install
+elif command -v bun >/dev/null 2>&1; then
+  bun install
+else
+  npm install
+fi
 
 echo "==> [3/6] Build bản mới (ra .next-new, .next cũ vẫn chạy)..."
 rm -rf .next-new
-if ! NEXT_DIST_DIR=.next-new bun run build; then
+BUILD_CMD="pnpm build"
+if ! command -v pnpm >/dev/null 2>&1; then
+  if command -v bun >/dev/null 2>&1; then
+    BUILD_CMD="bun run build"
+  else
+    BUILD_CMD="npm run build"
+  fi
+fi
+
+if ! NEXT_DIST_DIR=.next-new $BUILD_CMD; then
   rm -rf .next-new
   echo "LỖI: build thất bại — GIỮ NGUYÊN web cũ, không restart." >&2
   exit 1
@@ -33,7 +48,7 @@ mv .next-new .next
 
 restart_or_rollback() {
   echo "==> Restart service $SERVICE..."
-  if sudo systemctl restart "$SERVICE"; then
+  if systemctl restart "$SERVICE" 2>/dev/null || sudo systemctl restart "$SERVICE" 2>/dev/null; then
     echo "==> Health check (tối đa 60s)..."
     for i in $(seq 1 60); do
       if curl -fsS -o /dev/null "$URL" 2>/dev/null; then
@@ -50,7 +65,7 @@ restart_or_rollback() {
   echo "==> Health check thất bại / restart lỗi — ROLLBACK bản cũ..."
   rm -rf .next
   [ -d .next.old ] && mv .next.old .next
-  sudo systemctl restart "$SERVICE"
+  systemctl restart "$SERVICE" 2>/dev/null || sudo systemctl restart "$SERVICE" 2>/dev/null || true
   echo "ROLLBACK XONG — web chạy bản trước. Kiểm tra log: journalctl -u mtp-web -n 50" >&2
   exit 1
 }

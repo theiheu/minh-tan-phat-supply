@@ -83,4 +83,33 @@ describe("ListFilters", () => {
 
     expect(screen.queryByPlaceholderText("Tìm kiếm…")).toBeNull();
   });
+
+  it("opens mobile filter sheet when clicking mobile filter button", () => {
+    render(
+      <ListFilters
+        basePath="/repairs"
+        title="Lọc sửa chữa"
+        filters={[
+          {
+            param: "status",
+            label: "Trạng thái",
+            options: [
+              { value: "pending", label: "Chờ duyệt" },
+              { value: "completed", label: "Hoàn thành" },
+            ],
+          },
+        ]}
+      />
+    );
+
+    // Click mobile filter button (the second "Lọc" button with SlidersHorizontal)
+    const filterButtons = screen.getAllByRole("button", { name: /Lọc/i });
+    // filterButtons[1] is the mobile trigger button
+    fireEvent.click(filterButtons[1]);
+
+    // Sheet title should appear
+    expect(screen.getByText("Lọc sửa chữa")).toBeDefined();
+    // Status select label should be visible
+    expect(screen.getByText("Trạng thái")).toBeDefined();
+  });
 });

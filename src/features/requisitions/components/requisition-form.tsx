@@ -7,17 +7,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { SearchSelect } from "@/components/search-select";
-import type { Zone } from "@/lib/types";
+import { ZoneSubZoneSelect } from "@/components/zone-sub-zone-select";
+import type { SubZone, Zone } from "@/lib/types";
 import { isPrivileged } from "@/lib/types";
 import { useCartStore } from "@/stores/cart-store";
 import { useOfflineQueueStore } from "@/stores/offline-queue-store";
@@ -27,16 +21,20 @@ import { ProductQrScannerDialog } from "@/features/products/components/product-q
 
 export function RequisitionForm({
   zones,
+  subZones = [],
   defaultZoneId = null,
+  defaultSubZoneId = null,
   currentUser = null,
   accounts = [],
   onSuccess,
   onCancel,
 }: {
   zones: Zone[];
+  subZones?: SubZone[];
   defaultZoneId?: string | null;
+  defaultSubZoneId?: string | null;
   currentUser?: { id: string; role: string; name: string | null } | null;
-  accounts?: { id: string; name: string | null; username: string; zone_id: string | null }[];
+  accounts?: { id: string; name: string | null; username: string; zone_id: string | null; sub_zone_id?: string | null }[];
   onSuccess?: (id: string) => void;
   onCancel?: () => void;
 }) {
@@ -50,10 +48,10 @@ export function RequisitionForm({
 
   // Thư mục khớp tên → tài khoản (dùng khi nhập tên thủ công cho người khác).
   const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
-  const requesterDirectory = new Map<string, { id: string; zoneId: string | null }>();
+  const requesterDirectory = new Map<string, { id: string; zoneId: string | null; subZoneId: string | null }>();
   for (const a of accounts) {
     if (!a.name) continue;
-    requesterDirectory.set(norm(a.name), { id: a.id, zoneId: a.zone_id });
+    requesterDirectory.set(norm(a.name), { id: a.id, zoneId: a.zone_id, subZoneId: a.sub_zone_id ?? null });
   }
 
   // MẶC ĐỊNH: phiếu là của tài khoản đang đăng nhập. Chỉ khi "làm cho người khác"
@@ -67,6 +65,7 @@ export function RequisitionForm({
   const [choosingOther, setChoosingOther] = useState(false);
   const [typingOther, setTypingOther] = useState(false);
   const [zoneId, setZoneId] = useState(defaultZoneId ?? "");
+  const [subZoneId, setSubZoneId] = useState(defaultSubZoneId ?? "");
   const [purpose, setPurpose] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -76,11 +75,12 @@ export function RequisitionForm({
     setRequesterName(currentUser?.name || "");
     setChoosingOther(false);
     setTypingOther(false);
-    // Tự điền lại khu mặc định của chính mình (nếu có).
+    // Tự điền lại khu mặc định của chính mình (nếu có), trại/xưởng tuỳ chọn
     if (defaultZoneId) setZoneId(defaultZoneId);
+    setSubZoneId("");
   }
 
-  // Chọn 1 tài khoản người yêu cầu khác → tự điền khu mặc định của họ (nếu có).
+  // Chọn 1 tài khoản người yêu cầu khác → tự điền khu mặc định của họ (nếu có), trại/xưởng tuỳ chọn.
   function onPickAccount(id: string) {
     const acc = accounts.find((a) => a.id === id);
     setRequesterAccountId(id);
@@ -119,6 +119,7 @@ export function RequisitionForm({
     const enqueueOffline = (submit: boolean) => {
       useOfflineQueueStore.getState().enqueue({
         zoneId,
+        subZoneId: subZoneId || undefined,
         purpose: purpose.trim(),
         requesterId,
         submitAfterCreate: submit,
@@ -145,6 +146,7 @@ export function RequisitionForm({
       try {
         const id = await createRequisition({
           zoneId,
+          subZoneId: subZoneId || undefined,
           purpose: purpose.trim(),
           requesterId,
           items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
@@ -253,18 +255,16 @@ export function RequisitionForm({
               </div>
             </div>
           )}
-          <div className="space-y-1.5">
-            <Label className="font-medium">Khu vực</Label>
-            <Select value={zoneId} onValueChange={setZoneId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn khu vực" />
-              </SelectTrigger>
-              <SelectContent>
-                {zones.map((z) => (
-                  <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="sm:col-span-2">
+            <ZoneSubZoneSelect
+              zones={zones}
+              subZones={subZones}
+              zoneId={zoneId}
+              subZoneId={subZoneId}
+              onZoneChange={setZoneId}
+              onSubZoneChange={setSubZoneId}
+              required
+            />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label className="font-medium">Mục đích</Label>

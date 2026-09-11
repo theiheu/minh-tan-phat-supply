@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import {
@@ -49,8 +50,9 @@ export default async function IssuesPage({
 
   const supabase = await createClient();
 
-  const [{ data: zones }, { data: customers }, { data: variants }] = await Promise.all([
+  const [{ data: zones }, { data: subZones }, { data: customers }, { data: variants }] = await Promise.all([
     supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
     supabase.from("customers").select("id, name").is("deleted_at", null).order("name"),
     supabase
       .from("variants")
@@ -69,7 +71,7 @@ export default async function IssuesPage({
   let query = supabase
     .from("issues")
     .select(
-      "id, code, destination_type, status, invoice_images, created_at, customer:customers(name), zone:zones(name), creator:profiles(name)",
+      "id, code, destination_type, status, invoice_images, created_at, customer:customers(name), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -114,6 +116,7 @@ export default async function IssuesPage({
         </p>
         <IssueDialog
           zones={zones ?? []}
+          subZones={subZones ?? []}
           customers={customers ?? []}
           variants={variantOptions}
         />
@@ -157,7 +160,7 @@ export default async function IssuesPage({
               const t = totals.get(r.id);
               const destLabel =
                 r.destination_type === "zone"
-                  ? (r.zone?.name ?? "Khu nội bộ")
+                  ? formatZoneLabel(r.zone?.name, r.sub_zone?.name, "Khu nội bộ")
                   : (r.customer?.name ?? "Khách hàng");
               const invoiceImages = r.invoice_images ?? [];
               return (

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "cn";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,7 +148,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   const { data: req } = await supabase
     .from("requisitions")
     .select(
-      "*, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name)",
+      "*, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name)",
     )
     .eq("id", id)
     .single();
@@ -346,7 +347,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
             </span>
             <span className="inline-flex items-center gap-1.5">
               <MapPin className="size-4" aria-hidden />
-              {req.zone?.name ?? "—"}
+              {formatZoneLabel(req.zone?.name, req.sub_zone?.name)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <User className="size-4" aria-hidden />

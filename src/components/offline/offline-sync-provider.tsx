@@ -33,6 +33,7 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
         try {
           const reqId = await createRequisition({
             zoneId: item.zoneId,
+            subZoneId: item.subZoneId,
             purpose: item.purpose,
             requesterId: item.requesterId,
             items: item.items.map((i) => ({

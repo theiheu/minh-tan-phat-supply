@@ -10,6 +10,7 @@ export const issueSchema = z
   .object({
     destinationType: z.enum(["zone", "customer"]),
     zoneId: z.string().uuid().nullable(),
+    subZoneId: z.string().uuid().optional().nullable(),
     customerId: z.string().uuid().nullable(),
     vehiclePlate: z.string().trim().max(50).optional(),
     driverName: z.string().trim().max(100).optional(),

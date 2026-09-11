@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
@@ -18,7 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { data: d } = await supabase
     .from("fuel_dispenses")
     .select(
-      "code, quantity, current_odo, previous_odo, usage_diff, consumption_rate, driver_name, notes, created_at, vehicle:vehicles(code, name, odo_unit, fuel_norm), zone:zones(name), fuel_type:fuel_types(name, unit), dispenser:profiles!fuel_dispenses_dispenser_id_fkey(name)"
+      "code, quantity, current_odo, previous_odo, usage_diff, consumption_rate, driver_name, notes, created_at, vehicle:vehicles(code, name, odo_unit, fuel_norm), zone:zones(name), sub_zone:sub_zones(name), fuel_type:fuel_types(name, unit), dispenser:profiles!fuel_dispenses_dispenser_id_fkey(name)"
     )
     .eq("id", id)
     .single();
@@ -30,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const leftFields = [
     { label: "Phương tiện nhận", value: d.vehicle ? `${d.vehicle.code} - ${d.vehicle.name}` : "Cấp ngoài / Không chọn xe" },
-    { label: "Khu vực / Công trình", value: d.zone?.name ?? "—" },
+    { label: "Khu vực / Công trình", value: formatZoneLabel(d.zone?.name, d.sub_zone?.name) },
     { label: "Tài xế / Người nhận", value: d.driver_name ?? "—" },
     { label: "Người cấp dầu", value: d.dispenser?.name ?? "—" },
     { label: "Ghi chú", value: d.notes },

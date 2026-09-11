@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const requisitionSchema = z.object({
   zoneId: z.string().uuid(),
+  subZoneId: z.string().uuid().optional().nullable(),
   purpose: z.string().min(1, "Mục đích không được trống"),
   requesterId: z.string().uuid().optional(), // manager tạo dùm người khác
   items: z

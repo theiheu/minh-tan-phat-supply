@@ -12,21 +12,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { Zone } from "@/lib/types";
+import type { SubZone, Zone } from "@/lib/types";
 import { RequisitionForm } from "./requisition-form";
 
 export function RequisitionDialog({
   zones,
+  subZones = [],
   defaultZoneId = null,
+  defaultSubZoneId = null,
   currentUser = null,
   accounts = [],
   triggerLabel = "Tạo phiếu yêu cầu",
   triggerClassName,
 }: {
   zones: Zone[];
+  subZones?: SubZone[];
   defaultZoneId?: string | null;
+  defaultSubZoneId?: string | null;
   currentUser?: { id: string; role: string; name: string | null } | null;
-  accounts?: { id: string; name: string | null; username: string; zone_id: string | null }[];
+  accounts?: { id: string; name: string | null; username: string; zone_id: string | null; sub_zone_id?: string | null }[];
   triggerLabel?: string;
   triggerClassName?: string;
 }) {
@@ -51,7 +55,9 @@ export function RequisitionDialog({
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pr-1">
           <RequisitionForm
             zones={zones}
+            subZones={subZones}
             defaultZoneId={defaultZoneId}
+            defaultSubZoneId={defaultSubZoneId}
             currentUser={currentUser}
             accounts={accounts}
             onSuccess={(id) => {

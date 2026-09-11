@@ -14,19 +14,39 @@ export const usernameSchema = z
 
 export const passwordSchema = z.string().min(8, "Mật khẩu tối thiểu 8 ký tự");
 
+export const emailSchema = z.preprocess(
+  (val) => {
+    if (typeof val === "string") {
+      const trimmed = val.trim().toLowerCase();
+      return trimmed === "" ? null : trimmed;
+    }
+    return val ?? null;
+  },
+  z
+    .string()
+    .email("Email không đúng định dạng (ví dụ: user@company.com)")
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null),
+);
+
 export const createUserSchema = z.object({
   name: z.string().min(1, "Tên không được trống"),
   username: usernameSchema,
+  email: emailSchema,
   role: z.enum(["requester", "manager", "superuser"]),
   zoneId: z.string().uuid().nullable(),
+  subZoneId: z.string().uuid().nullable().optional(),
   password: passwordSchema,
 });
 
 export const updateProfileSchema = z.object({
   userId: z.string().uuid(),
   name: z.string().min(1, "Tên không được trống"),
+  email: emailSchema,
   role: z.enum(["requester", "manager", "superuser"]),
   zoneId: z.string().uuid().nullable(),
+  subZoneId: z.string().uuid().nullable().optional(),
   isActive: z.boolean(),
 });
 

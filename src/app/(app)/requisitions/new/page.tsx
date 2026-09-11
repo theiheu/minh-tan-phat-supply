@@ -9,18 +9,20 @@ export default async function NewRequisitionPage() {
   const supabase = await createClient();
   const profile = await getCurrentProfile();
 
-  const { data: zones } = await supabase.from("zones").select("*").is("deleted_at", null).order("name");
-
-  // Danh sách tài khoản người yêu cầu (kèm tên đăng nhập) — RPC chỉ cho manager.
-  const { data: accounts } =
+  const [{ data: zones }, { data: subZones }, { data: accounts }] = await Promise.all([
+    supabase.from("zones").select("*").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("*").is("deleted_at", null).order("display_order"),
     isPrivileged(profile?.role)
-      ? await supabase.rpc("list_requester_accounts")
-      : { data: null };
+      ? supabase.rpc("list_requester_accounts")
+      : Promise.resolve({ data: null }),
+  ]);
 
   return (
     <RequisitionForm
       zones={zones ?? []}
+      subZones={subZones ?? []}
       defaultZoneId={profile?.zone_id ?? null}
+      defaultSubZoneId={null}
       currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
       accounts={accounts ?? []}
     />

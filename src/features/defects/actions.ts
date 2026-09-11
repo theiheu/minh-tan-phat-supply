@@ -5,6 +5,7 @@ import { requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getManagerIds, notifyUsers } from "@/lib/notifications";
 import { defectSchema, type DefectInput } from "./schema";
 
 export async function recordDefect(input: DefectInput) {
@@ -28,6 +29,16 @@ export async function recordDefect(input: DefectInput) {
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);
+
+  const managerIds = await getManagerIds(supabase);
+  await notifyUsers({
+    userIds: managerIds,
+    type: "defect",
+    title: "Phiếu báo hỏng vật tư mới",
+    body: `${profile.name} vừa báo hỏng ${items.length} mặt hàng vật tư.`,
+    link: "/defects",
+  });
+
   revalidatePath("/defects");
   revalidatePath("/products");
   return data as string;

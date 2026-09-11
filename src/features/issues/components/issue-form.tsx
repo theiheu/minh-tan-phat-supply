@@ -7,6 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ZoneSubZoneSelect } from "@/components/zone-sub-zone-select";
 import { ComboboxInput } from "@/components/combobox-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,12 +43,14 @@ const EMPTY: ItemDraft = { variantId: "", quantity: "1", unitPrice: "" };
 
 export function IssueForm({
   zones,
+  subZones = [],
   customers,
   variants,
   onSuccess,
   onCancel,
 }: {
   zones: { id: string; name: string }[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   customers: { id: string; name: string }[];
   variants: VariantOption[];
   onSuccess?: (id: string) => void;
@@ -56,6 +59,7 @@ export function IssueForm({
   const router = useRouter();
   const [destinationType, setDestinationType] = useState<DestinationType>("zone");
   const [zoneId, setZoneId] = useState("");
+  const [subZoneId, setSubZoneId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");
   const [driverName, setDriverName] = useState("");
@@ -117,6 +121,7 @@ export function IssueForm({
         const id = await createIssue({
           destinationType,
           zoneId: destinationType === "zone" ? zoneId : null,
+          subZoneId: destinationType === "zone" && subZoneId ? subZoneId : null,
           customerId: isSale ? customerId : null,
           vehiclePlate: vehiclePlate.trim() ? vehiclePlate.trim() : undefined,
           driverName: driverName.trim() ? driverName.trim() : undefined,
@@ -155,7 +160,10 @@ export function IssueForm({
                 const next = v as DestinationType;
                 setDestinationType(next);
                 if (next === "zone") setCustomerId("");
-                if (next === "customer") setZoneId("");
+                if (next === "customer") {
+                  setZoneId("");
+                  setSubZoneId("");
+                }
                 // Đổi kiểu đích = bắt đầu ngữ cảnh phiếu mới: không giữ text vận chuyển
                 // của kiểu cũ, để phiếu khu nội bộ không mang theo biển xe/tài xế.
                 setVehiclePlate("");
@@ -176,20 +184,20 @@ export function IssueForm({
           </div>
 
           {destinationType === "zone" ? (
-            <div className="space-y-1.5">
-              <Label className="font-medium">Khu nhận</Label>
-              <Select value={zoneId} onValueChange={setZoneId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khu nhận" />
-                </SelectTrigger>
-                <SelectContent>
-                  {zones.map((z) => (
-                    <SelectItem key={z.id} value={z.id}>
-                      {z.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="sm:col-span-2">
+              <ZoneSubZoneSelect
+                zones={zones}
+                subZones={subZones}
+                zoneId={zoneId}
+                subZoneId={subZoneId}
+                onZoneChange={setZoneId}
+                onSubZoneChange={setSubZoneId}
+                zoneLabel="Khu nhận"
+                subZoneLabel="Trại / Phân xưởng nhận"
+                zonePlaceholder="Chọn khu nhận"
+                subZonePlaceholder="Chọn trại/xưởng nhận"
+                required
+              />
             </div>
           ) : (
             <div className="space-y-1.5">

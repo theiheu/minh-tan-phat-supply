@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { notifyUsers } from "@/lib/notifications";
 import {
   toolBorrowingSchema,
   toolReturnSchema,
@@ -17,13 +18,23 @@ export async function createToolBorrowing(input: ToolBorrowingInput) {
 
   const { data, error } = await supabase.rpc("create_tool_borrowing", {
     p_items: parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
-    p_zone_id: parsed.zoneId || null,
+    p_zone_id: (parsed.zoneId ?? null) as unknown as string,
     p_purpose: parsed.purpose.trim(),
-    p_expected_return_date: parsed.expectedReturnDate || null,
+    p_expected_return_date: (parsed.expectedReturnDate ?? null) as unknown as string,
     p_borrower_id: parsed.borrowerId || profile.id,
+    p_sub_zone_id: (parsed.subZoneId ?? null) as unknown as string,
   });
 
   if (error) throw new Error(error.message);
+
+  const borrowerId = parsed.borrowerId || profile.id;
+  await notifyUsers({
+    userIds: [borrowerId],
+    type: "tool_borrowing",
+    title: "Xác nhận mượn dụng cụ",
+    body: `Mục đích: ${parsed.purpose.trim()}${parsed.expectedReturnDate ? ` (Hạn trả: ${parsed.expectedReturnDate})` : ""}`,
+    link: "/tools",
+  });
 
   revalidatePath("/tools");
   revalidatePath("/products");

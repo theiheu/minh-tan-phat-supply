@@ -4,17 +4,9 @@ import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { getManagerIds, notifyUsers } from "@/lib/notifications";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
-
-async function getManagerIds(supabase: Supabase): Promise<string[]> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("id")
-    .in("role", ["manager", "superuser"])
-    .eq("is_active", true);
-  return (data ?? []).map((p) => p.id);
-}
 
 // Người lập HONG liên kết (để gửi thông báo trạng thái phiếu Đổi Mới).
 async function linkedReporterId(supabase: Supabase, exchangeId: string): Promise<string | null> {
@@ -36,7 +28,7 @@ async function exchangeMeta(supabase: Supabase, exchangeId: string) {
   return data;
 }
 
-// Gửi thông báo (bỏ qua lỗi — không làm hỏng thao tác chính).
+// Gửi thông báo in-app và email (bỏ qua lỗi — không làm hỏng thao tác chính).
 async function safeNotify(
   userIds: (string | null | undefined)[],
   type: string,
@@ -44,23 +36,7 @@ async function safeNotify(
   body?: string | null,
   link?: string,
 ) {
-  try {
-    const supabase = await createClient();
-    const unique = [...new Set(userIds.filter((u): u is string => Boolean(u)))];
-    await Promise.all(
-      unique.map((uid) =>
-        supabase.rpc("create_notification", {
-          p_user_id: uid,
-          p_type: type,
-          p_title: title,
-          p_body: body ?? undefined,
-          p_link: link ?? undefined,
-        }),
-      ),
-    );
-  } catch {
-    // Im lặng — thông báo là phụ.
-  }
+  await notifyUsers({ userIds, type, title, body, link });
 }
 
 export async function createExchange(noteId: string): Promise<{ id: string; code: string }> {

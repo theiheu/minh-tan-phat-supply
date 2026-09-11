@@ -454,6 +454,7 @@ export type Database = {
           previous_odo: number | null
           quantity: number
           status: string
+          sub_zone_id: string | null
           updated_at: string
           usage_diff: number | null
           vehicle_id: string | null
@@ -473,6 +474,7 @@ export type Database = {
           previous_odo?: number | null
           quantity: number
           status?: string
+          sub_zone_id?: string | null
           updated_at?: string
           usage_diff?: number | null
           vehicle_id?: string | null
@@ -492,6 +494,7 @@ export type Database = {
           previous_odo?: number | null
           quantity?: number
           status?: string
+          sub_zone_id?: string | null
           updated_at?: string
           usage_diff?: number | null
           vehicle_id?: string | null
@@ -510,6 +513,13 @@ export type Database = {
             columns: ["fuel_type_id"]
             isOneToOne: false
             referencedRelation: "fuel_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_dispenses_sub_zone_id_fkey"
+            columns: ["sub_zone_id"]
+            isOneToOne: false
+            referencedRelation: "sub_zones"
             referencedColumns: ["id"]
           },
           {
@@ -762,6 +772,7 @@ export type Database = {
           invoice_images: string[]
           notes: string | null
           status: string
+          sub_zone_id: string | null
           updated_at: string
           vehicle_plate: string | null
           zone_id: string | null
@@ -777,6 +788,7 @@ export type Database = {
           invoice_images?: string[]
           notes?: string | null
           status?: string
+          sub_zone_id?: string | null
           updated_at?: string
           vehicle_plate?: string | null
           zone_id?: string | null
@@ -792,6 +804,7 @@ export type Database = {
           invoice_images?: string[]
           notes?: string | null
           status?: string
+          sub_zone_id?: string | null
           updated_at?: string
           vehicle_plate?: string | null
           zone_id?: string | null
@@ -809,6 +822,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_sub_zone_id_fkey"
+            columns: ["sub_zone_id"]
+            isOneToOne: false
+            referencedRelation: "sub_zones"
             referencedColumns: ["id"]
           },
           {
@@ -1033,38 +1053,51 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           is_active: boolean
           is_protected: boolean
           name: string
           role: string
+          sub_zone_id: string | null
           updated_at: string
           username: string
           zone_id: string | null
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id: string
           is_active?: boolean
           is_protected?: boolean
           name: string
           role: string
+          sub_zone_id?: string | null
           updated_at?: string
           username: string
           zone_id?: string | null
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           is_active?: boolean
           is_protected?: boolean
           name?: string
           role?: string
+          sub_zone_id?: string | null
           updated_at?: string
           username?: string
           zone_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_sub_zone_id_fkey"
+            columns: ["sub_zone_id"]
+            isOneToOne: false
+            referencedRelation: "sub_zones"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_zone_id_fkey"
             columns: ["zone_id"]
@@ -1485,6 +1518,7 @@ export type Database = {
           requester_id: string
           requisition_type: Database["public"]["Enums"]["requisition_type"]
           status: Database["public"]["Enums"]["requisition_status"]
+          sub_zone_id: string | null
           updated_at: string
           zone_id: string | null
         }
@@ -1505,6 +1539,7 @@ export type Database = {
           requester_id: string
           requisition_type?: Database["public"]["Enums"]["requisition_type"]
           status?: Database["public"]["Enums"]["requisition_status"]
+          sub_zone_id?: string | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -1525,6 +1560,7 @@ export type Database = {
           requester_id?: string
           requisition_type?: Database["public"]["Enums"]["requisition_type"]
           status?: Database["public"]["Enums"]["requisition_status"]
+          sub_zone_id?: string | null
           updated_at?: string
           zone_id?: string | null
         }
@@ -1562,6 +1598,13 @@ export type Database = {
             columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisitions_sub_zone_id_fkey"
+            columns: ["sub_zone_id"]
+            isOneToOne: false
+            referencedRelation: "sub_zones"
             referencedColumns: ["id"]
           },
           {
@@ -1854,6 +1897,47 @@ export type Database = {
           },
         ]
       }
+      sub_zones: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          display_order: number
+          id: string
+          name: string
+          updated_at: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          updated_at?: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          updated_at?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_zones_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1895,6 +1979,152 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tool_borrowing_items: {
+        Row: {
+          borrowing_id: string
+          id: string
+          notes: string | null
+          quantity: number
+          returned_quantity: number
+          variant_id: string
+        }
+        Insert: {
+          borrowing_id: string
+          id?: string
+          notes?: string | null
+          quantity: number
+          returned_quantity?: number
+          variant_id: string
+        }
+        Update: {
+          borrowing_id?: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          returned_quantity?: number
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_borrowing_items_borrowing_id_fkey"
+            columns: ["borrowing_id"]
+            isOneToOne: false
+            referencedRelation: "tool_borrowings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_borrowings: {
+        Row: {
+          borrowed_at: string
+          borrower_id: string
+          code: string
+          created_at: string
+          expected_return_date: string | null
+          id: string
+          issued_by: string | null
+          notes: string | null
+          purpose: string
+          received_back_by: string | null
+          returned_at: string | null
+          status: Database["public"]["Enums"]["tool_borrowing_status"]
+          sub_zone_id: string | null
+          updated_at: string
+          zone_id: string | null
+        }
+        Insert: {
+          borrowed_at?: string
+          borrower_id: string
+          code: string
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          issued_by?: string | null
+          notes?: string | null
+          purpose: string
+          received_back_by?: string | null
+          returned_at?: string | null
+          status?: Database["public"]["Enums"]["tool_borrowing_status"]
+          sub_zone_id?: string | null
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Update: {
+          borrowed_at?: string
+          borrower_id?: string
+          code?: string
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          issued_by?: string | null
+          notes?: string | null
+          purpose?: string
+          received_back_by?: string | null
+          returned_at?: string | null
+          status?: Database["public"]["Enums"]["tool_borrowing_status"]
+          sub_zone_id?: string | null
+          updated_at?: string
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_borrowings_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_received_back_by_fkey"
+            columns: ["received_back_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_sub_zone_id_fkey"
+            columns: ["sub_zone_id"]
+            isOneToOne: false
+            referencedRelation: "sub_zones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_borrowings_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       variant_components: {
         Row: {
@@ -1963,75 +2193,6 @@ export type Database = {
           },
         ]
       }
-      vehicles: {
-        Row: {
-          code: string
-          created_at: string
-          current_odo: number
-          default_driver: string | null
-          fuel_norm: number | null
-          fuel_type_id: string | null
-          id: string
-          is_active: boolean
-          name: string
-          notes: string | null
-          odo_unit: Database["public"]["Enums"]["fuel_calc_unit"]
-          qr_token: string
-          type: Database["public"]["Enums"]["vehicle_type"]
-          updated_at: string
-          zone_id: string | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          current_odo?: number
-          default_driver?: string | null
-          fuel_norm?: number | null
-          fuel_type_id?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          notes?: string | null
-          odo_unit?: Database["public"]["Enums"]["fuel_calc_unit"]
-          qr_token: string
-          type?: Database["public"]["Enums"]["vehicle_type"]
-          updated_at?: string
-          zone_id?: string | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          current_odo?: number
-          default_driver?: string | null
-          fuel_norm?: number | null
-          fuel_type_id?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          notes?: string | null
-          odo_unit?: Database["public"]["Enums"]["fuel_calc_unit"]
-          qr_token?: string
-          type?: Database["public"]["Enums"]["vehicle_type"]
-          updated_at?: string
-          zone_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vehicles_fuel_type_id_fkey"
-            columns: ["fuel_type_id"]
-            isOneToOne: false
-            referencedRelation: "fuel_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vehicles_zone_id_fkey"
-            columns: ["zone_id"]
-            isOneToOne: false
-            referencedRelation: "zones"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       variants: {
         Row: {
           attributes: Json
@@ -2082,121 +2243,78 @@ export type Database = {
           },
         ]
       }
-      tool_borrowing_items: {
+      vehicles: {
         Row: {
-          borrowing_id: string
-          id: string
-          notes: string | null
-          quantity: number
-          returned_quantity: number
-          variant_id: string
-        }
-        Insert: {
-          borrowing_id: string
-          id?: string
-          notes?: string | null
-          quantity: number
-          returned_quantity?: number
-          variant_id: string
-        }
-        Update: {
-          borrowing_id?: string
-          id?: string
-          notes?: string | null
-          quantity?: number
-          returned_quantity?: number
-          variant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tool_borrowing_items_borrowing_id_fkey"
-            columns: ["borrowing_id"]
-            isOneToOne: false
-            referencedRelation: "tool_borrowings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tool_borrowings: {
-        Row: {
-          borrowed_at: string
-          borrower_id: string
           code: string
           created_at: string
-          expected_return_date: string | null
+          current_odo: number
+          default_driver: string | null
+          fuel_norm: number | null
+          fuel_type_id: string | null
           id: string
-          issued_by: string | null
+          is_active: boolean
+          name: string
           notes: string | null
-          purpose: string
-          received_back_by: string | null
-          returned_at: string | null
-          status: Database["public"]["Enums"]["tool_borrowing_status"]
+          odo_unit: Database["public"]["Enums"]["fuel_calc_unit"]
+          qr_token: string
+          sub_zone_id: string | null
+          type: Database["public"]["Enums"]["vehicle_type"]
           updated_at: string
           zone_id: string | null
         }
         Insert: {
-          borrowed_at?: string
-          borrower_id: string
           code: string
           created_at?: string
-          expected_return_date?: string | null
+          current_odo?: number
+          default_driver?: string | null
+          fuel_norm?: number | null
+          fuel_type_id?: string | null
           id?: string
-          issued_by?: string | null
+          is_active?: boolean
+          name: string
           notes?: string | null
-          purpose: string
-          received_back_by?: string | null
-          returned_at?: string | null
-          status?: Database["public"]["Enums"]["tool_borrowing_status"]
+          odo_unit?: Database["public"]["Enums"]["fuel_calc_unit"]
+          qr_token: string
+          sub_zone_id?: string | null
+          type?: Database["public"]["Enums"]["vehicle_type"]
           updated_at?: string
           zone_id?: string | null
         }
         Update: {
-          borrowed_at?: string
-          borrower_id?: string
           code?: string
           created_at?: string
-          expected_return_date?: string | null
+          current_odo?: number
+          default_driver?: string | null
+          fuel_norm?: number | null
+          fuel_type_id?: string | null
           id?: string
-          issued_by?: string | null
+          is_active?: boolean
+          name?: string
           notes?: string | null
-          purpose?: string
-          received_back_by?: string | null
-          returned_at?: string | null
-          status?: Database["public"]["Enums"]["tool_borrowing_status"]
+          odo_unit?: Database["public"]["Enums"]["fuel_calc_unit"]
+          qr_token?: string
+          sub_zone_id?: string | null
+          type?: Database["public"]["Enums"]["vehicle_type"]
           updated_at?: string
           zone_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "tool_borrowings_borrower_id_fkey"
-            columns: ["borrower_id"]
+            foreignKeyName: "vehicles_fuel_type_id_fkey"
+            columns: ["fuel_type_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "fuel_types"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tool_borrowings_issued_by_fkey"
-            columns: ["issued_by"]
+            foreignKeyName: "vehicles_sub_zone_id_fkey"
+            columns: ["sub_zone_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "sub_zones"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tool_borrowings_received_back_by_fkey"
-            columns: ["received_back_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tool_borrowings_zone_id_fkey"
+            foreignKeyName: "vehicles_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "zones"
@@ -2291,32 +2409,6 @@ export type Database = {
       }
     }
     Functions: {
-      cancel_tool_borrowing: {
-        Args: {
-          p_borrowing_id: string
-          p_by: string
-        }
-        Returns: undefined
-      }
-      create_tool_borrowing: {
-        Args: {
-          p_borrower_id?: string | null
-          p_expected_return_date?: string | null
-          p_items: Json
-          p_purpose: string
-          p_zone_id?: string | null
-        }
-        Returns: string
-      }
-      return_tool_borrowing: {
-        Args: {
-          p_borrowing_id: string
-          p_by: string
-          p_items: Json
-          p_notes?: string | null
-        }
-        Returns: undefined
-      }
       _effective_demand: {
         Args: { p_requisition: string }
         Returns: {
@@ -2364,16 +2456,29 @@ export type Database = {
         }
         Returns: undefined
       }
-      admin_update_profile: {
-        Args: {
-          p_is_active: boolean
-          p_name: string
-          p_role: string
-          p_user_id: string
-          p_zone_id: string
-        }
-        Returns: undefined
-      }
+      admin_update_profile:
+        | {
+            Args: {
+              p_email?: string | null
+              p_is_active: boolean
+              p_name: string
+              p_role: string
+              p_sub_zone_id?: string | null
+              p_user_id: string
+              p_zone_id: string | null
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_is_active: boolean
+              p_name: string
+              p_role: string
+              p_user_id: string
+              p_zone_id: string
+            }
+            Returns: undefined
+          }
       admin_update_username: {
         Args: { p_user_id: string; p_username: string }
         Returns: undefined
@@ -2431,6 +2536,10 @@ export type Database = {
         Args: { p_by: string; p_id: string }
         Returns: undefined
       }
+      cancel_tool_borrowing: {
+        Args: { p_borrowing_id: string; p_by: string }
+        Returns: undefined
+      }
       complete_liquidation: {
         Args: { p_by: string; p_id: string; p_items_outcome: Json }
         Returns: undefined
@@ -2443,20 +2552,36 @@ export type Database = {
         Args: { p_by: string; p_defect_id: string }
         Returns: string
       }
-      create_fuel_dispense: {
-        Args: {
-          p_by: string
-          p_current_odo: number
-          p_driver_name: string
-          p_fuel_type_id: string
-          p_meter_images: string[]
-          p_notes: string
-          p_quantity: number
-          p_vehicle_id: string
-          p_zone_id: string
-        }
-        Returns: string
-      }
+      create_fuel_dispense:
+        | {
+            Args: {
+              p_by: string
+              p_current_odo: number
+              p_driver_name: string
+              p_fuel_type_id: string
+              p_meter_images: string[]
+              p_notes: string
+              p_quantity: number
+              p_vehicle_id: string
+              p_zone_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_by: string
+              p_current_odo: number
+              p_driver_name: string
+              p_fuel_type_id: string
+              p_meter_images: string[]
+              p_notes: string
+              p_quantity: number
+              p_sub_zone_id?: string
+              p_vehicle_id: string
+              p_zone_id: string
+            }
+            Returns: string
+          }
       create_fuel_receipt: {
         Args: {
           p_by: string
@@ -2470,19 +2595,34 @@ export type Database = {
         }
         Returns: string
       }
-      create_issue: {
-        Args: {
-          p_by: string
-          p_customer_id: string
-          p_destination_type: string
-          p_driver_name: string
-          p_items: Json
-          p_notes: string
-          p_vehicle_plate: string
-          p_zone_id: string
-        }
-        Returns: string
-      }
+      create_issue:
+        | {
+            Args: {
+              p_by: string
+              p_customer_id: string
+              p_destination_type: string
+              p_driver_name: string
+              p_items: Json
+              p_notes: string
+              p_vehicle_plate: string
+              p_zone_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_by: string
+              p_customer_id: string
+              p_destination_type: string
+              p_driver_name: string
+              p_items: Json
+              p_notes: string
+              p_sub_zone_id?: string
+              p_vehicle_plate: string
+              p_zone_id: string
+            }
+            Returns: string
+          }
       create_liquidation: {
         Args: { p_by: string; p_items: Json; p_reason: string }
         Returns: string
@@ -2507,56 +2647,56 @@ export type Database = {
         }
         Returns: string
       }
-      update_defect_item_images: {
-        Args: {
-          p_by: string
-          p_images: string[]
-          p_item_id: string
-        }
-        Returns: undefined
-      }
-      update_receipt: {
-        Args: {
-          p_by: string
-          p_id: string
-          p_invoice_images?: string[]
-          p_items: Json
-          p_notes?: string
-          p_supplier_id: string
-        }
-        Returns: undefined
-      }
-      update_receipt_invoice_images: {
-        Args: {
-          p_by: string
-          p_id: string
-          p_invoice_images: string[]
-        }
-        Returns: undefined
-      }
-      update_issue_invoice_images: {
-        Args: {
-          p_by: string
-          p_id: string
-          p_invoice_images: string[]
-        }
-        Returns: undefined
-      }
-      create_requisition: {
-        Args: {
-          p_items: Json
-          p_linked_defect_id: string
-          p_purpose: string
-          p_requester_id: string
-          p_type: Database["public"]["Enums"]["requisition_type"]
-          p_zone_id: string
-        }
-        Returns: string
-      }
+      create_requisition:
+        | {
+            Args: {
+              p_items: Json
+              p_linked_defect_id: string
+              p_purpose: string
+              p_requester_id: string
+              p_type: Database["public"]["Enums"]["requisition_type"]
+              p_zone_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_items: Json
+              p_linked_defect_id: string
+              p_purpose: string
+              p_requester_id: string
+              p_sub_zone_id?: string
+              p_type: Database["public"]["Enums"]["requisition_type"]
+              p_zone_id: string
+            }
+            Returns: string
+          }
       create_stocktake:
         | { Args: { p_by: string; p_location_id: string }; Returns: string }
         | {
             Args: { p_by: string; p_location_id: string; p_name: string }
+            Returns: string
+          }
+      create_tool_borrowing:
+        | {
+            Args: {
+              p_borrower_id: string
+              p_expected_return_date: string
+              p_items: Json
+              p_purpose: string
+              p_zone_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_borrower_id: string
+              p_expected_return_date: string
+              p_items: Json
+              p_purpose: string
+              p_sub_zone_id?: string
+              p_zone_id: string
+            }
             Returns: string
           }
       delete_defect: {
@@ -2599,8 +2739,10 @@ export type Database = {
       list_requester_accounts: {
         Args: never
         Returns: {
+          email: string | null
           id: string
           name: string
+          sub_zone_id: string
           username: string
           zone_id: string
         }[]
@@ -2648,6 +2790,15 @@ export type Database = {
         Args: { p_by: string; p_items: Json; p_requisition_id: string }
         Returns: undefined
       }
+      return_tool_borrowing: {
+        Args: {
+          p_borrowing_id: string
+          p_by: string
+          p_items: Json
+          p_notes: string
+        }
+        Returns: undefined
+      }
       revert_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       revert_liquidation: {
         Args: { p_by: string; p_id: string }
@@ -2693,6 +2844,29 @@ export type Database = {
           p_items: Json
           p_to_loc: string
         }
+        Returns: undefined
+      }
+      update_defect_item_images: {
+        Args: { p_by: string; p_images: string[]; p_item_id: string }
+        Returns: undefined
+      }
+      update_issue_invoice_images: {
+        Args: { p_by: string; p_id: string; p_invoice_images: string[] }
+        Returns: undefined
+      }
+      update_receipt: {
+        Args: {
+          p_by: string
+          p_id: string
+          p_invoice_images?: string[]
+          p_items: Json
+          p_notes?: string
+          p_supplier_id: string
+        }
+        Returns: undefined
+      }
+      update_receipt_invoice_images: {
+        Args: { p_by: string; p_id: string; p_invoice_images: string[] }
         Returns: undefined
       }
     }
@@ -2788,12 +2962,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2817,11 +2991,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2842,11 +3016,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2867,11 +3041,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2884,11 +3058,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

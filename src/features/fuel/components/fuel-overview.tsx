@@ -16,12 +16,14 @@ export function FuelOverview({
   fuelTypes,
   vehicles,
   zones,
+  subZones = [],
   suppliers,
 }: {
   overview: FuelOverviewData;
   fuelTypes: FuelType[];
   vehicles: VehicleSelection[];
   zones: { id: string; name: string }[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   suppliers: { id: string; name: string }[];
 }) {
   const totalLitersInStock = overview.fuelTypes.reduce((acc, ft) => acc + Number(ft.current_stock), 0);
@@ -45,7 +47,7 @@ export function FuelOverview({
               Quét mã cấp dầu
             </Link>
           </Button>
-          <FuelDispenseDialog fuelTypes={fuelTypes} vehicles={vehicles} zones={zones} />
+          <FuelDispenseDialog fuelTypes={fuelTypes} vehicles={vehicles} zones={zones} subZones={subZones} />
           <FuelReceiptDialog fuelTypes={fuelTypes} suppliers={suppliers} />
         </div>
       </div>

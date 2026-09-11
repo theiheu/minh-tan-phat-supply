@@ -272,7 +272,11 @@ export function ProductQrScannerDialog({
 
       {/* Quick Add Bottom Sheet on Mobile/Desktop */}
       <Sheet open={Boolean(scannedVariant)} onOpenChange={(open) => !open && setScannedVariant(null)}>
-        <SheetContent side="bottom" className="p-0 sm:max-w-lg sm:mx-auto rounded-t-2xl">
+        <SheetContent
+          side="bottom"
+          className="p-0 sm:max-w-lg sm:mx-auto rounded-t-2xl"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           {scannedVariant && (
             <QuickAddBottomSheet
               productName={scannedVariant.productName}

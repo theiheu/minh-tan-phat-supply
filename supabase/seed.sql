@@ -20,9 +20,26 @@ on conflict (name) do update set
   display_order = excluded.display_order,
   deleted_at = null;
 
--- Zones
+-- Zones & Sub-Zones
 insert into public.zones (name) values ('Khu 1'),('Khu 2'),('Khu 3'),('Khu 4')
 on conflict (name) do nothing;
+
+insert into public.sub_zones (zone_id, name, display_order)
+select z.id, s.name, s.display_order
+from public.zones z
+cross join (values
+  ('Trại 1', 1),
+  ('Trại 2', 2),
+  ('Trại 3', 3)
+) as s(name, display_order)
+where z.name = 'Khu 1'
+on conflict (zone_id, lower(name)) where deleted_at is null do nothing;
+
+insert into public.sub_zones (zone_id, name, display_order)
+select z.id, 'Xưởng phân', 1
+from public.zones z
+where z.name = 'Khu 4'
+on conflict (zone_id, lower(name)) where deleted_at is null do nothing;
 
 -- Stock locations
 insert into public.stock_locations (code, name, type) values

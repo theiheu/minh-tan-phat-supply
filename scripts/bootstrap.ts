@@ -40,9 +40,13 @@ async function ensureUser(
   else console.log("đã tạo:", username, `(${email})`);
 }
 
-const { data: zones } = await admin.from("zones").select("id").limit(1);
-const zoneId = zones?.[0]?.id ?? null;
+async function main() {
+  const { data: zones } = await admin.from("zones").select("id").limit(1);
+  const zoneId = zones?.[0]?.id ?? null;
 
-await ensureUser("manager", "password123", "Quản lý kho", "manager", null);
-await ensureUser("requester", "password123", "Người yêu cầu", "requester", zoneId);
-console.log("Xong. Đăng nhập: manager / password123 hoặc requester / password123");
+  await ensureUser("manager", "password123", "Quản lý kho", "manager", null);
+  await ensureUser("requester", "password123", "Người yêu cầu", "requester", zoneId);
+  console.log("Xong. Đăng nhập: manager / password123 hoặc requester / password123");
+}
+
+main().catch(console.error);

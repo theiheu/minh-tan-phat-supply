@@ -102,6 +102,7 @@ describe("Tool Server Actions", () => {
         p_purpose: "Hàn máng ăn chuồng 2",
         p_expected_return_date: "2026-09-12",
         p_borrower_id: "user-123",
+        p_sub_zone_id: null,
       });
       expect(mockRevalidatePath).toHaveBeenCalledWith("/tools");
       expect(mockRevalidatePath).toHaveBeenCalledWith("/products");

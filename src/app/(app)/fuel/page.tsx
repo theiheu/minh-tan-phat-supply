@@ -61,10 +61,11 @@ export default async function FuelPage({
   const supabase = await createClient();
 
   // Load basic options
-  const [fuelTypes, vehiclesRaw, zonesRes, suppliersRes] = await Promise.all([
+  const [fuelTypes, vehiclesRaw, zonesRes, subZonesRes, suppliersRes] = await Promise.all([
     getFuelTypes({ activeOnly: true }),
     getVehicles({ activeOnly: true }),
     supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
     supabase.from("suppliers").select("id, name").is("deleted_at", null).order("name"),
   ]);
 
@@ -77,9 +78,11 @@ export default async function FuelPage({
     default_driver: v.default_driver,
     fuel_type_id: v.fuel_type_id,
     zone_id: v.zone_id,
+    sub_zone_id: v.sub_zone_id,
   }));
 
   const zones: OptionItem[] = zonesRes.data ?? [];
+  const subZones = subZonesRes.data ?? [];
   const suppliers: OptionItem[] = suppliersRes.data ?? [];
 
   return (
@@ -140,6 +143,7 @@ export default async function FuelPage({
           fuelTypes={fuelTypes}
           vehicles={vehicles}
           zones={zones}
+          subZones={subZones}
           suppliers={suppliers}
         />
       )}
@@ -156,6 +160,7 @@ export default async function FuelPage({
           fuelTypes={fuelTypes}
           vehicles={vehicles}
           zones={zones}
+          subZones={subZones}
         />
       )}
 
@@ -191,11 +196,13 @@ async function OverviewTabContent({
   fuelTypes,
   vehicles,
   zones,
+  subZones,
   suppliers,
 }: {
   fuelTypes: FuelType[];
   vehicles: VehicleSelection[];
   zones: OptionItem[];
+  subZones: { id: string; zone_id: string; name: string }[];
   suppliers: OptionItem[];
 }) {
   const overview = await getFuelOverview();
@@ -205,6 +212,7 @@ async function OverviewTabContent({
       fuelTypes={fuelTypes}
       vehicles={vehicles}
       zones={zones}
+      subZones={subZones}
       suppliers={suppliers}
     />
   );
@@ -221,6 +229,7 @@ async function DispensesTabContent({
   fuelTypes,
   vehicles,
   zones,
+  subZones,
 }: {
   from: string;
   to: string;
@@ -232,6 +241,7 @@ async function DispensesTabContent({
   fuelTypes: FuelType[];
   vehicles: VehicleSelection[];
   zones: OptionItem[];
+  subZones: { id: string; zone_id: string; name: string }[];
 }) {
   const { data, total } = await getFuelDispenses({
     from,
@@ -252,6 +262,7 @@ async function DispensesTabContent({
       fuelTypes={fuelTypes}
       vehicles={vehicles}
       zones={zones}
+      subZones={subZones}
       filters={{ from, to, q, vehicleId, zoneId, fuelTypeId }}
     />
   );

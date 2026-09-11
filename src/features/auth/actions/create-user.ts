@@ -10,8 +10,10 @@ import { createUserSchema } from "../schema";
 export async function createUser(input: {
   name: string;
   username: string;
+  email?: string | null;
   role: string;
   zoneId: string | null;
+  subZoneId?: string | null;
   password: string;
 }) {
   const caller = await requireManager();
@@ -32,14 +34,16 @@ export async function createUser(input: {
   if (dup) throw new Error("Tên đăng nhập đã tồn tại");
 
   const email = internalEmailForUsername(parsed.username);
-  const { error } = await admin.auth.admin.createUser({
+  const { data: createdUser, error } = await admin.auth.admin.createUser({
     email,
     password: parsed.password,
     email_confirm: true,
     user_metadata: {
       name: parsed.name,
+      email: parsed.email ?? null,
       role: parsed.role,
       zone_id: parsed.zoneId,
+      sub_zone_id: parsed.subZoneId ?? null,
       username: parsed.username,
     },
   });
@@ -54,6 +58,14 @@ export async function createUser(input: {
       .maybeSingle();
     if (exists) throw new Error("Tên đăng nhập đã tồn tại");
     throw new Error(error.message);
+  }
+
+  if (createdUser?.user?.id && parsed.email) {
+    // Đảm bảo profiles.email được cập nhật chuẩn xác
+    await admin
+      .from("profiles")
+      .update({ email: parsed.email })
+      .eq("id", createdUser.user.id);
   }
 
   revalidatePath("/admin/users");

@@ -16,12 +16,14 @@ import { IssueForm } from "./issue-form";
 
 export function IssueDialog({
   zones,
+  subZones = [],
   customers,
   variants,
   triggerLabel = "Tạo phiếu xuất",
   triggerClassName,
 }: {
   zones: { id: string; name: string }[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   customers: { id: string; name: string }[];
   variants: {
     id: string;
@@ -54,6 +56,7 @@ export function IssueDialog({
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pr-1">
           <IssueForm
             zones={zones}
+            subZones={subZones}
             customers={customers}
             variants={variants}
             onSuccess={(id) => {

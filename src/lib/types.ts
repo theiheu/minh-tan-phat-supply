@@ -18,6 +18,7 @@ export type Variant = Database["public"]["Tables"]["variants"]["Row"];
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Customer = Database["public"]["Tables"]["customers"]["Row"];
 export type Zone = Database["public"]["Tables"]["zones"]["Row"];
+export type SubZone = Database["public"]["Tables"]["sub_zones"]["Row"];
 export type Supplier = Database["public"]["Tables"]["suppliers"]["Row"];
 export type StockLocation = Database["public"]["Tables"]["stock_locations"]["Row"];
 export type StockBalance = Database["public"]["Tables"]["stock_balances"]["Row"];

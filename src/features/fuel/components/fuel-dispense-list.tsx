@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDateTime } from "@/lib/format";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { formatConsumptionRate, formatFuelLiters, formatOdo } from "@/lib/fuel";
 import { cancelFuelDispenseAction } from "../actions";
 import type { FuelDispense, FuelType } from "../types";
@@ -28,6 +29,7 @@ export interface FuelDispenseRow extends FuelDispense {
   fuel_type?: { name: string; code: string; unit: string } | null;
   vehicle?: { code: string; name: string; odo_unit: "km" | "hours" } | null;
   zone?: { name: string } | null;
+  sub_zone?: { name: string } | null;
   dispenser?: { name: string } | null;
 }
 
@@ -39,6 +41,7 @@ export function FuelDispenseList({
   fuelTypes,
   vehicles,
   zones,
+  subZones = [],
   filters,
 }: {
   dispenses: FuelDispenseRow[];
@@ -48,6 +51,7 @@ export function FuelDispenseList({
   fuelTypes: FuelType[];
   vehicles: VehicleSelection[];
   zones: { id: string; name: string }[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   filters: { from: string; to: string; q?: string; vehicleId: string; zoneId: string; fuelTypeId: string };
 }) {
   const router = useRouter();
@@ -83,6 +87,7 @@ export function FuelDispenseList({
           fuelTypes={fuelTypes}
           vehicles={vehicles}
           zones={zones}
+          subZones={subZones}
           onSaved={() => router.refresh()}
         />
       </div>
@@ -179,7 +184,7 @@ export function FuelDispenseList({
                           )}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {d.zone?.name ?? "—"}
+                          {formatZoneLabel(d.zone?.name, d.sub_zone?.name)}
                         </TableCell>
                         <TableCell className="text-xs font-medium">
                           {d.fuel_type?.name ?? "—"}

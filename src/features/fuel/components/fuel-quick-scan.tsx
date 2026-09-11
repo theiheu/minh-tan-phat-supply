@@ -24,6 +24,7 @@ export interface VehicleScanResult {
   name: string;
   type: string;
   zone_id: string | null;
+  sub_zone_id?: string | null;
   zone_name: string | null;
   default_driver: string | null;
   fuel_type_id: string;
@@ -182,6 +183,7 @@ export function FuelQuickScan({
         const id = await createFuelDispenseAction({
           vehicleId: vehicle.id,
           zoneId: vehicle.zone_id,
+          subZoneId: vehicle.sub_zone_id ?? null,
           fuelTypeId: vehicle.fuel_type_id,
           quantity: numQty,
           currentOdo: numOdo,

@@ -25,6 +25,7 @@ export async function createIssue(input: IssueInput) {
     p_driver_name: parsed.driverName ?? (null as unknown as string),
     p_notes: parsed.notes ?? (null as unknown as string),
     p_by: profile.id,
+    p_sub_zone_id: parsed.subZoneId ?? (null as unknown as string),
   });
   if (error) throw new Error(error.message);
   revalidatePath("/issues");

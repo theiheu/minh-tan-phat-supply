@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ZoneSubZoneSelect } from "@/components/zone-sub-zone-select";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { calcConsumptionRate, calcUsageDiff, formatConsumptionRate, formatFuelLiters, formatOdo } from "@/lib/fuel";
 import { createFuelDispenseAction } from "../actions";
@@ -38,17 +39,20 @@ export interface VehicleSelection {
   default_driver: string | null;
   fuel_type_id: string | null;
   zone_id: string | null;
+  sub_zone_id?: string | null;
 }
 
 export function FuelDispenseDialog({
   fuelTypes,
   vehicles,
   zones,
+  subZones = [],
   onSaved,
 }: {
   fuelTypes: FuelType[];
   vehicles: VehicleSelection[];
   zones: { id: string; name: string }[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   onSaved?: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -56,6 +60,7 @@ export function FuelDispenseDialog({
 
   const [vehicleId, setVehicleId] = useState("none");
   const [zoneId, setZoneId] = useState("none");
+  const [subZoneId, setSubZoneId] = useState("");
   const [fuelTypeId, setFuelTypeId] = useState(fuelTypes[0]?.id || "");
   const [quantity, setQuantity] = useState("");
   const [currentOdo, setCurrentOdo] = useState("");
@@ -74,6 +79,9 @@ export function FuelDispenseDialog({
       }
       if (selectedVehicle.zone_id) {
         setZoneId(selectedVehicle.zone_id);
+      }
+      if (selectedVehicle.sub_zone_id) {
+        setSubZoneId(selectedVehicle.sub_zone_id);
       }
       if (selectedVehicle.default_driver) {
         setDriverName(selectedVehicle.default_driver);
@@ -130,6 +138,7 @@ export function FuelDispenseDialog({
         await createFuelDispenseAction({
           vehicleId: vehicleId === "none" ? null : vehicleId,
           zoneId: zoneId === "none" ? null : zoneId,
+          subZoneId: zoneId === "none" ? null : (subZoneId || null),
           fuelTypeId,
           quantity: numQty,
           currentOdo: selectedVehicle ? numOdo : null,
@@ -143,6 +152,7 @@ export function FuelDispenseDialog({
         // Reset form
         setVehicleId("none");
         setZoneId("none");
+        setSubZoneId("");
         setQuantity("");
         setCurrentOdo("");
         setDriverName("");
@@ -228,29 +238,32 @@ export function FuelDispenseDialog({
             </div>
 
             <div className="space-y-1.5 min-w-0">
-              <Label htmlFor="zoneId" className="text-xs font-semibold">Khu vực / Công trình</Label>
-              <Select value={zoneId} onValueChange={setZoneId} disabled={pending}>
-                <SelectTrigger id="zoneId" className="w-full">
-                  <SelectValue placeholder="Chọn khu vực" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">-- Không chọn --</SelectItem>
-                  {zones.map((z) => (
-                    <SelectItem key={z.id} value={z.id}>
-                      {z.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5 min-w-0">
               <Label htmlFor="driverName" className="text-xs font-semibold">Tài xế / Người nhận</Label>
               <Input
                 id="driverName"
                 placeholder="VD: Nguyễn Văn A"
                 value={driverName}
                 onChange={(e) => setDriverName(e.target.value)}
+                disabled={pending}
+              />
+            </div>
+
+            <div className="sm:col-span-2 min-w-0">
+              <ZoneSubZoneSelect
+                zones={zones}
+                subZones={subZones}
+                zoneId={zoneId === "none" ? "" : zoneId}
+                subZoneId={subZoneId}
+                onZoneChange={(zid) => {
+                  setZoneId(zid || "none");
+                  setSubZoneId("");
+                }}
+                onSubZoneChange={setSubZoneId}
+                zoneLabel="Khu vực / Công trình"
+                subZoneLabel="Trại / Phân xưởng"
+                zonePlaceholder="-- Không chọn --"
+                subZonePlaceholder="Chọn trại/xưởng (tùy chọn)"
+                required={false}
                 disabled={pending}
               />
             </div>

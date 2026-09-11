@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { materialLabel } from "@/lib/attributes";
 import { requireManager, requireProfile } from "@/lib/auth";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { createClient } from "@/lib/supabase/server";
 import { fetchProductVariantRows } from "./data";
 import {
@@ -67,12 +68,13 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       requester: { name: string | null } | null;
       fulfiller: { name: string | null } | null;
       zone: { name: string | null } | null;
+      sub_zone: { name: string | null } | null;
     } | null;
   };
   const { data: reqData, error: reqErr } = await supabase
     .from("requisition_items")
     .select(
-      "id, variant_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name))",
+      "id, variant_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name))",
     )
     .in("variant_id", variantIds)
     // Lọc cột của quan hệ to-one đã inner join → bỏ phiếu nháp chưa gửi yêu cầu.
@@ -92,13 +94,14 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       updated_at: string;
       creator: { name: string | null } | null;
       zone: { name: string | null } | null;
+      sub_zone: { name: string | null } | null;
       customer: { name: string | null } | null;
     } | null;
   };
   const { data: issueData, error: issueErr } = await supabase
     .from("issue_items")
     .select(
-      "id, variant_id, quantity, issue:issues!issue_items_issue_id_fkey!inner(code, status, updated_at, creator:profiles!issues_creator_id_fkey(name), zone:zones!issues_zone_id_fkey(name), customer:customers!issues_customer_id_fkey(name))",
+      "id, variant_id, quantity, issue:issues!issue_items_issue_id_fkey!inner(code, status, updated_at, creator:profiles!issues_creator_id_fkey(name), zone:zones!issues_zone_id_fkey(name), sub_zone:sub_zones!issues_sub_zone_id_fkey(name), customer:customers!issues_customer_id_fkey(name))",
     )
     .in("variant_id", variantIds)
     // Chỉ phiếu đã thực sự xuất kho mới tính là lịch sử cấp/xuất của vật tư.
@@ -119,7 +122,7 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       occurredAt: req.fulfilled_at,
       requesterName: req.requester?.name ?? null,
       fulfillerName: req.fulfiller?.name ?? null,
-      destinationName: req.zone?.name ?? null,
+      destinationName: formatZoneLabel(req.zone?.name, req.sub_zone?.name),
       variantId: raw.variant_id,
       quantity: raw.quantity,
     });
@@ -136,7 +139,7 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       occurredAt: iss.updated_at,
       requesterName: null,
       fulfillerName: iss.creator?.name ?? null,
-      destinationName: iss.zone?.name ?? iss.customer?.name ?? null,
+      destinationName: iss.customer?.name ?? formatZoneLabel(iss.zone?.name, iss.sub_zone?.name),
       variantId: raw.variant_id,
       quantity: raw.quantity,
     });

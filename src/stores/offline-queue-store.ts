@@ -13,6 +13,7 @@ export interface OfflineRequisition {
   clientTempId: string;
   items: OfflineRequisitionItem[];
   zoneId: string;
+  subZoneId?: string | null;
   purpose: string;
   requesterId?: string;
   submitAfterCreate?: boolean;
@@ -25,6 +26,7 @@ export interface OfflineRequisition {
 export interface EnqueueInput {
   items: OfflineRequisitionItem[];
   zoneId: string;
+  subZoneId?: string | null;
   purpose: string;
   requesterId?: string;
   submitAfterCreate?: boolean;

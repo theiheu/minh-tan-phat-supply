@@ -21,11 +21,12 @@ export default async function AdminUsersPage({
 
   // Thứ tự hiển thị: superuser → manager → requester (mỗi nhóm theo created_at).
   // Hai nhóm đầu rất ít tài khoản nên tải đủ; riêng nhóm requester phân trang bằng SQL.
-  const [{ data: supers }, { data: managers }, { count: requesterTotal }, { data: zones }] = await Promise.all([
+  const [{ data: supers }, { data: managers }, { count: requesterTotal }, { data: zones }, { data: subZones }] = await Promise.all([
     supabase.from("profiles").select("*").eq("role", "superuser").order("created_at", { ascending: true }),
     supabase.from("profiles").select("*").eq("role", "manager").order("created_at", { ascending: true }),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "requester"),
-    supabase.from("zones").select("id, name").order("name"),
+    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
   ]);
 
   const headCount = (supers ?? []).length + (managers ?? []).length;
@@ -54,7 +55,14 @@ export default async function AdminUsersPage({
   return (
     <div className="space-y-4">
       <SubnavTabs group="admin" />
-      <UsersManager profiles={rows} zones={zones ?? []} currentRole={current.role} page={page} totalPages={totalPages} />
+      <UsersManager
+        profiles={rows}
+        zones={zones ?? []}
+        subZones={subZones ?? []}
+        currentRole={current.role}
+        page={page}
+        totalPages={totalPages}
+      />
     </div>
   );
 }

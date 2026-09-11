@@ -12,6 +12,9 @@ cd "$(dirname "$0")/.."
 
 PROJECT_ID="$(sed -n 's/^project_id *= *"\([^"]*\)".*/\1/p' supabase/config.toml | head -1)"
 PROJECT_ID="${PROJECT_ID:-minh-tan-phat-supply}"
+mkdir -p .tmp/home .tmp
+export TMPDIR="${PWD}/.tmp"
+export HOME="${PWD}/.tmp/home"
 PID_FILE=".tmp/dev-server.pid"
 
 # --- Tắt Next.js dev server do dev:up khởi động (nếu có) ---
@@ -31,6 +34,7 @@ fi
 # --- Tìm supabase CLI ---
 resolve_cli() {
   if [ -n "${SUPABASE_CLI:-}" ] && [ -x "$SUPABASE_CLI" ]; then printf '%s\n' "$SUPABASE_CLI"; return 0; fi
+  if [ -x "./node_modules/.bin/supabase" ]; then printf '%s\n' "./node_modules/.bin/supabase"; return 0; fi
   if command -v supabase >/dev/null 2>&1; then command -v supabase; return 0; fi
   local c
   for c in "$HOME"/.bun/install/cache/@supabase/cli-linux-x64@*/bin/supabase; do

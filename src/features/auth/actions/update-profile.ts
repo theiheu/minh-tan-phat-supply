@@ -22,8 +22,10 @@ async function assertCanMutate(userId: string) {
 export async function updateProfile(input: {
   userId: string;
   name: string;
+  email?: string | null;
   role: string;
   zoneId: string | null;
+  subZoneId?: string | null;
   isActive: boolean;
 }) {
   await assertCanMutate(input.userId);
@@ -35,8 +37,10 @@ export async function updateProfile(input: {
     p_name: parsed.name,
     p_role: parsed.role,
     // Postgres uuid arg nhận null; generated type chỉ báo `string`.
-    p_zone_id: parsed.zoneId as string,
+    p_zone_id: (parsed.zoneId ?? null) as unknown as string,
     p_is_active: parsed.isActive,
+    p_sub_zone_id: (parsed.subZoneId ?? null) as unknown as string,
+    p_email: parsed.email ?? null,
   });
 
   if (error) throw new Error(error.message);

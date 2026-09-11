@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
@@ -18,7 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: doc } = await supabase
     .from("issues")
-    .select("*, customer:customers!issues_customer_id_fkey(name, phone, address), zone:zones!issues_zone_id_fkey(name), creator:profiles!issues_creator_id_fkey(name)")
+    .select("*, customer:customers!issues_customer_id_fkey(name, phone, address), zone:zones!issues_zone_id_fkey(name), sub_zone:sub_zones!issues_sub_zone_id_fkey(name), creator:profiles!issues_creator_id_fkey(name)")
     .eq("id", id)
     .single();
   if (!doc) return new NextResponse("Không tìm thấy phiếu", { status: 404 });
@@ -40,7 +41,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           { label: "Số điện thoại", value: doc.customer?.phone },
         ]
       : [
-          { label: "Nhận tại khu", value: doc.zone?.name },
+          { label: "Nhận tại khu", value: formatZoneLabel(doc.zone?.name, doc.sub_zone?.name) },
           { label: "Người lập phiếu", value: doc.creator?.name },
         ];
   // Ghi chú phiếu (issues.notes) — chỉ in khi có nội dung; cột GHI CHÚ trong bảng

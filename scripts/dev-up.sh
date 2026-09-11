@@ -20,6 +20,7 @@ cd "$(dirname "$0")/.."
 # --- Tìm binary supabase CLI ---
 resolve_cli() {
   if [ -n "${SUPABASE_CLI:-}" ] && [ -x "$SUPABASE_CLI" ]; then printf '%s\n' "$SUPABASE_CLI"; return 0; fi
+  if [ -x "./node_modules/.bin/supabase" ]; then printf '%s\n' "./node_modules/.bin/supabase"; return 0; fi
   if command -v supabase >/dev/null 2>&1; then command -v supabase; return 0; fi
   local c
   for c in /home/thehi/.bun/install/cache/@supabase/cli-linux-x64@*/bin/supabase "$HOME"/.bun/install/cache/@supabase/cli-linux-x64@*/bin/supabase; do
@@ -99,7 +100,13 @@ else
     exit 1
   fi
   rm -f "$PID_FILE"
-  nohup bun run dev >"$LOG_FILE" 2>&1 &
+  RUNNER="npm run dev"
+  if command -v bun >/dev/null 2>&1; then
+    RUNNER="bun run dev"
+  elif command -v pnpm >/dev/null 2>&1; then
+    RUNNER="pnpm dev"
+  fi
+  nohup $RUNNER >"$LOG_FILE" 2>&1 &
   echo $! >"$PID_FILE"
   for _ in $(seq 1 60); do
     app_up && { echo "==> Next.js OK: ${APP_URL}"; break; }

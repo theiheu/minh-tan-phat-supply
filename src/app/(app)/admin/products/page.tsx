@@ -1,5 +1,3 @@
-import { ListFilters } from "@/components/list-filters";
-import { Pagination } from "@/components/pagination";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ProductsManager } from "@/features/products/components/products-manager";
 import { fetchProductVariantRows } from "@/features/products/data";
@@ -68,34 +66,15 @@ export default async function AdminProductsPage({
     };
   });
 
-  const categoryOptions = (categories ?? []).map((c) => ({ value: c.id, label: c.name }));
-
   return (
     <div className="space-y-4">
       <SubnavTabs group="admin" />
-
-      <ListFilters
-        basePath="/admin/products"
-        searchPlaceholder="Tìm vật tư…"
-        title="Lọc vật tư"
-        filters={[{ param: "category", label: "Danh mục", options: categoryOptions }]}
-        initial={{ q, category: category ?? "" }}
-      />
-
       <ProductsManager
         products={rows}
         categories={categories ?? []}
-        q={q}
-        category={category ?? ""}
-        sort={sort}
-        order={order}
-      />
-
-      <Pagination
-        basePath="/admin/products"
         page={page}
         totalPages={totalPages}
-        params={{ q, category, sort, order }}
+        filters={{ q, category: category ?? "", sort, order }}
       />
     </div>
   );

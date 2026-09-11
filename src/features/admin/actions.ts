@@ -14,6 +14,11 @@ const zoneSchema = z.object({
   name: z.string().min(1, "Tên không được trống"),
   description: z.string().optional().default(""),
 });
+const zoneWithSubZonesSchema = z.object({
+  name: z.string().trim().min(1, "Tên không được trống"),
+  description: z.string().optional().default(""),
+  subZones: z.array(z.string().trim().min(1)).optional().default([]),
+});
 const supplierSchema = z.object({
   name: z.string().min(1, "Tên không được trống"),
   contact_name: z.string().optional().default(""),
@@ -83,6 +88,86 @@ export async function saveZone(id: string | null, data: Record<string, string>) 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/zones");
 }
+
+export async function saveZoneWithSubZones(
+  id: string | null,
+  data: { name: string; description?: string; subZones?: string[] }
+) {
+  await requireManager();
+  const parsed = zoneWithSubZonesSchema.parse(data);
+  const supabase = await createClient();
+
+  let zoneId = id;
+  if (zoneId) {
+    const { error } = await supabase
+      .from("zones")
+      .update({ name: parsed.name, description: parsed.description || null })
+      .eq("id", zoneId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { data: newZone, error } = await supabase
+      .from("zones")
+      .insert({ name: parsed.name, description: parsed.description || null })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    zoneId = newZone.id;
+  }
+
+  // Quản lý sub_zones:
+  const { data: existingSubZones, error: fetchErr } = await supabase
+    .from("sub_zones")
+    .select("id, name, deleted_at")
+    .eq("zone_id", zoneId);
+
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  const incomingNames = (parsed.subZones ?? []).map((s) => s.trim()).filter(Boolean);
+  const uniqueIncomingNames: string[] = [];
+  const seen = new Set<string>();
+  for (const name of incomingNames) {
+    const lower = name.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      uniqueIncomingNames.push(name);
+    }
+  }
+
+  const existingMap = new Map<string, { id: string; name: string; deleted_at: string | null }>();
+  for (const sz of existingSubZones ?? []) {
+    existingMap.set(sz.name.toLowerCase(), sz);
+  }
+
+  // A. Soft-delete các sub_zones không còn trong danh sách mới
+  const activeExisting = (existingSubZones ?? []).filter((sz) => sz.deleted_at === null);
+  for (const active of activeExisting) {
+    if (!seen.has(active.name.toLowerCase())) {
+      await supabase
+        .from("sub_zones")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", active.id);
+    }
+  }
+
+  // B. Thêm mới hoặc khôi phục (restore) các sub_zones trong danh sách
+  for (let idx = 0; idx < uniqueIncomingNames.length; idx++) {
+    const name = uniqueIncomingNames[idx];
+    const match = existingMap.get(name.toLowerCase());
+    if (match) {
+      await supabase
+        .from("sub_zones")
+        .update({ name, deleted_at: null, display_order: idx })
+        .eq("id", match.id);
+    } else {
+      await supabase
+        .from("sub_zones")
+        .insert({ zone_id: zoneId, name, display_order: idx });
+    }
+  }
+
+  revalidatePath("/admin/zones");
+}
+
 export async function deleteZone(id: string) {
   await softDelete("zones", id, "/admin/zones");
 }

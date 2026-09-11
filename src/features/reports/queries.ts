@@ -1,4 +1,5 @@
 import { REQUISITION_STATUS, variantLabel } from "@/lib/labels";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { dayRange } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -833,6 +834,7 @@ export async function fetchRequisitionsReportData(params: {
       created_at,
       requester:profiles!requisitions_requester_id_fkey(name),
       zone:zones!requisitions_zone_id_fkey(name),
+      sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name),
       items:requisition_items(
         quantity,
         variants(
@@ -873,6 +875,7 @@ export async function fetchRequisitionsReportData(params: {
     created_at: string;
     requester?: { name?: string } | null;
     zone?: { name?: string } | null;
+    sub_zone?: { name?: string } | null;
     items?: Array<{
       quantity: number;
       variants?: {
@@ -898,7 +901,7 @@ export async function fetchRequisitionsReportData(params: {
       code: r.code,
       createdAt: r.created_at,
       requesterName: (r.requester as { name?: string } | null)?.name || "—",
-      zoneName: (r.zone as { name?: string } | null)?.name || "—",
+      zoneName: formatZoneLabel((r.zone as { name?: string } | null)?.name, (r.sub_zone as { name?: string } | null)?.name),
       purpose: r.purpose,
       requisitionType: r.requisition_type,
       status: r.status,

@@ -339,7 +339,11 @@ export function ListFilters({
 
       {/* Mobile: bottom sheet chứa bộ lọc */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+        <SheetContent
+          side="bottom"
+          className="max-h-[85vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           <SheetHeader className="border-b">
             <SheetTitle>{title}</SheetTitle>
           </SheetHeader>

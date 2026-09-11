@@ -1,20 +1,17 @@
 [Unit]
 Description=MTP production web (next start, port 3000)
-After=network-online.target
-Wants=network-online.target
+After=network-online.target docker.service
+Wants=network-online.target docker.service
 
 [Service]
 Type=simple
-User=thehi
-WorkingDirectory=/home/thehi/apps/mtp-prod
+User=root
+WorkingDirectory=/root/apps/mtp-prod
 Environment=NODE_ENV=production
 Environment=NEXT_TELEMETRY_DISABLED=1
-# Systemd PATH tối thiểu → mặc định dùng /usr/bin/node (v12) không chạy được next 15.
-# Ưu tiên node v22 (nvm) để `bun run start` spawn đúng runtime.
-# CẢNH BÁO: nếu upgrade nvm node lên bản mới phải cập nhật đường dẫn trong file này
-# (cả bản trong repo lẫn /etc/systemd/system) rồi `sudo systemctl daemon-reload && sudo systemctl restart mtp-web`.
-Environment=PATH=/home/thehi/.nvm/versions/node/v22.19.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/home/thehi/.bun/bin/bun run start
+Environment=PORT=3000
+Environment=PATH=/root/.nvm/versions/node/v24.21.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/root/.nvm/versions/node/v24.21.0/bin/pnpm start
 Restart=always
 RestartSec=5
 

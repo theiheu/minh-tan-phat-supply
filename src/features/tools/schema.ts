@@ -8,6 +8,7 @@ export const toolBorrowingItemSchema = z.object({
 export const toolBorrowingSchema = z.object({
   items: z.array(toolBorrowingItemSchema).min(1, "Phải chọn ít nhất 1 dụng cụ"),
   zoneId: z.string().uuid().optional().nullable(),
+  subZoneId: z.string().uuid().optional().nullable(),
   purpose: z.string().min(1, "Vui lòng nhập mục đích mượn dụng cụ"),
   expectedReturnDate: z.string().optional().nullable(),
   borrowerId: z.string().uuid().optional(),

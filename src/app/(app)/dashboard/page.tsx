@@ -5,6 +5,7 @@ import {
 } from "@/components/dashboard/dashboard-stats-section";
 import { RecentRequisitionsCard } from "@/components/dashboard/recent-requisitions-card";
 import type { ModalDocumentItem } from "@/components/dashboard/stat-detail-dialog";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { getCurrentProfile } from "@/lib/auth";
 import {
   auditActionLabel,
@@ -134,7 +135,7 @@ async function loadDashboard() {
     supabase
       .from("requisitions")
       .select(
-        "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
+        "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
       )
       .in("status", ["draft", "pending", "approved", "issued"])
       .order("created_at", { ascending: false }),
@@ -212,7 +213,7 @@ async function loadDashboard() {
         href: `/requisitions/${r.id}`,
         createdAt: r.created_at,
         actorName: r.requester?.name,
-        zoneName: r.zone?.name,
+        zoneName: formatZoneLabel(r.zone?.name, r.sub_zone?.name),
         purpose: r.purpose,
       }),
     ),
@@ -299,7 +300,7 @@ async function loadDashboard() {
         href: `/requisitions/${r.id}`,
         createdAt: r.created_at,
         actorName: r.requester?.name,
-        zoneName: r.zone?.name,
+        zoneName: formatZoneLabel(r.zone?.name, r.sub_zone?.name),
         purpose: r.purpose,
       }),
     ),

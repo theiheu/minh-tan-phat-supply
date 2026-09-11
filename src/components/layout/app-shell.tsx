@@ -43,7 +43,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
       />
       <Sheet open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <SheetContent side="left" className="flex h-full w-72 flex-col gap-0 p-0">
-          <SheetHeader className="flex h-14 shrink-0 items-center justify-between border-b px-4">
+          <SheetHeader className="flex h-14 shrink-0 flex-row items-center justify-start border-b px-4 py-0 pr-12 space-y-0 text-left">
             <div className="flex items-center gap-2.5">
               <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden">
                 <Image

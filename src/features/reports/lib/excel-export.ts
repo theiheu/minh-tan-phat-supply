@@ -134,7 +134,7 @@ export async function generateStyledExcelReport(options: GenerateExcelReportOpti
       extension: ext,
     });
     ws.addImage(imageId, {
-      tl: { nativeCol: 0, nativeColOff: 190500, nativeRow: 0, nativeRowOff: 127000 } as any,
+      tl: { col: 0.1, row: 0.1 },
       ext: { width: 72, height: 72 },
     });
   }

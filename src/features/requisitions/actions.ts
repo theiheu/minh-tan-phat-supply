@@ -3,20 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getManagerIds, notifyUsers } from "@/lib/notifications";
 import { requisitionSchema, type RequisitionInput } from "./schema";
 
-type Supabase = Awaited<ReturnType<typeof createClient>>;
-
-async function getManagerIds(supabase: Supabase): Promise<string[]> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("id")
-    .in("role", ["manager", "superuser"])
-    .eq("is_active", true);
-  return (data ?? []).map((p) => p.id);
-}
-
-// Gửi thông báo (bỏ qua lỗi — không làm hỏng thao tác chính).
+// Gửi thông báo in-app và email (bỏ qua lỗi — không làm hỏng thao tác chính).
 async function safeNotify(
   userIds: (string | null | undefined)[],
   type: string,
@@ -24,23 +14,7 @@ async function safeNotify(
   body?: string | null,
   link?: string,
 ) {
-  try {
-    const supabase = await createClient();
-    const unique = [...new Set(userIds.filter((u): u is string => Boolean(u)))];
-    await Promise.all(
-      unique.map((uid) =>
-        supabase.rpc("create_notification", {
-          p_user_id: uid,
-          p_type: type,
-          p_title: title,
-          p_body: body ?? undefined,
-          p_link: link ?? undefined,
-        }),
-      ),
-    );
-  } catch {
-    // Im lặng — thông báo là phụ.
-  }
+  await notifyUsers({ userIds, type, title, body, link });
 }
 
 async function requisitionMeta(id: string) {
@@ -87,6 +61,7 @@ export async function createRequisition(input: RequisitionInput) {
     p_type: "new_supply",
     p_linked_defect_id: null as unknown as string,
     p_requester_id: requesterId,
+    p_sub_zone_id: parsed.subZoneId ?? null,
   });
 
   if (error) {

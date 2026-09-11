@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
@@ -19,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { data: req } = await supabase
     .from("requisitions")
     .select(
-      "*, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
+      "*, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
     )
     .eq("id", id)
     .single();
@@ -43,7 +44,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       createdAt={req.created_at}
       fields={[
         { label: "Người yêu cầu", value: req.requester?.name },
-        { label: "Khu vực", value: req.zone?.name },
+        { label: "Khu vực", value: formatZoneLabel(req.zone?.name, req.sub_zone?.name) },
         { label: "Loại", value: REQUISITION_TYPE[req.requisition_type] ?? req.requisition_type },
         { label: "Trạng thái", value: REQUISITION_STATUS[req.status] ?? req.status },
         { label: "Mục đích", value: req.purpose },

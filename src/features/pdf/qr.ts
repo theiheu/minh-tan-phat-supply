@@ -30,7 +30,7 @@ export function getSlipUrl(req: Request, path: string): string {
     try {
       origin = new URL(req.url).origin;
     } catch {
-      origin = "http://localhost:3000";
+      origin = "https://minhtanphat.io.vn";
     }
   }
   const cleanOrigin = origin.replace(/\/+$/, "");

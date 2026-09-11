@@ -112,7 +112,7 @@ export async function getFuelDispenses(opts?: {
   let query = supabase
     .from("fuel_dispenses")
     .select(
-      "*, fuel_type:fuel_types(name,code,unit), vehicle:vehicles(code,name,odo_unit), zone:zones(name), dispenser:profiles!fuel_dispenses_dispenser_id_fkey(name)",
+      "*, fuel_type:fuel_types(name,code,unit), vehicle:vehicles(code,name,odo_unit), zone:zones(name), sub_zone:sub_zones(name), dispenser:profiles!fuel_dispenses_dispenser_id_fkey(name)",
       { count: "exact" }
     )
     .neq("status", "cancelled")
@@ -150,6 +150,7 @@ export async function createFuelDispenseAction(input: FuelDispenseInput) {
     p_meter_images: parsed.meterImages ?? [],
     p_notes: (parsed.notes ?? null) as unknown as string,
     p_by: profile.id,
+    p_sub_zone_id: (parsed.subZoneId ?? null) as unknown as string,
   });
 
   if (error) throw new Error(error.message);

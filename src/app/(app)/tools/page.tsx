@@ -3,6 +3,7 @@ import { AlertTriangle, Clock, History, User, Wrench } from "lucide-react";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { ToolBorrowDialog, type ToolBorrowVariantOption } from "@/features/tools/components/tool-borrow-dialog";
 import { ToolCard } from "@/features/tools/components/tool-card";
 import { requireProfile } from "@/lib/auth";
@@ -46,11 +47,12 @@ export default async function ToolsPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
   const todayStr = new Date().toISOString().split("T")[0];
 
-  // 1. Fetch form options (variants, stock, zones, profiles for manager)
+  // 1. Fetch form options (variants, stock, zones, sub_zones, profiles for manager)
   const [
     { data: variantsData },
     { data: stockData },
     { data: zonesData },
+    { data: subZonesData },
     { data: profilesData },
   ] = await Promise.all([
     supabase
@@ -59,6 +61,7 @@ export default async function ToolsPage({
       .order("id"),
     supabase.from("variant_stock").select("variant_id, quantity"),
     supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
     isManager
       ? supabase.from("profiles").select("id, name").eq("is_active", true).order("name")
       : Promise.resolve({ data: null }),
@@ -80,6 +83,12 @@ export default async function ToolsPage({
   const zones = (zonesData ?? []).map((z) => ({
     id: z.id,
     name: z.name,
+  }));
+
+  const subZones = (subZonesData ?? []).map((s) => ({
+    id: s.id,
+    zone_id: s.zone_id,
+    name: s.name,
   }));
 
   const borrowers = (profilesData ?? []).map((p) => ({
@@ -142,6 +151,7 @@ export default async function ToolsPage({
       updated_at,
       borrower:profiles!tool_borrowings_borrower_id_fkey(name),
       zone:zones!tool_borrowings_zone_id_fkey(name),
+      sub_zone:sub_zones!tool_borrowings_sub_zone_id_fkey(name),
       issued_by_profile:profiles!tool_borrowings_issued_by_fkey(name),
       tool_borrowing_items(
         id,
@@ -227,9 +237,11 @@ export default async function ToolsPage({
         <ToolBorrowDialog
           variants={toolVariants}
           zones={zones}
+          subZones={subZones}
           borrowers={borrowers}
           isManager={isManager}
           defaultZoneId={profile?.zone_id ?? undefined}
+          defaultSubZoneId={undefined}
         />
       </div>
 
@@ -325,9 +337,11 @@ export default async function ToolsPage({
             <ToolBorrowDialog
               variants={toolVariants}
               zones={zones}
+              subZones={subZones}
               borrowers={borrowers}
               isManager={isManager}
               defaultZoneId={profile?.zone_id ?? undefined}
+              defaultSubZoneId={undefined}
             />
           </div>
         </div>
@@ -335,7 +349,10 @@ export default async function ToolsPage({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {borrowings.flatMap((b) => {
             const borrowerName = (b.borrower as { name?: string } | null)?.name ?? null;
-            const zoneName = (b.zone as { name?: string } | null)?.name ?? null;
+            const zoneName = formatZoneLabel(
+              (b.zone as { name?: string } | null)?.name,
+              (b.sub_zone as { name?: string } | null)?.name
+            );
             const issuedByName = (b.issued_by_profile as { name?: string } | null)?.name ?? null;
             const items = b.tool_borrowing_items ?? [];
 

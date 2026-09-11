@@ -24,6 +24,7 @@ export function VehicleList({
   vehicles,
   fuelTypes,
   zones,
+  subZones = [],
   page,
   totalPages,
   filters,
@@ -31,6 +32,7 @@ export function VehicleList({
   vehicles: VehicleListRow[];
   fuelTypes: VehicleOption[];
   zones: VehicleOption[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   page: number;
   totalPages: number;
   filters: { q: string; type: string; status: string };
@@ -125,7 +127,7 @@ export function VehicleList({
       </Card>
 
       <Pagination basePath="/admin/vehicles" page={page} totalPages={totalPages} params={filters} />
-      <VehicleDialog open={dialogOpen} onOpenChange={setDialogOpen} vehicle={editing} fuelTypes={fuelTypes} zones={zones} onSaved={() => router.refresh()} />
+      <VehicleDialog open={dialogOpen} onOpenChange={setDialogOpen} vehicle={editing} fuelTypes={fuelTypes} zones={zones} subZones={subZones} onSaved={() => router.refresh()} />
       <VehicleQrModal vehicle={qrVehicle} open={Boolean(qrVehicle)} onOpenChange={(open) => !open && setQrVehicle(null)} />
     </div>
   );

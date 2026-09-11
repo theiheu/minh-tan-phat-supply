@@ -10,7 +10,7 @@ export async function getVehicles(opts?: { activeOnly?: boolean }) {
   const supabase = await createClient();
   let query = supabase
     .from("vehicles")
-    .select("*, zone:zones(name), fuel_type:fuel_types(name,code)")
+    .select("*, zone:zones(name), sub_zone:sub_zones(name), fuel_type:fuel_types(name,code)")
     .order("code");
   if (opts?.activeOnly) query = query.eq("is_active", true);
   const { data, error } = await query;
@@ -22,7 +22,7 @@ export async function getVehicleById(id: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("vehicles")
-    .select("*, zone:zones(name), fuel_type:fuel_types(name,code)")
+    .select("*, zone:zones(name), sub_zone:sub_zones(name), fuel_type:fuel_types(name,code)")
     .eq("id", id)
     .single();
   if (error) throw new Error(error.message);
@@ -43,6 +43,7 @@ export async function createVehicleAction(input: VehicleInput) {
       name: parsed.name,
       type: parsed.type,
       zone_id: parsed.zoneId ?? null,
+      sub_zone_id: parsed.subZoneId ?? null,
       default_driver: parsed.defaultDriver ?? null,
       fuel_type_id: parsed.fuelTypeId ?? null,
       current_odo: parsed.currentOdo,
@@ -56,6 +57,8 @@ export async function createVehicleAction(input: VehicleInput) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/vehicles");
+  revalidatePath("/vehicles");
+  revalidatePath("/fuel");
   return data.id;
 }
 
@@ -71,6 +74,7 @@ export async function updateVehicleAction(id: string, input: VehicleInput) {
       name: parsed.name,
       type: parsed.type,
       zone_id: parsed.zoneId ?? null,
+      sub_zone_id: parsed.subZoneId ?? null,
       default_driver: parsed.defaultDriver ?? null,
       fuel_type_id: parsed.fuelTypeId ?? null,
       current_odo: parsed.currentOdo,
@@ -82,6 +86,8 @@ export async function updateVehicleAction(id: string, input: VehicleInput) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/vehicles");
+  revalidatePath("/vehicles");
+  revalidatePath("/fuel");
 }
 
 export async function toggleVehicleActiveAction(id: string, isActive: boolean) {

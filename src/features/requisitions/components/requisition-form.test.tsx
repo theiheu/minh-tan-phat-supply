@@ -243,4 +243,43 @@ describe("RequisitionForm", () => {
       expect(mockPush).toHaveBeenCalledWith("/requisitions/req-789");
     });
   });
+
+  it("leaves subZoneId optional by default and does not auto-populate from user default when creating slip", async () => {
+    (createRequisition as Mock).mockResolvedValue("req-100");
+    (submitRequisition as Mock).mockResolvedValue(undefined);
+
+    useCartStore.getState().addItem({
+      variantId: "var-100",
+      quantity: 2,
+      name: "Tấm làm mát",
+      label: "Cooling Pad 1.8m",
+      unit: "Tấm",
+    });
+
+    render(
+      <RequisitionForm
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
+        subZones={[{ id: "sz-1", zone_id: "z-1", name: "Trại 1", description: null, display_order: 1, created_at: "", updated_at: "", deleted_at: null }]}
+        defaultZoneId="z-1"
+        defaultSubZoneId={null}
+        currentUser={{ id: "usr-1", role: "staff", name: "Nguyễn Văn A" }}
+      />
+    );
+
+    const purposeInput = screen.getByPlaceholderText("Mục đích sử dụng vật tư…");
+    fireEvent.change(purposeInput, { target: { value: "Thay tấm làm mát chung toàn khu" } });
+
+    const submitBtn = screen.getByRole("button", { name: "Gửi yêu cầu" });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(createRequisition).toHaveBeenCalledWith({
+        zoneId: "z-1",
+        subZoneId: undefined,
+        purpose: "Thay tấm làm mát chung toàn khu",
+        requesterId: undefined,
+        items: [{ variantId: "var-100", quantity: 2 }],
+      });
+    });
+  });
 });

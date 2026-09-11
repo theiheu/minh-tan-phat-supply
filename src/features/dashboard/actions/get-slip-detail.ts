@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentProfile } from "@/lib/auth";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { createClient } from "@/lib/supabase/server";
 import { auditActionLabel, auditActionTone, type StatusBadgeVariant } from "@/lib/labels";
 
@@ -137,7 +138,7 @@ export async function getSlipDetail(
       const { data: req, error } = await supabase
         .from("requisitions")
         .select(
-          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images, description)))",
+          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images, description)))",
         )
         .eq("id", id)
         .single();
@@ -281,7 +282,7 @@ export async function getSlipDetail(
           createdAt: req.created_at,
           creatorName: req.requester?.name,
           requesterId: req.requester_id,
-          zoneName: req.zone?.name,
+          zoneName: formatZoneLabel(req.zone?.name, req.sub_zone?.name),
           purposeOrNotes: req.purpose,
           rejectionReason: req.rejection_reason,
           defectEvidence,
@@ -378,7 +379,7 @@ export async function getSlipDetail(
       const { data: iss, error } = await supabase
         .from("issues")
         .select(
-          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
+          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
         )
         .eq("id", id)
         .single();
@@ -425,7 +426,7 @@ export async function getSlipDetail(
           creatorName: iss.creator?.name,
           creatorId: iss.creator_id,
           destinationType: iss.destination_type,
-          zoneName: iss.zone?.name,
+          zoneName: formatZoneLabel(iss.zone?.name, iss.sub_zone?.name),
           customerName: iss.customer?.name,
           customerAddress: iss.customer?.address,
           customerPhone: iss.customer?.phone,

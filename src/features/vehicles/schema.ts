@@ -18,6 +18,12 @@ export const vehicleSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
+  subZoneId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
   defaultDriver: z
     .string()
     .trim()

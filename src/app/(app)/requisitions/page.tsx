@@ -1,4 +1,5 @@
 import { FileSpreadsheet, Printer } from "lucide-react";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,8 +43,9 @@ export default async function RequisitionsPage({
   const supabase = await createClient();
   const profile = await getCurrentProfile();
 
-  const [{ data: zones }, { data: accounts }] = await Promise.all([
+  const [{ data: zones }, { data: subZones }, { data: accounts }] = await Promise.all([
     supabase.from("zones").select("*").is("deleted_at", null).order("name"),
+    supabase.from("sub_zones").select("*").is("deleted_at", null).order("display_order"),
     isPrivileged(profile?.role)
       ? supabase.rpc("list_requester_accounts")
       : Promise.resolve({ data: null }),
@@ -52,7 +54,7 @@ export default async function RequisitionsPage({
   let query = supabase
     .from("requisitions")
     .select(
-      "id, code, purpose, status, requisition_type, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name)",
+      "id, code, purpose, status, requisition_type, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -112,7 +114,9 @@ export default async function RequisitionsPage({
 
           <RequisitionDialog
             zones={zones ?? []}
+            subZones={subZones ?? []}
             defaultZoneId={profile?.zone_id ?? null}
+            defaultSubZoneId={null}
             currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
             accounts={accounts ?? []}
           />
@@ -158,7 +162,9 @@ export default async function RequisitionsPage({
                   <SlipCodeButton type="requisition" id={r.id} code={r.code} />
                 </TableCell>
                 <TableCell>{r.requester?.name ?? "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{r.zone?.name ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {formatZoneLabel(r.zone?.name, r.sub_zone?.name)}
+                </TableCell>
                 <TableCell className="max-w-[240px] truncate text-muted-foreground">{r.purpose}</TableCell>
                 <TableCell className="hidden text-muted-foreground md:table-cell">
                   {REQUISITION_TYPE[r.requisition_type] ?? "—"}

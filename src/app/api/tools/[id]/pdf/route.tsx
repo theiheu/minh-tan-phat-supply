@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
@@ -31,6 +32,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       created_at,
       borrower:profiles!tool_borrowings_borrower_id_fkey(name),
       zone:zones!tool_borrowings_zone_id_fkey(name),
+      sub_zone:sub_zones!tool_borrowings_sub_zone_id_fkey(name),
       issued_by_profile:profiles!tool_borrowings_issued_by_fkey(name),
       received_back_by_profile:profiles!tool_borrowings_received_back_by_fkey(name)
     `)
@@ -62,7 +64,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       createdAt={b.created_at || b.borrowed_at}
       fields={[
         { label: "Người mượn", value: b.borrower?.name },
-        { label: "Khu vực / Trại", value: b.zone?.name },
+        { label: "Khu vực / Trại", value: formatZoneLabel(b.zone?.name, b.sub_zone?.name) },
         { label: "Mục đích", value: b.purpose },
         {
           label: "Hạn dự kiến trả",

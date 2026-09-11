@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { VehicleQrLabelDocument } from "@/features/pdf/vehicle-qr-label";
@@ -18,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const supabase = await createClient();
   const { data: vehicle, error } = await supabase
     .from("vehicles")
-    .select("code, name, qr_token, zone:zones!vehicles_zone_id_fkey(name), fuel_type:fuel_types!vehicles_fuel_type_id_fkey(name)")
+    .select("code, name, qr_token, zone:zones!vehicles_zone_id_fkey(name), sub_zone:sub_zones!vehicles_sub_zone_id_fkey(name), fuel_type:fuel_types!vehicles_fuel_type_id_fkey(name)")
     .eq("id", id)
     .single();
 
@@ -35,7 +36,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           code: vehicle.code,
           name: vehicle.name,
           fuelTypeName: vehicle.fuel_type?.name ?? null,
-          zoneName: vehicle.zone?.name ?? null,
+          zoneName: vehicle.zone ? formatZoneLabel(vehicle.zone.name, vehicle.sub_zone?.name) : null,
         }}
       />,
     );

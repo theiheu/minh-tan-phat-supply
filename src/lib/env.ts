@@ -11,6 +11,18 @@ const publicEnvSchema = z.object({
 
 const serverEnvSchema = publicEnvSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(10),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z
+    .preprocess((v) => {
+      if (typeof v === "string") return v === "true" || v === "1";
+      if (v === undefined || v === null) return undefined;
+      return Boolean(v);
+    }, z.boolean().optional())
+    .optional(),
+  SMTP_FROM: z.string().optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;

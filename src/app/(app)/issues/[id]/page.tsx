@@ -15,6 +15,7 @@ import { IssueActions } from "@/features/issues/components/issue-actions";
 import { IssueInvoices } from "@/features/issues/components/issue-invoices";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { formatDate, formatVnd } from "@/lib/format";
 import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { isSuperuser } from "@/lib/types";
@@ -31,7 +32,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
   const { data: issue } = await supabase
     .from("issues")
     .select(
-      "*, customer:customers(name, phone, address), zone:zones(name), creator:profiles(name)",
+      "*, customer:customers(name, phone, address), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name)",
     )
     .eq("id", id)
     .single();
@@ -54,7 +55,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
 
   const destinationName = isCustomer
     ? issue.customer?.name ?? "—"
-    : issue.zone?.name ?? "—";
+    : formatZoneLabel(issue.zone?.name, issue.sub_zone?.name);
 
   return (
     <div className="space-y-4">

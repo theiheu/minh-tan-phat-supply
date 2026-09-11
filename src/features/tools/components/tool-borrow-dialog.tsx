@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ZoneSubZoneSelect } from "@/components/zone-sub-zone-select";
 import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-input";
 import { createToolBorrowing } from "../actions";
 import { cn } from "@/lib/utils";
@@ -38,10 +39,12 @@ export interface ToolBorrowVariantOption {
 export interface ToolBorrowDialogProps {
   variants?: ToolBorrowVariantOption[];
   zones?: { id: string; name: string }[];
+  subZones?: { id: string; zone_id: string; name: string }[];
   borrowers?: { id: string; fullName: string; username?: string }[];
   isManager?: boolean;
   defaultVariantId?: string;
   defaultZoneId?: string;
+  defaultSubZoneId?: string;
   trigger?: React.ReactNode;
   triggerLabel?: string;
   triggerClassName?: string;
@@ -62,10 +65,12 @@ function getFutureDate(days: number): string {
 export function ToolBorrowDialog({
   variants = [],
   zones = [],
+  subZones = [],
   borrowers = [],
   isManager = false,
   defaultVariantId,
   defaultZoneId,
+  defaultSubZoneId,
   trigger,
   triggerLabel = "Mượn dụng cụ",
   triggerClassName,
@@ -82,6 +87,7 @@ export function ToolBorrowDialog({
   const [variantId, setVariantId] = useState(defaultVariantId ?? (variants.length === 1 ? variants[0].id : ""));
   const [quantity, setQuantity] = useState("1");
   const [zoneId, setZoneId] = useState(defaultZoneId ?? "none");
+  const [subZoneId, setSubZoneId] = useState(defaultSubZoneId ?? "");
   const [borrowerId, setBorrowerId] = useState("self");
   const [expectedReturnDate, setExpectedReturnDate] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -103,6 +109,7 @@ export function ToolBorrowDialog({
     setVariantId(defaultVariantId ?? (variants.length === 1 ? variants[0].id : ""));
     setQuantity("1");
     setZoneId(defaultZoneId ?? "none");
+    setSubZoneId(defaultSubZoneId ?? "");
     setBorrowerId("self");
     setExpectedReturnDate("");
     setPurpose("");
@@ -145,6 +152,7 @@ export function ToolBorrowDialog({
         const borrowingId = await createToolBorrowing({
           items: [{ variantId, quantity: numQty }],
           zoneId: zoneId !== "none" ? zoneId : undefined,
+          subZoneId: zoneId !== "none" && subZoneId ? subZoneId : undefined,
           purpose: purpose.trim(),
           expectedReturnDate: expectedReturnDate || undefined,
           borrowerId: isManager && borrowerId !== "self" ? borrowerId : undefined,
@@ -280,26 +288,25 @@ export function ToolBorrowDialog({
               />
             </div>
 
-            {/* Zone selection */}
+            {/* Zone & Sub-Zone selection */}
             {zones.length > 0 && (
-              <div className="space-y-1.5">
-                <Label htmlFor="borrow-zone" className="text-sm font-medium">
-                  Khu vực / Trại sử dụng
-                </Label>
-                <Select value={zoneId} onValueChange={setZoneId} disabled={pending}>
-                  <SelectTrigger id="borrow-zone" className="w-full">
-                    <SelectValue placeholder="Chọn khu vực (tùy chọn)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">-- Không chọn khu vực --</SelectItem>
-                    {zones.map((z) => (
-                      <SelectItem key={z.id} value={z.id}>
-                        {z.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <ZoneSubZoneSelect
+                zones={zones}
+                subZones={subZones}
+                zoneId={zoneId === "none" ? "" : zoneId}
+                subZoneId={subZoneId}
+                onZoneChange={(zid) => {
+                  setZoneId(zid || "none");
+                  setSubZoneId("");
+                }}
+                onSubZoneChange={setSubZoneId}
+                zoneLabel="Khu vực sử dụng"
+                subZoneLabel="Trại / Phân xưởng"
+                zonePlaceholder="-- Không chọn khu vực --"
+                subZonePlaceholder="Chọn trại/xưởng (tùy chọn)"
+                required={false}
+                disabled={pending}
+              />
             )}
 
             {/* Borrower selection (for manager) */}

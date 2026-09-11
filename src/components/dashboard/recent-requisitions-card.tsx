@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
+import { formatZoneLabel } from "@/lib/format-zone";
 import { REQUISITION_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -25,6 +26,7 @@ export interface RecentRequisitionItem {
   created_at?: string;
   requester?: { name: string | null } | null;
   zone?: { name: string } | null;
+  sub_zone?: { name: string } | null;
 }
 
 interface RecentRequisitionsCardProps {
@@ -92,7 +94,7 @@ export function RecentRequisitionsCard({
                       </TableCell>
                       <TableCell>
                         <span className="text-xs text-muted-foreground">
-                          {r.zone?.name ?? "—"}
+                          {formatZoneLabel(r.zone?.name, r.sub_zone?.name)}
                         </span>
                       </TableCell>
                       <TableCell className="max-w-[260px] truncate text-xs text-muted-foreground" title={r.purpose}>
@@ -144,11 +146,11 @@ export function RecentRequisitionsCard({
                       <span className="font-semibold text-foreground">
                         {r.requester?.name ?? "—"}
                       </span>
-                      {r.zone?.name && (
+                      {(r.zone?.name || r.sub_zone?.name) && (
                         <>
                           <span className="text-muted-foreground">·</span>
                           <span className="font-semibold text-foreground">
-                            {r.zone.name}
+                            {formatZoneLabel(r.zone?.name, r.sub_zone?.name)}
                           </span>
                         </>
                       )}

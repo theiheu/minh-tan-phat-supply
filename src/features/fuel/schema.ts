@@ -52,6 +52,12 @@ export const fuelDispenseSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
+  subZoneId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
   fuelTypeId: z.string().uuid("Phải chọn loại dầu"),
   quantity: positiveNumber2Decimals,
   currentOdo: z.preprocess(
