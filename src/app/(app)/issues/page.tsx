@@ -14,8 +14,14 @@ import { IssueDialog } from "@/features/issues/components/issue-dialog";
 import { SlipCodeButton } from "@/components/slip-code-button";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { requireManager } from "@/lib/auth";
+import {
+  getCachedCustomers,
+  getCachedSubZones,
+  getCachedVariantOptions,
+  getCachedZones,
+} from "@/lib/cached-metadata";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
-import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { ZoomableImage } from "@/components/image-lightbox";
 
@@ -48,23 +54,19 @@ export default async function IssuesPage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const supabase = await createClient();
-
-  const [{ data: zones }, { data: subZones }, { data: customers }, { data: variants }] = await Promise.all([
-    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
-    supabase.from("customers").select("id, name").is("deleted_at", null).order("name"),
-    supabase
-      .from("variants")
-      .select("id, attributes, unit, is_trackable_lot, price, products(name)")
-      .order("id"),
+  const [supabase, zones, subZones, customers, variants] = await Promise.all([
+    createClient(),
+    getCachedZones(),
+    getCachedSubZones(),
+    getCachedCustomers(),
+    getCachedVariantOptions(),
   ]);
 
-  const variantOptions = (variants ?? []).map((v) => ({
+  const variantOptions = variants.map((v) => ({
     id: v.id,
-    name: v.products?.name ?? "Vật tư",
-    detail: variantLabel(v.attributes, v.unit),
-    isTrackableLot: v.is_trackable_lot,
+    name: v.productName,
+    detail: v.detail,
+    isTrackableLot: v.isTrackableLot,
     price: v.price,
   }));
 

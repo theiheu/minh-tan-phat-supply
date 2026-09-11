@@ -3,6 +3,7 @@ import { ProductsManager } from "@/features/products/components/products-manager
 import { fetchProductVariantRows } from "@/features/products/data";
 import type { AdminProductRow } from "@/features/products/types";
 import { requireManager } from "@/lib/auth";
+import { getCachedCategories } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function AdminProductsPage({
 
   const supabase = await createClient();
 
-  const [{ data: products, count }, { data: categories }] = await Promise.all([
+  const [{ data: products, count }, categories] = await Promise.all([
     (async () => {
       let query = supabase
         .from("products")
@@ -36,7 +37,7 @@ export default async function AdminProductsPage({
         .order(sort, { ascending: order === "asc" })
         .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
     })(),
-    supabase.from("categories").select("id, name").is("deleted_at", null).order("display_order"),
+    getCachedCategories(),
   ]);
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));

@@ -1,6 +1,5 @@
 import { ReceiptForm, type ItemDraft } from "@/features/receipts/components/receipt-form";
-import { fetchCompositeVariantIds } from "@/features/products/data";
-import { variantLabel } from "@/lib/labels";
+import { getCachedCompositeVariantIds, getCachedSuppliers, getCachedVariantOptions } from "@/lib/cached-metadata";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,24 +15,23 @@ export default async function NewReceiptPage({
   const requisitionId = sp?.requisition_id;
   const supabase = await createClient();
 
-  const [{ data: suppliers }, { data: variants }, compositeIds] = await Promise.all([
-    supabase.from("suppliers").select("id, name").is("deleted_at", null).order("name"),
-    supabase
-      .from("variants")
-      .select("id, attributes, unit, is_trackable_lot, products(name)")
-      .order("id"),
-    fetchCompositeVariantIds(supabase),
+  const [suppliers, variants, compositeIdsArr] = await Promise.all([
+    getCachedSuppliers(),
+    getCachedVariantOptions(),
+    getCachedCompositeVariantIds(),
   ]);
+
+  const compositeIds = new Set(compositeIdsArr);
 
   // Loại dòng "bộ" khỏi phiếu nhập: bộ không nhập thẳng (tồn bộ tự theo linh kiện) —
   // nhập kho theo từng linh kiện.
-  const variantOptions = (variants ?? [])
+  const variantOptions = variants
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,
-      name: v.products?.name ?? "Vật tư",
-      detail: variantLabel(v.attributes, v.unit),
-      isTrackableLot: v.is_trackable_lot,
+      name: v.productName,
+      detail: v.detail,
+      isTrackableLot: v.isTrackableLot,
     }));
 
   let initialItems: ItemDraft[] | undefined;
@@ -66,7 +64,7 @@ export default async function NewReceiptPage({
 
   return (
     <ReceiptForm
-      suppliers={suppliers ?? []}
+      suppliers={suppliers}
       variants={variantOptions}
       initialItems={initialItems}
       initialNotes={initialNotes}

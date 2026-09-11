@@ -55,43 +55,23 @@ async function loadAuditActivities(supabase: Awaited<ReturnType<typeof createCli
     else if (t.startsWith("stocktake")) stocktakeIds.push(a.entity_id);
   }
 
-  const [reqs, receipts, issues, exchanges, defects, repairs, liquidations, stocktakes] =
-    await Promise.all([
-      reqIds.length > 0
-        ? supabase.from("requisitions").select("id, code").in("id", reqIds)
-        : Promise.resolve({ data: [] }),
-      receiptIds.length > 0
-        ? supabase.from("receipts").select("id, code").in("id", receiptIds)
-        : Promise.resolve({ data: [] }),
-      issueIds.length > 0
-        ? supabase.from("issues").select("id, code").in("id", issueIds)
-        : Promise.resolve({ data: [] }),
-      exchangeIds.length > 0
-        ? supabase.from("exchange_notes").select("id, code").in("id", exchangeIds)
-        : Promise.resolve({ data: [] }),
-      defectIds.length > 0
-        ? supabase.from("defect_notes").select("id, code").in("id", defectIds)
-        : Promise.resolve({ data: [] }),
-      repairIds.length > 0
-        ? supabase.from("repair_orders").select("id, code").in("id", repairIds)
-        : Promise.resolve({ data: [] }),
-      liquidationIds.length > 0
-        ? supabase.from("liquidation_notes").select("id, code").in("id", liquidationIds)
-        : Promise.resolve({ data: [] }),
-      stocktakeIds.length > 0
-        ? supabase.from("stocktake_sessions").select("id, code, name").in("id", stocktakeIds)
-        : Promise.resolve({ data: [] }),
-    ]);
+  const queryPromises: PromiseLike<{ data: { id: string; code?: string; name?: string | null }[] | null }>[] = [];
+  if (reqIds.length > 0) queryPromises.push(supabase.from("requisitions").select("id, code").in("id", reqIds));
+  if (receiptIds.length > 0) queryPromises.push(supabase.from("receipts").select("id, code").in("id", receiptIds));
+  if (issueIds.length > 0) queryPromises.push(supabase.from("issues").select("id, code").in("id", issueIds));
+  if (exchangeIds.length > 0) queryPromises.push(supabase.from("exchange_notes").select("id, code").in("id", exchangeIds));
+  if (defectIds.length > 0) queryPromises.push(supabase.from("defect_notes").select("id, code").in("id", defectIds));
+  if (repairIds.length > 0) queryPromises.push(supabase.from("repair_orders").select("id, code").in("id", repairIds));
+  if (liquidationIds.length > 0) queryPromises.push(supabase.from("liquidation_notes").select("id, code").in("id", liquidationIds));
+  if (stocktakeIds.length > 0) queryPromises.push(supabase.from("stocktake_sessions").select("id, code, name").in("id", stocktakeIds));
 
+  const results = await Promise.all(queryPromises);
   const codeMap = new Map<string, string>();
-  for (const r of reqs.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of receipts.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of issues.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of exchanges.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of defects.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of repairs.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of liquidations.data ?? []) codeMap.set(r.id, r.code);
-  for (const r of stocktakes.data ?? []) codeMap.set(r.id, r.code || r.name || "Kiểm kê");
+  for (const res of results) {
+    for (const r of (res.data ?? []) as { id: string; code?: string; name?: string }[]) {
+      codeMap.set(r.id, r.code || r.name || "Kiểm kê");
+    }
+  }
 
   return rawAudits.map((a): ActivityItem => {
     const actor = a.actor as { id?: string; name?: string; role?: string } | null;
@@ -131,14 +111,15 @@ async function loadDashboard() {
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).is("deleted_at", null),
 
-    // Các phiếu yêu cầu cần xử lý (chưa nhận: draft, pending, approved, issued)
+    // Các phiếu yêu cầu cần xử lý (chưa nhận: draft, pending, approved, issued) - tối đa 50 phiếu mới nhất
     supabase
       .from("requisitions")
       .select(
         "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
       )
       .in("status", ["draft", "pending", "approved", "issued"])
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
     supabase
       .from("receipts")
@@ -146,7 +127,8 @@ async function loadDashboard() {
         "id, code, notes, status, created_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name)",
       )
       .eq("status", "draft")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
     supabase
       .from("exchange_notes")
@@ -154,7 +136,8 @@ async function loadDashboard() {
         "id, code, status, created_at, requester:profiles!exchange_notes_created_by_fkey(name)",
       )
       .eq("status", "pending")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
     supabase
       .from("liquidation_notes")
@@ -162,7 +145,8 @@ async function loadDashboard() {
         "id, code, notes, status, created_at, creator:profiles!liquidation_notes_created_by_fkey(name)",
       )
       .eq("status", "pending")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
     supabase
       .from("defect_notes")
@@ -170,7 +154,8 @@ async function loadDashboard() {
         "id, code, notes, status, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), location:stock_locations!defect_notes_source_location_id_fkey(name)",
       )
       .eq("status", "staging")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
     // Các phiếu đổi mới đã cấp chưa nhận
     supabase
@@ -179,16 +164,18 @@ async function loadDashboard() {
         "id, code, status, created_at, requester:profiles!exchange_notes_created_by_fkey(name)",
       )
       .eq("status", "issued")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
-    // Các phiếu nhập đã ghi sổ
+    // Các phiếu nhập đã ghi sổ (50 phiếu gần nhất)
     supabase
       .from("receipts")
       .select(
         "id, code, notes, status, created_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name)",
       )
       .eq("status", "posted")
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),
 
     // Hoạt động gần đây
     loadAuditActivities(supabase),

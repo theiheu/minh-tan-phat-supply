@@ -7,6 +7,7 @@ import { ProductCard } from "@/features/products/components/product-card";
 import { ProductSearchBar } from "@/features/products/components/product-search-bar";
 import type { VariantWithStock } from "@/features/products/types";
 import { materialLabel } from "@/lib/attributes";
+import { getCachedCategories } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -26,13 +27,10 @@ export default async function ProductsPage({
   const categoryId = sp.category ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const supabase = await createClient();
-
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("id, name, icon")
-    .is("deleted_at", null)
-    .order("display_order");
+  const [supabase, categories] = await Promise.all([
+    createClient(),
+    getCachedCategories(),
+  ]);
 
   let productQuery = supabase
     .from("products")
@@ -40,6 +38,7 @@ export default async function ProductsPage({
     .is("deleted_at", null)
     .order("name")
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
   if (q) {
     const { data: matchIds, error: matchError } = await supabase.rpc("search_catalog", { p_query: q });
     if (matchError) throw new Error(matchError.message);
@@ -54,23 +53,28 @@ export default async function ProductsPage({
   const variantsByProduct = new Map<string, VariantWithStock[]>();
 
   if (productIds.length > 0) {
-    const { data: variantRows } = await supabase
-      .from("variants")
-      .select("*")
-      .in("product_id", productIds)
-      .order("is_default", { ascending: false })
-      .order("price", { ascending: true, nullsFirst: false });
+    const [{ data: variantRows }, { data: stockRows }] = await Promise.all([
+      supabase
+        .from("variants")
+        .select("*")
+        .in("product_id", productIds)
+        .order("is_default", { ascending: false })
+        .order("price", { ascending: true, nullsFirst: false }),
+      supabase
+        .from("variant_stock")
+        .select("variant_id, quantity")
+        .in("product_id", productIds),
+    ]);
 
     const variantIds = (variantRows ?? []).map((v) => v.id);
-    const [{ data: stockRows }, { data: compRows }] = await Promise.all([
-      supabase.from("variant_stock").select("variant_id, quantity").in("variant_id", variantIds),
-      supabase
-        .from("variant_components")
-        .select(
-          "parent_variant_id, child_variant_id, quantity, child:variants!variant_components_child_variant_id_fkey(attributes, unit)",
-        )
-        .in("parent_variant_id", variantIds),
-    ]);
+    const { data: compRows } = variantIds.length > 0
+      ? await supabase
+          .from("variant_components")
+          .select(
+            "parent_variant_id, child_variant_id, quantity, child:variants!variant_components_child_variant_id_fkey(attributes, unit)",
+          )
+          .in("parent_variant_id", variantIds)
+      : { data: [] };
 
     const stockMap = new Map((stockRows ?? []).map((s) => [s.variant_id, s.quantity]));
     const compMap = new Map<string, NonNullable<VariantWithStock["components"]>>();
@@ -117,10 +121,7 @@ export default async function ProductsPage({
       {/* Ô tìm kiếm kèm nút quét QR/Barcode */}
       <ProductSearchBar defaultValue={q} categoryId={categoryId} />
 
-      {/* Danh mục dạng ô vuông:
-          - Mobile (<lg): 2 hàng, dài quá thì cuộn ngang toàn màn hình mượt mà.
-          - Desktop (lg+): các ô nhỏ hơn (2/3 kích thước cũ), wrap xuống hàng
-            mới thì đi từ trái sang phải (không căn giữa hàng thừa). */}
+      {/* Danh mục dạng ô vuông */}
       <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 lg:overflow-visible lg:pb-0">
         <div className="grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-start lg:gap-x-3 lg:gap-y-2 xl:gap-x-4">
           <CategoryTile active={!categoryId} href={categoryHref(null)} label="Tất cả" className="lg:w-16 xl:w-[4.7rem]">
@@ -167,7 +168,6 @@ function CategoryTile({
   href: string;
   label: string;
   children: React.ReactNode;
-  /** Class thêm cho ô (VD đổi bề rộng ở breakpoint). */
   className?: string;
 }) {
   return (

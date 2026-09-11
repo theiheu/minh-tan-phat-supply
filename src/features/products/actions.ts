@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { materialLabel } from "@/lib/attributes";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { formatZoneLabel } from "@/lib/format-zone";
@@ -30,6 +30,7 @@ function parseAttributes(attributes: string): Record<string, string> {
 function revalidate() {
   revalidatePath("/admin/products");
   revalidatePath("/products");
+  revalidateTag("metadata:variants");
 }
 
 /** Đọc toàn bộ biến thể + tồn + cấu tạo bộ của 1 vật tư (dùng cho dialog quản lý). */

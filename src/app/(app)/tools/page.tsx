@@ -7,6 +7,11 @@ import { formatZoneLabel } from "@/lib/format-zone";
 import { ToolBorrowDialog, type ToolBorrowVariantOption } from "@/features/tools/components/tool-borrow-dialog";
 import { ToolCard } from "@/features/tools/components/tool-card";
 import { requireProfile } from "@/lib/auth";
+import {
+  getCachedSubZones,
+  getCachedVariantOptions,
+  getCachedZones,
+} from "@/lib/cached-metadata";
 import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { isPrivileged } from "@/lib/types";
@@ -49,19 +54,16 @@ export default async function ToolsPage({
 
   // 1. Fetch form options (variants, stock, zones, sub_zones, profiles for manager)
   const [
-    { data: variantsData },
+    cachedVariants,
     { data: stockData },
-    { data: zonesData },
-    { data: subZonesData },
+    zonesData,
+    subZonesData,
     { data: profilesData },
   ] = await Promise.all([
-    supabase
-      .from("variants")
-      .select("id, attributes, unit, products(name, code, image_url)")
-      .order("id"),
+    getCachedVariantOptions(),
     supabase.from("variant_stock").select("variant_id, quantity"),
-    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
+    getCachedZones(),
+    getCachedSubZones(),
     isManager
       ? supabase.from("profiles").select("id, name").eq("is_active", true).order("name")
       : Promise.resolve({ data: null }),
@@ -69,23 +71,20 @@ export default async function ToolsPage({
 
   const stockMap = new Map((stockData ?? []).map((s) => [s.variant_id, s.quantity ?? 0]));
 
-  const toolVariants: ToolBorrowVariantOption[] = (variantsData ?? []).map((v) => {
-    const product = v.products as { name?: string; code?: string; image_url?: string } | null;
-    return {
-      id: v.id,
-      name: product?.name ?? "Dụng cụ / Vật tư",
-      detail: variantLabel(v.attributes, v.unit),
-      unit: v.unit ?? "cái",
-      availableStock: stockMap.get(v.id) ?? 0,
-    };
-  });
+  const toolVariants: ToolBorrowVariantOption[] = cachedVariants.map((v) => ({
+    id: v.id,
+    name: v.productName,
+    detail: v.detail,
+    unit: v.unit ?? "cái",
+    availableStock: stockMap.get(v.id) ?? 0,
+  }));
 
-  const zones = (zonesData ?? []).map((z) => ({
+  const zones = zonesData.map((z) => ({
     id: z.id,
     name: z.name,
   }));
 
-  const subZones = (subZonesData ?? []).map((s) => ({
+  const subZones = subZonesData.map((s) => ({
     id: s.id,
     zone_id: s.zone_id,
     name: s.name,

@@ -3,23 +3,12 @@ import { ReportsHub } from "@/features/reports/components/reports-hub";
 import type { StockVariantOption } from "@/features/reports/components/stock-card-tab";
 import { fetchGeneralReportData } from "@/features/reports/queries";
 import { requireManager } from "@/lib/auth";
-import { variantLabel } from "@/lib/labels";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedStockLocations, getCachedVariantOptions } from "@/lib/cached-metadata";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
   await requireManager();
-
-  const supabase = await createClient();
-
-  const [locationsRes, variantsRes] = await Promise.all([
-    supabase.from("stock_locations").select("id, code, name").order("code", { ascending: true }),
-    supabase
-      .from("variants")
-      .select("id, attributes, unit, price, products(name)")
-      .order("id", { ascending: true }),
-  ]);
 
   const defaultRange = getPresetRange("this_month");
   const initialDateRange = {
@@ -29,16 +18,25 @@ export default async function ReportsPage() {
     locationId: undefined,
   };
 
-  const initialGeneralData = await fetchGeneralReportData({
-    from: defaultRange.from,
-    to: defaultRange.to,
-  });
+  const [locationsData, variantsData, initialGeneralData] = await Promise.all([
+    getCachedStockLocations(),
+    getCachedVariantOptions(),
+    fetchGeneralReportData({
+      from: defaultRange.from,
+      to: defaultRange.to,
+    }),
+  ]);
 
-  const locations = locationsRes.data ?? [];
-  const variants: StockVariantOption[] = (variantsRes.data ?? []).map((v) => ({
+  const locations = locationsData.map((l) => ({
+    id: l.id,
+    code: l.code,
+    name: l.name,
+  }));
+
+  const variants: StockVariantOption[] = variantsData.map((v) => ({
     id: v.id,
-    productName: (v.products as { name?: string } | null)?.name || "Vật tư",
-    variantLabel: variantLabel(v.attributes, v.unit),
+    productName: v.productName,
+    variantLabel: v.detail,
     unit: v.unit || "",
   }));
 

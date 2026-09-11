@@ -12,9 +12,9 @@ import {
 import { ReceiptDialog } from "@/features/receipts/components/receipt-dialog";
 import { SlipCodeButton } from "@/components/slip-code-button";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
-import { fetchCompositeVariantIds } from "@/features/products/data";
+import { getCachedCompositeVariantIds, getCachedSuppliers, getCachedVariantOptions } from "@/lib/cached-metadata";
 import { dayRange, formatDate } from "@/lib/format";
-import { RECEIPT_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { RECEIPT_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { ZoomableImage } from "@/components/image-lightbox";
 
@@ -37,28 +37,21 @@ export default async function ReceiptsPage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const supabase = await createClient();
-
-  const [{ data: suppliers }, { data: variants }, compositeIds] = await Promise.all([
-    supabase
-      .from("suppliers")
-      .select("id, name")
-      .is("deleted_at", null)
-      .order("name"),
-    supabase
-      .from("variants")
-      .select("id, attributes, unit, is_trackable_lot, products(name)")
-      .order("id"),
-    fetchCompositeVariantIds(supabase),
+  const [supabase, suppliers, variants, compositeIdsArr] = await Promise.all([
+    createClient(),
+    getCachedSuppliers(),
+    getCachedVariantOptions(),
+    getCachedCompositeVariantIds(),
   ]);
 
-  const variantOptions = (variants ?? [])
+  const compositeIds = new Set(compositeIdsArr);
+  const variantOptions = variants
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,
-      name: v.products?.name ?? "Vật tư",
-      detail: variantLabel(v.attributes, v.unit),
-      isTrackableLot: v.is_trackable_lot,
+      name: v.productName,
+      detail: v.detail,
+      isTrackableLot: v.isTrackableLot,
     }));
 
   let query = supabase

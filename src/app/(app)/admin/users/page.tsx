@@ -1,6 +1,7 @@
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { UsersManager } from "@/features/auth/components/users-manager";
 import { requireManager } from "@/lib/auth";
+import { getCachedSubZones, getCachedZones } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
@@ -21,12 +22,12 @@ export default async function AdminUsersPage({
 
   // Thứ tự hiển thị: superuser → manager → requester (mỗi nhóm theo created_at).
   // Hai nhóm đầu rất ít tài khoản nên tải đủ; riêng nhóm requester phân trang bằng SQL.
-  const [{ data: supers }, { data: managers }, { count: requesterTotal }, { data: zones }, { data: subZones }] = await Promise.all([
+  const [{ data: supers }, { data: managers }, { count: requesterTotal }, zones, subZones] = await Promise.all([
     supabase.from("profiles").select("*").eq("role", "superuser").order("created_at", { ascending: true }),
     supabase.from("profiles").select("*").eq("role", "manager").order("created_at", { ascending: true }),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "requester"),
-    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
+    getCachedZones(),
+    getCachedSubZones(),
   ]);
 
   const headCount = (supers ?? []).length + (managers ?? []).length;

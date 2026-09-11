@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { Download, TrendingDown, TrendingUp } from "lucide-react";
-import * as XLSX from "xlsx";
 import { ListFilters } from "@/components/list-filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,7 +115,8 @@ export function FuelReports({
 
   const totalPeriodLiters = reportData.reduce((acc, r) => acc + Number(r.quantity), 0);
 
-  function exportExcel() {
+  async function exportExcel() {
+    const XLSX = await import("xlsx");
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: Chi tiết từng lần cấp dầu

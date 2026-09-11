@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireManager } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -50,7 +50,7 @@ function requireValid<T>(
   return r.data;
 }
 
-async function softDelete(table: "categories" | "zones" | "suppliers" | "customers", id: string, path: string) {
+async function softDelete(table: "categories" | "zones" | "suppliers" | "customers", id: string, path: string, tag?: string) {
   await requireManager();
   const supabase = await createClient();
   const { error } = await supabase
@@ -59,6 +59,7 @@ async function softDelete(table: "categories" | "zones" | "suppliers" | "custome
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(path);
+  if (tag) revalidateTag(tag);
 }
 
 // ---- Categories ----
@@ -72,9 +73,10 @@ export async function saveCategory(id: string | null, data: Record<string, strin
     : await supabase.from("categories").insert(payload);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/categories");
+  revalidateTag("metadata:categories");
 }
 export async function deleteCategory(id: string) {
-  await softDelete("categories", id, "/admin/categories");
+  await softDelete("categories", id, "/admin/categories", "metadata:categories");
 }
 
 // ---- Zones ----
@@ -87,6 +89,7 @@ export async function saveZone(id: string | null, data: Record<string, string>) 
     : await supabase.from("zones").insert({ name: parsed.name, description: parsed.description });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/zones");
+  revalidateTag("metadata:zones");
 }
 
 export async function saveZoneWithSubZones(
@@ -166,10 +169,13 @@ export async function saveZoneWithSubZones(
   }
 
   revalidatePath("/admin/zones");
+  revalidateTag("metadata:zones");
+  revalidateTag("metadata:sub_zones");
 }
 
 export async function deleteZone(id: string) {
-  await softDelete("zones", id, "/admin/zones");
+  await softDelete("zones", id, "/admin/zones", "metadata:zones");
+  revalidateTag("metadata:sub_zones");
 }
 
 // ---- Suppliers ----
@@ -189,9 +195,10 @@ export async function saveSupplier(id: string | null, data: Record<string, strin
     : await supabase.from("suppliers").insert(payload);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/suppliers");
+  revalidateTag("metadata:suppliers");
 }
 export async function deleteSupplier(id: string) {
-  await softDelete("suppliers", id, "/admin/suppliers");
+  await softDelete("suppliers", id, "/admin/suppliers", "metadata:suppliers");
 }
 
 // ---- Customers ----
@@ -210,9 +217,10 @@ export async function saveCustomer(id: string | null, data: Record<string, strin
     : await supabase.from("customers").insert(payload);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/customers");
+  revalidateTag("metadata:customers");
 }
 export async function deleteCustomer(id: string) {
-  await softDelete("customers", id, "/admin/customers");
+  await softDelete("customers", id, "/admin/customers", "metadata:customers");
 }
 
 // ---- Stock locations ----
@@ -225,6 +233,7 @@ export async function saveLocation(id: string | null, data: Record<string, strin
     : await supabase.from("stock_locations").insert({ code: parsed.code, name: parsed.name, type: parsed.type });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/locations");
+  revalidateTag("metadata:locations");
 }
 export async function deactivateLocation(id: string) {
   await requireManager();
@@ -232,4 +241,5 @@ export async function deactivateLocation(id: string) {
   const { error } = await supabase.from("stock_locations").update({ is_active: false }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/locations");
+  revalidateTag("metadata:locations");
 }

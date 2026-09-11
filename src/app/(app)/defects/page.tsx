@@ -8,8 +8,13 @@ import {
   type DefectItemRow,
   type DefectListRow,
 } from "@/features/defects/components/defects-list";
-import { fetchCompositeVariantIds } from "@/features/products/data";
 import { getCurrentProfile } from "@/lib/auth";
+import {
+  getCachedCompositeVariantIds,
+  getCachedStockLocations,
+  getCachedSuppliers,
+  getCachedVariantOptions,
+} from "@/lib/cached-metadata";
 import { dayRange } from "@/lib/format";
 import { DEFECT_STATUS } from "@/lib/labels";
 import { isPrivileged, isSuperuser } from "@/lib/types";
@@ -58,39 +63,31 @@ export default async function DefectsPage({
 
   const supabase = await createClient();
 
-  const [{ data: locations }, mainLocations, { data: allVariants }, compositeIds, { data: suppliersData }] = await Promise.all([
-    supabase
-      .from("stock_locations")
-      .select("id, name")
-      .eq("is_active", true)
-      .order("code"),
-    supabase
-      .from("stock_locations")
-      .select("id, code, name")
-      .eq("type", "main")
-      .eq("is_active", true)
-      .order("code"),
-    supabase.from("variants").select("id, attributes, unit, products(name)").order("id"),
-    fetchCompositeVariantIds(supabase),
-    supabase.from("suppliers").select("id, name, phone").is("deleted_at", null).order("name"),
+  const [allLocations, allVariants, compositeIdsArr, allSuppliers] = await Promise.all([
+    getCachedStockLocations(),
+    getCachedVariantOptions(),
+    getCachedCompositeVariantIds(),
+    getCachedSuppliers(),
   ]);
 
-  const suppliers = (suppliersData ?? []).map((s) => ({
+  const locations = allLocations.map((l) => ({ id: l.id, name: l.name }));
+  const main = allLocations.filter((l) => l.type === "main");
+  const sourceLocationId =
+    main.find((l) => l.code === "KHO_CHINH")?.id ?? main[0]?.id ?? "";
+
+  const suppliers = allSuppliers.map((s) => ({
     id: s.id,
     name: s.name,
     phone: s.phone ?? null,
   }));
 
-  const main = mainLocations.data ?? [];
-  const sourceLocationId =
-    main.find((l) => l.code === "KHO_CHINH")?.id ?? main[0]?.id ?? "";
-
-  const defectVariantOptions = (allVariants ?? [])
+  const compositeIds = new Set(compositeIdsArr);
+  const defectVariantOptions = allVariants
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,
-      name: v.products?.name ?? "Vật tư",
-      detail: variantLabelFor(v),
+      name: v.productName,
+      detail: v.detail,
     }));
 
   // ---- Tab: Kho đồ hỏng (manager) — gom vật tư hỏng staging nhiều HONG → 1 phiếu SC ----

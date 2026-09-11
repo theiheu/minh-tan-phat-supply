@@ -3,6 +3,7 @@ import { formatZoneLabel } from "@/lib/format-zone";
 import { VehicleList, type VehicleListRow } from "@/features/vehicles/components/vehicle-list";
 import { VEHICLE_TYPE_LABELS } from "@/features/vehicles/schema";
 import { requireManager } from "@/lib/auth";
+import { getCachedSubZones, getCachedZones } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -32,16 +33,15 @@ export default async function AdminVehiclesPage({
   if (type) vehiclesQuery = vehiclesQuery.eq("type", type as "other" | "truck" | "excavator" | "generator" | "car" | "forklift" | "tractor");
   if (status) vehiclesQuery = vehiclesQuery.eq("is_active", status === "active");
 
-  const [vehiclesResult, fuelTypesResult, zonesResult, subZonesResult] = await Promise.all([
+  const [vehiclesResult, fuelTypesResult, zonesData, subZonesData] = await Promise.all([
     vehiclesQuery,
     supabase.from("fuel_types").select("id, name").eq("is_active", true).order("name"),
-    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
+    getCachedZones(),
+    getCachedSubZones(),
   ]);
 
   if (vehiclesResult.error) throw new Error(`Không thể tải danh sách phương tiện: ${vehiclesResult.error.message}`);
   if (fuelTypesResult.error) throw new Error(`Không thể tải loại nhiên liệu: ${fuelTypesResult.error.message}`);
-  if (zonesResult.error) throw new Error(`Không thể tải khu vực: ${zonesResult.error.message}`);
 
   const rows: VehicleListRow[] = (vehiclesResult.data ?? []).map((vehicle) => ({
     id: vehicle.id,
@@ -68,8 +68,8 @@ export default async function AdminVehiclesPage({
       <VehicleList
         vehicles={rows}
         fuelTypes={fuelTypesResult.data ?? []}
-        zones={zonesResult.data ?? []}
-        subZones={subZonesResult.data ?? []}
+        zones={zonesData.map((z) => ({ id: z.id, name: z.name }))}
+        subZones={subZonesData.map((s) => ({ id: s.id, zone_id: s.zone_id, name: s.name }))}
         page={page}
         totalPages={Math.max(1, Math.ceil((vehiclesResult.count ?? 0) / PAGE_SIZE))}
         filters={{ q, type, status }}

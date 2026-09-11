@@ -1,5 +1,6 @@
 import { RequisitionForm } from "@/features/requisitions/components/requisition-form";
 import { getCurrentProfile } from "@/lib/auth";
+import { getCachedSubZones, getCachedZones } from "@/lib/cached-metadata";
 import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,13 +10,14 @@ export default async function NewRequisitionPage() {
   const supabase = await createClient();
   const profile = await getCurrentProfile();
 
-  const [{ data: zones }, { data: subZones }, { data: accounts }] = await Promise.all([
-    supabase.from("zones").select("*").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("*").is("deleted_at", null).order("display_order"),
+  const [zones, subZones, accountsRes] = await Promise.all([
+    getCachedZones(),
+    getCachedSubZones(),
     isPrivileged(profile?.role)
       ? supabase.rpc("list_requester_accounts")
       : Promise.resolve({ data: null }),
   ]);
+  const accounts = accountsRes.data;
 
   return (
     <RequisitionForm

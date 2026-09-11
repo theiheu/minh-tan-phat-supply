@@ -28,7 +28,18 @@ export function NotificationBell() {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [unread, setUnread] = useState(0);
 
-  const refresh = useCallback(async () => {
+  // Chỉ lấy số lượng chưa đọc khi chưa mở drawer để tiết kiệm tài nguyên
+  const refreshCountOnly = useCallback(async () => {
+    const supabase = createClient();
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null);
+    setUnread(count ?? 0);
+  }, []);
+
+  // Lấy chi tiết 30 thông báo khi người dùng mở drawer
+  const refreshFull = useCallback(async () => {
     const supabase = createClient();
     const [{ data: rows }, { count }] = await Promise.all([
       supabase
@@ -43,14 +54,14 @@ export function NotificationBell() {
   }, []);
 
   useEffect(() => {
-    refresh();
-    const timer = setInterval(refresh, 30000);
+    refreshCountOnly();
+    const timer = setInterval(refreshCountOnly, 30000);
     return () => clearInterval(timer);
-  }, [refresh]);
+  }, [refreshCountOnly]);
 
   useEffect(() => {
-    if (open) refresh();
-  }, [open, refresh]);
+    if (open) refreshFull();
+  }, [open, refreshFull]);
 
   async function openItem(n: NotificationRow) {
     const supabase = createClient();
@@ -66,7 +77,7 @@ export function NotificationBell() {
   async function markAllRead() {
     const supabase = createClient();
     await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
-    await refresh();
+    await refreshFull();
   }
 
   return (

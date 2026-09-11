@@ -16,6 +16,7 @@ import { SlipCodeButton } from "@/components/slip-code-button";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { RequisitionDialog } from "@/features/requisitions/components/requisition-dialog";
 import { getCurrentProfile } from "@/lib/auth";
+import { getCachedSubZones, getCachedZones } from "@/lib/cached-metadata";
 import { dayRange, formatDate } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
@@ -40,16 +41,16 @@ export default async function RequisitionsPage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const supabase = await createClient();
-  const profile = await getCurrentProfile();
-
-  const [{ data: zones }, { data: subZones }, { data: accounts }] = await Promise.all([
-    supabase.from("zones").select("*").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("*").is("deleted_at", null).order("display_order"),
-    isPrivileged(profile?.role)
-      ? supabase.rpc("list_requester_accounts")
-      : Promise.resolve({ data: null }),
+  const [supabase, profile, zones, subZones] = await Promise.all([
+    createClient(),
+    getCurrentProfile(),
+    getCachedZones(),
+    getCachedSubZones(),
   ]);
+
+  const { data: accounts } = isPrivileged(profile?.role)
+    ? await supabase.rpc("list_requester_accounts")
+    : { data: null };
 
   let query = supabase
     .from("requisitions")

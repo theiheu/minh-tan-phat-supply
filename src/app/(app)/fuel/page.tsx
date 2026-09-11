@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { BarChart3, Droplets, PackageMinus, PackagePlus } from "lucide-react";
 import { requireManager } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getCachedSubZones,
+  getCachedSuppliers,
+  getCachedZones,
+} from "@/lib/cached-metadata";
 import {
   getFuelDispenses,
   getFuelOverview,
@@ -58,15 +62,13 @@ export default async function FuelPage({
   const to = sp.to ?? defaultTo;
   const q = sp.q ?? "";
 
-  const supabase = await createClient();
-
-  // Load basic options
-  const [fuelTypes, vehiclesRaw, zonesRes, subZonesRes, suppliersRes] = await Promise.all([
+  // Load basic options with cached metadata
+  const [fuelTypes, vehiclesRaw, zonesData, subZonesData, suppliersData] = await Promise.all([
     getFuelTypes({ activeOnly: true }),
     getVehicles({ activeOnly: true }),
-    supabase.from("zones").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("sub_zones").select("id, zone_id, name").is("deleted_at", null).order("display_order"),
-    supabase.from("suppliers").select("id, name").is("deleted_at", null).order("name"),
+    getCachedZones(),
+    getCachedSubZones(),
+    getCachedSuppliers(),
   ]);
 
   const vehicles: VehicleSelection[] = (vehiclesRaw ?? []).map((v) => ({
@@ -81,9 +83,9 @@ export default async function FuelPage({
     sub_zone_id: v.sub_zone_id,
   }));
 
-  const zones: OptionItem[] = zonesRes.data ?? [];
-  const subZones = subZonesRes.data ?? [];
-  const suppliers: OptionItem[] = suppliersRes.data ?? [];
+  const zones: OptionItem[] = zonesData.map((z) => ({ id: z.id, name: z.name }));
+  const subZones = subZonesData.map((s) => ({ id: s.id, zone_id: s.zone_id, name: s.name }));
+  const suppliers: OptionItem[] = suppliersData.map((s) => ({ id: s.id, name: s.name }));
 
   return (
     <div className="space-y-4 sm:space-y-6">

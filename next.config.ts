@@ -35,8 +35,58 @@ function supabaseStoragePatterns(): NonNullable<NonNullable<NextConfig["images"]
 const nextConfig: NextConfig = {
   // Cho phép build ra thư mục riêng (deploy.sh build .next-new, không đụng .next đang chạy).
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // Bật nén Gzip/Brotli để giảm kích thước truyền tải tài nguyên
+  compress: true,
+  // Tắt header X-Powered-By để bảo mật và tiết kiệm byte
+  poweredByHeader: false,
+  // Tối ưu tree-shaking và chia nhỏ chunk các thư viện lớn
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@tanstack/react-query",
+      "radix-ui",
+      "sonner",
+      "exceljs",
+      "xlsx",
+      "date-fns",
+    ],
+  },
   images: {
     remotePatterns: supabaseStoragePatterns(),
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
+  },
+  // Cache headers cho static assets
+  async headers() {
+    return [
+      {
+        source: "/brand/:all*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/icons/:all*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/fonts/:all*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
   // Proxy ảnh storage qua server app (cùng nguồn) — trình duyệt không cần truy cập
   // thẳng Supabase (127.0.0.1:54321), tránh lỗi ảnh không hiện khi ở máy/xa khác.
