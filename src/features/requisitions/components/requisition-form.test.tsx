@@ -36,6 +36,17 @@ vi.mock("sonner", () => ({
   },
 }));
 
+if (!global.ResizeObserver) {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+}
+if (!window.HTMLElement.prototype.scrollIntoView) {
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
+}
+
 describe("RequisitionForm", () => {
   const originalOnLine = navigator.onLine;
 
@@ -281,5 +292,35 @@ describe("RequisitionForm", () => {
         items: [{ variantId: "var-100", quantity: 2 }],
       });
     });
+  });
+
+  it("displays user full name and not login username when selecting another requester", async () => {
+    const accounts = [
+      { id: "usr-2", name: "Trần Thị B", username: "tranthib", zone_id: "z-2" },
+      { id: "usr-3", name: "Lê Văn C", username: "levanc", zone_id: "z-1" },
+    ];
+
+    render(
+      <RequisitionForm
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
+        currentUser={{ id: "usr-1", role: "manager", name: "Nguyễn Quản Lý" }}
+        accounts={accounts}
+      />
+    );
+
+    const switchBtn = screen.getByRole("button", { name: "Làm phiếu cho người khác" });
+    fireEvent.click(switchBtn);
+
+    // Click to open combobox
+    const combobox = screen.getByText("Chọn tên tài khoản người khác…");
+    fireEvent.click(combobox);
+
+    // Full names should be in the document
+    expect(screen.getByText("Trần Thị B")).toBeInTheDocument();
+    expect(screen.getByText("Lê Văn C")).toBeInTheDocument();
+
+    // Login usernames should not be displayed
+    expect(screen.queryByText("tranthib")).not.toBeInTheDocument();
+    expect(screen.queryByText("levanc")).not.toBeInTheDocument();
   });
 });

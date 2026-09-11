@@ -55,10 +55,10 @@ export function RequisitionForm({
   }
 
   // MẶC ĐỊNH: phiếu là của tài khoản đang đăng nhập. Chỉ khi "làm cho người khác"
-  // mới chọn tài khoản khác từ danh sách (hiện tên đăng nhập).
-  const otherAccountOptions: { value: string; label: string; hint?: string }[] = accounts
+  // mới chọn tài khoản khác từ danh sách (chỉ hiện tên người dùng).
+  const otherAccountOptions: { value: string; label: string }[] = accounts
     .filter((a) => a.name)
-    .map((a) => ({ value: a.id, label: a.name as string, hint: a.username }));
+    .map((a) => ({ value: a.id, label: a.name as string }));
 
   const [requesterName, setRequesterName] = useState(currentUser?.name || "");
   const [requesterAccountId, setRequesterAccountId] = useState(currentUser?.id || "");
@@ -225,7 +225,7 @@ export function RequisitionForm({
                       onChange={onPickAccount}
                       options={otherAccountOptions}
                       placeholder="Chọn tên tài khoản người khác…"
-                      searchPlaceholder="Gõ tên hoặc tên đăng nhập để tìm…"
+                      searchPlaceholder="Gõ tên để tìm…"
                       emptyText="Không tìm thấy tài khoản."
                     />
                     {!typingOther ? (
