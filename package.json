@@ -14,7 +14,9 @@
     "seed:complete": "tsx scripts/seed-complete-data.ts",
     "dev:up": "bash scripts/dev-up.sh",
     "dev:down": "bash scripts/dev-down.sh",
-    "assign:emails": "tsx scripts/assign-user-emails.ts"
+    "assign:emails": "tsx scripts/assign-user-emails.ts",
+    "deploy:prod": "bash scripts/deploy.sh",
+    "prod": "bash scripts/deploy.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
