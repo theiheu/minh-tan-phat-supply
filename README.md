@@ -1,74 +1,104 @@
-# 🐔 MTP Farm ERP — Hệ Thống Quản Trị Trại Gà Minh Tân Phát
-### Đơn vị áp dụng: Trang Trại Gà Đẻ Trứng Lê Văn Dương (Dầu Tiếng, Bình Dương)
+# 🐔 MTP Farm ERP — Hệ Thống Quản Trị Toàn Diện Trại Gà Minh Tân Phát
+### Đơn vị áp dụng thực tế: Trang Trại Gà Đẻ Trứng Lê Văn Dương (Minh Tân, Dầu Tiếng, Bình Dương)
 
 ![Next.js](https://img.shields.io/badge/Next.js-15_(App_Router)-black?style=flat-square&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)
-![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17-3ecf8e?style=flat-square&logo=supabase)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x_(Strict)-blue?style=flat-square&logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_17_%2B_RLS-3ecf8e?style=flat-square&logo=supabase)
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat-square&logo=tailwindcss)
-![Performance](https://img.shields.io/badge/Tốc_độ-~200ms-success?style=flat-square)
+![Performance](https://img.shields.io/badge/Tốc_độ_tải_trang-~200ms-success?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-Offline_Ready-orange?style=flat-square)
+![Tests](https://img.shields.io/badge/Automated_Tests-318_Passed-brightgreen?style=flat-square)
 
-Hệ thống phần mềm quản trị chuyên biệt dành cho **trang trại chăn nuôi gà đẻ trứng quy mô công nghiệp**, số hóa toàn diện từ quản lý kho bãi, vật tư cơ điện, cấp phát nhiên liệu xăng dầu cho xe cơ giới và máy phát điện, kiểm soát chi phí thực tế theo từng dãy chuồng trại.
+Hệ thống phần mềm quản trị chuyên biệt dành cho **trang trại chăn nuôi gà đẻ trứng quy mô công nghiệp**, số hóa toàn diện từ quản lý kho bãi, vật tư cơ điện chuồng trại, cấp phát nhiên liệu xăng dầu cho xe cơ giới và máy phát điện dự phòng, phân quyền người dùng, thông báo chuông tức thì đến từng nhân viên, kiểm soát chi phí thực tế theo từng dãy chuồng.
 
 ---
 
-## 📦 CÁC TÍNH NĂNG CHÍNH HIỆN TẠI
+## 📦 TOÀN BỘ CÁC TÍNH NĂNG CỦA HỆ THỐNG
 
-### 1. 🔍 Quản lý Danh mục Vật tư & Phụ tùng (`/products`)
-* Tra cứu vật tư có hình ảnh thực tế, mã QR, thông số kỹ thuật và vị trí kệ hàng.
-* Hỗ trợ vật tư đa biến thể (công suất, kích cỡ, điện áp) và vật tư theo bộ (Composite Kits).
-* Cảnh báo tồn kho tối thiểu (Min/Max Stock) để chủ động đặt hàng dự phòng.
+### 1. 👥 Phân Cấp Người Dùng & Quản Trị Tài Khoản (`/admin/users`)
+* **3 Cấp độ Phân quyền chặt chẽ:**
+  * **`requester` (Trưởng chuồng, Thợ cơ điện, Tài xế, Công nhân):** Tra cứu danh mục, tạo phiếu yêu cầu vật tư, báo hỏng đổi đồ 1-1, xác nhận đã nhận hàng. Được gắn trực tiếp với Khu vực (`zone_id`) và Dãy chuồng (`sub_zone_id`) phụ trách.
+  * **`manager` (Thủ kho, Quản lý trại, Kế toán):** Toàn quyền duyệt cấp phát, xuất/nhập kho, đổi 1-1 cấp tốc, quản lý sửa chữa, thanh lý, nhập bồn dầu, kiểm kê kho, quản lý danh mục xe và giá cả.
+  * **`superuser` (Chủ trại, Ban Giám đốc):** Quyền tối cao: Tạo mới, khóa/kích hoạt tài khoản, đổi mật khẩu nhân viên, phân quyền vai trò, xem toàn bộ báo cáo doanh thu & chi phí lãi/lỗ.
+* **Đăng nhập bằng Tên tài khoản (Username Auth):** Đăng nhập nhanh bằng username ngắn gọn (`thukho_dung`, `truongchuong_tuan`), không cần email phức tạp.
 
-### 2. 📝 Phiếu Yêu cầu & Cấp phát Nội bộ (`/requisitions`, `/issues`)
-* Tạo phiếu xin cấp vật tư dạng giỏ hàng tiện lợi trên điện thoại.
-* Quy trình duyệt 4 bước: Tạo nháp ➜ Chờ duyệt ➜ Xuất kho ➜ Người nhận xác nhận.
-* Bắn chuông thông báo (Notification) tức thì và yêu cầu người nhận bấm nút xác nhận khi nhận hàng.
-* Xuất bán phân gà, vỉ trứng hoặc thiết bị cũ cho khách hàng/thương lái bên ngoài.
+### 2. 🔔 Hệ Thống Thông Báo Chuông Tức Thì (Realtime Notifications)
+* **Chuông thông báo đích danh tới từng người:**
+  * Thông báo cho **Trưởng chuồng/Người yêu cầu** khi: Phiếu yêu cầu được Duyệt / Từ chối / Thủ kho đã xuất hàng giao.
+  * Thông báo cho **Quản lý / Thủ kho** khi: Có phiếu yêu cầu mới cần duyệt / Có phiếu báo hỏng khẩn cấp / Có xe đổ dầu tiêu hao bất thường.
+  * Thông báo nhắc nhở khi: Có dụng cụ đồ nghề mượn quá hạn chưa trả.
+* **Cơ chế xác nhận 2 chiều:** Khi nhận hàng, người nhận bắt buộc bấm nút **"Xác nhận đã nhận đủ hàng"** trên app để hoàn tất phiếu, chống cãi vã và thất thoát.
 
-### 3. ⚡ Báo hỏng & Đổi mới 1-1 Cấp tốc (`/defects`)
-* Chụp ảnh vật tư hư hỏng tại chuồng (motor quạt, máy bơm, núm uống...).
-* Bấm 1 chạm **"Đổi 1-1"** trong dưới 30 giây: tự động trừ 1 hàng mới từ Kho Tổng đi lắp ngay và nạp 1 hàng hỏng vào Kho Hỏng.
+### 3. 🔍 Danh Mục Vật Tư & Phụ Tùng Đa Biến Thể (`/products`, `/admin/products`)
+* Tra cứu vật tư trực quan có hình ảnh thực tế, thông số kỹ thuật, vị trí lưu ở kệ nào và số lượng tồn khả dụng.
+* **Đa biến thể linh hoạt:** Hỗ trợ sản phẩm có nhiều quy cách (công suất kW/HP, điện áp 220V/380V, kích cỡ, hãng sản xuất).
+* **Vật tư theo bộ (Composite Kits):** Khai báo 1 bộ quạt hút (gồm khung quạt, cánh, motor, pully, dây curoa) ➜ Cho phép xuất nguyên bộ hoặc xuất lẻ từng linh kiện.
+* **Cảnh báo tồn kho tối thiểu (Min/Max Stock):** Đổi màu cảnh báo vàng/đỏ khi số lượng tồn kho xuống dưới mức an toàn.
 
-### 4. 🔄 Chuỗi Vòng đời Thiết bị: Sửa chữa & Thanh lý (`/repairs`, `/liquidations`)
-* **Gom sửa chữa (`/repairs`):** Gom thiết bị hỏng gửi thợ ngoài quấn motor/hàn xì; nghiệm thu đạt trả về Kho Tổng sẵn sàng dùng tiếp.
-* **Thanh lý phế liệu (`/liquidations`):** Xuất bán ve chai, phế liệu sắt nhôm không thể sửa, ghi nhận doanh thu thanh lý về quỹ trại.
+### 4. 📝 Phiếu Yêu Cầu & Cấp Phát Xuất Kho (`/requisitions`, `/issues`)
+* **Giao diện Giỏ hàng:** Chọn vật tư xin cấp như mua sắm online trên điện thoại; hỗ trợ làm phiếu thay cho công nhân không có smartphone.
+* **Quy trình duyệt chuẩn 4 bước:** Nháp ➜ Chờ duyệt ➜ Đã xuất hàng ➜ Người nhận xác nhận đã nhận đủ.
+* **Xuất cấp nội bộ:** Gắn đích xuất cụ thể theo từng Khu chuồng (`Zone`) và Dãy chuồng (`Sub-zone`).
+* **Xuất bán bên ngoài:** Xuất bán phân gà, vỉ trứng cũ hoặc phế liệu cho khách hàng/thương lái có lưu giá và công nợ.
 
-### 5. 🧰 Mượn - Trả Dụng cụ & Đồ nghề (`/tools`)
-* Quản lý danh mục đồ nghề giá trị cao (máy hàn, máy mài, máy xịt rửa, kìm bấm cáp, thang nhôm).
-* Theo dõi ai mượn, ngày mượn, mục đích sử dụng; cảnh báo quá hạn mượn (Overdue alerts).
+### 5. ⚡ Báo Hỏng & Đổi Mới 1-1 Cấp Tốc Trong 30 Giây (`/defects`)
+* Chụp ảnh vật tư hư hỏng tại chuồng (motor quạt, máy bơm, núm uống...), chọn mức độ hỏng.
+* Bấm 1 chạm **"Đổi 1-1 Cấp Tốc"**: Hệ thống tự động xuất 1 món mới từ **Kho Tổng** đi lắp ngay cứu chuồng gà ngạt thở, đồng thời nạp 1 món cũ vào **Kho Hỏng**.
 
-### 6. ⛽ Quản lý Trạm Cấp Dầu & Xe Cơ Giới (`/fuel`, `/fuel/scan`)
-* Quản lý dàn xe ben chở phân, xe xúc lật, xe bồn cám và máy phát điện dự phòng 250kVA.
-* Nhập bồn dầu tổng (`/fuel/receipts`) từ xe bồn, quản lý đơn giá và đo hao hụt bồn chứa.
-* **Quét mã QR 5 giây:** Quét tem QR dán trên xe ➜ Nhập số lít và Odo mới ➜ Tự động tính định mức tiêu hao ($L/100km$ hoặc $L/giờ$) và cảnh báo nếu tiêu hao bất thường.
+### 6. 🔄 Vòng Đời Thiết Bị: Sửa Chữa & Thanh Lý Phế Liệu (`/repairs`, `/liquidations`)
+* **Gom sửa chữa (`/repairs`):** Gom các motor cháy, máy bơm hỏng gửi thợ ngoài quấn lại, ghi nhận chi phí sửa.
+* **Nghiệm thu kỹ thuật:** Đạt chuẩn ➜ Nhập lại **Kho Tổng** tái sử dụng; Nát quá không sửa được ➜ Chuyển Thanh lý phế liệu.
+* **Thanh lý ve chai (`/liquidations`):** Lập phiếu bán phế liệu sắt nhôm cho thương lái, ghi nhận doanh thu thanh lý nộp về quỹ trại.
 
-### 7. 📥 Nhập kho Nhà Cung Cấp & Lưu trữ Hóa đơn (`/receipts`)
-* Ghi nhận nhập hàng từ nhà cung cấp, cập nhật đơn giá vốn.
-* Chụp ảnh hóa đơn đỏ / phiếu giao hàng đính kèm trực tiếp lên phiếu để đối soát chéo.
+### 7. 🧰 Mượn - Trả Dụng Cụ & Đồ Nghề Chuyên Dụng (`/tools`)
+* Quản lý danh mục đồ nghề đắt tiền: Máy hàn Inverter, máy mài, máy xịt rửa cao áp, kìm bấm cáp, đồng hồ vạn năng, thang nhôm.
+* Theo dõi chi tiết ai đang mượn, mượn ngày nào, hạn trả, dùng ở chuồng nào; cảnh báo quá hạn mượn (Overdue alerts).
 
-### 8. 📋 Kiểm kê Kho & Tự động Cân bằng (`/stocktake`)
+### 8. ⛽ Quản Lý Trạm Cấp Dầu & Xe Cơ Giới (`/fuel`, `/fuel/scan`, `/admin/vehicles`)
+* Quản lý danh mục dàn xe ben chở phân, xe xúc lật dọn chuồng, xe bồn cám, xe tải chở trứng, máy phát điện Cummins 250kVA.
+* **Nhập bồn dầu tổng (`/fuel/receipts`):** Ghi nhận xe bồn Petrolimex vào nhập dầu, lưu hóa đơn, theo dõi tồn và hao hụt bồn chứa.
+* **Quét mã QR 5 giây (`/fuel/scan`):** Quét tem QR dán trên xe ➜ Tự nhận diện xe & Odo cũ ➜ Nhập số lít và Odo mới ➜ Tự động tính định mức tiêu hao ($L/100km$ hoặc $L/giờ$) và báo động đỏ nếu hao dầu bất thường.
+
+### 9. 📥 Nhập Kho Nhà Cung Cấp & Lưu Hóa Đơn Chứng Từ (`/receipts`, `/admin/suppliers`)
+* Quản lý danh bạ Nhà cung cấp thiết bị điện, quạt, thuốc men, xăng dầu.
+* Nhập kho vật tư, cập nhật đơn giá vốn, chụp ảnh hóa đơn đỏ / phiếu giao hàng đính kèm lên phiếu để đối soát chéo.
+
+### 10. 🏷️ Quản Lý Cấu Trúc Khu Vực & Dãy Chuồng (`/admin/zones`)
+* Phân cấp 2 tầng: **Khu vực lớn (`zones`)** (Khu A, Khu B, Khu Úm, Xưởng Cơ Điện, Trạm Dầu) ➜ **Dãy chuồng chi tiết (`sub_zones`)** (Chuồng A1, Chuồng A2, Dãy B1, Dãy B2...).
+* Phân bổ chi phí và thống kê vật tư chính xác đến từng dãy chuồng.
+
+### 11. 🏢 Quản Lý Đa Vị Trí Kho & Điều Chuyển Nội Bộ (`/admin/locations`, `/transfers`)
+* Quản lý các phân vùng kho: **Kho Chính (Main Stock)**, **Kho Hỏng (Defect)**, **Kho Đang sửa (Repair)**, **Kho Dự phòng (Backup)**.
+* Điều chuyển nội bộ linh hoạt giữa các kho với đầy đủ nhật ký luân chuyển (Stock Movements).
+
+### 12. 📋 Kiểm Kê Kho Tự Động & Cân Bằng Tồn Kho (`/stocktake`)
 * Khởi tạo phiên kiểm kê theo từng dãy kệ hoặc toàn bộ kho.
-* Quét mã QR kiểm đếm số lượng thực tế, hiển thị trực quan thừa/thiếu, tự động tạo bút toán cân bằng kho sau khi duyệt.
+* Quét mã QR đếm số lượng thực tế, hiển thị trực quan thừa/thiếu, tự động tạo bút toán cân bằng tồn kho khi duyệt.
 
-### 9. 📊 Báo cáo, Phân tích Chi phí & In ấn Chuẩn hóa (`/reports`)
-* Báo cáo Xuất - Nhập - Tồn (XNT) chi tiết theo khoảng ngày.
-* Báo cáo phân bổ chi phí vật tư, điện, dầu theo từng Khu vực / Dãy chuồng (`Zone Costing`).
-* Xuất dữ liệu ra file Excel và In PDF A4/A5 chuẩn nhận diện thương hiệu Trại Gà Lê Văn Dương.
+### 13. 📊 Trung Tâm Báo Cáo, Thẻ Kho & In Ấn Chuẩn Hóa (`/reports`)
+* **Báo cáo Xuất - Nhập - Tồn (XNT):** Xem biến động xuất nhập tồn theo khoảng ngày.
+* **Thẻ kho (Stock Card):** Truy vết chi tiết lịch sử vào/ra của từng món đồ.
+* **Báo cáo Chi phí theo Chuồng Trại:** Bảng biểu và biểu đồ phân bổ chi phí vật tư, điện, dầu theo từng Khu/Dãy chuồng (`Zone Costing`).
+* **Xuất dữ liệu & In ấn:** Xuất file Excel chi tiết; In PDF A4/A5 chuẩn nhận diện thương hiệu Trại Gà Lê Văn Dương có logo, mã QR tra cứu và chữ ký 4 bên.
 
-### 10. 🌐 Trải nghiệm Thực địa & Công nghệ
+### 14. 🛡️ Nhật Ký Hệ Thống & Kiểm Soát Trách Nhiệm (Audit Trail - `/dashboard`)
+* Ghi lại 100% mọi hành động (Tạo, Sửa, Xóa, Duyệt, Hủy, Đổi 1-1, Cân bằng kho).
+* Lưu chi tiết: Ai làm, lúc mấy giờ, dữ liệu trước khi sửa (Before) và sau khi sửa (After), địa chỉ IP.
+
+### 15. 📱 Trải Nghiệm Thực Địa & Công Nghệ Nền Tảng
 * **Tốc độ siêu tốc (~200ms/trang):** Áp dụng Next.js 15 Server Components + 38 Database Indexes + RAM Cache Metadata.
-* **Ngoại tuyến (Offline PWA):** Hoạt động bình thường cả khi mất sóng ở góc chuồng xa, tự đồng bộ khi có mạng lại.
-* **Đăng nhập Username:** Không cần email, công nhân đăng nhập bằng tên tài khoản ngắn gọn.
+* **Ngoại tuyến (Offline PWA):** Thao tác bình thường cả khi mất sóng ở góc chuồng xa, tự động đồng bộ khi có mạng lại.
+* **Mã QR toàn diện:** In mã QR dán trên kệ hàng, xe cơ giới, máy phát điện và trên từng phiếu in PDF.
 
 ---
 
 ## 🚀 ĐỊNH HƯỚNG MỞ RỘNG ERP TOÀN DIỆN (POULTRY ERP ROADMAP)
 
-Hệ thống đã có sẵn bản Kế hoạch (Plan) và Thiết kế (Spec) để mở rộng tiếp 3 giai đoạn:
+Hệ thống đã có sẵn bản Kế hoạch (Plan) và Thiết kế (Spec) trong thư mục `docs/superpowers/` để sẵn sàng mở rộng tiếp 3 giai đoạn:
 
-* **Giai đoạn 1 (Sản lượng & Đàn gà):** Quản lý lứa gà theo chuồng, theo dõi gà chết/loại thải hằng ngày, nhật ký thu nhặt trứng theo ca (sáng/chiều), phân loại trứng (loại 1, loại 2, dập...), tính tức thì tỷ lệ đẻ **% Laying Rate**, quản lý giá và xuất bán trứng cho thương lái.
-* **Giai đoạn 2 (Thức ăn & Thú y):** Quản lý tiêu thụ Cám (g/con/ngày), tính chỉ số chuyển hóa **FCR** (kg cám/kg trứng), cảnh báo ăn giảm sớm (báo động ủ bệnh), lịch Vắc-xin tự động theo tuần tuổi, cảnh báo thời gian ngưng thuốc cách ly an toàn sinh học.
-* **Giai đoạn 3 (Tài chính P&L):** Báo cáo **Giá thành sản xuất 1 quả trứng (Cost per Egg)** theo ngày, Báo cáo Lãi/Lỗ ròng (P&L) toàn trại, Chấm công ca nhặt trứng & Thưởng năng suất chuồng.
+* **Giai đoạn 1 (Sản lượng & Đàn gà):** Quản lý lứa gà theo từng dãy chuồng, theo dõi gà chết & loại thải hằng ngày, nhật ký thu nhặt trứng theo ca (sáng/chiều), phân loại trứng (loại 1, loại 2, dập...), tính tức thì tỷ lệ đẻ **% Laying Rate**, quản lý bảng giá và xuất bán trứng cho thương lái.
+* **Giai đoạn 2 (Thức ăn & Thú y):** Quản lý tiêu thụ Cám (g/con/ngày), tính chỉ số chuyển hóa **FCR** (kg cám / kg trứng), cảnh báo ăn giảm sớm (báo động ủ bệnh trước khi sụt đẻ), lịch Vắc-xin tự động theo tuần tuổi, cảnh báo thời gian ngưng thuốc cách ly an toàn sinh học.
+* **Giai đoạn 3 (Tài chính Nông trại):** Báo cáo **Giá thành sản xuất 1 quả trứng (Cost per Egg)** theo ngày, Báo cáo Lãi/Lỗ ròng (P&L) toàn trại, Chấm công ca nhặt trứng & Thưởng năng suất chuồng.
 
 ---
 
@@ -78,7 +108,7 @@ Hệ thống đã có sẵn bản Kế hoạch (Plan) và Thiết kế (Spec) đ
 # 1. Khởi động môi trường phát triển (Dev 3001):
 bash scripts/dev-up.sh
 
-# 2. Kiểm tra chất lượng mã nguồn & chạy 318 unit tests:
+# 2. Kiểm tra chất lượng mã nguồn & chạy 318 bài test tự động:
 pnpm typecheck
 pnpm test
 
