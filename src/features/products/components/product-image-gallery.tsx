@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, ZoomIn } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { appAssetUrl } from "@/lib/images";
 
 /**
  * Gallery trượt ngang hiển thị nhiều ảnh trong một khung vuông cố định.
@@ -58,7 +59,7 @@ export function ProductImageGallery({ images, alt }: { images: string[]; alt: st
                 </div>
               ) : (
                 <Image
-                  src={src}
+                  src={appAssetUrl(src) || src}
                   alt={alt}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

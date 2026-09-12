@@ -16,17 +16,21 @@ export function MobileInstallPrompt() {
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    // Check if already in standalone mode
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      // @ts-expect-error - iOS standalone property
-      Boolean(window.navigator.standalone);
+    try {
+      // Check if already in standalone mode
+      const isStandalone =
+        (typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(display-mode: standalone)").matches) ||
+        // @ts-expect-error - iOS standalone property
+        Boolean(typeof window !== "undefined" && window.navigator && window.navigator.standalone);
 
-    if (isStandalone) return;
+      if (isStandalone) return;
 
-    // Check if user dismissed recently
-    const lastDismissed = localStorage.getItem("mtp-pwa-dismissed");
-    if (lastDismissed && Date.now() - Number(lastDismissed) < 7 * 24 * 60 * 60 * 1000) {
+      // Check if user dismissed recently
+      const lastDismissed = typeof localStorage !== "undefined" ? localStorage.getItem("mtp-pwa-dismissed") : null;
+      if (lastDismissed && Date.now() - Number(lastDismissed) < 7 * 24 * 60 * 60 * 1000) {
+        return;
+      }
+    } catch {
       return;
     }
 
@@ -62,7 +66,9 @@ export function MobileInstallPrompt() {
 
   function handleDismiss() {
     setDismissed(true);
-    localStorage.setItem("mtp-pwa-dismissed", Date.now().toString());
+    try {
+      localStorage.setItem("mtp-pwa-dismissed", Date.now().toString());
+    } catch {}
   }
 
   if (!installEvent && !isIos) return null;

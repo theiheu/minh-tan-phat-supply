@@ -421,3 +421,33 @@ export async function deleteProduct(id: string) {
   if (error) throw new Error(error.message);
   revalidate();
 }
+
+export async function lookupVariantByQrAction(variantId: string) {
+  const supabase = await createClient();
+  const { data: vRow } = await supabase
+    .from("variants")
+    .select("*, products(id, name, image_url)")
+    .eq("id", variantId)
+    .single();
+
+  if (!vRow) return null;
+
+  const { data: stockRow } = await supabase
+    .from("variant_stock")
+    .select("quantity")
+    .eq("variant_id", vRow.id)
+    .maybeSingle();
+
+  const pMeta = vRow.products as { name?: string; image_url?: string } | null;
+
+  return {
+    productName: pMeta?.name || "Vật tư",
+    variant: {
+      ...vRow,
+      stock: stockRow?.quantity ?? 0,
+      isComposite: false,
+      components: [],
+    },
+    image: pMeta?.image_url,
+  };
+}

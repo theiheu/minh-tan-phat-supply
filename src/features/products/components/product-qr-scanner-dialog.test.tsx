@@ -1,15 +1,15 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ProductQrScannerDialog } from "./product-qr-scanner-dialog";
-import { createClient } from "@/lib/supabase/client";
+import { lookupVariantByQrAction } from "../actions";
 import { useRouter } from "next/navigation";
 
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
 }));
 
-vi.mock("@/lib/supabase/client", () => ({
-  createClient: vi.fn(),
+vi.mock("../actions", () => ({
+  lookupVariantByQrAction: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -44,8 +44,9 @@ describe("ProductQrScannerDialog", () => {
 
   it("handles manual code submission and displays QuickAddBottomSheet when variant is found", async () => {
     const validUuid = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-    const mockSingle = vi.fn().mockResolvedValue({
-      data: {
+    (lookupVariantByQrAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      productName: "Kìm bấm cos",
+      variant: {
         id: validUuid,
         product_id: "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22",
         unit: "cái",
@@ -57,39 +58,12 @@ describe("ProductQrScannerDialog", () => {
         images: [],
         created_at: "2025-01-01T00:00:00Z",
         updated_at: "2025-01-01T00:00:00Z",
-        products: { id: "b1eebc99-9c0b-4ef8-bb6d-6bb9bd380b22", name: "Kìm bấm cos", image_url: "https://example.com/kim.jpg" },
+        stock: 8,
+        isComposite: false,
+        components: [],
       },
+      image: "https://example.com/kim.jpg",
     });
-
-    const mockMaybeSingle = vi.fn().mockResolvedValue({
-      data: { quantity: 8 },
-    });
-
-    const mockSupabase = {
-      from: vi.fn((table: string) => {
-        if (table === "variants") {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: mockSingle,
-              }),
-            }),
-          };
-        }
-        if (table === "variant_stock") {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: mockMaybeSingle,
-              }),
-            }),
-          };
-        }
-        return {};
-      }),
-    };
-
-    (createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     render(<ProductQrScannerDialog open={true} onOpenChange={vi.fn()} />);
 
@@ -107,16 +81,7 @@ describe("ProductQrScannerDialog", () => {
 
   it("navigates to /products?q=... when code is text query or variant not found", async () => {
     const onOpenChange = vi.fn();
-    const mockSupabase = {
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null }),
-          }),
-        }),
-      })),
-    };
-    (createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (lookupVariantByQrAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     render(<ProductQrScannerDialog open={true} onOpenChange={onOpenChange} />);
 
@@ -139,35 +104,18 @@ describe("ProductQrScannerDialog", () => {
     });
 
     const validUuid = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
-    const mockSupabase = {
-      from: vi.fn((table: string) => {
-        if (table === "variants") {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: {
-                    id: validUuid,
-                    product_id: "prod-1",
-                    unit: "bộ",
-                    price: 200000,
-                    products: { name: "Bộ dụng cụ" },
-                  },
-                }),
-              }),
-            }),
-          };
-        }
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              maybeSingle: vi.fn().mockResolvedValue({ data: { quantity: 5 } }),
-            }),
-          }),
-        };
-      }),
-    };
-    (createClient as unknown as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (lookupVariantByQrAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      productName: "Bộ dụng cụ",
+      variant: {
+        id: validUuid,
+        product_id: "prod-1",
+        unit: "bộ",
+        price: 200000,
+        stock: 5,
+        isComposite: false,
+        components: [],
+      },
+    });
 
     render(<ProductQrScannerDialog open={true} onOpenChange={vi.fn()} />);
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { createClient } from "@/lib/supabase/client";
+import { lookupVariantByQrAction } from "../actions";
 import { parseProductQrText } from "../lib/qr-parser";
 import { QuickAddBottomSheet } from "./quick-add-bottom-sheet";
 import type { VariantWithStock } from "../types";
@@ -53,38 +53,15 @@ export function ProductQrScannerDialog({
     async (rawCode: string) => {
       setLoading(true);
       const parsed = parseProductQrText(rawCode);
-      const supabase = createClient();
 
       try {
         if (parsed.type === "variant_id") {
-          const { data: vRow } = await supabase
-            .from("variants")
-            .select("*, products(id, name, image_url)")
-            .eq("id", parsed.value)
-            .single();
-
-          if (vRow) {
-            const { data: stockRow } = await supabase
-              .from("variant_stock")
-              .select("quantity")
-              .eq("variant_id", vRow.id)
-              .maybeSingle();
-
-            const pMeta = vRow.products as { name?: string; image_url?: string } | null;
+          const result = await lookupVariantByQrAction(parsed.value);
+          if (result) {
             if (typeof navigator !== "undefined" && navigator.vibrate) {
               navigator.vibrate([40, 30, 40]);
             }
-
-            setScannedVariant({
-              productName: pMeta?.name || "Vật tư",
-              variant: {
-                ...vRow,
-                stock: stockRow?.quantity ?? 0,
-                isComposite: false,
-                components: [],
-              },
-              image: pMeta?.image_url,
-            });
+            setScannedVariant(result);
             setLoading(false);
             return;
           }

@@ -9,6 +9,9 @@ function supabaseStoragePatterns(): NonNullable<NonNullable<NextConfig["images"]
     { protocol: "http", hostname: "localhost", port: "54321", pathname: "/storage/v1/object/**" },
     // Supabase hosted project storage (production cloud)
     { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/**" },
+    // Domain production
+    { protocol: "https", hostname: "minhtanphat.io.vn", pathname: "/**" },
+    { protocol: "http", hostname: "minhtanphat.io.vn", pathname: "/**" },
     // Unsplash (placeholder / seed / mock images)
     { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
   ];
@@ -88,12 +91,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // Proxy ảnh storage qua server app (cùng nguồn) — trình duyệt không cần truy cập
-  // thẳng Supabase (127.0.0.1:54321), tránh lỗi ảnh không hiện khi ở máy/xa khác.
+  // Proxy Supabase endpoints qua server app (cùng nguồn) — trình duyệt không cần truy cập
+  // thẳng Supabase (127.0.0.1:54321), tránh lỗi mixed content / CORS khi ở xa.
   async rewrites() {
     const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
     if (!supabaseUrl) return [];
-    return [{ source: "/storage/:path*", destination: `${supabaseUrl}/storage/:path*` }];
+    return [
+      { source: "/storage/:path*", destination: `${supabaseUrl}/storage/:path*` },
+      { source: "/auth/:path*", destination: `${supabaseUrl}/auth/:path*` },
+      { source: "/rest/:path*", destination: `${supabaseUrl}/rest/:path*` },
+    ];
   },
 };
 

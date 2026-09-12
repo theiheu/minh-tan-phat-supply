@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { createClient } from "@/lib/supabase/client";
-import type { Database } from "@/types/database.types";
-
-type NotificationRow = Database["public"]["Tables"]["notifications"]["Row"];
+import {
+  getUnreadNotificationsCount,
+  getRecentNotifications,
+  markNotificationReadAction,
+  markAllNotificationsReadAction,
+  type NotificationRow,
+} from "@/features/notifications/actions";
 
 function timeAgo(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -30,27 +33,23 @@ export function NotificationBell() {
 
   // Chỉ lấy số lượng chưa đọc khi chưa mở drawer để tiết kiệm tài nguyên
   const refreshCountOnly = useCallback(async () => {
-    const supabase = createClient();
-    const { count } = await supabase
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
-      .is("read_at", null);
-    setUnread(count ?? 0);
+    try {
+      const count = await getUnreadNotificationsCount();
+      setUnread(count);
+    } catch {
+      // Bỏ qua lỗi ngầm
+    }
   }, []);
 
   // Lấy chi tiết 30 thông báo khi người dùng mở drawer
   const refreshFull = useCallback(async () => {
-    const supabase = createClient();
-    const [{ data: rows }, { count }] = await Promise.all([
-      supabase
-        .from("notifications")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(30),
-      supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
-    ]);
-    if (rows) setItems(rows);
-    setUnread(count ?? 0);
+    try {
+      const res = await getRecentNotifications();
+      if (res.items) setItems(res.items);
+      setUnread(res.unread);
+    } catch {
+      // Bỏ qua lỗi ngầm
+    }
   }, []);
 
   useEffect(() => {
@@ -64,19 +63,19 @@ export function NotificationBell() {
   }, [open, refreshFull]);
 
   async function openItem(n: NotificationRow) {
-    const supabase = createClient();
     if (!n.read_at) {
-      await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
       setUnread((u) => Math.max(0, u - 1));
-      setItems((list) => list.map((x) => (x.id === n.id ? { ...x, read_at: x.read_at ?? "" } : x)));
+      setItems((list) => list.map((x) => (x.id === n.id ? { ...x, read_at: new Date().toISOString() } : x)));
+      markNotificationReadAction(n.id).catch(() => {});
     }
     setOpen(false);
     if (n.link) router.push(n.link);
   }
 
   async function markAllRead() {
-    const supabase = createClient();
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+    setUnread(0);
+    setItems((list) => list.map((x) => ({ ...x, read_at: x.read_at || new Date().toISOString() })));
+    await markAllNotificationsReadAction().catch(() => {});
     await refreshFull();
   }
 
