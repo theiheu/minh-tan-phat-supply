@@ -9,7 +9,31 @@
 ![PWA](https://img.shields.io/badge/PWA-Offline_Ready-orange?style=flat-square)
 ![Tests](https://img.shields.io/badge/Automated_Tests-318_Passed-brightgreen?style=flat-square)
 
-Hệ thống phần mềm quản trị chuyên biệt dành cho **trang trại chăn nuôi gà đẻ trứng quy mô công nghiệp**, số hóa toàn diện từ quản lý kho bãi, vật tư cơ điện chuồng trại, cấp phát nhiên liệu xăng dầu cho xe cơ giới và máy phát điện dự phòng, phân quyền người dùng, thông báo chuông tức thì đến từng nhân viên, kiểm soát chi phí thực tế theo từng dãy chuồng.
+---
+
+## 💡 KHÁI NIỆM & BẢN CHẤT ERP TRONG QUẢN TRỊ DOANH NGHIỆP
+
+**ERP** (viết tắt của **Enterprise Resource Planning** - Hoạch định Nguồn lực Doanh nghiệp) là hệ thống phần mềm tích hợp đa chức năng, giúp doanh nghiệp quản lý và đồng bộ toàn bộ quy trình vận hành cốt lõi trên **một cơ sở dữ liệu duy nhất theo thời gian thực**.
+
+Thay vì kế toán dùng phần mềm riêng, kho dùng bảng Excel riêng, phòng kinh doanh dùng một công cụ khác, ERP gom tất cả các phòng ban về chung một mối:
+
+### Các phân hệ chính trong một hệ thống ERP tiêu chuẩn:
+* **Tài chính - Kế toán (Financial Management):** Quản lý dòng tiền, sổ cái, công nợ phải thu/phải trả, báo cáo tài chính và thuế.
+* **Quản lý kho & Chuỗi cung ứng (SCM & Inventory):** Theo dõi xuất - nhập - tồn, điều chuyển kho nội bộ, theo dõi đơn đặt mua nguyên vật liệu và quản lý nhà cung cấp.
+* **Sản xuất (Manufacturing):** Lập kế hoạch sản xuất, định mức nguyên vật liệu (BOM), theo dõi tiến độ phân xưởng và tính giá thành sản phẩm.
+* **Bán hàng & CRM:** Quản lý đơn đặt hàng, báo giá, hợp đồng, xuất hóa đơn và thông tin khách hàng.
+* **Nhân sự & Tiền lương (HRM):** Chấm công, tính lương thưởng, hồ sơ nhân viên và KPI.
+
+### Lợi ích cốt lõi:
+* **Dữ liệu liền mạch (Single Source of Truth):** Khi nhân viên kinh doanh chốt một đơn hàng, hệ thống tự động trừ tồn kho, gửi thông báo cho phân xưởng sản xuất và ghi nhận doanh thu vào bộ phận kế toán mà không cần nhập liệu thủ công qua lại giữa các phòng ban.
+* **Giảm thiểu sai sót & Minh bạch:** Loại bỏ tình trạng lệch số liệu giữa các phòng ban hoặc gian lận thất thoát.
+* **Hỗ trợ ra quyết định nhanh:** Ban lãnh đạo xem được báo cáo doanh thu, chi phí, tồn kho tổng thể theo thời gian thực (real-time).
+
+---
+
+## 🎯 ỨNG DỤNG ERP VÀO TRẠI GÀ ĐẺ TRỨNG MINH TÂN PHÁT
+
+Áp dụng triết lý ERP vào thực tế trang trại chăn nuôi gà đẻ trứng quy mô lớn, **MTP Farm ERP** số hóa toàn diện từ quản lý kho bãi, vật tư cơ điện chuồng trại, cấp phát nhiên liệu xăng dầu cho xe cơ giới và máy phát điện dự phòng, phân quyền người dùng, thông báo chuông tức thì đến từng nhân viên, kiểm soát chi phí thực tế theo từng dãy chuồng.
 
 ---
 
@@ -87,7 +111,7 @@ Hệ thống phần mềm quản trị chuyên biệt dành cho **trang trại c
 
 ### 15. 📱 Trải Nghiệm Thực Địa & Công Nghệ Nền Tảng
 * **Tốc độ siêu tốc (~200ms/trang):** Áp dụng Next.js 15 Server Components + 38 Database Indexes + RAM Cache Metadata.
-* **Ngoại tuyến (Offline PWA):** Thao tác bình thường cả khi mất sóng ở góc chuồng xa, tự động đồng bộ khi có mạng lại.
+* **Ngoại tuyến (Offline PWA):** Thao tác bình thường cả khi mất sóng ở góc chuồng xa, tự đồng bộ khi có mạng lại.
 * **Mã QR toàn diện:** In mã QR dán trên kệ hàng, xe cơ giới, máy phát điện và trên từng phiếu in PDF.
 
 ---
