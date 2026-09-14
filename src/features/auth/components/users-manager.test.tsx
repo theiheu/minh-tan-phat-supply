@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { UsersManager } from "./users-manager";
 import type { Profile } from "@/lib/types";
 
@@ -46,24 +46,35 @@ describe("UsersManager", () => {
     },
   ];
 
-  it("hiển thị cột Email và giá trị email của người dùng", () => {
+  it("hiển thị cột Email, nút Tạo tài khoản và mở modal form khi bấm nút", () => {
     render(
       <UsersManager
         profiles={mockProfiles}
-        zones={[]}
-        subZones={[]}
+        zones={[{ id: "z1", name: "Khu A" }]}
+        subZones={[{ id: "sz1", zone_id: "z1", name: "Trại A1" }]}
         currentRole="manager"
       />,
     );
 
-    // Tiêu đề cột Email
+    // Tiêu đề cột Email trong bảng
     expect(screen.getByRole("columnheader", { name: "Email" })).toBeInTheDocument();
 
-    // Input email trong form tạo tài khoản
-    expect(screen.getByLabelText("Email (nhận thông báo)")).toBeInTheDocument();
-
-    // Input email trong danh sách dòng người dùng
+    // Giá trị email hiển thị trong danh sách người dùng
     expect(screen.getByDisplayValue("vana@gmail.com")).toBeInTheDocument();
     expect(screen.getByDisplayValue("quanly@minhtanphat.vn")).toBeInTheDocument();
+
+    // Nút Tạo tài khoản ở góc trên bên phải
+    const createBtn = screen.getByRole("button", { name: /Tạo tài khoản/i });
+    expect(createBtn).toBeInTheDocument();
+
+    // Bấm nút mở modal form tạo tài khoản
+    fireEvent.click(createBtn);
+
+    // Kiểm tra các trường trong modal
+    expect(screen.getByText("Tạo tài khoản mới")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Họ và tên/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Tên đăng nhập/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Mật khẩu khởi tạo/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Email (nhận thông báo)")).toBeInTheDocument();
   });
 });

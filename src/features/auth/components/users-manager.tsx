@@ -2,11 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -50,11 +59,15 @@ function roleOptionsFor(currentRole: string): { value: string; label: string }[]
   return base;
 }
 
-function CreateAccountForm({
+export function CreateUserDialog({
+  open,
+  onOpenChange,
   zones,
   subZones = [],
   currentRole,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   zones: ZoneOption[];
   subZones?: SubZoneOption[];
   currentRole: string;
@@ -72,6 +85,16 @@ function CreateAccountForm({
 
   const availableSubZones = zoneId ? subZones.filter((s) => s.zone_id === zoneId) : [];
 
+  function resetForm() {
+    setName("");
+    setUsername("");
+    setEmail("");
+    setPassword("");
+    setRole("requester");
+    setZoneId(null);
+    setSubZoneId(null);
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
@@ -86,13 +109,8 @@ function CreateAccountForm({
           password,
         });
         toast.success(`Đã tạo tài khoản ${username.trim().toLowerCase()}`);
-        setName("");
-        setUsername("");
-        setEmail("");
-        setPassword("");
-        setRole("requester");
-        setZoneId(null);
-        setSubZoneId(null);
+        resetForm();
+        onOpenChange(false);
         router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Tạo tài khoản thất bại");
@@ -101,56 +119,83 @@ function CreateAccountForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Tạo tài khoản mới</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={submit} className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cu-name">Tên</Label>
-            <Input id="cu-name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Tạo tài khoản mới</DialogTitle>
+          <DialogDescription>
+            Nhập thông tin nhân viên, tài khoản đăng nhập và phân quyền khu vực.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={submit} className="space-y-4 pt-1">
+          {/* 1. Hàng 1: Tên & Tên đăng nhập (Cố định trên cùng) */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cu-name">
+                Họ và tên <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cu-name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nguyễn Văn A"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cu-username">
+                Tên đăng nhập <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cu-username"
+                required
+                minLength={3}
+                maxLength={30}
+                pattern="[a-z][a-z0-9._-]{2,29}"
+                title="Chữ thường không dấu, số, . _ - ; bắt đầu bằng chữ cái"
+                autoComplete="off"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="nguyen.van.a"
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cu-username">Tên đăng nhập</Label>
-            <Input
-              id="cu-username"
-              required
-              minLength={3}
-              maxLength={30}
-              pattern="[a-z][a-z0-9._-]{2,29}"
-              title="Chữ thường không dấu, số, . _ - ; bắt đầu bằng chữ cái"
-              autoComplete="off"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="nguyen.van.a"
-            />
+
+          {/* 2. Hàng 2: Mật khẩu & Email (Cố định) */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cu-password">
+                Mật khẩu khởi tạo <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cu-password"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Tối thiểu 8 ký tự"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="cu-email">Email (nhận thông báo)</Label>
+              <Input
+                id="cu-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@vidu.com"
+              />
+            </div>
           </div>
+
+          {/* 3. Hàng 3: Vai trò (Cố định) */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cu-email">Email (nhận thông báo)</Label>
-            <Input
-              id="cu-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@vidu.com"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="cu-password">Mật khẩu</Label>
-            <Input
-              id="cu-password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tối thiểu 8 ký tự"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Vai trò</Label>
+            <Label>
+              Vai trò <span className="text-destructive">*</span>
+            </Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -162,52 +207,68 @@ function CreateAccountForm({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Khu vực</Label>
-            <Select
-              value={zoneId ?? "none"}
-              onValueChange={(v) => {
-                setZoneId(v === "none" ? null : v);
-                setSubZoneId(null);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Không —</SelectItem>
-                {zones.map((z) => (
-                  <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          {/* 4. Khối Khu vực & Trại: Nằm riêng ở phần dưới, Trại luôn hiển thị xuống dưới Khu vực */}
+          <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>Khu vực quản lý / công tác</Label>
+              <Select
+                value={zoneId ?? "none"}
+                onValueChange={(v) => {
+                  setZoneId(v === "none" ? null : v);
+                  setSubZoneId(null);
+                }}
+              >
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Không phân khu vực —</SelectItem>
+                  {zones.map((z) => (
+                    <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Ô Trại / Xưởng: Khi xuất hiện sẽ mở rộng XUỐNG DƯỚI ô Khu vực, không làm thay đổi các hàng phía trên */}
+            {zoneId && availableSubZones.length > 0 && (
+              <div className="flex flex-col gap-1.5 pt-1 animate-in fade-in slide-in-from-top-1">
+                <Label>Trại / Xưởng trực thuộc</Label>
+                <Select
+                  value={subZoneId ?? "none"}
+                  onValueChange={(v) => setSubZoneId(v === "none" ? null : v)}
+                >
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue placeholder="— Tất cả trại trong khu —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Tất cả trại trong khu —</SelectItem>
+                    {availableSubZones.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Trại / Xưởng</Label>
-            <Select
-              value={subZoneId ?? "none"}
-              onValueChange={(v) => setSubZoneId(v === "none" ? null : v)}
-              disabled={!zoneId || availableSubZones.length === 0}
+
+          <DialogFooter className="pt-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={pending}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="— Không —" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Không —</SelectItem>
-                {availableSubZones.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end">
-            <Button type="submit" disabled={pending} className="w-full">
+              Hủy
+            </Button>
+            <Button type="submit" disabled={pending}>
               {pending ? "Đang tạo…" : "Tạo tài khoản"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -275,7 +336,7 @@ function UserRow({
   }
 
   return (
-    <TableRow>
+    <TableRow className="align-top">
       <TableCell className="min-w-[150px]">
         <div className="flex items-center gap-1.5">
           <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} />
@@ -360,7 +421,7 @@ function UserRow({
         </div>
       </TableCell>
       <TableCell>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm pt-2">
           <input
             type="checkbox"
             checked={isActive}
@@ -569,13 +630,24 @@ export function UsersManager({
   /** Tổng số trang — mặc định 1 (ẩn phân trang). */
   totalPages?: number;
 }) {
+  const [createOpen, setCreateOpen] = useState(false);
+
   return (
     <div className="space-y-4">
       <EmailToolsCard />
-      <CreateAccountForm zones={zones} subZones={subZones} currentRole={currentRole} />
+
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Danh sách người dùng</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle className="text-base font-semibold">Danh sách người dùng</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Quản lý tài khoản, phân quyền khu vực và mật khẩu nhân viên
+            </p>
+          </div>
+          <Button onClick={() => setCreateOpen(true)} className="gap-1.5">
+            <UserPlus className="size-4" />
+            <span>Tạo tài khoản</span>
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -599,6 +671,14 @@ export function UsersManager({
           <Pagination basePath="/admin/users" page={page} totalPages={totalPages} className="mt-4" />
         </CardContent>
       </Card>
+
+      <CreateUserDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        zones={zones}
+        subZones={subZones}
+        currentRole={currentRole}
+      />
     </div>
   );
 }
