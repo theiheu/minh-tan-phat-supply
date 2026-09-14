@@ -4,7 +4,7 @@ import { ThemeToggle } from "./theme-toggle";
 
 export default function LoginPage() {
   return (
-    <div className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-background px-4 py-8 select-none-subtle">
+    <div className="relative flex h-dvh max-h-dvh w-full items-center justify-center overflow-hidden bg-background p-4 select-none-subtle">
       {/* Dynamic Ambient Background Glows */}
       <div
         className="pointer-events-none absolute -top-40 -left-40 size-96 rounded-full bg-primary/20 blur-3xl opacity-60 dark:opacity-30"
@@ -26,37 +26,19 @@ export default function LoginPage() {
       />
 
       {/* Top Bar with Theme Toggle */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-3 right-3 z-20">
         <ThemeToggle />
       </div>
 
       {/* Main Container */}
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6">
+      <div className="relative z-10 flex w-full max-w-sm sm:max-w-md flex-col items-center gap-3">
         <Suspense
           fallback={
-            <div className="h-96 w-full max-w-md animate-pulse rounded-2xl bg-card/60" />
+            <div className="h-80 w-full max-w-sm sm:max-w-md animate-pulse rounded-2xl bg-card/60" />
           }
         >
           <LoginForm />
         </Suspense>
-
-        {/* Feature Tags / Footnote */}
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-center text-xs text-muted-foreground/80">
-          <span className="flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-emerald-500" />
-            Tồn kho tức thời
-          </span>
-          <span className="text-border">•</span>
-          <span className="flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-primary" />
-            Quét mã QR
-          </span>
-          <span className="text-border">•</span>
-          <span className="flex items-center gap-1">
-            <span className="size-1.5 rounded-full bg-sky-500" />
-            Đồng bộ ngoại tuyến
-          </span>
-        </div>
 
         <p className="text-center text-[11px] text-muted-foreground/70">
           © {new Date().getFullYear()} Trại gà Minh Tân Phát • Quản lý Vật tư & Kho
