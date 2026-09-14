@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ImagePlus, Loader2, Milestone, Printer, QrCode, X } from "lucide-react";
+import { BrandLoading } from "@/components/brand-loading";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -270,10 +271,12 @@ export function SlipDetailModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-4xl lg:max-w-5xl h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
         {loading || !detail ? (
-          <div className="flex flex-col items-center justify-center py-24 space-y-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Đang tải thông tin phiếu…</p>
-          </div>
+          <BrandLoading
+            variant="inline"
+            size="md"
+            message="Đang tải thông tin phiếu…"
+            className="py-16"
+          />
         ) : (
           <>
             {/* Header */}

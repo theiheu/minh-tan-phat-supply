@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { BrandLoading } from "@/components/brand-loading";
 import { requireProfile } from "@/lib/auth";
 import { getFuelTypes, getVehicleByQrAction } from "@/features/fuel/actions";
 import { FuelQuickScan, type VehicleScanResult } from "@/features/fuel/components/fuel-quick-scan";
@@ -41,10 +41,11 @@ export default async function FuelScanPage({
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[300px] flex-col items-center justify-center gap-3">
-          <Loader2 className="size-10 animate-spin text-primary" />
-          <p className="text-sm font-medium">Đang tải biểu mẫu cấp dầu...</p>
-        </div>
+        <BrandLoading
+          variant="page"
+          size="md"
+          message="Đang tải biểu mẫu cấp dầu..."
+        />
       }
     >
       <FuelQuickScan

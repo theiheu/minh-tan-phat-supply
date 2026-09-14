@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { BrandLoading } from "@/components/brand-loading";
 import { LoginForm } from "./login-form";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -34,7 +35,9 @@ export default function LoginPage() {
       <div className="relative z-10 flex w-full max-w-sm sm:max-w-md flex-col items-center gap-3">
         <Suspense
           fallback={
-            <div className="h-80 w-full max-w-sm sm:max-w-md animate-pulse rounded-2xl bg-card/60" />
+            <div className="flex h-96 w-full max-w-sm sm:max-w-md items-center justify-center rounded-2xl border border-border/80 bg-card/95 p-6 shadow-2xl backdrop-blur-md">
+              <BrandLoading variant="inline" size="md" message="Đang tải đăng nhập..." />
+            </div>
           }
         >
           <LoginForm />

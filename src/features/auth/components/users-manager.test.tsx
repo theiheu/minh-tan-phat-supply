@@ -77,4 +77,27 @@ describe("UsersManager", () => {
     expect(screen.getByLabelText(/Mật khẩu khởi tạo/i)).toBeInTheDocument();
     expect(screen.getByLabelText("Email (nhận thông báo)")).toBeInTheDocument();
   });
+
+  it("căn lề trên (align-top) cho các ô trong bảng để khi hiển thị ô trại không làm lệch hàng", () => {
+    const { container } = render(
+      <UsersManager
+        profiles={[
+          {
+            ...mockProfiles[0],
+            zone_id: "z1",
+            sub_zone_id: "sz1",
+          },
+        ]}
+        zones={[{ id: "z1", name: "Khu A" }]}
+        subZones={[{ id: "sz1", zone_id: "z1", name: "Trại A1" }]}
+        currentRole="manager"
+      />,
+    );
+
+    const cells = container.querySelectorAll("tbody td");
+    expect(cells.length).toBeGreaterThan(0);
+    cells.forEach((cell) => {
+      expect(cell.className).toContain("align-top");
+    });
+  });
 });

@@ -336,16 +336,16 @@ function UserRow({
   }
 
   return (
-    <TableRow className="align-top">
-      <TableCell className="min-w-[150px]">
-        <div className="flex items-center gap-1.5">
-          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} />
+    <TableRow className="align-top [&>td]:align-top">
+      <TableCell className="align-top min-w-[150px]">
+        <div className="flex items-center gap-1.5 h-9">
+          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit} className="h-9" />
           {isSystemAccount && (
             <Badge variant="violet" className="shrink-0">Hệ thống</Badge>
           )}
         </div>
       </TableCell>
-      <TableCell className="min-w-[130px]">
+      <TableCell className="align-top min-w-[130px]">
         <Input
           value={username}
           minLength={3}
@@ -353,23 +353,25 @@ function UserRow({
           pattern="[a-z][a-z0-9._-]{2,29}"
           onChange={(e) => setUsername(e.target.value)}
           disabled={!canEdit}
+          className="h-9"
         />
       </TableCell>
-      <TableCell className="min-w-[160px]">
+      <TableCell className="align-top min-w-[160px]">
         <Input
           type="email"
           value={email}
           placeholder="email@vidu.com"
           onChange={(e) => setEmail(e.target.value)}
           disabled={!canEdit}
+          className="h-9"
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="align-top">
         {!canEdit ? (
-          <span className="text-sm font-medium">{roleLabel(profile.role)}</span>
+          <span className="inline-flex items-center h-9 text-sm font-medium">{roleLabel(profile.role)}</span>
         ) : (
           <Select value={role} onValueChange={setRole}>
-            <SelectTrigger className="w-full min-w-[130px]">
+            <SelectTrigger className="w-full min-w-[130px] h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -380,7 +382,7 @@ function UserRow({
           </Select>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="align-top">
         <div className="flex flex-col gap-1.5 min-w-[140px]">
           <Select
             value={zoneId ?? "none"}
@@ -390,7 +392,7 @@ function UserRow({
             }}
             disabled={!canEdit}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -420,8 +422,8 @@ function UserRow({
           )}
         </div>
       </TableCell>
-      <TableCell>
-        <label className="flex items-center gap-2 text-sm pt-2">
+      <TableCell className="align-top">
+        <label className="flex items-center gap-2 text-sm h-9 cursor-pointer">
           <input
             type="checkbox"
             checked={isActive}
@@ -436,9 +438,9 @@ function UserRow({
           )}
         </label>
       </TableCell>
-      <TableCell className="min-w-[160px]">
+      <TableCell className="align-top min-w-[160px]">
         <div className="flex flex-col items-end gap-1.5">
-          <div className="flex gap-1.5">
+          <div className="flex items-center gap-1.5 h-9">
             {canEdit ? (
               <Button variant="outline" size="sm" onClick={save} disabled={pending}>
                 {pending ? "…" : "Lưu"}
