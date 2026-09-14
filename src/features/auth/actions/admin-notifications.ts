@@ -30,7 +30,7 @@ const batchAssignSchema = z.object({
 });
 
 /**
- * Gửi email kiểm tra cấu hình SMTP & Tên miền doanh nghiệp
+ * Gửi email kiểm tra cấu hình SMTP & Tên miền doanh nghiệp MTP-ERP
  */
 export async function sendTestEmailAction(toEmail: string) {
   await requireManager();
@@ -43,15 +43,21 @@ export async function sendTestEmailAction(toEmail: string) {
   }
 
   const html = renderNotificationEmailHtml({
-    title: "Kiểm tra kết nối Email Doanh Nghiệp",
-    body: "Chúc mừng! Cấu hình máy chủ SMTP và tên miền doanh nghiệp của hệ thống Minh Tân Phát đã hoạt động hoàn hảo.",
+    title: "[Hệ thống] Kiểm tra kết nối Email Doanh Nghiệp MTP-ERP",
+    body: "Chúc mừng! Cấu hình máy chủ SMTP và tên miền doanh nghiệp của Hệ thống MTP-ERP đã hoạt động chính xác và ổn định.",
     link: "/dashboard",
-    recipientName: "Quản trị viên",
+    recipientName: "Quản trị viên Hệ thống",
+    document: {
+      type: "Kiểm tra hệ thống MTP-ERP",
+      status: "Thành công",
+      statusVariant: "success",
+      notes: "Cấu hình SMTP Transporter kết nối thành công.",
+    },
   });
 
   const res = await sendEmail({
     to: parsed.toEmail,
-    subject: "[MTP Supply] Thử nghiệm gửi Email Doanh Nghiệp thành công",
+    subject: "[MTP-ERP] [Hệ thống] Thử nghiệm gửi Email Doanh Nghiệp thành công",
     html,
   });
 
@@ -96,13 +102,25 @@ export async function broadcastNotificationAction(input: {
     throw new Error("Không tìm thấy người dùng nào đang hoạt động.");
   }
 
+  const title =
+    parsed.title.startsWith("[MTP-ERP]") || parsed.title.startsWith("[Thông báo")
+      ? parsed.title
+      : `[Thông báo hệ thống] ${parsed.title}`;
+
   await notifyUsers({
     userIds: targetIds,
     type: "broadcast",
-    title: parsed.title,
+    title,
     body: parsed.body,
     link: parsed.link || "/dashboard",
     sendEmailNotification: parsed.sendEmail,
+    document: {
+      type: "Thông báo hệ thống",
+      status: "Thông báo",
+      statusVariant: "info",
+      creatorName: profile.name,
+      notes: parsed.body,
+    },
   });
 
   // Ghi audit log
@@ -112,7 +130,7 @@ export async function broadcastNotificationAction(input: {
     entity_type: "notification",
     entity_id: profile.id,
     after: {
-      title: parsed.title,
+      title,
       recipients_count: targetIds.length,
       send_email: parsed.sendEmail,
     },

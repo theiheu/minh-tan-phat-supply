@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getManagerIds, notifyUsers } from "@/lib/notifications";
 
 export async function transferStock(input: {
   items: { variantId: string; quantity: number }[];
@@ -18,6 +19,21 @@ export async function transferStock(input: {
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);
+
+  await notifyUsers({
+    userIds: await getManagerIds(supabase),
+    type: "transfer",
+    title: "[Điều chuyển kho] - Đã hoàn tất điều chuyển kho nội bộ",
+    body: `Thủ kho ${profile.name} đã hoàn tất điều chuyển ${input.items.length} mặt hàng vật tư giữa các vị trí kho.`,
+    link: "/transfers",
+    document: {
+      type: "Phiếu điều chuyển kho",
+      status: "Đã hoàn tất",
+      statusVariant: "success",
+      handlerName: profile.name,
+    },
+  });
+
   revalidatePath("/transfers");
   revalidatePath("/products");
 }
@@ -38,6 +54,22 @@ export async function adjustStock(input: {
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);
+
+  await notifyUsers({
+    userIds: await getManagerIds(supabase),
+    type: "transfer",
+    title: "[Điều chỉnh kho] - Đã ghi nhận điều chỉnh tồn kho",
+    body: `Thủ kho ${profile.name} đã điều chỉnh tồn kho (Chênh lệch: ${input.delta > 0 ? `+${input.delta}` : input.delta}). Lý do: ${input.reason}`,
+    link: "/transfers",
+    document: {
+      type: "Phiếu điều chỉnh tồn kho",
+      status: "Đã điều chỉnh",
+      statusVariant: "info",
+      handlerName: profile.name,
+      notes: input.reason,
+    },
+  });
+
   revalidatePath("/transfers");
   revalidatePath("/products");
 }

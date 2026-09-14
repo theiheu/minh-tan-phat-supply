@@ -3,28 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import { getManagerIds, notifyUsers, type NotifyOptions } from "@/lib/notifications";
 import { requisitionSchema, type RequisitionInput } from "./schema";
 
-// Gửi thông báo in-app và email (bỏ qua lỗi — không làm hỏng thao tác chính).
-async function safeNotify(
-  userIds: (string | null | undefined)[],
-  type: string,
-  title: string,
-  body?: string | null,
-  link?: string,
-) {
-  await notifyUsers({ userIds, type, title, body, link });
+// Gửi thông báo in-app và email chuẩn ERP (bỏ qua lỗi — không làm hỏng thao tác chính).
+async function safeNotify(options: NotifyOptions) {
+  await notifyUsers(options);
 }
 
 async function requisitionMeta(id: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("requisitions")
-    .select("code, requester_id")
-    .eq("id", id)
-    .single();
-  return data;
+  try {
+    const supabase = await createClient();
+    if (!supabase.from) return null;
+    const { data } = await supabase
+      .from("requisitions")
+      .select("code, requester_id, purpose, zone:zones(name), sub_zone:sub_zones(name)")
+      .eq("id", id)
+      .single();
+    return data;
+  } catch {
+    return null;
+  }
 }
 
 export async function createRequisition(input: RequisitionInput) {
@@ -77,19 +76,31 @@ export async function createRequisition(input: RequisitionInput) {
 }
 
 export async function submitRequisition(id: string) {
-  await requireProfile();
+  const profile = await requireProfile();
   const supabase = await createClient();
   const { error } = await supabase.rpc("submit_requisition", { p_id: id });
   if (error) throw new Error(error.message);
 
   const meta = await requisitionMeta(id);
-  await safeNotify(
-    await getManagerIds(supabase),
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} chờ duyệt`,
-    "Có phiếu yêu cầu vật tư mới cần xử lý.",
-    `/requisitions/${id}`,
-  );
+  const code = meta?.code ?? "YCCP";
+  const zoneName = (meta?.zone as { name?: string } | null)?.name;
+
+  await safeNotify({
+    userIds: await getManagerIds(supabase),
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Chờ phê duyệt`,
+    body: `Người yêu cầu ${profile.name} đã gửi phiếu yêu cầu cấp phát vật tư${zoneName ? ` cho khu vực ${zoneName}` : ""}, cần được xem xét và phê duyệt.`,
+    link: `/requisitions/${id}`,
+    document: {
+      code,
+      type: "Phiếu yêu cầu cấp phát",
+      status: "Chờ phê duyệt",
+      statusVariant: "warning",
+      creatorName: profile.name,
+      locationName: zoneName,
+      notes: meta?.purpose,
+    },
+  });
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
@@ -102,13 +113,24 @@ export async function approveRequisition(id: string) {
   if (error) throw new Error(error.message);
 
   const meta = await requisitionMeta(id);
-  await safeNotify(
-    [meta?.requester_id],
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} đã được duyệt`,
-    "Phiếu của bạn đã được duyệt, chờ cấp phát.",
-    `/requisitions/${id}`,
-  );
+  const code = meta?.code ?? "YCCP";
+  const zoneName = (meta?.zone as { name?: string } | null)?.name;
+
+  await safeNotify({
+    userIds: [meta?.requester_id],
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Đã được phê duyệt`,
+    body: `Phiếu yêu cầu cấp phát vật tư đã được phê duyệt bởi ${profile.name}, đang chờ thủ kho chuẩn bị và xuất cấp.`,
+    link: `/requisitions/${id}`,
+    document: {
+      code,
+      type: "Phiếu yêu cầu cấp phát",
+      status: "Đã phê duyệt",
+      statusVariant: "success",
+      handlerName: profile.name,
+      locationName: zoneName,
+    },
+  });
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
@@ -160,13 +182,24 @@ export async function fulfillRequisition(id: string) {
   }
 
   const meta = await requisitionMeta(id);
-  await safeNotify(
-    [meta?.requester_id],
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} đã cấp phát`,
-    "Vật tư đã được cấp, hãy xác nhận đã nhận.",
-    `/requisitions/${id}`,
-  );
+  const code = meta?.code ?? "YCCP";
+  const zoneName = (meta?.zone as { name?: string } | null)?.name;
+
+  await safeNotify({
+    userIds: [meta?.requester_id],
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Đã xuất cấp phát kho`,
+    body: `Thủ kho ${profile.name} đã hoàn tất xuất cấp vật tư. Vui lòng kiểm tra và xác nhận nhận hàng trên hệ thống.`,
+    link: `/requisitions/${id}`,
+    document: {
+      code,
+      type: "Phiếu yêu cầu cấp phát",
+      status: "Đã xuất cấp phát",
+      statusVariant: "info",
+      handlerName: profile.name,
+      locationName: zoneName,
+    },
+  });
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
@@ -179,13 +212,24 @@ export async function receiveRequisition(id: string) {
   if (error) throw new Error(error.message);
 
   const meta = await requisitionMeta(id);
-  await safeNotify(
-    await getManagerIds(supabase),
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} đã nhận hàng`,
-    "Người yêu cầu đã xác nhận nhận đủ vật tư.",
-    `/requisitions/${id}`,
-  );
+  const code = meta?.code ?? "YCCP";
+  const zoneName = (meta?.zone as { name?: string } | null)?.name;
+
+  await safeNotify({
+    userIds: await getManagerIds(supabase),
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Đã hoàn tất nhận hàng`,
+    body: `Người nhận ${profile.name} đã xác nhận nhận đủ toàn bộ số lượng vật tư bàn giao.`,
+    link: `/requisitions/${id}`,
+    document: {
+      code,
+      type: "Phiếu yêu cầu cấp phát",
+      status: "Đã hoàn tất",
+      statusVariant: "success",
+      handlerName: profile.name,
+      locationName: zoneName,
+    },
+  });
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
@@ -198,13 +242,23 @@ export async function rejectRequisition(id: string, reason: string) {
   if (error) throw new Error(error.message);
 
   const meta = await requisitionMeta(id);
-  await safeNotify(
-    [meta?.requester_id],
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} bị từ chối`,
-    reason || undefined,
-    `/requisitions/${id}`,
-  );
+  const code = meta?.code ?? "YCCP";
+
+  await safeNotify({
+    userIds: [meta?.requester_id],
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Bị từ chối phê duyệt`,
+    body: `Phiếu yêu cầu cấp phát bị từ chối phê duyệt bởi ${profile.name}.${reason ? ` Lý do: ${reason}` : ""}`,
+    link: `/requisitions/${id}`,
+    document: {
+      code,
+      type: "Phiếu yêu cầu cấp phát",
+      status: "Bị từ chối",
+      statusVariant: "danger",
+      handlerName: profile.name,
+      notes: reason,
+    },
+  });
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
@@ -217,15 +271,24 @@ export async function cancelRequisition(id: string) {
   if (error) throw new Error(error.message);
 
   const meta = await requisitionMeta(id);
+  const code = meta?.code ?? "YCCP";
   const isOwner = meta?.requester_id === profile.id;
   const managers = await getManagerIds(supabase);
-  await safeNotify(
-    isOwner ? managers : [meta?.requester_id],
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} đã hủy`,
-    undefined,
-    `/requisitions/${id}`,
-  );
+
+  await safeNotify({
+    userIds: isOwner ? managers : [meta?.requester_id],
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Đã hủy phiếu`,
+    body: `Phiếu yêu cầu cấp phát vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
+    link: `/requisitions/${id}`,
+    document: {
+      code,
+      type: "Phiếu yêu cầu cấp phát",
+      status: "Đã hủy",
+      statusVariant: "neutral",
+      handlerName: profile.name,
+    },
+  });
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
@@ -242,13 +305,22 @@ export async function returnRequisitionItems(requisitionId: string, items: { var
   if (error) throw new Error(error.message);
 
   const meta = await requisitionMeta(requisitionId);
-  await safeNotify(
-    await getManagerIds(supabase),
-    "requisition",
-    `Phiếu ${meta?.code ?? "yêu cầu"} trả lại vật tư`,
-    "Có vật tư được trả lại kho.",
-    `/requisitions/${requisitionId}`,
-  );
+  const code = meta?.code ?? "YCCP";
+
+  await safeNotify({
+    userIds: await getManagerIds(supabase),
+    type: "requisition",
+    title: `[Yêu cầu cấp phát] ${code} - Hoàn trả vật tư về kho`,
+    body: `Nhân sự ${profile.name} đã hoàn trả lại ${items.length} mặt hàng vật tư về kho lưu trữ.`,
+    link: `/requisitions/${requisitionId}`,
+    document: {
+      code,
+      type: "Hoàn trả vật tư",
+      status: "Đã hoàn trả",
+      statusVariant: "info",
+      handlerName: profile.name,
+    },
+  });
 
   revalidatePath(`/requisitions/${requisitionId}`);
   revalidatePath("/products");

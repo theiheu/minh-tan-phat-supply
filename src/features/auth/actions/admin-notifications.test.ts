@@ -85,7 +85,7 @@ describe("features/auth/actions/admin-notifications", () => {
       expect(notifySpy).toHaveBeenCalledWith(
         expect.objectContaining({
           userIds: ["u-1", "u-2"],
-          title: "Bảo trì hệ thống",
+          title: "[Thông báo hệ thống] Bảo trì hệ thống",
         }),
       );
     });

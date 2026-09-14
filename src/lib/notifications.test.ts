@@ -80,12 +80,12 @@ describe("lib/notifications", () => {
         p_link: "/requisitions/123",
       });
 
-      // Chỉ user-1 có email hợp lệ nên chỉ gửi 1 email
+      // Chỉ user-1 có email hợp lệ nên chỉ gửi 1 email với subject chuẩn MTP-ERP [MTP-ERP]
       expect(sendEmailSpy).toHaveBeenCalledTimes(1);
       expect(sendEmailSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           to: "a@gmail.com",
-          subject: "[MTP Supply] Phiếu đã duyệt",
+          subject: "[MTP-ERP] Phiếu đã duyệt",
         }),
       );
     });

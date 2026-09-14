@@ -3,6 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getManagerIds, notifyUsers } from "@/lib/notifications";
+
+async function stocktakeMeta(id: string) {
+  try {
+    const supabase = await createClient();
+    if (!supabase.from) return null;
+    const { data } = await supabase
+      .from("stocktake_sessions")
+      .select("code, name, location:stock_locations(name)")
+      .eq("id", id)
+      .single();
+    return data;
+  } catch {
+    return null;
+  }
+}
 
 export async function createStocktake(locationId: string, name: string) {
   const profile = await requireProfile();
@@ -14,6 +30,33 @@ export async function createStocktake(locationId: string, name: string) {
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);
+
+  const sessionId = data as string;
+  let code = "PKK";
+  let locName: string | undefined;
+  if (sessionId) {
+    const meta = await stocktakeMeta(sessionId);
+    if (meta?.code) code = meta.code;
+    locName = (meta?.location as { name?: string } | null)?.name;
+  }
+
+  await notifyUsers({
+    userIds: await getManagerIds(supabase),
+    type: "stocktake",
+    title: `[Kiểm kê kho] ${code} - Khởi tạo kỳ kiểm kê kho`,
+    body: `Kỳ kiểm kê kho "${name.trim()}" đã được khởi tạo bởi ${profile.name}${locName ? ` tại ${locName}` : ""}.`,
+    link: "/stocktake",
+    document: {
+      code,
+      type: "Phiếu kiểm kê kho",
+      status: "Đang kiểm kê",
+      statusVariant: "info",
+      creatorName: profile.name,
+      locationName: locName,
+      notes: name.trim(),
+    },
+  });
+
   revalidatePath("/stocktake");
   return data as string;
 }
@@ -35,6 +78,27 @@ export async function postStocktake(
   }
   const { error } = await supabase.rpc("post_stocktake", { p_session_id: sessionId, p_by: profile.id });
   if (error) throw new Error(error.message);
+
+  const meta = await stocktakeMeta(sessionId);
+  const code = meta?.code ?? "PKK";
+  const sessionName = meta?.name || code;
+
+  await notifyUsers({
+    userIds: await getManagerIds(supabase),
+    type: "stocktake",
+    title: `[Kiểm kê kho] ${code} - Đã chốt số liệu kiểm kê kho`,
+    body: `Thủ kho ${profile.name} đã chốt số liệu kỳ kiểm kê "${sessionName}" và cập nhật cân bằng sổ kho MTP-ERN.`,
+    link: "/stocktake",
+    document: {
+      code,
+      type: "Phiếu kiểm kê kho",
+      status: "Đã chốt sổ",
+      statusVariant: "success",
+      handlerName: profile.name,
+      notes: sessionName,
+    },
+  });
+
   revalidatePath("/stocktake");
   revalidatePath("/products");
 }

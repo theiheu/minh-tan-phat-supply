@@ -8,6 +8,21 @@ import { createClient } from "@/lib/supabase/server";
 import { getManagerIds, notifyUsers } from "@/lib/notifications";
 import { defectSchema, type DefectInput } from "./schema";
 
+async function defectMeta(id: string) {
+  try {
+    const supabase = await createClient();
+    if (!supabase || typeof supabase.from !== "function") return null;
+    const { data } = await supabase
+      .from("defect_notes")
+      .select("code, reported_by, notes, source_location:stock_locations(name)")
+      .eq("id", id)
+      .single();
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function recordDefect(input: DefectInput) {
   const profile = await requireProfile();
   const parsed = defectSchema.parse(input);
@@ -30,13 +45,30 @@ export async function recordDefect(input: DefectInput) {
   });
   if (error) throw new Error(error.message);
 
+  const defectId = data as string;
+  let code = "PBH";
+  let locName: string | undefined;
+  if (defectId) {
+    const meta = await defectMeta(defectId);
+    if (meta?.code) code = meta.code;
+    locName = (meta?.source_location as { name?: string } | null)?.name;
+  }
+
   const managerIds = await getManagerIds(supabase);
   await notifyUsers({
     userIds: managerIds,
     type: "defect",
-    title: "Phiếu báo hỏng vật tư mới",
-    body: `${profile.name} vừa báo hỏng ${items.length} mặt hàng vật tư.`,
+    title: `[Báo hỏng vật tư] ${code} - Tiếp nhận báo hỏng mới`,
+    body: `Nhân viên ${profile.name} vừa lập biên bản báo hỏng ${items.length} mặt hàng vật tư${locName ? ` tại vị trí ${locName}` : ""}, cần kiểm tra và xử lý.`,
     link: "/defects",
+    document: {
+      code,
+      type: "Biên bản báo hỏng vật tư",
+      status: "Tập kết chờ xử lý",
+      statusVariant: "warning",
+      creatorName: profile.name,
+      locationName: locName,
+    },
   });
 
   revalidatePath("/defects");
@@ -59,8 +91,31 @@ export async function updateDefectItemImages(itemId: string, images: string[]) {
 export async function cancelDefect(id: string) {
   const profile = await requireProfile();
   const supabase = await createClient();
+
+  const meta = await defectMeta(id);
+  const code = meta?.code ?? "PBH";
+
   const { error } = await supabase.rpc("cancel_defect", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
+
+  const managers = await getManagerIds(supabase);
+  const userIds = [...new Set([meta?.reported_by, ...managers])];
+
+  await notifyUsers({
+    userIds,
+    type: "defect",
+    title: `[Báo hỏng vật tư] ${code} - Đã hủy phiếu báo hỏng`,
+    body: `Biên bản báo hỏng vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
+    link: "/defects",
+    document: {
+      code,
+      type: "Biên bản báo hỏng vật tư",
+      status: "Đã hủy",
+      statusVariant: "neutral",
+      handlerName: profile.name,
+    },
+  });
+
   revalidatePath("/defects");
 }
 

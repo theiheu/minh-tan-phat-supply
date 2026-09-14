@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { renderNotificationEmailHtml, sendEmail } from "./email";
+import {
+  renderNotificationEmailHtml,
+  sendEmail,
+  type DocumentInfo,
+} from "./email";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -10,6 +14,10 @@ export interface NotifyOptions {
   body?: string | null;
   link?: string | null;
   sendEmailNotification?: boolean;
+  /** Tiêu đề email tùy chỉnh chuẩn MTP-ERP */
+  emailSubject?: string | null;
+  /** Thông tin chứng từ chi tiết để render email MTP-ERP */
+  document?: DocumentInfo | null;
 }
 
 /**
@@ -18,6 +26,7 @@ export interface NotifyOptions {
 export async function getManagerIds(supabaseClient?: Supabase): Promise<string[]> {
   try {
     const supabase = supabaseClient ?? (await createClient());
+    if (!supabase || typeof supabase.from !== "function") return [];
     const { data } = await supabase
       .from("profiles")
       .select("id")
@@ -31,7 +40,7 @@ export async function getManagerIds(supabaseClient?: Supabase): Promise<string[]
 }
 
 /**
- * Gửi thông báo hợp nhất:
+ * Gửi thông báo hợp nhất chuẩn MTP-ERP:
  * 1. Lưu thông báo vào bảng in-app notifications
  * 2. Gửi email thông báo tới người dùng có cấu hình email
  * Không bao giờ throw error làm gián đoạn nghiệp vụ chính.
@@ -44,6 +53,8 @@ export async function notifyUsers(options: NotifyOptions): Promise<void> {
     body = null,
     link = null,
     sendEmailNotification = true,
+    emailSubject: customEmailSubject,
+    document = null,
   } = options;
 
   try {
@@ -51,6 +62,7 @@ export async function notifyUsers(options: NotifyOptions): Promise<void> {
     if (uniqueIds.length === 0) return;
 
     const supabase = await createClient();
+    if (!supabase || typeof supabase.from !== "function" || typeof supabase.rpc !== "function") return;
 
     // Lấy thông tin profiles của người nhận (tên, email, trạng thái hoạt động)
     const { data: profiles, error: profileErr } = await supabase
@@ -84,6 +96,11 @@ export async function notifyUsers(options: NotifyOptions): Promise<void> {
       );
 
       if (emailRecipients.length > 0) {
+        // Chuẩn hóa tiêu đề email MTP-ERP: [MTP-ERP] [Phân hệ / Mã phiếu] - Trạng thái
+        const subject =
+          customEmailSubject ||
+          (title.startsWith("[MTP-ERP]") ? title : "[MTP-ERP] " + title);
+
         await Promise.allSettled(
           emailRecipients.map(async (recipient) => {
             const html = renderNotificationEmailHtml({
@@ -91,11 +108,12 @@ export async function notifyUsers(options: NotifyOptions): Promise<void> {
               body,
               link,
               recipientName: recipient.name,
+              document,
             });
 
             await sendEmail({
               to: recipient.email!,
-              subject: `[MTP Supply] ${title}`,
+              subject,
               html,
             });
           }),
