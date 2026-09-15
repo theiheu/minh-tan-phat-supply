@@ -735,7 +735,7 @@ for update;
 | 6 | `reject_requisition` | id, by, reason | — | pending/approved→rejected |
 | 7 | `cancel_requisition` | id, by | — | draft/pending→cancelled |
 | 8 | `create_receipt` | items jsonb, supplier_id, by | receipt_id | tạo `draft` |
-| 9 | `post_receipt` | id, by | linked_req_ids[] | draft→posted, cộng stock + auto fulfill |
+| 9 | `post_receipt` | id, by | linked_req_ids[] | draft→posted, cộng stock + auto fulfill các phiếu yêu cầu đã duyệt |
 | 10 | `cancel_receipt` | id, by | — | draft→cancelled |
 | 11 | `record_defect` | items jsonb, source_loc, by | defect_id | tạo defect + chuyển kho hỏng |
 | 12 | `send_to_repair` | defect_item_ids[], vendor, dates, by | repair_id | staging→in_repair |
@@ -1053,7 +1053,7 @@ stock(variant) = có components ? min(floor(stock(child)/qty)) : sum(stock_balan
 - Requester `receive` → `received` (đóng phiếu).
 
 ### 15.3 Nhập kho + auto cấp phát
-- `post_receipt`: cộng stock (lưu unit_cost + lô/hạn) → lấy các requisition `pending`/`approved` theo `created_at, id` tăng dần (FIFO, tie-break bằng id) → lần lượt `fulfill` → ghi id vào `linked_requisition_ids`.
+- `post_receipt`: cộng stock (lưu unit_cost + lô/hạn) → lấy các requisition **ĐÃ DUYỆT** (`approved`, bắt buộc quản kho duyệt trước, không tự động duyệt phiếu `pending`) theo `created_at, id` tăng dần (FIFO, tie-break bằng id) → lần lượt `fulfill` → ghi id vào `linked_requisition_ids`.
 
 ### 15.4 Hỏng → sửa → nhập lại / thanh lý
 1. `record_defect`: **chỉ khai báo phiếu HONG** — KHÔNG trừ Kho chính, không chuyển kho (code `0050`).

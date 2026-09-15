@@ -253,7 +253,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
           <CardContent>
             {linkedReqs.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Không có phiếu yêu cầu nào được cấp phát tự động (không có yêu cầu đang chờ hoặc tồn chưa đủ).
+                Không có phiếu yêu cầu đã duyệt nào được cấp phát tự động (chưa có yêu cầu đã duyệt hoặc tồn chưa đủ).
               </p>
             ) : (
               <div className="overflow-x-auto">

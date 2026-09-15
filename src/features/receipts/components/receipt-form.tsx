@@ -147,7 +147,7 @@ export function ReceiptForm({
           const linked = (await postReceipt(targetId)) as string[] | null;
           toast.success(
             linked && linked.length > 0
-              ? `Đã duyệt nhập kho thành công (tự động cấp phát ${linked.length} phiếu yêu cầu)`
+              ? `Đã duyệt nhập kho thành công (tự động cấp phát ${linked.length} phiếu yêu cầu đã duyệt)`
               : "Đã duyệt nhập kho thành công",
           );
           if (onSuccess) {

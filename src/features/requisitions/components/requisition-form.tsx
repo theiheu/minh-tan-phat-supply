@@ -294,7 +294,7 @@ export function RequisitionForm({
             <div className="space-y-3">
               {items.some((i) => i.stock === 0) && (
                 <div className="rounded-md bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-300">
-                  ⚠️ <strong>Lưu ý:</strong> Phiếu chứa vật tư đang hết hàng trong kho. Quản kho sẽ tiếp nhận thông tin yêu cầu để đặt hàng từ nhà cung cấp và tự động cấp phát khi hàng về.
+                  ⚠️ <strong>Lưu ý:</strong> Phiếu chứa vật tư đang hết hàng trong kho. Quản kho sẽ duyệt yêu cầu và đặt hàng từ nhà cung cấp để tự động cấp phát khi hàng về.
                 </div>
               )}
               <ul className="divide-y">

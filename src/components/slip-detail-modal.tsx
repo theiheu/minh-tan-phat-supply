@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ImagePlus, Loader2, Milestone, Printer, QrCode, X } from "lucide-react";
+import { AlertTriangle, ImagePlus, Milestone, Printer, QrCode, X } from "lucide-react";
 import { BrandLoading } from "@/components/brand-loading";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -233,7 +233,7 @@ export function SlipDetailModal({
         if (Array.isArray(res)) {
           toast.success(
             res.length > 0
-              ? `${successMessage} (tự động cấp phát ${res.length} phiếu yêu cầu)`
+              ? `${successMessage} (tự động cấp phát ${res.length} phiếu yêu cầu đã duyệt)`
               : `${successMessage} (không có phiếu yêu cầu nào cần cấp phát)`,
           );
         } else {
@@ -664,7 +664,7 @@ export function SlipDetailModal({
                 <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
                   <div className="pb-2 border-b border-border/60">
                     <span className="text-xs font-semibold text-foreground">
-                      Phiếu yêu cầu được cấp phát tự động ({detail.linkedRequisitions.length} phiếu):
+                      Phiếu yêu cầu đã duyệt được cấp phát tự động ({detail.linkedRequisitions.length} phiếu):
                     </span>
                   </div>
                   <div className="rounded-lg border overflow-hidden">

@@ -186,7 +186,7 @@ export async function deleteUser(input: { userId: string; force?: boolean }) {
 
   // Nếu người gọi là superuser và yêu cầu xóa sạch (force = true)
   if (isSuper && input.force) {
-    const { error: purgeError } = await (admin.rpc as any)("admin_purge_user_data", {
+    const { error: purgeError } = await (admin.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>)("admin_purge_user_data", {
       p_user_id: input.userId,
     });
     if (purgeError) throw new Error(purgeError.message);

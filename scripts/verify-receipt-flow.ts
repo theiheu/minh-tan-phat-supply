@@ -1,4 +1,6 @@
 // scripts/verify-receipt-flow.ts — kiểm tra nhập kho + auto cấp phát + ledger
+// Quy tắc mới: post_receipt CHỈ tự động cấp phát các phiếu yêu cầu ĐÃ ĐƯỢC DUYỆT (approved).
+// Các phiếu yêu cầu đang chờ (pending) bắt buộc phải qua bước Quản kho duyệt trước.
 import { createClient } from "@supabase/supabase-js";
 
 const URL = "http://127.0.0.1:54321";
@@ -19,9 +21,9 @@ async function main() {
 
   const { data: zone } = await rc.from("zones").select("id").limit(1).single();
   const { data: variant } = await rc.from("variants").select("id").limit(1).single();
-  const stockBefore = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockInitial = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
 
-  // requester tạo + gửi phiếu yêu cầu 10
+  // 1. requester tạo + gửi phiếu yêu cầu 10 (chờ duyệt - pending)
   const created = await rc.rpc("create_requisition", {
     p_items: [{ variant_id: variant!.id, quantity: 10 }],
     p_zone_id: zone!.id,
@@ -29,31 +31,56 @@ async function main() {
     p_type: "new_supply",
     p_linked_defect_id: null,
     p_requester_id: req.data.user!.id,
+    p_sub_zone_id: null,
   });
   if (created.error) throw created.error;
   const rid = created.data as string;
   await rc.rpc("submit_requisition", { p_id: rid });
-  console.log("requisition pending:", rid);
+  console.log("1. Requisition submitted (pending):", rid);
 
-  // manager tạo + post phiếu nhập 50 (kèm ghi chú)
+  // 2. manager tạo + post phiếu nhập 20 KHI PHIẾU YÊU CẦU CHƯA DUYỆT (pending)
+  // Kết quả mong đợi: post_receipt KHÔNG tự động duyệt hay cấp phát phiếu pending này.
   const NOTE = "Nhập bổ sung cho khu vực cấp phát — kiểm thử ghi chú";
-  const receipt = await mc.rpc("create_receipt", {
-    p_items: [{ variant_id: variant!.id, quantity: 50, unit_cost: 1000, batch_no: null, expiry_date: null }],
+  const receipt1 = await mc.rpc("create_receipt", {
+    p_items: [{ variant_id: variant!.id, quantity: 20, unit_cost: 1000, batch_no: null, expiry_date: null }],
     p_supplier_id: null,
     p_notes: NOTE,
     p_by: mgr.data.user!.id,
   });
-  if (receipt.error) throw receipt.error;
-  const receiptId = receipt.data as string;
-  const posted = await mc.rpc("post_receipt", { p_id: receiptId, p_by: mgr.data.user!.id });
-  if (posted.error) throw posted.error;
-  console.log("receipt posted, linked requisitions:", JSON.stringify(posted.data));
+  if (receipt1.error) throw receipt1.error;
+  const receipt1Id = receipt1.data as string;
+  const posted1 = await mc.rpc("post_receipt", { p_id: receipt1Id, p_by: mgr.data.user!.id });
+  if (posted1.error) throw posted1.error;
+  console.log("2. Receipt 1 posted (while req pending), linked requisitions:", JSON.stringify(posted1.data));
+
+  const reqRowPending = await rc.from("requisitions").select("status").eq("id", rid).single();
+  const linkedNotIncluded = !(posted1.data ?? []).includes(rid);
+  console.log("   Req status remains pending:", reqRowPending.data?.status === "pending", "(status:", reqRowPending.data?.status, ")");
+
+  // 3. Quản kho xem xét và BẤM DUYỆT PHIẾU YÊU CẦU (approve_requisition) -> status = 'approved'
+  const approved = await mc.rpc("approve_requisition", { p_id: rid, p_by: mgr.data.user!.id });
+  if (approved.error) throw approved.error;
+  console.log("3. Manager approved requisition -> status = approved");
+
+  // 4. Nhập tiếp phiếu nhập 2 (quantity: 30). Lúc này phiếu yêu cầu ĐÃ DUYỆT (approved).
+  // Kết quả mong đợi: post_receipt tự động cấp phát phiếu yêu cầu đã duyệt này!
+  const receipt2 = await mc.rpc("create_receipt", {
+    p_items: [{ variant_id: variant!.id, quantity: 30, unit_cost: 1000, batch_no: null, expiry_date: null }],
+    p_supplier_id: null,
+    p_notes: NOTE,
+    p_by: mgr.data.user!.id,
+  });
+  if (receipt2.error) throw receipt2.error;
+  const receipt2Id = receipt2.data as string;
+  const posted2 = await mc.rpc("post_receipt", { p_id: receipt2Id, p_by: mgr.data.user!.id });
+  if (posted2.error) throw posted2.error;
+  console.log("4. Receipt 2 posted (while req approved), linked requisitions:", JSON.stringify(posted2.data));
 
   // --- kiểm tra nội dung phục vụ trang chi tiết phiếu nhập ---
   const detailRow = await mc
     .from("receipts")
     .select("status, notes, linked_requisition_ids")
-    .eq("id", receiptId)
+    .eq("id", receipt2Id)
     .single();
   const notesOk = (detailRow.data?.notes ?? null) === NOTE;
   const linkedOk = (detailRow.data?.linked_requisition_ids ?? []).includes(rid);
@@ -61,15 +88,14 @@ async function main() {
     .from("audit_logs")
     .select("action")
     .eq("entity_type", "receipt")
-    .eq("entity_id", receiptId)
+    .eq("entity_id", receipt2Id)
     .in("action", ["receipt.create", "receipt.post"]);
   const auditOk = (audit.data ?? []).some((a) => a.action === "receipt.post");
   console.log("receipt notes:", JSON.stringify(detailRow.data?.notes ?? null), "(expected saved:", NOTE, ")");
   console.log("linked_requisition_ids:", JSON.stringify(detailRow.data?.linked_requisition_ids ?? []), "includes rid:", linkedOk);
   console.log("audit receipt events:", JSON.stringify((audit.data ?? []).map((a) => a.action)), "has post:", auditOk);
 
-  // Regression: gọi create_receipt KHÔNG kèm p_notes (3 tham số) — trước đây bị
-  // lỗi overload 'Could not choose the best candidate function'.
+  // Regression: gọi create_receipt KHÔNG kèm p_notes (3 tham số)
   const noNotes = await mc.rpc("create_receipt", {
     p_items: [{ variant_id: variant!.id, quantity: 1, unit_cost: null, batch_no: null, expiry_date: null }],
     p_supplier_id: null,
@@ -83,16 +109,18 @@ async function main() {
 
   const stockAfter = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
   const reqRow = await rc.from("requisitions").select("status").eq("id", rid).single();
-  const receiptRow = await mc.from("receipts").select("status").eq("id", receiptId).single();
-  const led = await mc.from("stock_movements").select("movement_type, quantity").eq("ref_id", receiptId);
+  const receiptRow = await mc.from("receipts").select("status").eq("id", receipt2Id).single();
+  const led = await mc.from("stock_movements").select("movement_type, quantity").eq("ref_id", receipt2Id);
 
   console.log("--- kết quả ---");
-  console.log("stock:", stockBefore.data?.quantity, "→", stockAfter.data?.quantity, "(+50 nhập, -10 cấp phát)");
-  console.log("requisition status:", reqRow.data?.status, "(expected issued)");
-  console.log("receipt status:", receiptRow.data?.status, "(expected posted)");
+  console.log("stock:", stockInitial.data?.quantity, "→", stockAfter.data?.quantity, "(+20 nhập 1, +30 nhập 2, -10 cấp phát = +40)");
+  console.log("requisition final status:", reqRow.data?.status, "(expected issued)");
+  console.log("receipt final status:", receiptRow.data?.status, "(expected posted)");
   console.log("receipt ledger:", JSON.stringify(led.data));
   const ok =
-    stockBefore.data!.quantity + 40 === stockAfter.data!.quantity &&
+    stockInitial.data!.quantity + 40 === stockAfter.data!.quantity &&
+    reqRowPending.data?.status === "pending" &&
+    linkedNotIncluded &&
     reqRow.data?.status === "issued" &&
     receiptRow.data?.status === "posted" &&
     (led.data?.length ?? 0) >= 1 &&

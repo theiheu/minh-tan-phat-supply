@@ -137,7 +137,7 @@ Biến môi trường quan trọng của app:
 
 ## 3. Nạp schema + dữ liệu nền (migrations + seed)
 
-Repo có sẵn 25 migrations trong `supabase/migrations/` và `supabase/seed.sql` (idempotent).
+Repo có sẵn 68 migrations trong `supabase/migrations/` và `supabase/seed.sql` (idempotent).
 
 **Cách 1 — psql trực tiếp (khuyến nghị, dễ kiểm soát):**
 ```bash

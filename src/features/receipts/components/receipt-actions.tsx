@@ -18,7 +18,7 @@ export function ReceiptActions({ id, status }: { id: string; status: string }) {
         if (Array.isArray(res)) {
           toast.success(
             res.length > 0
-              ? `${success} (tự động cấp phát ${res.length} phiếu yêu cầu)`
+              ? `${success} (tự động cấp phát ${res.length} phiếu yêu cầu đã duyệt)`
               : `${success} (không có phiếu yêu cầu nào cần cấp phát)`,
           );
         } else {
