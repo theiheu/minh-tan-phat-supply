@@ -40,14 +40,25 @@ Tài liệu này là **cẩm nang thực chiến**, hướng dẫn từng bướ
 
 ## 1. PHÂN QUYỀN & TÀI KHOẢN NGƯỜI DÙNG
 
-Hệ thống phân chia 2 nhóm đối tượng rõ ràng:
+Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận hành trang trại:
 
-| Vai trò | Đối tượng thực tế | Quyền hạn trong hệ thống |
-|---|---|---|
-| **Người yêu cầu (`requester`)** | Trưởng khu chuồng, thợ điện lạnh, tài xế, công nhân phụ trách khu | - Tra cứu danh mục sản phẩm, tồn kho.<br>- Tạo phiếu xin cấp vật tư (`Yêu cầu`).<br>- Báo hỏng thiết bị & yêu cầu đổi 1-1.<br>- Xác nhận "Đã nhận hàng" khi thủ kho giao đồ. |
-| **Quản lý kho (`manager`)** | Thủ kho tổng, Quản lý trại, Chủ trại, Kế toán trại | - Toàn quyền duyệt cấp phát, xuất kho.<br>- Tạo phiếu nhập kho vật tư, nhập bồn dầu.<br>- Thực hiện đổi 1-1 cấp tốc.<br>- Quản lý sửa chữa, thanh lý, điều chuyển.<br>- Kiểm kê định kỳ, cân bằng kho tự động.<br>- Quản lý người dùng, xe cộ, nhà cung cấp, khách hàng, danh mục giá.<br>- Xem và xuất báo cáo doanh thu/chi phí/tiêu hao Excel & PDF. |
+| STT | Vai trò | Mã Role | Đối tượng thực tế | Quyền hạn & Trách nhiệm trong hệ thống |
+|:---:|---|---|---|---|
+| 1 | **Quản trị hệ thống** | `superuser` | Kỹ sư CNTT / Quản trị viên | Toàn quyền kỹ thuật, tạo/sửa/xóa tài khoản, audit logs, bảo mật & sao lưu. |
+| 2 | **Chủ trại** | `owner` | Chủ trang trại, Giám đốc | Toàn quyền xem báo cáo tài chính/giá vốn/lợi nhuận, duyệt thanh lý lớn, duyệt cân bằng kho, tạo/sửa/xóa tài khoản. |
+| 3 | **Kế toán** | `accountant` | Kế toán kho & nội bộ | Quản lý giá mua/bán, công nợ NCC/khách hàng, duyệt hóa đơn chứng từ, xem báo cáo chi phí, tạo/sửa/xóa tài khoản. |
+| 4 | **Quản kho** | `warehouse` | Quản lý kho, thủ kho tổng | Toàn quyền xuất - nhập - chuyển kho, đổi 1-1 cấp tốc, quản lý kho dầu, kiểm kê kho. |
+| 5 | **Kỹ thuật** | `technician` | Quản lý khu / Cơ sở / Cơ điện | Quản lý toàn diện khu/cơ sở phụ trách: Duyệt cấp 1 phiếu yêu cầu, mượn/trả dụng cụ, đề xuất & nghiệm thu sửa chữa, xem báo cáo tiêu hao khu vực. |
+| 6 | **Người yêu cầu** | `requester` | Công nhân chuồng, thợ phụ | Tra cứu tồn kho, lập phiếu xin cấp vật tư, mượn/trả dụng cụ, báo hỏng thiết bị, xác nhận nhận đồ. |
+| 7 | **Tài xế** | `driver` | Lái xe ben, xe xúc, xe bồn | Quét mã QR đổ dầu tại trạm bồn, cập nhật số Km (ODO)/giờ máy, xem lịch sử cấp dầu xe mình. |
 
-> **Lưu ý đăng nhập:** Người dùng không cần email. Đăng nhập trực tiếp bằng **Tên đăng nhập** (Ví dụ: `thukho_dung`, `truongchuong_tuan`, `taixe_nam`) và mật khẩu được cấp.
+> **Lưu ý quan trọng về Quản lý Tài khoản & Định danh:**
+> 1. **Bất biến định danh (Immutable Identity):** Họ và tên cùng Tên đăng nhập được cố định vĩnh viễn ngay sau khi tạo tài khoản để ngăn chặn gian lận danh tính hoặc làm sai lệch lịch sử chứng từ kế toán.
+> 2. **Chính sách Xóa & Lưu trữ thông minh (Hybrid Archive):**
+>    - **Xóa vĩnh viễn (Hard Delete):** Dành cho tài khoản tạo nhầm/thử nghiệm và *chưa từng phát sinh bất kỳ chứng từ nào*.
+>    - **Lưu trữ / Đánh dấu nghỉ việc (Archive):** Khi nhân viên đã có lịch sử chứng từ (phiếu nhập, xuất, biến động kho...), hệ thống sẽ tự động khóa đăng nhập và chuyển vào tab **"Đã nghỉ việc / Lưu trữ"** nhằm bảo toàn 100% chứng từ kế toán.
+>    - **Kích hoạt lại (Reactivate):** Đối với nhân sự thời vụ quay lại làm việc, Chủ trại / Kế toán chỉ cần bấm **"Kích hoạt lại"** để mở khóa tài khoản ngay lập tức.
+> 3. **Đăng nhập nhanh:** Đăng nhập trực tiếp bằng **Tên đăng nhập** (Ví dụ: `thukho_dung`, `truongchuong_tuan`, `taixe_nam`) và mật khẩu được cấp.
 
 ---
 

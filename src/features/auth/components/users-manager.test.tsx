@@ -15,6 +15,12 @@ vi.mock("@/features/auth/actions/update-username", () => ({
 vi.mock("@/features/auth/actions/reset-password", () => ({
   resetPassword: vi.fn(),
 }));
+vi.mock("@/features/auth/actions/delete-user", () => ({
+  deleteUser: vi.fn(),
+  archiveUser: vi.fn(),
+  reactivateUser: vi.fn(),
+  checkUserDeleteEligibility: vi.fn().mockResolvedValue({ canHardDelete: true, historyReason: null }),
+}));
 
 describe("UsersManager", () => {
   const mockProfiles: Profile[] = [
@@ -33,10 +39,10 @@ describe("UsersManager", () => {
     },
     {
       id: "user-2",
-      name: "Trần Quản Lý",
-      username: "tran.quanly",
-      email: "quanly@minhtanphat.vn",
-      role: "manager",
+      name: "Trần Quản Kho",
+      username: "tran.quankho",
+      email: "quankho@minhtanphat.vn",
+      role: "warehouse",
       zone_id: null,
       sub_zone_id: null,
       is_active: true,
@@ -44,24 +50,41 @@ describe("UsersManager", () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
+    {
+      id: "user-3",
+      name: "Lê Đã Nghỉ",
+      username: "le.danghi",
+      email: "danghi@gmail.com",
+      role: "driver",
+      zone_id: null,
+      sub_zone_id: null,
+      is_active: false,
+      is_protected: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   ];
 
-  it("hiển thị cột Email, nút Tạo tài khoản và mở modal form khi bấm nút", () => {
+  it("hiển thị cố định Họ tên và Tên đăng nhập (không cho sửa), hiển thị cột Email và mở form tạo tài khoản", () => {
     render(
       <UsersManager
         profiles={mockProfiles}
         zones={[{ id: "z1", name: "Khu A" }]}
-        subZones={[{ id: "sz1", zone_id: "z1", name: "Trại A1" }]}
-        currentRole="manager"
+        currentRole="warehouse"
       />,
     );
 
-    // Tiêu đề cột Email trong bảng
+    // Tiêu đề cột trong bảng
+    expect(screen.getByRole("columnheader", { name: "Họ và tên" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Tên đăng nhập" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Email" })).toBeInTheDocument();
 
-    // Giá trị email hiển thị trong danh sách người dùng
+    // Họ tên & Tên đăng nhập hiển thị cố định dạng text/badge (không phải input, không có @)
+    expect(screen.getByText("Nguyễn Văn A")).toBeInTheDocument();
+    expect(screen.getByText("nguyen.van.a")).toBeInTheDocument();
+
+    // Email vẫn cho phép nhập để nhận thông báo
     expect(screen.getByDisplayValue("vana@gmail.com")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("quanly@minhtanphat.vn")).toBeInTheDocument();
 
     // Nút Tạo tài khoản ở góc trên bên phải
     const createBtn = screen.getByRole("button", { name: /Tạo tài khoản/i });
@@ -78,26 +101,76 @@ describe("UsersManager", () => {
     expect(screen.getByLabelText("Email (nhận thông báo)")).toBeInTheDocument();
   });
 
-  it("căn lề trên (align-top) cho các ô trong bảng để khi hiển thị ô trại không làm lệch hàng", () => {
-    const { container } = render(
+  it("hỗ trợ chuyển đổi giữa tab Đang làm việc và Đã nghỉ việc / Lưu trữ", () => {
+    render(
       <UsersManager
-        profiles={[
-          {
-            ...mockProfiles[0],
-            zone_id: "z1",
-            sub_zone_id: "sz1",
-          },
-        ]}
+        profiles={mockProfiles}
         zones={[{ id: "z1", name: "Khu A" }]}
-        subZones={[{ id: "sz1", zone_id: "z1", name: "Trại A1" }]}
-        currentRole="manager"
+        currentRole="owner"
+        currentUserId="user-super"
       />,
     );
 
-    const cells = container.querySelectorAll("tbody td");
-    expect(cells.length).toBeGreaterThan(0);
-    cells.forEach((cell) => {
-      expect(cell.className).toContain("align-top");
-    });
+    // Mặc định tab Đang làm việc hiển thị 2 người active
+    expect(screen.getByText("Nguyễn Văn A")).toBeInTheDocument();
+    expect(screen.getByText("Trần Quản Kho")).toBeInTheDocument();
+    expect(screen.queryByText("Lê Đã Nghỉ")).not.toBeInTheDocument();
+
+    // Bấm chuyển sang tab Đã nghỉ việc / Lưu trữ
+    const archivedTabBtn = screen.getByText(/Đã nghỉ việc/i);
+    fireEvent.click(archivedTabBtn);
+
+    // Hiển thị người đã nghỉ và nút kích hoạt lại
+    expect(screen.getByText("Lê Đã Nghỉ")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Kích hoạt lại/i })).toBeInTheDocument();
+    expect(screen.queryByText("Nguyễn Văn A")).not.toBeInTheDocument();
+  });
+
+  it("chỉ hiển thị nút khóa/xóa cho kế toán, chủ trại hoặc superuser (ẩn đối với quản kho)", () => {
+    // 1. Quản kho (warehouse): không thấy nút xóa/khóa
+    const { rerender } = render(
+      <UsersManager
+        profiles={mockProfiles}
+        zones={[{ id: "z1", name: "Khu A" }]}
+        currentRole="warehouse"
+        currentUserId="user-2"
+      />,
+    );
+    expect(screen.queryByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Xóa vĩnh viễn (nếu chưa có phiếu)")).not.toBeInTheDocument();
+
+    // 2. Kế toán (accountant): thấy nút khóa và xóa trên user active
+    rerender(
+      <UsersManager
+        profiles={mockProfiles}
+        zones={[{ id: "z1", name: "Khu A" }]}
+        currentRole="accountant"
+        currentUserId="user-acc"
+      />,
+    );
+    expect(screen.getAllByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).toHaveLength(2);
+    expect(screen.getAllByTitle("Xóa vĩnh viễn (nếu chưa có phiếu)")).toHaveLength(2);
+
+    // 3. Chủ trại (owner): thấy nút khóa và xóa trên user active
+    rerender(
+      <UsersManager
+        profiles={mockProfiles}
+        zones={[{ id: "z1", name: "Khu A" }]}
+        currentRole="owner"
+        currentUserId="user-owner"
+      />,
+    );
+    expect(screen.getAllByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).toHaveLength(2);
+
+    // 4. Quản trị hệ thống (superuser): thấy nút khóa và xóa trên user active
+    rerender(
+      <UsersManager
+        profiles={mockProfiles}
+        zones={[{ id: "z1", name: "Khu A" }]}
+        currentRole="superuser"
+        currentUserId="user-super"
+      />,
+    );
+    expect(screen.getAllByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).toHaveLength(2);
   });
 });

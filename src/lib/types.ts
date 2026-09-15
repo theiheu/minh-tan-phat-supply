@@ -1,15 +1,61 @@
 import type { Database } from "@/types/database.types";
 
-export type Role = "requester" | "manager" | "superuser";
+export type Role =
+  | "superuser"
+  | "owner"
+  | "accountant"
+  | "warehouse"
+  | "technician"
+  | "requester"
+  | "driver";
 
-/** true nếu vai trò có quyền quản lý (manager hoặc superuser — superuser = toàn quyền manager). */
+/** true nếu vai trò có quyền quản lý cấp cao / quản kho (warehouse, accountant, owner hoặc superuser). */
 export function isPrivileged(role: string | null | undefined): boolean {
-  return role === "manager" || role === "superuser";
+  return (
+    role === "warehouse" ||
+    role === "accountant" ||
+    role === "owner" ||
+    role === "superuser"
+  );
 }
 
 /** true nếu là tài khoản superuser (quyền cao nhất). */
 export function isSuperuser(role: string | null | undefined): boolean {
   return role === "superuser";
+}
+
+/** true nếu là chủ trại hoặc superuser. */
+export function isOwner(role: string | null | undefined): boolean {
+  return role === "owner" || role === "superuser";
+}
+
+/** true nếu là kế toán, chủ trại hoặc superuser. */
+export function isAccountant(role: string | null | undefined): boolean {
+  return role === "accountant" || role === "owner" || role === "superuser";
+}
+
+/** true nếu là quản kho, chủ trại hoặc superuser. */
+export function isWarehouse(role: string | null | undefined): boolean {
+  return (
+    role === "warehouse" ||
+    role === "owner" ||
+    role === "superuser"
+  );
+}
+
+/** true nếu là kỹ thuật (quản lý khu/cơ sở), quản kho, chủ trại hoặc superuser. */
+export function isTechnician(role: string | null | undefined): boolean {
+  return role === "technician" || isPrivileged(role);
+}
+
+/** true nếu là tài xế. */
+export function isDriver(role: string | null | undefined): boolean {
+  return role === "driver";
+}
+
+/** true nếu có quyền xóa tài khoản người dùng (kế toán, chủ trại hoặc superuser). */
+export function canDeleteUsers(role: string | null | undefined): boolean {
+  return role === "superuser" || role === "owner" || role === "accountant";
 }
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];

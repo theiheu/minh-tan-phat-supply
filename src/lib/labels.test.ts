@@ -67,7 +67,11 @@ describe("labels helpers", () => {
   });
 
   it("formats role and status labels", () => {
-    expect(roleLabel("manager")).toBe("Quản lý kho");
+    expect(roleLabel("warehouse")).toBe("Quản kho");
+    expect(roleLabel("technician")).toBe("Kỹ thuật");
+    expect(roleLabel("driver")).toBe("Tài xế");
+    expect(roleLabel("accountant")).toBe("Kế toán");
+    expect(roleLabel("owner")).toBe("Chủ trại");
     expect(roleLabel("requester")).toBe("Người yêu cầu");
     expect(roleLabel("superuser")).toBe("Quản trị hệ thống");
     expect(statusBadgeVariant("approved")).toBe("info");

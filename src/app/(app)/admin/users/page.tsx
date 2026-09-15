@@ -1,7 +1,7 @@
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { UsersManager } from "@/features/auth/components/users-manager";
 import { requireManager } from "@/lib/auth";
-import { getCachedSubZones, getCachedZones } from "@/lib/cached-metadata";
+import { getCachedZones } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
@@ -20,38 +20,34 @@ export default async function AdminUsersPage({
 
   const supabase = await createClient();
 
-  // Thứ tự hiển thị: superuser → manager → requester (mỗi nhóm theo created_at).
-  // Hai nhóm đầu rất ít tài khoản nên tải đủ; riêng nhóm requester phân trang bằng SQL.
-  const [{ data: supers }, { data: managers }, { count: requesterTotal }, zones, subZones] = await Promise.all([
-    supabase.from("profiles").select("*").eq("role", "superuser").order("created_at", { ascending: true }),
-    supabase.from("profiles").select("*").eq("role", "manager").order("created_at", { ascending: true }),
-    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "requester"),
+  // Thứ bậc vai trò ưu tiên: Quản trị hệ thống -> Chủ trại -> Kế toán -> Quản kho -> Kỹ thuật -> Người yêu cầu -> Tài xế
+  const ROLE_PRIORITY: Record<string, number> = {
+    superuser: 1,
+    owner: 2,
+    accountant: 3,
+    warehouse: 4,
+    technician: 5,
+    requester: 6,
+    driver: 7,
+  };
+
+  const [{ data: allProfiles }, zones] = await Promise.all([
+    supabase.from("profiles").select("*").order("created_at", { ascending: true }),
     getCachedZones(),
-    getCachedSubZones(),
   ]);
 
-  const headCount = (supers ?? []).length + (managers ?? []).length;
-  const totalCount = headCount + (requesterTotal ?? 0);
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const sortedProfiles = (allProfiles ?? []).sort((a, b) => {
+    const pA = ROLE_PRIORITY[a.role] ?? 99;
+    const pB = ROLE_PRIORITY[b.role] ?? 99;
+    if (pA !== pB) return pA - pB;
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+  });
 
-  // Lát cắt [start, end) của danh sách gộp; phần requester cần tải từ SQL.
+  const totalCount = sortedProfiles.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const end = page * PAGE_SIZE;
-  const reqStart = Math.max(0, start - headCount);
-  const reqEnd = Math.max(0, Math.min(requesterTotal ?? 0, end - headCount));
-
-  let requesterSlice: Profile[] = [];
-  if (reqEnd > reqStart) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("role", "requester")
-      .order("created_at", { ascending: true })
-      .range(reqStart, reqEnd - 1);
-    requesterSlice = data ?? [];
-  }
-
-  const rows = [...(supers ?? []), ...(managers ?? [])].slice(start, end).concat(requesterSlice);
+  const rows = sortedProfiles.slice(start, end);
 
   return (
     <div className="space-y-4">
@@ -59,8 +55,8 @@ export default async function AdminUsersPage({
       <UsersManager
         profiles={rows}
         zones={zones ?? []}
-        subZones={subZones ?? []}
         currentRole={current.role}
+        currentUserId={current.id}
         page={page}
         totalPages={totalPages}
       />

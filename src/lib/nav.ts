@@ -37,34 +37,81 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+const ALL_SUPPLY_ROLES: Role[] = [
+  "requester",
+  "technician",
+  "warehouse",
+  "accountant",
+  "owner",
+  "superuser",
+];
+
+const WAREHOUSE_ROLES: Role[] = [
+  "warehouse",
+  "accountant",
+  "owner",
+  "superuser",
+];
+
+const REPAIR_ROLES: Role[] = [
+  "technician",
+  "warehouse",
+  "accountant",
+  "owner",
+  "superuser",
+];
+
+const FUEL_ROLES: Role[] = [
+  "driver",
+  "warehouse",
+  "accountant",
+  "owner",
+  "superuser",
+];
+
+const REPORT_ROLES: Role[] = [
+  "technician",
+  "warehouse",
+  "accountant",
+  "owner",
+  "superuser",
+];
+
+const ADMIN_ROLES: Role[] = [
+  "warehouse",
+  "accountant",
+  "owner",
+  "superuser",
+];
+
 export const REQUISITION_NAV_ITEMS: NavItem[] = [
-  { href: "/products", label: "Chọn vật tư", icon: PackageOpen },
-  { href: "/requisitions", label: "Phiếu yêu cầu", icon: ClipboardList },
-  { href: "/tools", label: "Dụng cụ", icon: Wrench },
+  { href: "/products", label: "Chọn vật tư", icon: PackageOpen, roles: ALL_SUPPLY_ROLES },
+  { href: "/requisitions", label: "Phiếu yêu cầu", icon: ClipboardList, roles: ALL_SUPPLY_ROLES },
+  { href: "/tools", label: "Dụng cụ", icon: Wrench, roles: ALL_SUPPLY_ROLES },
 ];
 
 export const WAREHOUSE_NAV_ITEMS: NavItem[] = [
-  { href: "/receipts", label: "Phiếu nhập", icon: Package, roles: ["manager"] },
-  { href: "/issues", label: "Phiếu xuất", icon: PackageMinus, roles: ["manager"] },
-  { href: "/transfers", label: "Chuyển kho", icon: ArrowLeftRight, roles: ["manager"] },
-  { href: "/stocktake", label: "Kiểm kê", icon: ClipboardCheck, roles: ["manager"] },
+  { href: "/receipts", label: "Phiếu nhập", icon: Package, roles: WAREHOUSE_ROLES },
+  { href: "/issues", label: "Phiếu xuất", icon: PackageMinus, roles: WAREHOUSE_ROLES },
+  { href: "/transfers", label: "Chuyển kho", icon: ArrowLeftRight, roles: WAREHOUSE_ROLES },
+  { href: "/stocktake", label: "Kiểm kê", icon: ClipboardCheck, roles: WAREHOUSE_ROLES },
 ];
 
 export const DEFECTS_NAV_ITEMS: NavItem[] = [
-  { href: "/defects", label: "Vật tư hỏng & Đổi mới", icon: Trash2 },
-  { href: "/repairs", label: "Sửa chữa", icon: Wrench, roles: ["manager"] },
-  { href: "/liquidations", label: "Thanh lý", icon: Trash2, roles: ["manager"] },
+  { href: "/defects", label: "Vật tư hỏng & Đổi mới", icon: Trash2, roles: ALL_SUPPLY_ROLES },
+  { href: "/repairs", label: "Sửa chữa", icon: Wrench, roles: REPAIR_ROLES },
+  { href: "/liquidations", label: "Thanh lý", icon: Trash2, roles: WAREHOUSE_ROLES },
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { href: "/admin/products", label: "Vật tư", icon: Package, roles: ["manager"] },
-  { href: "/admin/categories", label: "Danh mục", icon: Tags, roles: ["manager"] },
-  { href: "/admin/zones", label: "Khu vực", icon: MapPin, roles: ["manager"] },
-  { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse, roles: ["manager"] },
-  { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ["manager"] },
-  { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ["manager"] },
-  { href: "/admin/vehicles", label: "Phương tiện", icon: Truck, roles: ["manager"] },
-  { href: "/admin/users", label: "Người dùng", icon: Users, roles: ["manager"] },
+  { href: "/admin/products", label: "Vật tư", icon: Package, roles: ADMIN_ROLES },
+  { href: "/admin/categories", label: "Danh mục", icon: Tags, roles: ADMIN_ROLES },
+  { href: "/admin/zones", label: "Khu vực", icon: MapPin, roles: ADMIN_ROLES },
+  { href: "/admin/locations", label: "Kho/vị trí", icon: Warehouse, roles: ADMIN_ROLES },
+  { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ADMIN_ROLES },
+  { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ADMIN_ROLES },
+  { href: "/admin/vehicles", label: "Phương tiện", icon: Truck, roles: ADMIN_ROLES },
+  { href: "/admin/users", label: "Người dùng", icon: Users, roles: ADMIN_ROLES },
 ];
 
 export const NAV_GROUPS: NavGroup[] = [
@@ -80,6 +127,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Yêu cầu vật tư",
     href: "/products",
     icon: PackageOpen,
+    roles: ALL_SUPPLY_ROLES,
     items: REQUISITION_NAV_ITEMS,
   },
   {
@@ -87,7 +135,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Quản lý kho",
     href: "/receipts",
     icon: Warehouse,
-    roles: ["manager"],
+    roles: WAREHOUSE_ROLES,
     items: WAREHOUSE_NAV_ITEMS,
   },
   {
@@ -95,6 +143,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Vật tư hỏng",
     href: "/defects",
     icon: Wrench,
+    roles: ALL_SUPPLY_ROLES,
     items: DEFECTS_NAV_ITEMS,
   },
   {
@@ -102,23 +151,23 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Kho dầu",
     href: "/fuel",
     icon: Fuel,
-    roles: ["manager"],
-    items: [{ href: "/fuel", label: "Kho dầu", icon: Fuel, roles: ["manager"] }],
+    roles: FUEL_ROLES,
+    items: [{ href: "/fuel", label: "Kho dầu", icon: Fuel, roles: FUEL_ROLES }],
   },
   {
     id: "reports",
     label: "Báo cáo",
     href: "/reports",
     icon: BarChart3,
-    roles: ["manager"],
-    items: [{ href: "/reports", label: "Báo cáo", icon: BarChart3, roles: ["manager"] }],
+    roles: REPORT_ROLES,
+    items: [{ href: "/reports", label: "Báo cáo", icon: BarChart3, roles: REPORT_ROLES }],
   },
   {
     id: "admin",
     label: "Quản trị",
     href: "/admin/products",
     icon: Settings,
-    roles: ["manager"],
+    roles: ADMIN_ROLES,
     items: ADMIN_NAV_ITEMS,
   },
 ];
@@ -128,8 +177,8 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   ...REQUISITION_NAV_ITEMS,
   ...WAREHOUSE_NAV_ITEMS,
   ...DEFECTS_NAV_ITEMS,
-  { href: "/fuel", label: "Kho dầu", icon: Fuel, roles: ["manager"] },
-  { href: "/reports", label: "Báo cáo", icon: BarChart3, roles: ["manager"] },
+  { href: "/fuel", label: "Kho dầu", icon: Fuel, roles: FUEL_ROLES },
+  { href: "/reports", label: "Báo cáo", icon: BarChart3, roles: REPORT_ROLES },
   ...ADMIN_NAV_ITEMS,
 ];
 
@@ -137,8 +186,8 @@ export const MAIN_NAV: NavItem[] = ALL_NAV_ITEMS.filter((i) => !i.href.startsWit
 export const ADMIN_NAV: NavItem[] = ADMIN_NAV_ITEMS;
 
 export function filterByRole(items: NavItem[], role: string): NavItem[] {
-  // superuser = toàn quyền: thấy mọi mục (kể cả mục dành riêng manager).
-  if (role === "superuser") return items.filter((i) => !i.roles || i.roles.includes("manager") || i.roles.includes("superuser"));
+  // superuser = toàn quyền: thấy mọi mục
+  if (role === "superuser") return items;
   return items.filter((i) => !i.roles || i.roles.includes(role as Role));
 }
 

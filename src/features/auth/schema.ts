@@ -30,11 +30,21 @@ export const emailSchema = z.preprocess(
     .transform((v) => v ?? null),
 );
 
+export const ROLES_ENUM = [
+  "superuser",
+  "owner",
+  "accountant",
+  "warehouse",
+  "technician",
+  "requester",
+  "driver",
+] as const;
+
 export const createUserSchema = z.object({
   name: z.string().min(1, "Tên không được trống"),
   username: usernameSchema,
   email: emailSchema,
-  role: z.enum(["requester", "manager", "superuser"]),
+  role: z.enum(ROLES_ENUM),
   zoneId: z.string().uuid().nullable(),
   subZoneId: z.string().uuid().nullable().optional(),
   password: passwordSchema,
@@ -44,7 +54,7 @@ export const updateProfileSchema = z.object({
   userId: z.string().uuid(),
   name: z.string().min(1, "Tên không được trống"),
   email: emailSchema,
-  role: z.enum(["requester", "manager", "superuser"]),
+  role: z.enum(ROLES_ENUM),
   zoneId: z.string().uuid().nullable(),
   subZoneId: z.string().uuid().nullable().optional(),
   isActive: z.boolean(),

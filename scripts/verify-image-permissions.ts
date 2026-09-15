@@ -35,11 +35,11 @@ async function run() {
     email: emailB,
     password: "password123",
     email_confirm: true,
-    user_metadata: { name: "Manager B Test", role: "manager" },
+    user_metadata: { name: "Manager B Test", role: "warehouse" },
   });
   assert(mgrBCreate.data.user, "Create manager B user failed");
   const managerBId = mgrBCreate.data.user.id;
-  await admin.from("profiles").upsert({ id: managerBId, role: "manager", name: "Manager B Test" });
+  await admin.from("profiles").upsert({ id: managerBId, role: "warehouse", name: "Manager B Test" });
 
   const mgrBLogin = await authApi.auth.signInWithPassword({ email: emailB, password: "password123" });
   assert(!mgrBLogin.error && mgrBLogin.data.session, "Manager B login failed");

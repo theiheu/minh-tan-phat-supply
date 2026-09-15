@@ -23,7 +23,7 @@ describe("features/auth/actions/admin-notifications", () => {
     it("gửi email test thành công khi SMTP đã cấu hình", async () => {
       vi.spyOn(authLib, "requireManager").mockResolvedValue({
         id: "manager-1",
-        role: "manager",
+        role: "warehouse",
       } as unknown as Awaited<ReturnType<typeof authLib.requireManager>>);
       vi.spyOn(emailLib, "isEmailConfigured").mockReturnValue(true);
       const sendSpy = vi
@@ -43,7 +43,7 @@ describe("features/auth/actions/admin-notifications", () => {
     it("báo lỗi nếu chưa cấu hình SMTP", async () => {
       vi.spyOn(authLib, "requireManager").mockResolvedValue({
         id: "manager-1",
-        role: "manager",
+        role: "warehouse",
       } as unknown as Awaited<ReturnType<typeof authLib.requireManager>>);
       vi.spyOn(emailLib, "isEmailConfigured").mockReturnValue(false);
 
@@ -57,7 +57,7 @@ describe("features/auth/actions/admin-notifications", () => {
     it("gửi thông báo tới toàn bộ người dùng", async () => {
       vi.spyOn(authLib, "requireManager").mockResolvedValue({
         id: "manager-1",
-        role: "manager",
+        role: "warehouse",
       } as unknown as Awaited<ReturnType<typeof authLib.requireManager>>);
 
       const mockSupabase = {
@@ -95,7 +95,7 @@ describe("features/auth/actions/admin-notifications", () => {
     it("gán email theo cú pháp username@domain", async () => {
       vi.spyOn(authLib, "requireManager").mockResolvedValue({
         id: "manager-1",
-        role: "manager",
+        role: "warehouse",
       } as unknown as Awaited<ReturnType<typeof authLib.requireManager>>);
 
       const mockUpdate = vi.fn().mockReturnValue({

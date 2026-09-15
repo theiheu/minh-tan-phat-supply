@@ -10,32 +10,32 @@ import {
 
 describe("nav", () => {
   it("filters items by role correctly", () => {
-    const managerItems = filterByRole(ALL_NAV_ITEMS, "manager");
+    const warehouseItems = filterByRole(ALL_NAV_ITEMS, "warehouse");
     const requesterItems = filterByRole(ALL_NAV_ITEMS, "requester");
     const superuserItems = filterByRole(ALL_NAV_ITEMS, "superuser");
 
-    expect(managerItems.length).toBeGreaterThan(requesterItems.length);
+    expect(warehouseItems.length).toBeGreaterThan(requesterItems.length);
     expect(superuserItems.length).toBe(ALL_NAV_ITEMS.length);
 
     // Requesters should not see receipts or admin
     expect(requesterItems.some((i) => i.href === "/receipts")).toBe(false);
     expect(requesterItems.some((i) => i.href.startsWith("/admin"))).toBe(false);
 
-    // Managers should see receipts and admin
-    expect(managerItems.some((i) => i.href === "/receipts")).toBe(true);
-    expect(managerItems.some((i) => i.href === "/admin/products")).toBe(true);
+    // Warehouse managers should see receipts and admin
+    expect(warehouseItems.some((i) => i.href === "/receipts")).toBe(true);
+    expect(warehouseItems.some((i) => i.href === "/admin/products")).toBe(true);
   });
 
   it("filters groups by role properly", () => {
-    const managerGroups = filterGroupsByRole(NAV_GROUPS, "manager");
+    const warehouseGroups = filterGroupsByRole(NAV_GROUPS, "warehouse");
     const requesterGroups = filterGroupsByRole(NAV_GROUPS, "requester");
 
-    const managerGroupIds = managerGroups.map((g) => g.id);
+    const warehouseGroupIds = warehouseGroups.map((g) => g.id);
     const requesterGroupIds = requesterGroups.map((g) => g.id);
 
-    expect(managerGroupIds).toContain("warehouse");
-    expect(managerGroupIds).toContain("fuel");
-    expect(managerGroupIds).toContain("admin");
+    expect(warehouseGroupIds).toContain("warehouse");
+    expect(warehouseGroupIds).toContain("fuel");
+    expect(warehouseGroupIds).toContain("admin");
 
     expect(requesterGroupIds).not.toContain("warehouse");
     expect(requesterGroupIds).not.toContain("fuel");
@@ -87,10 +87,35 @@ describe("nav", () => {
     expect(findTitle("/admin/products")).toBe("Vật tư");
   });
 
-  it("includes /tools navigation item for all authenticated roles", () => {
+  it("includes /tools navigation item for all supply roles", () => {
     const requesterItems = filterByRole(ALL_NAV_ITEMS, "requester");
-    const managerItems = filterByRole(ALL_NAV_ITEMS, "manager");
+    const warehouseItems = filterByRole(ALL_NAV_ITEMS, "warehouse");
+    const technicianItems = filterByRole(ALL_NAV_ITEMS, "technician");
     expect(requesterItems.some((i) => i.href === "/tools")).toBe(true);
-    expect(managerItems.some((i) => i.href === "/tools")).toBe(true);
+    expect(warehouseItems.some((i) => i.href === "/tools")).toBe(true);
+    expect(technicianItems.some((i) => i.href === "/tools")).toBe(true);
+  });
+
+  it("filters navigation for technician (Quản lý khu) and driver (Tài xế)", () => {
+    const technicianGroups = filterGroupsByRole(NAV_GROUPS, "technician");
+    const driverGroups = filterGroupsByRole(NAV_GROUPS, "driver");
+
+    const techGroupIds = technicianGroups.map((g) => g.id);
+    const driverGroupIds = driverGroups.map((g) => g.id);
+
+    // Technician sees dashboard, requisitions, defects, reports
+    expect(techGroupIds).toContain("dashboard");
+    expect(techGroupIds).toContain("requisitions");
+    expect(techGroupIds).toContain("defects");
+    expect(techGroupIds).toContain("reports");
+    expect(techGroupIds).not.toContain("warehouse");
+    expect(techGroupIds).not.toContain("admin");
+
+    // Driver sees dashboard, fuel
+    expect(driverGroupIds).toContain("dashboard");
+    expect(driverGroupIds).toContain("fuel");
+    expect(driverGroupIds).not.toContain("warehouse");
+    expect(driverGroupIds).not.toContain("admin");
+    expect(driverGroupIds).not.toContain("requisitions");
   });
 });

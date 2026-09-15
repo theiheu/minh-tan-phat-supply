@@ -24,8 +24,8 @@ vi.mock("./sign-out-button", () => ({ SignOutButton: () => <button>Đăng xuất
 
 const profile = {
   id: "user-1",
-  name: "Quản lý kho",
-  role: "manager",
+  name: "Quản kho",
+  role: "warehouse",
   zone_id: null,
 } as Profile;
 

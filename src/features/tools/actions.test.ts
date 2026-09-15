@@ -79,7 +79,7 @@ describe("Tool Server Actions", () => {
     });
     mockRequireManager.mockResolvedValue({
       id: "manager-456",
-      role: "manager",
+      role: "warehouse",
     });
     mockRpc.mockResolvedValue({ data: "mock-borrowing-id", error: null });
   });

@@ -42,7 +42,7 @@ async function run() {
     username: string,
     pass: string,
     name: string,
-    role: "manager" | "requester" | "superuser",
+    role: "superuser" | "owner" | "accountant" | "warehouse" | "technician" | "requester" | "driver",
     zoneId: string | null,
   ) {
     const { data: existing } = await admin.from("profiles").select("id").ilike("username", username).maybeSingle();
@@ -69,9 +69,9 @@ async function run() {
   const zone1 = zones?.find((z) => z.name.includes("1"))?.id ?? zones?.[0]?.id ?? null;
   const zone2 = zones?.find((z) => z.name.includes("2"))?.id ?? zones?.[1]?.id ?? null;
 
-  const managerId = await ensureUser("manager", "password123", "Trần Quốc Hưng (Quản lý kho)", "manager", null);
-  const requesterId = await ensureUser("requester", "password123", "Nguyễn Văn An (Trưởng Khu 1)", "requester", zone1);
-  const staffId = await ensureUser("staff", "password123", "Lê Thị Mai (Kỹ thuật Khu 2)", "requester", zone2);
+  const managerId = await ensureUser("manager", "password123", "Trần Quốc Hưng (Quản kho)", "warehouse", null);
+  const requesterId = await ensureUser("requester", "password123", "Nguyễn Văn An (Trưởng Khu 1)", "technician", zone1);
+  const staffId = await ensureUser("staff", "password123", "Lê Thị Mai (Kỹ thuật Khu 2)", "technician", zone2);
   const adminId = await ensureUser("admin", "password123", "Quản trị viên hệ thống", "superuser", null);
 
   console.log("🏢 3. Lấy thông tin kho và danh mục...");

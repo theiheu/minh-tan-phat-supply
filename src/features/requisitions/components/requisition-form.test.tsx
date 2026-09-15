@@ -303,7 +303,7 @@ describe("RequisitionForm", () => {
     render(
       <RequisitionForm
         zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
-        currentUser={{ id: "usr-1", role: "manager", name: "Nguyễn Quản Lý" }}
+        currentUser={{ id: "usr-1", role: "warehouse", name: "Nguyễn Quản Kho" }}
         accounts={accounts}
       />
     );

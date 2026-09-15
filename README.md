@@ -7,7 +7,10 @@
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat-square&logo=tailwindcss)
 ![Performance](https://img.shields.io/badge/Tốc_độ_tải_trang-~200ms-success?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-Offline_Ready-orange?style=flat-square)
-![Tests](https://img.shields.io/badge/Automated_Tests-318_Passed-brightgreen?style=flat-square)
+![Tests](https://img.shields.io/badge/Automated_Tests-343_Passed-brightgreen?style=flat-square)
+
+> 📚 **TRUNG TÂM TÀI LIỆU VẬN HÀNH & HƯỚNG DẪN KỸ THUẬT:**  
+> Toàn bộ tài liệu chi tiết từng chức năng, kiến trúc hệ thống, ERD cơ sở dữ liệu và cẩm nang vận hành được lưu trữ tập trung tại thư mục [**`docs/`**](./docs/README.md).
 
 ---
 
@@ -40,11 +43,15 @@ Thay vì kế toán dùng phần mềm riêng, kho dùng bảng Excel riêng, ph
 ## 📦 TOÀN BỘ CÁC TÍNH NĂNG CỦA HỆ THỐNG
 
 ### 1. 👥 Phân Cấp Người Dùng & Quản Trị Tài Khoản (`/admin/users`)
-* **3 Cấp độ Phân quyền chặt chẽ:**
-  * **`requester` (Trưởng chuồng, Thợ cơ điện, Tài xế, Công nhân):** Tra cứu danh mục, tạo phiếu yêu cầu vật tư, báo hỏng đổi đồ 1-1, xác nhận đã nhận hàng. Được gắn trực tiếp với Khu vực (`zone_id`) và Dãy chuồng (`sub_zone_id`) phụ trách.
-  * **`manager` (Thủ kho, Quản lý trại, Kế toán):** Toàn quyền duyệt cấp phát, xuất/nhập kho, đổi 1-1 cấp tốc, quản lý sửa chữa, thanh lý, nhập bồn dầu, kiểm kê kho, quản lý danh mục xe và giá cả.
-  * **`superuser` (Chủ trại, Ban Giám đốc):** Quyền tối cao: Tạo mới, khóa/kích hoạt tài khoản, đổi mật khẩu nhân viên, phân quyền vai trò, xem toàn bộ báo cáo doanh thu & chi phí lãi/lỗ.
-* **Đăng nhập bằng Tên tài khoản (Username Auth):** Đăng nhập nhanh bằng username ngắn gọn (`thukho_dung`, `truongchuong_tuan`), không cần email phức tạp.
+* **Hệ thống 7 Vai trò Phân quyền Chuẩn hóa:**
+  1. 👑 **`superuser` (Quản trị hệ thống):** Toàn quyền kỹ thuật, phân quyền, bảo mật, xóa sạch dữ liệu lịch sử (`Force Purge`).
+  2. 💼 **`owner` (Chủ trại):** Xem toàn bộ báo cáo tài chính/giá vốn, duyệt thanh lý lớn, duyệt cân bằng kho.
+  3. 📊 **`accountant` (Kế toán):** Quản lý giá mua/bán, hóa đơn VAT, công nợ NCC/khách hàng, duyệt sổ sách.
+  4. 📦 **`warehouse` (Quản kho):** Toàn quyền xuất - nhập - chuyển kho, đổi 1-1 cấp tốc, quản lý kho dầu, kiểm kê kho.
+  5. 🔧 **`technician` (Kỹ thuật):** Quản lý toàn diện khu/cơ sở phụ trách, duyệt cấp 1 phiếu yêu cầu, nghiệm thu sửa chữa.
+  6. 📋 **`requester` (Người yêu cầu):** Công nhân chuồng, thợ phụ: Lập phiếu xin cấp vật tư, mượn dụng cụ, báo hỏng thiết bị.
+  7. 🚛 **`driver` (Tài xế):** Lái xe ben, xe xúc: Quét mã QR đổ dầu tại trạm bồn, cập nhật số ODO/giờ máy.
+* **Chính sách Bất biến định danh & Hybrid Archive:** Họ tên & Tên đăng nhập được khóa cố định chống gian lận. Hệ thống phân loại thông minh: Xóa vĩnh viễn tài khoản chưa có phiếu, và Lưu trữ (Archive) tài khoản đã có chứng từ.
 
 ### 2. 🔔 Hệ Thống Thông Báo Chuông Tức Thì (Realtime Notifications)
 * **Chuông thông báo đích danh tới từng người:**

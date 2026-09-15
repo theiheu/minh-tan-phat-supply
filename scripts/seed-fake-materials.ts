@@ -70,7 +70,7 @@ async function main() {
     username: string,
     pass: string,
     name: string,
-    role: "manager" | "requester" | "superuser",
+    role: "superuser" | "owner" | "accountant" | "warehouse" | "technician" | "requester" | "driver",
     zoneId: string | null = null,
     isProtected = false
   ) {
@@ -143,11 +143,11 @@ async function main() {
 
   // Users
   const adminId = await ensureUser("admin", "password123", "Quản trị viên hệ thống", "superuser", null, true);
-  const managerId = await ensureUser("manager", "password123", "Trần Quốc Hưng (Quản lý kho)", "manager", null);
-  const requesterId = await ensureUser("requester", "password123", "Nguyễn Văn An (Trưởng Khu 1)", "requester", zone1);
-  const staffId = await ensureUser("staff", "password123", "Lê Thị Mai (Kỹ thuật Khu 2)", "requester", zone2);
-  const staff3Id = await ensureUser("staff3", "password123", "Phạm Hoàng Nam (Kỹ thuật Khu 3)", "requester", zone3);
-  const driverId = await ensureUser("driver1", "password123", "Vũ Đình Tài (Tài xế Vận tải)", "requester", null);
+  const managerId = await ensureUser("manager", "password123", "Trần Quốc Hưng (Quản kho)", "warehouse", null);
+  const requesterId = await ensureUser("requester", "password123", "Nguyễn Văn An (Trưởng Khu 1)", "technician", zone1);
+  const staffId = await ensureUser("staff", "password123", "Lê Thị Mai (Kỹ thuật Khu 2)", "technician", zone2);
+  const staff3Id = await ensureUser("staff3", "password123", "Phạm Hoàng Nam (Kỹ thuật Khu 3)", "technician", zone3);
+  const driverId = await ensureUser("driver1", "password123", "Vũ Đình Tài (Tài xế Vận tải)", "driver", null);
 
   // Stock locations
   const locationsData = [

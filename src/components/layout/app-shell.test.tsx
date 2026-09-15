@@ -27,8 +27,8 @@ vi.mock("@/components/slip-detail-modal", () => ({ SlipDetailModal: () => null }
 
 const profile = {
   id: "user-1",
-  name: "Quản lý kho",
-  role: "manager",
+  name: "Quản kho",
+  role: "warehouse",
   zone_id: null,
 } as Profile;
 

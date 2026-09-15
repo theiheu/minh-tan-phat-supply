@@ -27,7 +27,7 @@ describe("IssueInvoices permissions", () => {
         issueCode="PXK0001"
         invoiceImages={[imageByA, imageByB]}
         status="posted"
-        currentUser={{ id: userA, role: "manager", name: "User A" }}
+        currentUser={{ id: userA, role: "warehouse", name: "User A" }}
         creatorId={userA}
       />,
     );

@@ -255,9 +255,13 @@ export function variantLabel(attributes: unknown, unit?: string | null): string 
 
 // Nhãn vai trò tài khoản (UI) — tránh ternary rải rác.
 export const ROLE_LABELS: Record<string, string> = {
-  requester: "Người yêu cầu",
-  manager: "Quản lý kho",
   superuser: "Quản trị hệ thống",
+  owner: "Chủ trại",
+  accountant: "Kế toán",
+  warehouse: "Quản kho",
+  technician: "Kỹ thuật",
+  requester: "Người yêu cầu",
+  driver: "Tài xế",
 };
 
 export function roleLabel(role: string | null | undefined): string {

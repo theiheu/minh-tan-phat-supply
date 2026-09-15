@@ -28,7 +28,7 @@ describe("ReceiptInvoices permissions", () => {
         invoiceImages={[imageByA, imageByB]}
         status="posted"
         isManager={true}
-        currentUser={{ id: userA, role: "manager", name: "User A" }}
+        currentUser={{ id: userA, role: "warehouse", name: "User A" }}
         creatorId={userA}
       />,
     );
