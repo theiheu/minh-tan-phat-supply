@@ -17,9 +17,13 @@ Hướng dẫn quản lý danh mục hàng hóa, đơn vị tính quy đổi, m�
 
 ## 2. TẠO MỚI & CHỈNH SỬA VẬT TƯ (Quản kho / Quản lý)
 * **Truy cập:** Menu **Quản trị** ➜ **Vật tư** (`/admin/products`).
+* **Các kiểu quản lý vật tư & đơn vị tính:**
+  1. **Lẻ (1 quy cách):** Dành cho vật tư chỉ có 1 đơn vị duy nhất (Bóng đèn, Quạt hút, Thang...).
+  2. **Quy đổi đơn vị (Đóng gói đa cấp):** Dành cho vật tư có nhiều cấp đơn vị (VD: Keo dán bạt 1 Thùng = 6 Hộp 550ml; Thuốc sát trùng 1 Can = 5 Lít). Người dùng có thể tùy ý xin theo Thùng hoặc Hộp. *(Xem chi tiết tại [Hướng dẫn 13: Quy đổi đơn vị tính](./13-quy-doi-don-vi-dong-goi.md))*
+  3. **Nhiều quy cách độc lập:** Cùng 1 vật tư nhưng các dòng có tồn kho độc lập (VD: Bao 10kg, Bao 25kg).
+  4. **Bộ lắp ráp:** 1 Bộ gồm nhiều linh kiện cơ khí ghép thành.
 * **Các thông tin quan trọng:**
-  * **Tên sản phẩm & Mã SKU:** Mã phân biệt (VD: `MOTOR-3HP-1F`, `DEN-LED-9W`).
-  * **Đơn vị tính cơ sở & Quy cách quy đổi:** Ví dụ 1 Thùng = 24 Chai.
+  * **Tên sản phẩm & Danh mục:** Phân loại rõ ràng theo ngành hàng.
   * **Tồn kho an toàn tối thiểu:** Khi tồn kho xuống dưới mức này, hệ thống sẽ tự động cảnh báo màu đỏ để kịp thời đặt hàng.
 
 ---

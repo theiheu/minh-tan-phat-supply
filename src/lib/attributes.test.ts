@@ -49,7 +49,7 @@ describe("materialLabel / kitLabel", () => {
     expect(materialLabel("{}", "Bộ")).toBe("Bộ");
     expect(materialLabel(null, null)).toBe("—");
   });
-  it("kitLabel gộp linh kiện", () => {
+  it("kitLabel gộp linh kiện và quy đổi đơn vị", () => {
     expect(
       kitLabel("Bộ máng", [
         { label: "Núm", quantity: 1 },
@@ -57,5 +57,10 @@ describe("materialLabel / kitLabel", () => {
       ]),
     ).toBe("Bộ máng (gồm Núm ×1 · Cốc ×2)");
     expect(kitLabel("Bộ", [])).toBe("Bộ");
+    expect(
+      kitLabel("Thùng", [
+        { label: "550ml", unit: "Hộp", quantity: 6 },
+      ]),
+    ).toBe("Thùng = 6 Hộp (550ml)");
   });
 });

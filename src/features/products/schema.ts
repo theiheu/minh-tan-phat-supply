@@ -32,6 +32,23 @@ export const kitInputSchema = z.object({
   components: z.array(kitComponentInputSchema).min(1, "Bộ phải có ít nhất 1 linh kiện"),
 });
 
+// Đơn vị quy đổi (dùng khi tạo vật tư theo chế độ quy đổi đơn vị / đóng gói đa cấp).
+export const conversionItemInputSchema = z.object({
+  unit: z.string().min(1, "Nhập tên đơn vị đóng gói (VD: Thùng)"),
+  factor: z.coerce.number().int().min(1, "Tỷ lệ quy đổi phải ≥ 1"),
+  price: z.coerce.number().nonnegative().nullable().optional(),
+  spec: z.string().optional().default(""),
+});
+
+export const unitConversionInputSchema = z.object({
+  baseUnit: z.string().min(1, "Nhập tên đơn vị cơ sở (VD: Hộp, ml)"),
+  baseSpec: z.string().optional().default(""),
+  basePrice: z.coerce.number().nonnegative().nullable().optional(),
+  baseMinStock: z.coerce.number().int().min(0).default(0),
+  baseTrackableLot: z.boolean().default(false),
+  conversions: z.array(conversionItemInputSchema).min(1, "Cần ít nhất 1 đơn vị quy đổi"),
+});
+
 export const productInputSchema = z.object({
   name: z.string().min(1, "Tên không được trống"),
   description: z.string().optional().default(""),
@@ -40,6 +57,7 @@ export const productInputSchema = z.object({
   images: z.array(z.string()).default([]),
   variants: z.array(variantInputSchema).min(1, "Phải có ít nhất 1 biến thể"),
   kit: kitInputSchema.optional(),
+  unitConversion: unitConversionInputSchema.optional(),
 });
 
 // Cập nhật vật tư (không đụng biến thể — biến thể quản lý riêng trong dialog chi tiết).
@@ -55,3 +73,5 @@ export type ProductInput = z.infer<typeof productInputSchema>;
 export type KitInput = z.infer<typeof kitInputSchema>;
 export type VariantInput = z.infer<typeof variantInputSchema>;
 export type ProductUpdateInput = z.infer<typeof productUpdateSchema>;
+export type ConversionItemInput = z.infer<typeof conversionItemInputSchema>;
+export type UnitConversionInput = z.infer<typeof unitConversionInputSchema>;

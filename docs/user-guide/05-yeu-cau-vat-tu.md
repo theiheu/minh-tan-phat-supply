@@ -26,7 +26,7 @@ Quy trình công nhân/trưởng chuồng lập phiếu xin cấp vật tư, K�
 ### Bước 1: Lập phiếu xin cấp (Công nhân / Người yêu cầu)
 * Vào menu **Yêu cầu** (`/requisitions`) ➜ Bấm **"Tạo phiếu yêu cầu"** (`/requisitions/new`).
 * Chọn **Khu vực & Trại chăn nuôi** cần cấp (Ví dụ: *Khu B - Trại B3*).
-* Chọn danh sách vật tư cần xin (Bóng đèn, lưới, vỉ trứng, thuốc...).
+* **Chọn đơn vị tính linh hoạt:** Đối với vật tư đóng gói đa cấp (VD: Keo dán bạt, thuốc sát trùng), bạn có thể tùy ý chọn xin theo **Thùng** (khi làm diện rộng) hoặc theo **Hộp** (khi làm lẻ). Hệ thống sẽ tự động hiển thị số lượng quy đổi tương đương. *(Xem [Hướng dẫn 13: Quy đổi đơn vị](./13-quy-doi-don-vi-dong-goi.md))*.
 * Nhập **Mức độ ưu tiên:** *Bình thường* hoặc *Khẩn cấp*.
 * Bấm **"Gửi yêu cầu"**.
 

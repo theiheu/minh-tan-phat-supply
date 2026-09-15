@@ -235,8 +235,14 @@ export function ProductVariantsDialog({
     return null;
   }
 
-  function kitLabel(label: string, components: { label: string; quantity: number }[]) {
+  function kitLabel(label: string, components: { label: string; unit?: string | null; quantity: number }[]) {
     if (components.length === 0) return label;
+    if (components.length === 1) {
+      const c = components[0];
+      const childUnit = c.unit ? ` ${c.unit}` : "";
+      const childLabel = c.label && c.label !== "—" && c.label !== c.unit ? ` (${c.label})` : "";
+      return `${label} [1 = ${c.quantity}${childUnit}${childLabel}]`;
+    }
     const summary = components.map((c) => `${c.label} ×${c.quantity}`).join(" + ");
     return `${label} [${summary}]`;
   }

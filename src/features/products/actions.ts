@@ -201,6 +201,24 @@ export async function createProduct(input: ProductInput) {
     await writeKitComponents(product.id, parsed.kit.parentIndex, parsed.kit.components, variantIds);
   }
 
+  // Quy đổi đơn vị (nếu khai theo schema quy đổi đơn vị):
+  // Dòng 0 = Base variant (child), Dòng 1..N = Conversion variants (parents)
+  if (parsed.unitConversion && parsed.unitConversion.conversions.length > 0) {
+    const baseId = variantIds[0];
+    for (let i = 0; i < parsed.unitConversion.conversions.length; i++) {
+      const conv = parsed.unitConversion.conversions[i];
+      const parentId = variantIds[i + 1];
+      if (baseId && parentId) {
+        const { error: cErr } = await supabase.from("variant_components").insert({
+          parent_variant_id: parentId,
+          child_variant_id: baseId,
+          quantity: conv.factor,
+        });
+        if (cErr) throw new Error(cErr.message);
+      }
+    }
+  }
+
   revalidate();
   return product.id;
 }

@@ -20,10 +20,17 @@ import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import { ZoomableImage } from "@/components/image-lightbox";
 
-/** Tên hiển thị cho 1 dòng: quy cách, hoặc bộ kèm "gồm linh kiện ×định mức". */
+/** Tên hiển thị cho 1 dòng: quy cách, hoặc quy đổi / bộ kèm "gồm linh kiện ×định mức". */
 function variantDisplayName(v: VariantWithStock): string {
   const base = variantLabel(v.attributes, v.unit);
-  return v.isComposite ? kitLabel(base, v.components ?? []) : base;
+  if (v.isComposite) {
+    if (v.components && v.components.length === 1) {
+      const unitName = v.unit || base;
+      return kitLabel(unitName, v.components);
+    }
+    return kitLabel(base, v.components ?? []);
+  }
+  return base;
 }
 
 export function ProductDetailDialog({
@@ -121,15 +128,17 @@ export function ProductDetailDialog({
                 </div>
                 <div className="truncate text-xs text-muted-foreground">
                   {v.isComposite
-                    ? v.components && v.components.length > 0
-                      ? "Bộ lắp ráp — tồn tự tính theo linh kiện"
-                      : "Bộ lắp ráp (chưa khai linh kiện)"
+                    ? v.components && v.components.length === 1
+                      ? `1 ${v.unit || "đơn vị"} = ${v.components[0].quantity} ${v.components[0].unit || v.components[0].label} (quy đổi tự động)`
+                      : v.components && v.components.length > 1
+                        ? "Bộ lắp ráp — tồn tự tính theo linh kiện"
+                        : "Bộ lắp ráp (chưa khai linh kiện)"
                     : v.unit ? `Đơn vị: ${v.unit}` : ""}
                 </div>
               </div>
               <div className="shrink-0 text-right text-sm">
                 <div className={`text-xs font-semibold ${v.stock === 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                  {v.isComposite ? `Tồn bộ: ${v.stock}` : `Tồn: ${v.stock}`}
+                  {v.isComposite ? `Tồn: ${v.stock} ${v.unit || ""}` : `Tồn: ${v.stock} ${v.unit || ""}`}
                 </div>
                 {v.isComposite ? (
                   <div className="text-[10px] text-muted-foreground">khả dụng</div>
@@ -139,36 +148,51 @@ export function ProductDetailDialog({
           ))}
         </div>
 
-        <div className="flex items-center justify-between gap-2 min-w-0">
-          <span className="text-sm text-muted-foreground">Số lượng</span>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Button
-              variant="outline"
-              size="icon-xs"
-              onClick={() => setQty(String(Math.max(1, numQty - 1)))}
-              aria-label="Giảm số lượng"
-            >
-              −
-            </Button>
-            <Input
-              type="number"
-              min="1"
-              className="h-8 w-18 text-center font-medium tabular-nums"
-              value={qty}
-              onChange={(e) => setQty(e.target.value)}
-              onBlur={() => {
-                if (!qty || parseInt(qty, 10) < 1) setQty("1");
-              }}
-            />
-            <Button
-              variant="outline"
-              size="icon-xs"
-              onClick={() => setQty(String(numQty + 1))}
-              aria-label="Tăng số lượng"
-            >
-              +
-            </Button>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span className="text-sm text-muted-foreground">Số lượng ({selected?.unit || "đơn vị"})</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                variant="outline"
+                size="icon-xs"
+                onClick={() => setQty(String(Math.max(1, numQty - 1)))}
+                aria-label="Giảm số lượng"
+              >
+                −
+              </Button>
+              <Input
+                type="number"
+                min="1"
+                className="h-8 w-18 text-center font-medium tabular-nums"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                onBlur={() => {
+                  if (!qty || parseInt(qty, 10) < 1) setQty("1");
+                }}
+              />
+              <Button
+                variant="outline"
+                size="icon-xs"
+                onClick={() => setQty(String(numQty + 1))}
+                aria-label="Tăng số lượng"
+              >
+                +
+              </Button>
+            </div>
           </div>
+
+          {/* Ghi chú quy đổi tương đương thông minh */}
+          {selected?.isComposite && selected.components && selected.components.length === 1 && (
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-2 text-xs text-foreground flex items-center justify-between">
+              <span>
+                💡 <strong>Quy đổi:</strong> {numQty} {selected.unit || "đơn vị"} ={" "}
+                <strong className="text-primary font-semibold">
+                  {numQty * selected.components[0].quantity} {selected.components[0].unit || selected.components[0].label}
+                </strong>
+              </span>
+              <span className="text-[11px] text-muted-foreground">Kho sẽ xuất nguyên kiện</span>
+            </div>
+          )}
         </div>
 
         {selected && selected.stock === 0 && (

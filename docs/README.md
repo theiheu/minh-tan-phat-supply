@@ -40,6 +40,7 @@ Tài liệu được phân chia thành 3 trụ cột chính:
 | **10** | [**Chuyển kho & Kiểm kê tồn**](./user-guide/10-chuyen-kho-kiem-ke.md) | Quản kho, Kế toán | Điều chuyển giữa các kho cơ sở, mở phiên kiểm kê định kỳ, cân bằng sai lệch kho. |
 | **11** | [**Báo cáo Tổng hợp & Phân tích**](./user-guide/11-bao-cao-phan-tich.md) | Chủ trại, Kế toán | Báo cáo chi phí vật tư từng khu chuồng, biến động kho, phân tích xe, xuất file Excel chuẩn. |
 | **12** | [**In ấn Phiếu & Tem nhãn QR**](./user-guide/12-in-an-va-tem-nhan.md) | Quản kho, Kế toán, Kỹ thuật | In phiếu nhập/xuất/yêu cầu khổ A4/A5, in tem nhãn QR dán kệ hàng, dán xe, dán dụng cụ. |
+| **13** | [**Quy đổi Đơn vị Tính & Đóng gói Đa cấp**](./user-guide/13-quy-doi-don-vi-dong-goi.md) | Quản kho, Kỹ thuật, Công nhân | Hướng dẫn tạo vật tư quy đổi (Thùng/Hộp/ml), chọn đơn vị xin cấp phát, tự động trừ kho chuẩn xác. |
 
 ---
 

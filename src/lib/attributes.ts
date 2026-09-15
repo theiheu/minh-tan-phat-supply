@@ -44,9 +44,18 @@ export function pairsWithoutBlank(pairs: [string, string][]): [string, string][]
   return pairs.filter(([k, v]) => k.trim() && v.trim());
 }
 
-/** Nhãn hiển thị cho bộ: "Bộ (gồm A ×1 · B ×2)" hoặc đơn giản theo label. */
-export function kitLabel(label: string, components: { label: string; quantity: number }[]): string {
+/** Nhãn hiển thị cho bộ / quy đổi: "Bộ (gồm A ×1 · B ×2)" hoặc "Thùng = 6 Hộp (550ml)". */
+export function kitLabel(
+  label: string,
+  components: { label: string; unit?: string | null; quantity: number }[],
+): string {
   if (components.length === 0) return label;
+  if (components.length === 1) {
+    const c = components[0];
+    const childUnit = c.unit ? ` ${c.unit}` : "";
+    const childLabel = c.label && c.label !== "—" && c.label !== c.unit ? ` (${c.label})` : "";
+    return `${label} = ${c.quantity}${childUnit}${childLabel}`.trim();
+  }
   const parts = components.map((c) => `${c.label} ×${c.quantity}`);
   return `${label} (gồm ${parts.join(" · ")})`;
 }
