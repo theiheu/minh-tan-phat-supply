@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
   BarChart3,
+  Bot,
   Building2,
   ClipboardCheck,
   ClipboardList,
@@ -112,6 +113,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ADMIN_ROLES },
   { href: "/admin/vehicles", label: "Phương tiện", icon: Truck, roles: ADMIN_ROLES },
   { href: "/admin/users", label: "Người dùng", icon: Users, roles: ADMIN_ROLES },
+  { href: "/admin/ai-copilot", label: "AI Copilot", icon: Bot, roles: ADMIN_ROLES },
 ];
 
 export const NAV_GROUPS: NavGroup[] = [
@@ -186,7 +188,6 @@ export const MAIN_NAV: NavItem[] = ALL_NAV_ITEMS.filter((i) => !i.href.startsWit
 export const ADMIN_NAV: NavItem[] = ADMIN_NAV_ITEMS;
 
 export function filterByRole(items: NavItem[], role: string): NavItem[] {
-  // superuser = toàn quyền: thấy mọi mục
   if (role === "superuser") return items;
   return items.filter((i) => !i.roles || i.roles.includes(role as Role));
 }

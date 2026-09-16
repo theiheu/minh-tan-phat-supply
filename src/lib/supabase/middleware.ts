@@ -32,16 +32,13 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
 
-  // Server Action POST (có header `Next-Action`): KHÔNG redirect ở middleware khi
-  // hết session. Nếu redirect 307 ở đây, fetch của Next theo redirect sang trang
-  // /login (HTML) → client không nhận được RSC → toast vô nghĩa
-  // "An unexpected response was received from the server."
-  // Thay vào đó, để action tự chặn qua requireManager()/requireProfile() —
-  // redirect() ném TRONG action được client router xử lý đúng (x-action-redirect
-  // → điều hướng sang /login), và mọi action bảo vệ đều đã tự gọi guard.
+  // Server Action POST (có header `Next-Action`) hoặc API routes (`/api/*`):
+  // KHÔNG redirect 307 sang HTML /login ở middleware khi chưa có session.
+  // Để API routes và Actions tự trả về JSON (401 Unauthorized / Error) hoặc tự xử lý auth guard.
   const isServerAction = request.method === "POST" && request.headers.has("next-action");
+  const isApiRoute = path.startsWith("/api/");
 
-  if (!user && !isPublic && !isServerAction) {
+  if (!user && !isPublic && !isServerAction && !isApiRoute) {
     const url = request.nextUrl.clone();
     const fullRedirectPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
     url.pathname = "/login";

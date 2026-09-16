@@ -15,6 +15,7 @@ import { MobileNav } from "./mobile-nav";
 import { Sidebar } from "./sidebar";
 import { SignOutButton } from "./sign-out-button";
 import { Topbar } from "./topbar";
+import { AIFloatingTrigger } from "@/components/ai/ai-floating-trigger";
 
 export function AppShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -36,6 +37,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
       </div>
       <MobileNav profile={profile} />
       <CartDrawer />
+      <AIFloatingTrigger />
       <SlipDetailModal
         entityType={slipModal?.type ?? null}
         entityId={slipModal?.id ?? null}

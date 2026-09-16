@@ -60,8 +60,8 @@ export function LoginForm() {
       </CardHeader>
 
       <CardContent className="pt-0 pb-2">
-        <form action={formAction} className="space-y-3.5">
-          <input type="hidden" name="next" value={next ?? "/dashboard"} />
+        <form action={formAction} className="space-y-3.5" suppressHydrationWarning>
+          <input type="hidden" name="next" value={next ?? "/dashboard"} suppressHydrationWarning />
 
           {state.error && (
             <div
@@ -89,6 +89,7 @@ export function LoginForm() {
                 placeholder="VD: nguyen.van.a"
                 autoCapitalize="none"
                 autoCorrect="off"
+                suppressHydrationWarning
                 className="h-9 sm:h-10 bg-background/60 pl-9 text-sm transition-colors focus:bg-background"
               />
             </div>
@@ -109,6 +110,7 @@ export function LoginForm() {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
+                suppressHydrationWarning
                 className="h-9 sm:h-10 bg-background/60 pl-9 pr-10 text-sm transition-colors focus:bg-background"
               />
               <button

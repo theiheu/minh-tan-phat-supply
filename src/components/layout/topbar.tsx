@@ -59,6 +59,7 @@ export function Topbar() {
         </Link>
       )}
       <h1 className="flex-1 truncate text-base font-semibold">{title}</h1>
+
       <NotificationBell />
       <Button
         variant="outline"
