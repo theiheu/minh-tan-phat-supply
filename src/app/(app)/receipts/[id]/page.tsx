@@ -17,7 +17,7 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
-import { isPrivileged, isSuperuser } from "@/lib/types";
+import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { ReceiptInvoices } from "@/features/receipts/components/receipt-invoices";
 
@@ -65,7 +65,7 @@ const AUDIT_LABELS: Record<string, string> = {
 
 export default async function ReceiptDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const profile = await getCurrentProfile();
-  const isDev = isSuperuser(profile?.role);
+  const isDev = canDeleteDoc(profile?.role);
   const { id } = await params;
   const supabase = await createClient();
 

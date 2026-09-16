@@ -17,7 +17,7 @@ import {
 } from "@/lib/cached-metadata";
 import { dayRange } from "@/lib/format";
 import { DEFECT_STATUS } from "@/lib/labels";
-import { isPrivileged, isSuperuser } from "@/lib/types";
+import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "cn";
 import {
@@ -58,7 +58,7 @@ export default async function DefectsPage({
 
   const profile = await getCurrentProfile();
   const isManager = isPrivileged(profile?.role);
-  const isDev = isSuperuser(profile?.role);
+  const isDev = canDeleteDoc(profile?.role);
   const showRepairBatch = isManager && view === "repair";
 
   const supabase = await createClient();

@@ -58,6 +58,11 @@ export function canDeleteUsers(role: string | null | undefined): boolean {
   return role === "superuser" || role === "owner" || role === "accountant";
 }
 
+/** true nếu có quyền quản trị viên/chủ trại/dev được xóa và mở lại phiếu (owner, superuser). */
+export function canDeleteDoc(role: string | null | undefined): boolean {
+  return role === "superuser" || role === "owner";
+}
+
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type Variant = Database["public"]["Tables"]["variants"]["Row"];

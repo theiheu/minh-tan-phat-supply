@@ -18,14 +18,14 @@ import { requireManager } from "@/lib/auth";
 import { formatZoneLabel } from "@/lib/format-zone";
 import { formatDate, formatVnd } from "@/lib/format";
 import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
-import { isSuperuser } from "@/lib/types";
+import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function IssueDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const profile = await requireManager();
-  const isDev = isSuperuser(profile.role);
+  const isDev = canDeleteDoc(profile.role);
   const { id } = await params;
   const supabase = await createClient();
 

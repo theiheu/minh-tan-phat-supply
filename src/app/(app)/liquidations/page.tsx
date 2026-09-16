@@ -2,7 +2,7 @@ import { LiquidationManager } from "@/features/liquidations/components/liquidati
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { getCurrentProfile } from "@/lib/auth";
 import { variantLabel } from "@/lib/labels";
-import { isSuperuser } from "@/lib/types";
+import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export default async function LiquidationsPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const profile = await getCurrentProfile();
-  const isDev = isSuperuser(profile?.role);
+  const isDev = canDeleteDoc(profile?.role);
 
   const supabase = await createClient();
   const { data: hong } = await supabase.from("stock_locations").select("id").eq("code", "KHO_HONG").single();

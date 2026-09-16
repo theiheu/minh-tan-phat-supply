@@ -13,11 +13,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ExchangeDetailActions } from "@/features/exchanges/components/exchange-detail-actions";
+import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { EXCHANGE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
-import { isPrivileged } from "@/lib/types";
+import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +98,15 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExchangeDetailActions exchangeId={note.id} status={note.status} isManager={isPrivileged(profile.role)} />
+          <DevDocTools
+            kind="exchange"
+            id={note.id}
+            code={note.code}
+            docName="phiếu đổi mới"
+            canReopen={note.status === "issued" || note.status === "received"}
+            isDev={canDeleteDoc(profile.role)}
+            compact
+          />
           <Button variant="outline" size="sm" asChild>
             <Link href="/defects">← Vật tư hỏng</Link>
           </Button>

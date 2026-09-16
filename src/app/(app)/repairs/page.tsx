@@ -17,7 +17,7 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
 import { REPAIR_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
-import { isSuperuser } from "@/lib/types";
+import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 type RepairStatus = "in_repair" | "returned" | "cancelled";
@@ -39,7 +39,7 @@ export default async function RepairsPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const profile = await getCurrentProfile();
-  const isDev = isSuperuser(profile?.role);
+  const isDev = canDeleteDoc(profile?.role);
 
   const supabase = await createClient();
 

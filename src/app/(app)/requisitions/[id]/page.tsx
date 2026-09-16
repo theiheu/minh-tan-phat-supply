@@ -36,7 +36,7 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant, variantLabel } from "@/lib/labels";
-import { isPrivileged, isSuperuser } from "@/lib/types";
+import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { ZoomableImage } from "@/components/image-lightbox";
 
@@ -367,7 +367,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               code={req.code}
               docName="phiếu yêu cầu"
               canReopen={req.status === "issued" || req.status === "received"}
-              isDev={isSuperuser(profile.role)}
+              isDev={canDeleteDoc(profile.role)}
               compact
             />
           )}

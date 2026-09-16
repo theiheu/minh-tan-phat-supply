@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { devDeleteDoc, devReopenDoc, type DevDocKind } from "@/features/dev-tools/actions";
 
 /**
- * Nút công cụ DEV (chỉ render khi isDev): "Mở lại sửa" (đảo bút toán về trạng thái
- * sửa được) và "Xoá phiếu" (đã ghi sổ sẽ đảo bút toán trước khi xoá).
- * RPC phía DB tự kiểm superuser — UI ẩn chỉ là lớp trình bày.
+ * Nút công cụ Quản trị viên (Admin / Chủ trại / Superuser): "Mở lại sửa" (đảo bút toán về trạng thái
+ * sửa được) và "Xoá phiếu" (đã ghi sổ sẽ tự động đảo bút toán trước khi xoá).
+ * RPC phía DB tự kiểm tra quyền is_owner() — UI ẩn chỉ là lớp trình bày.
  */
 export function DevDocTools({
   kind,
@@ -60,12 +60,12 @@ export function DevDocTools({
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       {canReopen && (
-        <Button variant="outline" size={compact ? "sm" : "default"} disabled={pending} onClick={reopen} title="Dev: đảo bút toán, mở lại để sửa số liệu">
+        <Button variant="outline" size={compact ? "sm" : "default"} disabled={pending} onClick={reopen} title="Quản trị: đảo bút toán, mở lại để sửa số liệu">
           <Pencil className="size-3.5" aria-hidden />
           {compact ? "Mở lại" : "Mở lại sửa"}
         </Button>
       )}
-      <Button variant="ghost" size={compact ? "sm" : "default"} className="text-destructive hover:text-destructive" disabled={pending} onClick={remove} title="Dev: xoá phiếu">
+      <Button variant="ghost" size={compact ? "sm" : "default"} className="text-destructive hover:text-destructive" disabled={pending} onClick={remove} title="Quản trị: xoá phiếu">
         <Trash2 className="size-3.5" aria-hidden />
         Xoá
       </Button>

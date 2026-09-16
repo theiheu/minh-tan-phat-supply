@@ -6,7 +6,7 @@ import type { StocktakeSessionView } from "@/features/stocktake/types";
 import { requireProfile } from "@/lib/auth";
 import { dayRange } from "@/lib/format";
 import { STOCKTAKE_STATUS } from "@/lib/labels";
-import { isSuperuser } from "@/lib/types";
+import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 
 type StocktakeStatus = "draft" | "posted" | "cancelled";
@@ -28,9 +28,9 @@ export default async function StocktakePage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  // Chỉ superuser (dev) mới thấy nút Mở lại sửa / Xoá phiếu.
+  // Quản trị viên (admin/owner/superuser) có nút Mở lại sửa / Xoá phiếu.
   const profile = await requireProfile();
-  const isDev = isSuperuser(profile.role);
+  const isDev = canDeleteDoc(profile.role);
 
   const supabase = await createClient();
 
