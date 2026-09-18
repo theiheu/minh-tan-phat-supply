@@ -480,12 +480,12 @@ export function AICopilotManager({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b pb-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
         <Button
           variant={activeTab === "sessions" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("sessions")}
-          className="gap-2 text-xs sm:text-sm"
+          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
         >
           <MessageSquare className="size-4" />
           <span>Lịch sử đàm thoại ({conversations.length})</span>
@@ -494,7 +494,7 @@ export function AICopilotManager({
           variant={activeTab === "prompts" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("prompts")}
-          className="gap-2 text-xs sm:text-sm"
+          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
         >
           <Sparkles className="size-4" />
           <span>Gợi ý tra cứu nhanh ({quickPrompts.length})</span>
@@ -503,7 +503,7 @@ export function AICopilotManager({
           variant={activeTab === "knowledge" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("knowledge")}
-          className="gap-2 text-xs sm:text-sm"
+          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
         >
           <BookOpen className="size-4" />
           <span>Cơ sở tri thức SOP ({knowledgeDocs.length})</span>
@@ -512,7 +512,7 @@ export function AICopilotManager({
           variant={activeTab === "settings" ? "default" : "ghost"}
           size="sm"
           onClick={() => setActiveTab("settings")}
-          className="gap-2 text-xs sm:text-sm"
+          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
         >
           <Sliders className="size-4" />
           <span>Cấu hình & Model</span>

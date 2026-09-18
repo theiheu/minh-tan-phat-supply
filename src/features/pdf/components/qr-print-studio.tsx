@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
+  ChevronRight,
   Copy,
   FileText,
   ImageIcon,
@@ -274,25 +275,21 @@ export function QrPrintStudio({
       {/* Header thanh công cụ (Ẩn khi in) */}
       <div className="no-print sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => (backHref ? router.push(backHref) : router.back())}
-              aria-label="Quay lại"
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-bold text-foreground">In mã QR nhãn dán</h1>
-                <Badge variant="outline" className="font-mono text-xs">
-                  {code}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground hidden sm:block">
-                Tối ưu cho máy in nhiệt mini cầm tay, Bluetooth và tem decal
-              </p>
+          <div className="flex flex-col gap-0.5">
+            <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+              <button
+                onClick={() => (backHref ? router.push(backHref) : router.back())}
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="size-3.5" />
+                Quay lại phiếu
+              </button>
+              <ChevronRight className="size-3.5 shrink-0" />
+              <span className="text-foreground font-medium">In mã QR</span>
+            </nav>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm sm:text-base font-bold text-foreground">In mã QR nhãn dán</h1>
+              <Badge variant="outline" className="font-mono text-xs">{code}</Badge>
             </div>
           </div>
 

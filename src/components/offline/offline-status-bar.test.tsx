@@ -21,7 +21,7 @@ describe("OfflineStatusBar", () => {
 
   it("renders syncing message when isSyncing is true", () => {
     useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
+      items: [{ skuId: "v1", enteredQuantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
       zoneId: "z1",
       purpose: "Chuồng 1",
     });

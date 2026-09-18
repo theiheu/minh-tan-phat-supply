@@ -1,69 +1,96 @@
 # Changelog
-Tất cả các thay đổi quan trọng của dự án **MTP Farm ERP (Minh Tân Phát Supply)** sẽ được ghi nhận và lưu trữ trong tài liệu này.
 
-Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/), và tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply**.  
+Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/) + [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
-### Added (Kế hoạch mở rộng Poultry ERP)
-- **Giai đoạn 1 — Sản lượng & Đàn gà:** Quản lý lứa gà theo từng dãy chuồng, theo dõi tỷ lệ đẻ `% Laying Rate`, phân loại trứng và xuất bán trứng thương phẩm.
-- **Giai đoạn 2 — Thức ăn & Thú y:** Định mức tiêu thụ cám (g/con/ngày), tính hệ số chuyển hóa `FCR`, cảnh báo ăn giảm sớm, lịch vắc-xin tự động.
-- **Giai đoạn 3 — Tài chính Nông trại:** Báo cáo Giá thành sản xuất 1 quả trứng (`Cost per Egg`), Báo cáo Lãi/Lỗ ròng (P&L) toàn trại.
+## [Unreleased] — Nâng cấp kiến trúc Catalog
+
+### In Progress
+- **SKU Catalog Architecture (migrations 0072–0086):** Thay thế toàn bộ mô hình Product/Variant cũ bằng mô hình `Product → SKU → UOM → Stock Ledger` chuẩn hóa.
+  - Normalized attribute definitions, typed attribute values
+  - Multi-level transaction UoM với document snapshots
+  - Append-only Posting Kernel, idempotency, reversal
+  - Lot/expiry/serial tracking policy
+  - BOM versioning cho bộ vật tư ảo và bộ ráp sẵn
+  - Catalog search tăng cường: unaccent tiếng Việt, multi-token, barcode, SKU code
+- **AI Copilot draggable button:** floating button hỗ trợ drag cả touch và mouse
+
+### Planned (Poultry ERP Phase 2+)
+- Giai đoạn 1 — Sản lượng & Đàn gà: Quản lý lứa gà theo dãy chuồng, tỷ lệ đẻ `% Laying Rate`, phân loại trứng.
+- Giai đoạn 2 — Thức ăn & Thú y: Định mức cám (g/con/ngày), FCR, lịch vắc-xin tự động.
+- Giai đoạn 3 — Tài chính Nông trại: Chi phí/quả trứng, Báo cáo Lãi/Lỗ ròng (P&L).
+
+---
+
+## [0.10.0] - 2026-09-18
+
+### Added
+- **AI Copilot (floating, draggable):** Chat RAG nội bộ dựa trên dữ liệu kho thực tế. Tích hợp Omniroute RAG system, quản lý conversations và documents qua admin panel.
+- **AI Admin Management (`/admin/ai-copilot`):** Upload tài liệu nội bộ vào knowledge base, quản lý conversations AI, theo dõi document chunks.
+- **Additive SKU + Posting schema (migrations 0072–0086):** Chuẩn bị nền tảng cho catalog cutover. Schemas mới được additive, runtime cũ vẫn là chính cho đến cutover.
+- **Multi-database backup:** Script backup pre-cutover tự động (`backups/database/`).
+- **Catalog search cải tiến (0086):** Unaccent tiếng Việt, multi-token search (tên + thuộc tính), barcode, SKU code.
+- **OG image, sitemap, robots.txt** cho SEO.
+- **Assembly module (`/assemblies`):** UI lắp ráp bộ vật tư.
 
 ---
 
 ## [0.9.0] - 2026-09-12
+
 ### Added
-- **Quy đổi Đơn vị Tính & Đóng gói Đa cấp:** Hỗ trợ sản phẩm có nhiều cấp đơn vị (Thùng, Hộp, ml, Can, Lít, Bao, Kg) với hệ số `conversion_factor` linh hoạt.
-- Cho phép nhân viên chuồng tùy ý chọn đơn vị xin cấp phát trên giỏ hàng, hệ thống tự động quy đổi về đơn vị cơ sở để trừ kho chính xác.
-- **Migration 0068 (`post_receipt_require_manager_approval`):** Siết chặt quy trình nhập kho: Chỉ tự động xuất cấp phát (Auto-fulfill FIFO) cho các phiếu yêu cầu **ĐÃ ĐƯỢC PHÊ DUYỆT (`approved`)**, không tự động duyệt phiếu đang chờ (`pending`).
-- Tái cấu trúc toàn bộ hệ thống tài liệu theo tiêu chuẩn quốc tế **Diátaxis Framework** tại `docs/`.
+- **Quy đổi Đơn vị Tính & Đóng gói Đa cấp:** Thùng, Hộp, ml, Can, Lít, Bao, Kg với hệ số `conversion_factor`. Giỏ hàng cho phép chọn đơn vị linh hoạt, hệ thống tự quy đổi về Base UOM.
+- **Migration 0068 — Auto-fulfill chỉ cho phiếu đã duyệt:** Siết quy trình nhập kho — chỉ Auto-fulfill FIFO cho phiếu `approved`, bỏ qua `pending`.
+- **Tái cấu trúc tài liệu Diátaxis:** `docs/` theo chuẩn quốc tế (Architecture, How-To, Reference, Operations).
 
 ### Changed
-- Nâng cấp toàn bộ 349 bài kiểm thử tự động (61 test suites) đạt chuẩn 100% pass.
+- 349 automated tests, 61 test suites, 100% pass.
 
 ---
 
 ## [0.8.0] - 2026-09-10
+
 ### Added
-- **Hệ thống 7 Vai trò Chuẩn hóa (RBAC):** `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester`, `driver`.
-- **Bất biến định danh (Immutable Identity):** PostgreSQL Trigger `trg_profiles_prevent_identity_change` khóa cố định Họ tên và Tên đăng nhập sau khi tạo.
-- **Cơ chế Hybrid Archive & Force Purge:**
-  - Xóa vĩnh viễn tài khoản chưa từng phát sinh chứng từ.
-  - Tự động chuyển sang Lưu trữ / Nghỉ việc (`is_active = false`) với tài khoản đã có lịch sử phiếu.
-  - Phân tách 2 tab *"Đang làm việc"* và *"Đã nghỉ việc / Lưu trữ"* kèm nút *"Kích hoạt lại"* một chạm.
-  - Đặc quyền `Force Purge` (`admin_purge_user_data`) dành riêng cho `superuser` để dọn dẹp môi trường test.
-- **Quản lý Dãy chuồng 2 cấp (`sub_zones`):** Phân bổ chi phí và thống kê vật tư chính xác đến từng dãy chuồng.
+- **7 Vai trò chuẩn hóa (RBAC):** `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester`, `driver`.
+- **Immutable Identity:** Trigger `trg_profiles_prevent_identity_change` — khóa `full_name` + `username` vĩnh viễn sau khi tạo.
+- **Hybrid Archive & Force Purge:** Hard Delete cho tài khoản trống, Archive (`is_active=false`) cho tài khoản có lịch sử, Force Purge (`admin_purge_user_data`) cho superuser.
+- **Sub-zones 2 cấp:** Phân bổ chi phí chính xác đến từng dãy chuồng.
+- **User email notifications (migration 0063):** Notify khi phiếu được duyệt/từ chối.
+- **Performance indexes (migration 0064):** 38+ indexes tối ưu query.
 
 ---
 
 ## [0.7.0] - 2026-09-08
+
 ### Added
-- **Phân hệ Trạm Bồn Dầu & Xe Cơ Giới (`/fuel`, `/fuel/scan`):** Quét mã QR 5 giây dán trên cabin xe, nhập số ODO/giờ máy, tự động tính định mức $L/100km$ hoặc $L/h$ và cảnh báo tiêu hao bất thường.
-- **Phân hệ Mượn - Trả Dụng Cụ Đồ Nghề (`/tools`):** Quản lý tủ đồ nghề dùng chung, theo dõi hạn trả và cảnh báo quá hạn mượn.
-- **Trung Tâm Báo Cáo & Phân Tích (`/reports`):** Thẻ kho (Stock Card), Báo cáo XNT, Chi phí vật tư theo từng dãy chuồng (`Zone Costing`), Xuất file Excel chuẩn kế toán.
+- **Trạm Bồn Xăng Dầu & Xe Cơ Giới (`/fuel`, `/fuel/scan`):** Quét QR 5 giây trên xe, nhập ODO/giờ máy, tự động tính L/100km hoặc L/h, cảnh báo tiêu hao bất thường.
+- **Mượn-Trả Dụng Cụ Đồ Nghề (`/tools`):** Tủ đồ nghề dùng chung, theo dõi hạn trả, cảnh báo quá hạn mượn.
+- **Báo cáo & Phân tích (`/reports`):** Thẻ kho (Stock Card), XNT, Zone Costing (chi phí từng dãy chuồng), xuất Excel kế toán.
 
 ---
 
 ## [0.6.0] - 2026-09-06
+
 ### Added
-- **Đổi 1-1 Cấp Tốc trong 30 Giây (`/defects`):** Xử lý sự cố cháy motor quạt/máy bơm chuồng gà, xuất ngay hàng mới cứu đàn gà và nạp hàng cũ vào kho hỏng trong 1 transaction duy nhất.
-- **Tách biệt Sửa chữa (`/repairs`) & Thanh lý phế liệu (`/liquidations`):** Gom motor đi quấn lại dây đồng, nghiệm thu đưa về kho tổng hoặc thanh lý ve chai thu hồi vốn.
-- **Mẫu in PDF Vector Chuẩn Nhận Diện:** Tích hợp `@react-pdf/renderer`, nhúng font tiếng Việt `Be Vietnam Pro`, logo Trại gà Lê Văn Dương và mã QR tra cứu trực tiếp trên phiếu.
+- **Đổi 1-1 Cấp Tốc (`/defects`):** Xuất hàng mới + nhận hàng hỏng vào kho trong 1 atomic transaction. Xử lý trong ≤30 giây cho trường hợp cháy motor quạt/máy bơm chuồng gà.
+- **Sửa chữa (`/repairs`) & Thanh lý (`/liquidations`):** Gom thiết bị đi quấn lại/sửa bên ngoài, nghiệm thu đưa về kho hoặc thanh lý ve chai.
+- **PDF Vector chuẩn nhận diện:** `@react-pdf/renderer` + font `Be Vietnam Pro` + logo trại + QR code tra cứu.
 
 ---
 
 ## [0.5.0] - 2026-09-05
+
 ### Added
-- **Đăng nhập bằng Tên đăng nhập (Username Login):** Nhân viên không cần email cá nhân, đăng nhập trực tiếp bằng username và mật khẩu.
-- **Trả lại Vật tư Thừa (`requisition_returns`):** Cho phép công nhân trả lại linh kiện thừa sau khi sửa chuồng xong, tự động cộng lại tồn kho.
-- **Tách biệt Môi trường Dev & Prod:** Chạy Dev trên cổng 3001 (`.next-dev`) và Web chính Production trên cổng 3000 (`.next`) qua systemd `mtp-web`.
+- **Username Login:** Đăng nhập bằng tên đăng nhập (không cần email cá nhân).
+- **Trả lại vật tư thừa (`requisition_returns`):** Trả linh kiện thừa sau sửa chuồng, tự động cộng lại tồn.
+- **Tách môi trường Dev/Prod:** Dev port 3001 (`.next-dev`), Prod port 3000 (`.next`) qua systemd `mtp-web`.
 
 ---
 
 ## [0.1.0] - 2026-09-01
+
 ### Added
-- Khởi tạo dự án Next.js 15 App Router, TypeScript Strict, Tailwind CSS, Supabase PostgreSQL 17 + Row Level Security (RLS).
-- Phân hệ Danh mục sản phẩm, Biến thể, Đa vị trí kho (`stock_locations`), Sổ cái biến động kho (`stock_movements`).
-- Phiếu nhập kho từ Nhà cung cấp và Phiếu xuất kho nội bộ cơ bản.
+- Khởi tạo Next.js 15 App Router, TypeScript Strict, Tailwind CSS v4, Supabase PostgreSQL 17 + RLS.
+- Danh mục sản phẩm + biến thể, đa vị trí kho (`stock_locations`), sổ cái biến động kho (`stock_movements`).
+- Phiếu nhập kho NCC và phiếu xuất kho nội bộ cơ bản.

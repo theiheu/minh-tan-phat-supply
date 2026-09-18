@@ -85,6 +85,23 @@ describe("ImageLightbox", () => {
 
     expect(screen.getByText("Không thể tải hình ảnh")).toBeInTheDocument();
   });
+
+  it("navigates images by clicking thumbnail previews", () => {
+    render(
+      <ImageLightbox
+        open={true}
+        onOpenChange={vi.fn()}
+        images={["https://example.com/1.jpg", "https://example.com/2.jpg", "https://example.com/3.jpg"]}
+        title="Ảnh sản phẩm"
+      />
+    );
+
+    expect(screen.getByText("1 / 3")).toBeInTheDocument();
+    const secondThumbBtn = screen.getByRole("button", { name: "Chuyển đến ảnh 2" });
+    fireEvent.click(secondThumbBtn);
+
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
+  });
 });
 
 describe("ZoomableImage", () => {

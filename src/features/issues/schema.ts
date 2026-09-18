@@ -1,17 +1,30 @@
 import { z } from "zod";
 
 export const issueItemSchema = z.object({
-  variantId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  skuId: z.string().uuid().optional(),
+  variantId: z.string().uuid().optional(),
+  quantity: z.number().positive().optional(),
+  enteredQuantity: z.number().positive().optional(),
+  transactionUnitId: z.string().uuid().optional().nullable(),
   unitPrice: z.number().nonnegative().optional(),
+  batchNo: z.string().optional(),
+  expiryDate: z.string().optional(),
+  allocations: z.array(z.any()).optional(),
+  overrideReason: z.string().optional(),
+}).refine((data) => Boolean(data.skuId || data.variantId), {
+  message: "Phải chọn vật tư (SKU)",
+  path: ["skuId"],
+}).refine((data) => (data.enteredQuantity != null && data.enteredQuantity > 0) || (data.quantity != null && data.quantity > 0), {
+  message: "Số lượng xuất phải lớn hơn 0",
+  path: ["enteredQuantity"],
 });
 
 export const issueSchema = z
   .object({
     destinationType: z.enum(["zone", "customer"]),
-    zoneId: z.string().uuid().nullable(),
+    zoneId: z.string().uuid().nullable().optional(),
     subZoneId: z.string().uuid().optional().nullable(),
-    customerId: z.string().uuid().nullable(),
+    customerId: z.string().uuid().nullable().optional(),
     vehiclePlate: z.string().trim().max(50).optional(),
     driverName: z.string().trim().max(100).optional(),
     notes: z.string().trim().max(500, "Ghi chú tối đa 500 ký tự").optional(),

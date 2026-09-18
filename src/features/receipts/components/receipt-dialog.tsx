@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ReceiptForm, type VariantOption } from "./receipt-form";
+import { ReceiptForm } from "./receipt-form";
 
 export function ReceiptDialog({
   suppliers,
@@ -21,7 +21,7 @@ export function ReceiptDialog({
   triggerClassName,
 }: {
   suppliers: { id: string; name: string }[];
-  variants: VariantOption[];
+  variants?: never;
   triggerLabel?: string;
   triggerClassName?: string;
 }) {

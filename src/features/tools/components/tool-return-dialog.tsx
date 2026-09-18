@@ -21,7 +21,8 @@ import { returnToolBorrowing } from "../actions";
 import { cn } from "@/lib/utils";
 
 export interface ToolReturnItemInfo {
-  variantId: string;
+  skuId?: string;
+  variantId?: string;
   name: string;
   detail?: string | null;
   unit?: string | null;
@@ -32,8 +33,10 @@ export interface ToolReturnItemInfo {
 export interface ToolReturnDialogProps {
   borrowingId: string;
   code?: string;
+  skuId?: string;
   variantId?: string;
   productName?: string;
+  skuLabel?: string | null;
   variantLabel?: string | null;
   quantity?: number;
   returnedQuantity?: number;
@@ -48,11 +51,17 @@ export interface ToolReturnDialogProps {
   onSuccess?: () => void;
 }
 
+function getItemKey(item: ToolReturnItemInfo, index: number): string {
+  return item.skuId || item.variantId || `item-${index}`;
+}
+
 export function ToolReturnDialog({
   borrowingId,
   code,
+  skuId,
   variantId,
   productName,
+  skuLabel,
   variantLabel,
   quantity = 1,
   returnedQuantity = 0,
@@ -73,23 +82,28 @@ export function ToolReturnDialog({
   const setIsOpen = isControlled ? controlledOnOpenChange ?? (() => {}) : setInternalOpen;
 
   // Build item list
+  const effectiveSkuId = skuId ?? variantId ?? "";
+  const effectiveLabel = skuLabel ?? variantLabel;
   const defaultItems: ToolReturnItemInfo[] = passedItems ?? [
     {
-      variantId: variantId ?? "",
+      skuId: effectiveSkuId,
+      variantId: effectiveSkuId,
       name: productName ?? "Dụng cụ",
-      detail: variantLabel,
+      detail: effectiveLabel,
       unit: unit ?? "cái",
       quantity,
       returnedQuantity,
     },
   ];
 
-  // Map of variantId -> return quantity
+  // Map of skuId -> return quantity
   const [returnQuantities, setReturnQuantities] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
-    for (const item of defaultItems) {
+    for (let i = 0; i < defaultItems.length; i++) {
+      const item = defaultItems[i];
+      const key = getItemKey(item, i);
       const remaining = Math.max(0, item.quantity - item.returnedQuantity);
-      init[item.variantId] = remaining;
+      init[key] = remaining;
     }
     return init;
   });
@@ -99,9 +113,11 @@ export function ToolReturnDialog({
 
   const resetForm = () => {
     const init: Record<string, number> = {};
-    for (const item of defaultItems) {
+    for (let i = 0; i < defaultItems.length; i++) {
+      const item = defaultItems[i];
+      const key = getItemKey(item, i);
       const remaining = Math.max(0, item.quantity - item.returnedQuantity);
-      init[item.variantId] = remaining;
+      init[key] = remaining;
     }
     setReturnQuantities(init);
     setNotes("");
@@ -112,21 +128,25 @@ export function ToolReturnDialog({
     setIsOpen(open);
   };
 
-  const handleQuantityChange = (vId: string, value: number, max: number) => {
+  const handleQuantityChange = (key: string, value: number, max: number) => {
     const clamped = Math.max(1, Math.min(value, max));
-    setReturnQuantities((prev) => ({ ...prev, [vId]: clamped }));
+    setReturnQuantities((prev) => ({ ...prev, [key]: clamped }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const itemsToReturn = defaultItems
-      .filter((item) => (item.quantity - item.returnedQuantity) > 0)
-      .map((item) => ({
-        variantId: item.variantId,
-        quantity: returnQuantities[item.variantId] ?? (item.quantity - item.returnedQuantity),
-      }))
-      .filter((i) => i.quantity > 0 && i.variantId);
+      .filter((item) => item.quantity - item.returnedQuantity > 0)
+      .map((item, index) => {
+        const key = getItemKey(item, index);
+        const effectiveId = item.skuId || item.variantId || "";
+        return {
+          skuId: effectiveId,
+          quantity: returnQuantities[key] ?? (item.quantity - item.returnedQuantity),
+        };
+      })
+      .filter((i) => i.quantity > 0 && i.skuId);
 
     if (itemsToReturn.length === 0) {
       toast.error("Không có dụng cụ nào để trả");
@@ -189,13 +209,14 @@ export function ToolReturnDialog({
           </DialogHeader>
 
           <div className="space-y-3">
-            {defaultItems.map((item) => {
+            {defaultItems.map((item, index) => {
+              const key = getItemKey(item, index);
               const remaining = Math.max(0, item.quantity - item.returnedQuantity);
-              const currentReturnQty = returnQuantities[item.variantId] ?? remaining;
+              const currentReturnQty = returnQuantities[key] ?? remaining;
 
               return (
                 <div
-                  key={item.variantId || item.name}
+                  key={key}
                   className="p-3 rounded-lg border bg-muted/30 space-y-2"
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -212,7 +233,7 @@ export function ToolReturnDialog({
 
                   {remaining > 0 ? (
                     <div className="flex items-center justify-between pt-1">
-                      <Label htmlFor={`qty-${item.variantId}`} className="text-xs text-muted-foreground">
+                      <Label htmlFor={`qty-${key}`} className="text-xs text-muted-foreground">
                         Số lượng trả:
                       </Label>
                       <div className="flex items-center gap-2">
@@ -224,20 +245,20 @@ export function ToolReturnDialog({
                           aria-label="Giảm số lượng trả"
                           disabled={currentReturnQty <= 1 || pending}
                           onClick={() =>
-                            handleQuantityChange(item.variantId, currentReturnQty - 1, remaining)
+                            handleQuantityChange(key, currentReturnQty - 1, remaining)
                           }
                         >
                           <Minus className="size-3" />
                         </Button>
                         <Input
-                          id={`qty-${item.variantId}`}
+                          id={`qty-${key}`}
                           type="number"
                           min={1}
                           max={remaining}
                           value={currentReturnQty}
                           onChange={(e) =>
                             handleQuantityChange(
-                              item.variantId,
+                              key,
                               parseInt(e.target.value, 10) || 1,
                               remaining,
                             )
@@ -253,7 +274,7 @@ export function ToolReturnDialog({
                           aria-label="Tăng số lượng trả"
                           disabled={currentReturnQty >= remaining || pending}
                           onClick={() =>
-                            handleQuantityChange(item.variantId, currentReturnQty + 1, remaining)
+                            handleQuantityChange(key, currentReturnQty + 1, remaining)
                           }
                         >
                           <Plus className="size-3" />
@@ -265,7 +286,7 @@ export function ToolReturnDialog({
                           className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
                           disabled={currentReturnQty === remaining || pending}
                           onClick={() =>
-                            handleQuantityChange(item.variantId, remaining, remaining)
+                            handleQuantityChange(key, remaining, remaining)
                           }
                         >
                           Trả hết

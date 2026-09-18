@@ -78,7 +78,16 @@ export async function fetchGeneralReportData(params: {
   ] = await Promise.all([
     supabase
       .from("variants")
-      .select("id, price, unit, attributes, min_stock, product_id, products(id, name, category_id, categories(id, name))"),
+      .select(`
+        id, price, min_stock, product_id,
+        units(name, symbol),
+        products(id, name, category_id, categories(id, name)),
+        sku_attribute_values(
+          text_value, numeric_value, boolean_value, legacy_text_value,
+          attribute_definitions(name),
+          units(symbol)
+        )
+      `),
     isSpecificLocation
       ? supabase.from("stock_balances").select("variant_id, quantity").eq("location_id", locationId!)
       : supabase.from("stock_balances").select("variant_id, quantity"),
@@ -200,12 +209,18 @@ export async function fetchGeneralReportData(params: {
     const unitPrice = Number(v.price) || 0;
     const closingValue = calc.closingQty * unitPrice;
     const categoryName = (v.products as { categories?: { name?: string } | null } | null)?.categories?.name || "Chưa phân loại";
+    const unitObj = v.units as { name?: string; symbol?: string } | null;
+    const unit = unitObj?.symbol || unitObj?.name || "—";
+    const attrVals = ((v as unknown as { sku_attribute_values?: Array<{ text_value?: string | null; legacy_text_value?: string | null; numeric_value?: number | null; units?: { symbol?: string | null } | null }> }).sku_attribute_values ?? []).map((av) => {
+      return av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null);
+    }).filter(Boolean);
+    const vLabel = attrVals.length > 0 ? attrVals.join(" · ") : (unit !== "—" ? unit : "Mặc định");
 
     return {
       variantId: v.id,
       productName: (v.products as { name?: string } | null)?.name || "—",
-      variantLabel: variantLabel(v.attributes, v.unit),
-      unit: v.unit || "—",
+      variantLabel: vLabel,
+      unit,
       categoryName,
       openingQty: calc.openingQty,
       inQty: calc.inQty,
@@ -621,7 +636,16 @@ export async function fetchStockCardData(params: {
   const [variantRes, locationRes, balancesRes, movementsRes, profilesRes] = await Promise.all([
     supabase
       .from("variants")
-      .select("id, attributes, unit, products(name)")
+      .select(`
+        id, sku_code,
+        units(name, symbol),
+        products(name),
+        sku_attribute_values(
+          text_value, numeric_value, boolean_value, legacy_text_value,
+          attribute_definitions(name),
+          units(symbol)
+        )
+      `)
       .eq("id", variantId)
       .maybeSingle(),
     isSpecificLocation
@@ -658,8 +682,12 @@ export async function fetchStockCardData(params: {
 
   const variant = variantRes.data;
   const productName = (variant.products as { name?: string } | null)?.name || "—";
-  const vLabel = variantLabel(variant.attributes, variant.unit);
-  const unit = variant.unit || "—";
+  const unitObj = variant.units as { name?: string; symbol?: string } | null;
+  const unit = unitObj?.symbol || unitObj?.name || "—";
+  const attrVals = ((variant as unknown as { sku_attribute_values?: Array<{ text_value?: string | null; legacy_text_value?: string | null; numeric_value?: number | null; units?: { symbol?: string | null } | null }> }).sku_attribute_values ?? []).map((av) => {
+    return av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null);
+  }).filter(Boolean);
+  const vLabel = attrVals.length > 0 ? attrVals.join(" · ") : (unit !== "—" ? unit : "Mặc định");
   const locationName = locationRes.data?.name || "Tất cả kho";
 
   const profileMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p.name]));
@@ -838,9 +866,16 @@ export async function fetchRequisitionsReportData(params: {
       items:requisition_items(
         quantity,
         variants(
-          unit,
-          attributes,
-          products(name)
+          id,
+          sku_code,
+          units(name, symbol),
+          products(name),
+          sku_attribute_values(
+            text_value,
+            numeric_value,
+            legacy_text_value,
+            units(symbol)
+          )
         )
       )
     `
@@ -879,9 +914,16 @@ export async function fetchRequisitionsReportData(params: {
     items?: Array<{
       quantity: number;
       variants?: {
-        unit: string | null;
-        attributes: Record<string, string> | null;
+        id?: string;
+        sku_code?: string | null;
+        units?: { name?: string | null; symbol?: string | null } | null;
         products?: { name: string } | null;
+        sku_attribute_values?: Array<{
+          text_value?: string | null;
+          legacy_text_value?: string | null;
+          numeric_value?: number | null;
+          units?: { symbol?: string | null } | null;
+        }> | null;
       } | null;
     }> | null;
   }
@@ -889,12 +931,19 @@ export async function fetchRequisitionsReportData(params: {
   return ((data ?? []) as unknown as RawRequisitionQueryResult[]).map((r) => {
     const rawItems = r.items ?? [];
 
-    const items: RequisitionReportItem[] = rawItems.map((it) => ({
-      productName: it.variants?.products?.name || "Vật tư",
-      variantLabel: it.variants ? variantLabel(it.variants.attributes, it.variants.unit) : "",
-      unit: it.variants?.unit || "—",
-      quantity: it.quantity,
-    }));
+    const items: RequisitionReportItem[] = rawItems.map((it) => {
+      const v = it.variants;
+      const unitObj = v?.units;
+      const unit = unitObj?.symbol || unitObj?.name || "—";
+      const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+      const vLabel = attrVals.length > 0 ? attrVals.join(" · ") : (unit !== "—" ? unit : "");
+      return {
+        productName: v?.products?.name || "Vật tư",
+        variantLabel: vLabel,
+        unit,
+        quantity: it.quantity,
+      };
+    });
 
     return {
       id: r.id,

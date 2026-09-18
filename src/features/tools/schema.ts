@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const toolBorrowingItemSchema = z.object({
-  variantId: z.string().uuid("Vật tư không hợp lệ"),
-  quantity: z.number().int().min(1, "Số lượng phải ít nhất là 1"),
+  skuId: z.string().uuid("Vật tư không hợp lệ"),
+  quantity: z.number().min(1, "Số lượng phải ít nhất là 1"),
 });
 
 export const toolBorrowingSchema = z.object({
@@ -15,8 +15,8 @@ export const toolBorrowingSchema = z.object({
 });
 
 export const toolReturnItemSchema = z.object({
-  variantId: z.string().uuid(),
-  quantity: z.number().int().min(1, "Số lượng trả phải lớn hơn 0"),
+  skuId: z.string().uuid("Vật tư không hợp lệ"),
+  quantity: z.number().min(1, "Số lượng trả phải lớn hơn 0"),
 });
 
 export const toolReturnSchema = z.object({

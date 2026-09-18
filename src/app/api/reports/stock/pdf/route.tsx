@@ -37,7 +37,16 @@ export async function GET(req: Request) {
       .select("variant_id, quantity")
       .eq("location_id", location.id)
       .gt("quantity", 0),
-    supabase.from("variants").select("id, attributes, unit, products(name)"),
+    supabase.from("variants").select(`
+      id, sku_code,
+      units(name, symbol),
+      products(name),
+      sku_attribute_values(
+        text_value, numeric_value, boolean_value, legacy_text_value,
+        attribute_definitions(name),
+        units(symbol)
+      )
+    `),
   ]);
   if (stockErr || variantsErr) return new NextResponse("Không đọc được dữ liệu tồn kho", { status: 502 });
 
@@ -45,10 +54,16 @@ export async function GET(req: Request) {
   const lines = (stockRows ?? [])
     .map((s) => {
       const v = s.variant_id ? variantMap.get(s.variant_id) : undefined;
+      const unitObj = v?.units as { name?: string; symbol?: string } | null;
+      const unit = unitObj?.symbol || unitObj?.name || "—";
+      const attrVals = ((v as unknown as { sku_attribute_values?: Array<{ text_value?: string | null; legacy_text_value?: string | null; numeric_value?: number | null; units?: { symbol?: string | null } | null }> })?.sku_attribute_values ?? []).map((av) => {
+        return av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null);
+      }).filter(Boolean);
+      const label = attrVals.length > 0 ? attrVals.join(" · ") : (unit !== "—" ? unit : "Mặc định");
       return {
         name: v?.products?.name ?? "—",
-        label: v ? variantLabel(v.attributes, v.unit) : "—",
-        unit: v?.unit ?? "—",
+        label: v ? label : "—",
+        unit,
         quantity: s.quantity ?? 0,
       };
     })

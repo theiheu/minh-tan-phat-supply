@@ -54,7 +54,7 @@ async function run() {
 
     // 3. Manager A creates a receipt with imageA
     const createRes = await clientA.rpc("create_receipt", {
-      p_items: [{ variant_id: variant.id, quantity: 1, unit_cost: 1000 }],
+      p_items: [{ sku_id: variant.id, entered_quantity: 1, unit_cost: 1000 }],
       p_supplier_id: null,
       p_by: managerAId,
       p_notes: "Test image delete permissions",

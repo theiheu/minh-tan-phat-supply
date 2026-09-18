@@ -40,20 +40,7 @@ describe("ProductCard", () => {
     },
   ];
 
-  it("opens ProductDetailDialog when clicking card body", () => {
-    render(<ProductCard product={mockProduct} variants={mockVariants} />);
-
-    // Initial state: ProductDetailDialog is closed
-    expect(screen.queryByRole("button", { name: "Thêm vào giỏ" })).not.toBeInTheDocument();
-
-    // Click product title / card body
-    fireEvent.click(screen.getByText("Găng tay cao su"));
-
-    // ProductDetailDialog should open
-    expect(screen.getByRole("button", { name: "Thêm vào giỏ" })).toBeInTheDocument();
-  });
-
-  it("does not open ProductDetailDialog when viewing or closing image lightbox", () => {
+  it("does not open dialog when viewing or closing image lightbox", () => {
     render(<ProductCard product={mockProduct} variants={mockVariants} />);
 
     // Find the image element / gallery container
@@ -119,6 +106,18 @@ describe("ProductCard", () => {
     expect(screen.queryByRole("button", { name: "Thêm vào giỏ" })).not.toBeInTheDocument();
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("quickly adds 1 unit to cart when clicking quick add button on single-variant card", () => {
+    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+
+    const quickAddBtn = screen.getByRole("button", { name: "Thêm nhanh Găng tay cao su vào giỏ" });
+    expect(quickAddBtn).toBeInTheDocument();
+
+    fireEvent.click(quickAddBtn);
+
+    // Dialog should NOT open when quick adding
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 

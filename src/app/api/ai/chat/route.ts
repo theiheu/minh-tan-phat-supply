@@ -148,7 +148,7 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: optimizedMessages,
       tools,
-      maxSteps: 5,
+      maxSteps: 10,
       maxTokens: effectiveMaxTokens,
       onFinish: async ({ text, toolCalls, toolResults }) => {
         try {
@@ -160,11 +160,11 @@ export async function POST(req: Request) {
             .limit(1)
             .single();
 
-          if (latestConv?.id && text) {
+          if (latestConv?.id && (text || (toolCalls && toolCalls.length > 0))) {
             await db.from("ai_messages").insert({
               conversation_id: latestConv.id,
               role: "assistant",
-              content: text,
+              content: text || "",
               tool_calls: toolCalls || null,
               tool_results: toolResults || null,
             });

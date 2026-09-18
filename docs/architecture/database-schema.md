@@ -77,7 +77,7 @@ erDiagram
 ### B. Danh Mục Hàng Hóa & Đa Quy Cách (Catalog & Packaging)
 6. **`categories`**: Danh mục phân loại vật tư (Cơ điện, Nước & Chuồng trại, Thuốc thú y, Bao bì...).
 7. **`products`**: Sản phẩm gốc (`code`, `name`, `category_id`, `base_unit`, `manage_type`, `min_stock_alert`).
-8. **`variants`**: Biến thể sản phẩm hoặc đơn vị quy đổi (`product_id`, `sku`, `name`, `unit`, `conversion_factor`, `price_buy`, `price_sell`, `is_default`).
+8. **`variants`**: Biến thể sản phẩm hoặc đơn vị quy đổi. `products.options` là danh sách nhóm lựa chọn có thứ tự; mỗi `variants.attributes` phải có đúng tập khóa này và biểu diễn một tổ hợp thực tế duy nhất. Unique index `variants_product_attributes_unique` chặn trùng `(product_id, attributes)`.
 9. **`variant_components`**: Định mức linh kiện cho vật tư dạng Bộ (Composite Kits).
 10. **`suppliers`**: Danh bạ Nhà Cung Cấp thiết bị, điện, thuốc, dầu (`code`, `name`, `phone`, `address`).
 11. **`customers`**: Danh bạ Khách hàng / Thương lái thu mua phân, vỉ trứng, phế liệu.

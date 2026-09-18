@@ -1,5 +1,5 @@
 import { ReceiptForm, type ItemDraft } from "@/features/receipts/components/receipt-form";
-import { getCachedCompositeVariantIds, getCachedSuppliers, getCachedVariantOptions } from "@/lib/cached-metadata";
+import { getCachedCategories, getCachedCompositeVariantIds, getCachedSuppliers, getCachedVariantOptions } from "@/lib/cached-metadata";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,10 +15,11 @@ export default async function NewReceiptPage({
   const requisitionId = sp?.requisition_id;
   const supabase = await createClient();
 
-  const [suppliers, variants, compositeIdsArr] = await Promise.all([
+  const [suppliers, variants, compositeIdsArr, categories] = await Promise.all([
     getCachedSuppliers(),
     getCachedVariantOptions(),
     getCachedCompositeVariantIds(),
+    getCachedCategories(),
   ]);
 
   const compositeIds = new Set(compositeIdsArr);
@@ -50,11 +51,13 @@ export default async function NewReceiptPage({
       initialItems = reqItems
         .filter((it) => !compositeIds.has(it.variant_id))
         .map((it) => ({
-          variantId: it.variant_id,
-          quantity: String(it.quantity),
+          skuId: it.variant_id,
+          transactionUnitId: "",
+          enteredQuantity: String(it.quantity),
           unitCost: "",
           batchNo: "",
           expiryDate: "",
+          trackingPolicy: "none"
         }));
     }
     if (req) {
@@ -65,7 +68,8 @@ export default async function NewReceiptPage({
   return (
     <ReceiptForm
       suppliers={suppliers}
-      variants={variantOptions}
+
+      categories={categories ?? []}
       initialItems={initialItems}
       initialNotes={initialNotes}
       currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}

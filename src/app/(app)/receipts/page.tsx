@@ -82,7 +82,7 @@ export default async function ReceiptsPage({
         </p>
         <ReceiptDialog
           suppliers={suppliers ?? []}
-          variants={variantOptions}
+  
         />
       </div>
 

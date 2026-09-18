@@ -23,6 +23,9 @@ export interface MaterialItemView {
   attributes: unknown;
   unit: string | null;
   quantity: number;
+  enteredQuantity?: number | null;
+  transactionUnitName?: string | null;
+  factorToBase?: number | null;
   /** Số lượng đã trả lại kho (0 nếu chưa trả). */
   returned: number;
   /** Ảnh biến thể + ảnh sản phẩm (đã gộp, thứ tự ưu tiên biến thể trước). */
@@ -77,6 +80,12 @@ export function MaterialItemsView({ items }: { items: MaterialItemView[] }) {
         <ul className="divide-y">
           {items.map((it) => {
             const label = variantLabel(it.attributes, it.unit);
+            const isConverted = Boolean(
+              it.enteredQuantity &&
+              it.transactionUnitName &&
+              it.factorToBase &&
+              it.factorToBase > 1
+            );
             return (
               <li key={it.id}>
                 <button
@@ -95,7 +104,11 @@ export function MaterialItemsView({ items }: { items: MaterialItemView[] }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <div className="flex shrink-0 flex-col items-end gap-0.5">
-                      <span className="text-sm font-medium tabular-nums">SL: {it.quantity}</span>
+                      <span className="text-sm font-medium tabular-nums">
+                        {isConverted
+                          ? `${it.enteredQuantity} ${it.transactionUnitName} (= ${it.quantity} ${it.unit ?? ""})`
+                          : `SL: ${it.quantity} ${it.unit ?? ""}`}
+                      </span>
                       {it.returned > 0 ? (
                         <span className="text-xs text-muted-foreground">đã trả {it.returned}</span>
                       ) : null}
@@ -117,6 +130,13 @@ export function MaterialItemsView({ items }: { items: MaterialItemView[] }) {
 function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null; onClose: () => void }) {
   const attrs = item ? attributeEntries(item.attributes) : [];
   const stock = item?.stock ?? null;
+  const isConverted = Boolean(
+    item?.enteredQuantity &&
+    item?.transactionUnitName &&
+    item?.factorToBase &&
+    item?.factorToBase > 1
+  );
+
   return (
     <Dialog open={item !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-lg h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-2 border-border shadow-2xl rounded-2xl min-w-0">
@@ -165,13 +185,22 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
                 </div>
               )}
 
+              {isConverted ? (
+                <div className="flex items-center justify-between rounded-lg bg-primary/10 border border-primary/20 px-3 py-2">
+                  <dt className="text-primary font-medium text-xs">Yêu cầu theo quy cách</dt>
+                  <dd className="font-bold text-primary tabular-nums">
+                    {item.enteredQuantity} {item.transactionUnitName} (= {item.quantity} {item.unit ?? ""})
+                  </dd>
+                </div>
+              ) : null}
+
               <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                <dt className="text-muted-foreground">Đơn vị</dt>
+                <dt className="text-muted-foreground">Đơn vị cơ sở</dt>
                 <dd className="font-medium">{item.unit ?? "—"}</dd>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                <dt className="text-muted-foreground">Số lượng yêu cầu</dt>
-                <dd className="font-medium tabular-nums">{item.quantity}</dd>
+                <dt className="text-muted-foreground">Số lượng thực tế (quy đổi)</dt>
+                <dd className="font-medium tabular-nums">{item.quantity} {item.unit ?? ""}</dd>
               </div>
               {stock !== null && (
                 <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">

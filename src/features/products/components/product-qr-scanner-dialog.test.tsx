@@ -19,6 +19,10 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("@/features/catalog/components/transaction-uom-select", () => ({
+  TransactionUomSelect: () => null,
+}));
+
 describe("ProductQrScannerDialog", () => {
   const pushMock = vi.fn();
 

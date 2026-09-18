@@ -27,6 +27,8 @@ export interface BatchItem {
   id: string;
   noteId: string;
   quantity: number;
+  enteredQuantity?: number | null;
+  skuCode?: string | null;
   productName: string | null;
   variantLabel: string;
   damageDetail: string | null;
@@ -203,9 +205,16 @@ export function RepairBatchTab({
                       )}
                       <div className="min-w-0 flex-1 pt-0.5">
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                          <span className="font-medium">{i.productName ?? "Vật tư"}</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-medium">{i.productName ?? "Vật tư"}</span>
+                            {i.skuCode && (
+                              <Badge variant="outline" className="font-mono text-[11px] px-1.5 py-0">
+                                {i.skuCode}
+                              </Badge>
+                            )}
+                          </div>
                           <span className="shrink-0 text-sm text-muted-foreground">
-                            {i.variantLabel} · <span className="font-semibold text-foreground">SL {i.quantity}</span>
+                            {i.variantLabel} · <span className="font-semibold text-foreground">SL {i.enteredQuantity ?? i.quantity}</span>
                           </span>
                         </div>
                         {i.damageDetail ? (

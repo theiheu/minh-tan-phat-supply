@@ -95,7 +95,7 @@ export default async function DefectsPage({
     const stagingNotes = await supabase
       .from("defect_notes")
       .select(
-        "id, code, reported_by, repair_requested_at, collected_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
+        "id, code, reported_by, repair_requested_at, collected_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, variant_id, quantity, entered_quantity, transaction_unit_id, damage_detail, note, images, variants(id, sku_code, attributes, unit, products(name)))",
       )
       .eq("status", "staging")
       .order("created_at", { ascending: false });
@@ -134,6 +134,8 @@ export default async function DefectsPage({
         .filter((i) => !repairedItemIds.has(i.id))
         .map((i) => {
           const variants = i.variants as {
+            id?: string;
+            sku_code?: string | null;
             attributes?: unknown;
             unit?: string | null;
             products?: { name?: string | null } | null;
@@ -142,6 +144,8 @@ export default async function DefectsPage({
             id: i.id,
             noteId: d.id,
             quantity: i.quantity,
+            enteredQuantity: i.entered_quantity,
+            skuCode: variants?.sku_code ?? null,
             productName: variants?.products?.name ?? null,
             variantLabel: variantLabelFor(variants),
             damageDetail: i.damage_detail,
@@ -229,7 +233,7 @@ export default async function DefectsPage({
   let query = supabase
     .from("defect_notes")
     .select(
-      "id, code, status, reported_by, repair_requested_at, collected_at, collected_by, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
+      "id, code, status, reported_by, repair_requested_at, collected_at, collected_by, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, entered_quantity, transaction_unit_id, damage_detail, note, images, variants(id, sku_code, attributes, unit, products(name)))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false });
@@ -310,19 +314,25 @@ export default async function DefectsPage({
       liveExchange: liveByNote.get(d.id) ?? null,
       items: (d.defect_note_items ?? []).map((i) => {
         const variants = i.variants as {
+          id?: string;
+          sku_code?: string | null;
           attributes?: unknown;
           unit?: string | null;
           products?: { name?: string | null } | null;
         } | null;
         return {
           id: i.id,
+          skuId: i.variant_id,
           variantId: i.variant_id,
           quantity: i.quantity,
+          enteredQuantity: i.entered_quantity,
+          transactionUnitId: i.transaction_unit_id,
+          skuCode: variants?.sku_code ?? null,
+          productName: variants?.products?.name ?? null,
+          variantLabel: variantLabelFor(variants),
           damageDetail: i.damage_detail,
           note: i.note,
           images: i.images ?? [],
-          productName: variants?.products?.name ?? null,
-          variantLabel: variantLabelFor(variants),
         } satisfies DefectItemRow;
       }),
     };

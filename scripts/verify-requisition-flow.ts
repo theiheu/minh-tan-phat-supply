@@ -26,11 +26,12 @@ async function main() {
 
   const { data: zone } = await rc.from("zones").select("id").limit(1).single();
   const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+  const { data: tuom } = await rc.from("sku_transaction_units").select("id").eq("sku_id", variant!.id).eq("is_base", true).limit(1).single();
   const stockBefore = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
 
   // 1. create draft
   const created = await rc.rpc("create_requisition", {
-    p_items: [{ variant_id: variant!.id, quantity: 5 }],
+    p_items: [{ sku_id: variant!.id, transaction_unit_id: tuom!.id, entered_quantity: 5 }],
     p_zone_id: zone!.id,
     p_purpose: "Kiểm tra luồng",
     p_type: "new_supply",

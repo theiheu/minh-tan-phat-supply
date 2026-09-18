@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Milestone, QrCode } from "lucide-react";
+import { ArrowLeft, ChevronRight, Milestone, QrCode } from "lucide-react";
 import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,12 +79,12 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
   // ---- Vật tư nhập ----
   const { data: items } = await supabase
     .from("receipt_items")
-    .select("id, quantity, unit_cost, batch_no, expiry_date, variants(attributes, unit, products(name))")
+    .select("id, quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("receipt_id", id)
     .order("created_at", { ascending: true });
 
-  const total = (items ?? []).reduce((n, it) => n + it.quantity * (it.unit_cost ?? 0), 0);
-  const totalQuantity = (items ?? []).reduce((n, it) => n + it.quantity, 0);
+  const total = (items ?? []).reduce((n, it) => n + (it.entered_quantity ?? it.quantity) * (it.unit_cost ?? 0), 0);
+  const totalQuantity = (items ?? []).reduce((n, it) => n + (it.entered_quantity ?? it.quantity), 0);
 
   // ---- Các phiếu yêu cầu được auto cấp phát khi ghi nhận (FIFO) ----
   const linkedIds = receipt.linked_requisition_ids ?? [];
@@ -120,6 +120,16 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-4">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/receipts" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <ArrowLeft className="size-3.5" />
+          Phiếu nhập kho
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="font-mono text-foreground font-medium">{receipt.code}</span>
+      </nav>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -203,25 +213,33 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                 )}
                 {(items ?? []).map((it) => {
                   const v = it.variants as {
-                    attributes?: unknown;
-                    unit?: string | null;
                     products?: { name?: string | null } | null;
+                    units?: { name?: string | null; symbol?: string | null } | null;
+                    sku_attribute_values?: Array<{
+                      text_value?: string | null;
+                      legacy_text_value?: string | null;
+                      numeric_value?: number | null;
+                      units?: { symbol?: string | null } | null;
+                    }> | null;
                   } | null;
+                  const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+                  const enteredQty = it.entered_quantity ?? it.quantity;
                   return (
                     <TableRow key={it.id}>
                       <TableCell>
-                        <span className="font-medium">{v?.products?.name ?? "Vật tư"}</span>
+                        <span className="font-medium">{it.sku_name_snapshot || v?.products?.name || "Vật tư"}</span>
                         <span className="ml-1 text-muted-foreground">
-                          {variantLabel(v?.attributes, v?.unit)}
+                          {detail}
                         </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{v?.unit ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{it.quantity}</TableCell>
+                      <TableCell className="text-muted-foreground">{it.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">{enteredQty}</TableCell>
                       <TableCell className="text-right tabular-nums">
                         {it.unit_cost != null ? formatVnd(it.unit_cost) : "—"}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatVnd(it.quantity * (it.unit_cost ?? 0))}
+                        {formatVnd(enteredQty * (it.unit_cost ?? 0))}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{it.batch_no ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">

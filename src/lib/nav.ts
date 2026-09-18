@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeftRight,
   BarChart3,
+  Boxes,
   Bot,
   Building2,
   ClipboardCheck,
@@ -95,6 +96,7 @@ export const WAREHOUSE_NAV_ITEMS: NavItem[] = [
   { href: "/receipts", label: "Phiếu nhập", icon: Package, roles: WAREHOUSE_ROLES },
   { href: "/issues", label: "Phiếu xuất", icon: PackageMinus, roles: WAREHOUSE_ROLES },
   { href: "/transfers", label: "Chuyển kho", icon: ArrowLeftRight, roles: WAREHOUSE_ROLES },
+  { href: "/assemblies", label: "Lắp ráp & Tháo dỡ", icon: Boxes, roles: WAREHOUSE_ROLES },
   { href: "/stocktake", label: "Kiểm kê", icon: ClipboardCheck, roles: WAREHOUSE_ROLES },
 ];
 

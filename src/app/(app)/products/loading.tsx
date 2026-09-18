@@ -10,7 +10,7 @@ export default function ProductsLoading() {
       </div>
 
       {/* Danh mục dạng ô vuông skeleton */}
-      <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 lg:overflow-visible lg:pb-0">
+      <div className="w-full max-w-full overflow-x-auto pb-2 scrollbar-none -mx-2.5 px-2.5 sm:mx-0 sm:px-0 lg:overflow-visible lg:pb-0">
         <div className="grid w-max auto-cols-[4.25rem] grid-flow-col grid-rows-2 gap-2 sm:auto-cols-[4.75rem] md:auto-cols-[5rem] lg:w-auto lg:flex lg:flex-wrap lg:justify-start lg:gap-x-3 lg:gap-y-2 xl:gap-x-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton

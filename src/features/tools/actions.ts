@@ -34,7 +34,11 @@ export async function createToolBorrowing(input: ToolBorrowingInput) {
   const borrowerId = parsed.borrowerId || profile.id;
 
   const { data, error } = await supabase.rpc("create_tool_borrowing", {
-    p_items: parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
+    p_items: parsed.items.map((i) => ({
+      sku_id: i.skuId,
+      variant_id: i.skuId,
+      quantity: i.quantity,
+    })),
     p_zone_id: (parsed.zoneId ?? null) as unknown as string,
     p_purpose: parsed.purpose.trim(),
     p_expected_return_date: (parsed.expectedReturnDate ?? null) as unknown as string,
@@ -83,7 +87,11 @@ export async function returnToolBorrowing(input: ToolReturnInput) {
 
   const { error } = await supabase.rpc("return_tool_borrowing", {
     p_borrowing_id: parsed.borrowingId,
-    p_items: parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
+    p_items: parsed.items.map((i) => ({
+      sku_id: i.skuId,
+      variant_id: i.skuId,
+      quantity: i.quantity,
+    })),
     p_notes: parsed.notes || "",
     p_by: profile.id,
   });

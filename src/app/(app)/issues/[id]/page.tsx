@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { QrCode } from "lucide-react";
+import { ArrowLeft, ChevronRight, QrCode } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -43,13 +43,13 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
   // ---- Dòng vật tư xuất (giữ thứ tự nhập) ----
   const { data: items } = await supabase
     .from("issue_items")
-    .select("id, quantity, unit_price, variants(attributes, unit, products(name))")
+    .select("id, quantity, entered_quantity, transaction_unit_id, unit_price, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("issue_id", id)
     .order("created_at", { ascending: true });
 
-  const totalQuantity = (items ?? []).reduce((n, it) => n + it.quantity, 0);
+  const totalQuantity = (items ?? []).reduce((n, it) => n + (it.entered_quantity ?? it.quantity), 0);
   const totalAmount = (items ?? []).reduce(
-    (n, it) => n + it.quantity * (it.unit_price ?? 0),
+    (n, it) => n + (it.entered_quantity ?? it.quantity) * (it.unit_price ?? 0),
     0,
   );
 
@@ -59,6 +59,16 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-4">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/issues" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <ArrowLeft className="size-3.5" />
+          Phiếu xuất kho
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="font-mono text-foreground font-medium">{issue.code}</span>
+      </nav>
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
@@ -193,26 +203,39 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                 )}
                 {(items ?? []).map((it, idx) => {
                   const v = it.variants as {
-                    attributes?: unknown;
-                    unit?: string | null;
                     products?: { name?: string | null } | null;
+                    units?: { name?: string | null; symbol?: string | null } | null;
+                    sku_attribute_values?: Array<{
+                      text_value?: string | null;
+                      legacy_text_value?: string | null;
+                      numeric_value?: number | null;
+                      units?: { symbol?: string | null } | null;
+                    }> | null;
                   } | null;
+                  const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+                  const displayName = it.sku_name_snapshot || v?.products?.name || "Vật tư";
+                  const displayUnit = it.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—";
+                  const displayQty = it.entered_quantity ?? it.quantity;
+
                   return (
                     <TableRow key={it.id}>
                       <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                       <TableCell>
-                        <span className="font-medium">{v?.products?.name ?? "Vật tư"}</span>
-                        <span className="ml-1 text-muted-foreground">{variantLabel(v?.attributes, v?.unit)}</span>
+                        <span className="font-medium">{displayName}</span>
+                        {!it.sku_name_snapshot && (
+                          <span className="ml-1 text-muted-foreground">{detail}</span>
+                        )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{v?.unit ?? "—"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{it.quantity}</TableCell>
+                      <TableCell className="text-muted-foreground">{displayUnit}</TableCell>
+                      <TableCell className="text-right tabular-nums">{displayQty}</TableCell>
                       {isCustomer && (
                         <>
                           <TableCell className="text-right tabular-nums">
                             {it.unit_price != null ? formatVnd(it.unit_price) : "—"}
                           </TableCell>
                           <TableCell className="text-right tabular-nums">
-                            {formatVnd(it.quantity * (it.unit_price ?? 0))}
+                            {formatVnd(displayQty * (it.unit_price ?? 0))}
                           </TableCell>
                         </>
                       )}

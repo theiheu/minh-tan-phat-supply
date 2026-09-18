@@ -38,6 +38,7 @@ export function RecentRequisitionsCard({
   items,
 }: RecentRequisitionsCardProps) {
   const openSlipModal = useUIStore((s) => s.openSlipModal);
+  const displayItems = items.filter((r) => r.status !== "issued");
 
   return (
     <Card className="border-2 border-border shadow-xs rounded-xl">
@@ -55,7 +56,7 @@ export function RecentRequisitionsCard({
         </Link>
       </CardHeader>
       <CardContent>
-        {items.length === 0 ? (
+        {displayItems.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
             Không có phiếu yêu cầu nào đang chờ xử lý.
           </div>
@@ -76,7 +77,7 @@ export function RecentRequisitionsCard({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((r) => (
+                  {displayItems.map((r) => (
                     <TableRow key={r.id} className="hover:bg-muted/50">
                       <TableCell>
                         <button
@@ -127,7 +128,7 @@ export function RecentRequisitionsCard({
 
             {/* Mobile List View */}
             <div className="divide-y md:hidden">
-              {items.map((r) => (
+              {displayItems.map((r) => (
                 <div key={r.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                   <div className="flex items-center justify-between gap-2">
                     <button

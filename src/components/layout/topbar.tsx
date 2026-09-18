@@ -1,10 +1,9 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight, ClipboardList, Menu } from "lucide-react";
-import Link from "next/link";
+import { ChevronLeft, ChevronRight, ClipboardList, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ADMIN_NAV, MAIN_NAV, findTitle } from "@/lib/nav";
+import { findTitle } from "@/lib/nav";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
 import { NotificationBell } from "./notification-bell";
@@ -16,12 +15,7 @@ export function Topbar() {
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
   const setSidebarCollapsed = useUIStore((s) => s.setSidebarCollapsed);
   const toggleCart = useUIStore((s) => s.toggleCart);
-  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
-
-  // Trang con (vd /requisitions/new, /requisitions/[id]) → nút ← về đúng màn danh sách.
-  const sectionRoot = [...MAIN_NAV, ...ADMIN_NAV]
-    .filter((i) => pathname.startsWith(i.href + "/"))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const cartCount = useCartStore((s) => s.items.reduce((n, i) => n + i.enteredQuantity, 0));
 
   return (
     <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur">
@@ -48,16 +42,7 @@ export function Topbar() {
           <ChevronLeft className="size-5" />
         )}
       </Button>
-      {sectionRoot && (
-        <Link
-          href={sectionRoot}
-          className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground lg:hidden"
-          aria-label="Quay lại danh sách"
-        >
-          <ArrowLeft className="size-4" />
-          <span className="hidden sm:inline">Quay lại</span>
-        </Link>
-      )}
+
       <h1 className="flex-1 truncate text-base font-semibold">{title}</h1>
 
       <NotificationBell />

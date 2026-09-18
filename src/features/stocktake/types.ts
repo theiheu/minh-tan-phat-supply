@@ -7,6 +7,9 @@ export interface StocktakeItemView {
   checked: boolean;
   /** Ghi chú của người kiểm cho dòng này. */
   notes: string;
+  // --- SKU / Biến thể ---
+  skuId?: string;
+  skuCode?: string;
   // --- Vật tư chính (products) — dùng để gom nhóm "thẻ vật tư chính" ---
   productId: string;
   productName: string;
@@ -19,6 +22,11 @@ export interface StocktakeItemView {
   variantImages: string[];
   systemQty: number;
   actualQty: number;
+  enteredQuantity?: number | null;
+  transactionUnitId?: string | null;
+  transactionUnitName?: string | null;
+  conversionFactorSnapshot?: number | null;
+  snapshotQuality?: string;
 }
 
 export interface StocktakeSessionView {

@@ -2,8 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface OfflineRequisitionItem {
-  variantId: string;
-  quantity: number;
+  skuId: string;
+  transactionUnitId?: string;
+  enteredQuantity: number;
   name: string;
   label: string;
   unit: string | null;
@@ -11,6 +12,7 @@ export interface OfflineRequisitionItem {
 
 export interface OfflineRequisition {
   clientTempId: string;
+  schemaVersion: "v2";
   items: OfflineRequisitionItem[];
   zoneId: string;
   subZoneId?: string | null;
@@ -54,6 +56,7 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
             : `temp_${Date.now()}`;
         const newItem: OfflineRequisition = {
           clientTempId,
+          schemaVersion: "v2",
           items: input.items,
           zoneId: input.zoneId,
           purpose: input.purpose,
@@ -88,6 +91,24 @@ export const useOfflineQueueStore = create<OfflineQueueState>()(
         })),
       clearAll: () => set({ queue: [] }),
     }),
-    { name: "mtp-offline-requisitions-queue" },
+    {
+      name: "mtp-offline-requisitions-queue",
+      version: 2,
+      migrate: (persisted: unknown) => {
+        const state = persisted as { queue?: unknown[] };
+        const queue = Array.isArray(state?.queue)
+          ? state.queue.map((raw) => {
+              const item = raw as Record<string, unknown>;
+              if (item.schemaVersion === "v2") return item;
+              return {
+                ...item,
+                status: "failed",
+                lastError: "Phiếu ngoại tuyến được tạo bằng dữ liệu cũ. Vui lòng xóa phiếu này và chọn lại SKU/đơn vị.",
+              };
+            })
+          : [];
+        return { ...state, queue };
+      },
+    },
   ),
 );

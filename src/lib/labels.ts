@@ -253,6 +253,33 @@ export function variantLabel(attributes: unknown, unit?: string | null): string 
   return unit ?? "—";
 }
 
+/** Trích xuất tên vật tư, nhãn quy cách và đơn vị tính từ SKU record chuẩn hóa. */
+export function formatSkuRecord(
+  v: {
+    sku_code?: string | null;
+    products?: { name?: string | null } | null;
+    units?: { name?: string | null; symbol?: string | null } | null;
+    sku_attribute_values?: Array<{
+      text_value?: string | null;
+      legacy_text_value?: string | null;
+      numeric_value?: number | null;
+      units?: { symbol?: string | null } | null;
+    }> | null;
+  } | null | undefined,
+  fallbackUnit?: string | null,
+): { name: string; detail: string; unit: string; skuCode: string } {
+  if (!v) return { name: "Vật tư", detail: "—", unit: fallbackUnit || "—", skuCode: "" };
+  const name = v.products?.name || "Vật tư";
+  const unit = v.units?.symbol || v.units?.name || fallbackUnit || "—";
+  const attrVals = (v.sku_attribute_values ?? [])
+    .map((av) => {
+      return av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null);
+    })
+    .filter(Boolean);
+  const detail = attrVals.length > 0 ? attrVals.join(" · ") : unit;
+  return { name, detail, unit, skuCode: v.sku_code || "" };
+}
+
 // Nhãn vai trò tài khoản (UI) — tránh ternary rải rác.
 export const ROLE_LABELS: Record<string, string> = {
   superuser: "Quản trị hệ thống",

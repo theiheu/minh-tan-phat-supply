@@ -9,23 +9,20 @@ export const reportTools = {
   get_recent_requisitions: tool({
     description: "Tra cứu danh sách các phiếu xin cấp phát vật tư gần đây và trạng thái phê duyệt.",
     parameters: z.object({
-      status: z.string().optional().default("all"),
-      limit: z.number().optional().default(6),
-    }),
-    execute: async ({
-      status = "all",
-      limit = 6,
-    }: {
-      status?: string;
-      limit?: number;
-    }) => {
+      status: z.string().optional().default("all").describe("Trạng thái phiếu ('all', 'pending', 'approved',...)"),
+      limit: z.number().optional().default(6).describe("Số lượng phiếu cần lấy"),
+    }).passthrough(),
+    execute: async (rawArgs: { status?: string; limit?: number }) => {
       try {
+        const status = rawArgs.status || "all";
+        const limit = typeof rawArgs.limit === "number" ? rawArgs.limit : 6;
+
         const supabase = createAdminClient();
         let query = supabase
           .from("requisitions")
           .select("id, code, status, purpose, created_at, profiles!requisitions_requester_id_fkey(name), zones(name)")
           .order("created_at", { ascending: false })
-          .limit(limit || 6);
+          .limit(limit);
 
         if (status && status !== "all" && VALID_STATUSES.includes(status as RequisitionStatus)) {
           query = query.eq("status", status as RequisitionStatus);
@@ -53,16 +50,17 @@ export const reportTools = {
   get_recent_defects: tool({
     description: "Tra cứu danh sách phiếu báo hỏng vật tư và tình trạng đổi 1-1 / sửa chữa.",
     parameters: z.object({
-      limit: z.number().optional().default(6),
-    }),
-    execute: async ({ limit = 6 }: { limit?: number }) => {
+      limit: z.number().optional().default(6).describe("Số lượng phiếu cần lấy"),
+    }).passthrough(),
+    execute: async (rawArgs: { limit?: number }) => {
       try {
+        const limit = typeof rawArgs.limit === "number" ? rawArgs.limit : 6;
         const supabase = createAdminClient();
         const { data, error } = await supabase
           .from("defect_notes")
           .select("id, code, status, created_at, zones(name), defect_note_items(id, reason, status)")
           .order("created_at", { ascending: false })
-          .limit(limit || 6);
+          .limit(limit);
 
         if (error) {
           return { error: error.message };

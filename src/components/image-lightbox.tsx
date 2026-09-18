@@ -114,17 +114,17 @@ export function ImageLightbox({
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
-      {/* Khung gallery thu gọn — không phủ toàn màn hình */}
+      {/* Khung modal cố định kích thước — không co giãn theo từng ảnh */}
       <div
-        className="relative flex w-full max-w-[min(94vw,56rem)] flex-col overflow-hidden rounded-2xl border border-border/80 bg-background text-foreground shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+        className="relative flex w-full max-w-[min(94vw,56rem)] h-[82dvh] max-h-[720px] min-h-[420px] flex-col overflow-hidden rounded-2xl border border-border/80 bg-background text-foreground shadow-2xl animate-in zoom-in-95 fade-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header bar: Title & Counter & Close */}
-        <div className="flex items-center justify-between gap-3 border-b px-3 py-2 sm:px-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b px-3.5 py-2.5 sm:px-4 sm:py-3 bg-background/95 backdrop-blur-xs select-none z-10">
           <div className="flex min-w-0 items-center gap-2.5">
             {title && <span className="truncate text-sm font-medium sm:text-base">{title}</span>}
             {images.length > 1 && (
-              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
+              <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
                 {currentIndex + 1} / {images.length}
               </span>
             )}
@@ -139,8 +139,8 @@ export function ImageLightbox({
           </button>
         </div>
 
-        {/* Main Image View */}
-        <div className="relative flex min-h-[220px] items-center justify-center overflow-hidden bg-muted/50 p-3 sm:p-5">
+        {/* Main Image View — Chiếm toàn bộ không gian còn lại cố định */}
+        <div className="relative flex flex-1 min-h-0 w-full items-center justify-center overflow-hidden bg-muted/30 dark:bg-muted/10 p-2 sm:p-4 select-none">
           {hasError ? (
             <div className="flex h-56 w-full max-w-md flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 bg-background/50 p-6 text-center text-muted-foreground animate-in fade-in-50 duration-200 select-none">
               <ImageOff className="size-10 text-muted-foreground/60" aria-hidden />
@@ -152,7 +152,7 @@ export function ImageLightbox({
             <img
               src={lightboxImgSrc || currentSrc}
               alt={title || `Ảnh ${currentIndex + 1}`}
-              className="max-h-[60vh] w-auto max-w-full object-contain rounded-lg transition-all"
+              className="max-h-full max-w-full h-auto w-auto object-contain rounded-lg transition-all drop-shadow-sm select-none"
               onError={() => {
                 if (lightboxImgSrc !== currentSrc && currentSrc) {
                   setLightboxImgSrc(currentSrc);
@@ -170,40 +170,74 @@ export function ImageLightbox({
                 type="button"
                 aria-label="Ảnh trước"
                 onClick={prev}
-                className="absolute left-2 top-1/2 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-105 sm:left-3"
+                className="absolute left-2 top-1/2 flex size-9 sm:size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-105 active:scale-95 sm:left-4 z-10"
               >
-                <ChevronLeft className="size-5" />
+                <ChevronLeft className="size-5 sm:size-6" />
               </button>
               <button
                 type="button"
                 aria-label="Ảnh sau"
                 onClick={next}
-                className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-105 sm:right-3"
+                className="absolute right-2 top-1/2 flex size-9 sm:size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/50 text-white shadow-md backdrop-blur-sm transition-all hover:bg-black/75 hover:scale-105 active:scale-95 sm:right-4 z-10"
               >
-                <ChevronRight className="size-5" />
+                <ChevronRight className="size-5 sm:size-6" />
               </button>
             </>
           )}
         </div>
 
-        {/* Thumbnail dots when multiple images */}
-        {images.length > 1 && images.length <= 15 && (
-          <div className="flex items-center justify-center gap-1.5 border-t px-4 py-2.5">
-            {images.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                aria-label={`Chuyển đến ảnh ${idx + 1}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentIndex(idx);
-                }}
-                className={cn(
-                  "h-2 rounded-full transition-all cursor-pointer",
-                  idx === currentIndex ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
-                )}
-              />
-            ))}
+        {/* Thumbnail bar when multiple images */}
+        {images.length > 1 && (
+          <div className="flex shrink-0 items-center justify-center gap-2 border-t bg-background/95 px-3 py-2 sm:px-4 sm:py-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {images.length <= 15 ? (
+              images.map((imgUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  aria-label={`Chuyển đến ảnh ${idx + 1}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentIndex(idx);
+                  }}
+                  className={cn(
+                    "relative size-11 sm:size-12 shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer bg-muted",
+                    idx === currentIndex
+                      ? "border-primary ring-2 ring-primary/30 shadow-xs scale-105"
+                      : "border-border/60 opacity-60 hover:opacity-100 hover:border-border"
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={appAssetUrl(imgUrl) || imgUrl}
+                    alt={`Thu nhỏ ${idx + 1}`}
+                    className="size-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = "none";
+                    }}
+                  />
+                </button>
+              ))
+            ) : (
+              <div className="flex items-center justify-center gap-1.5 py-1">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    aria-label={`Chuyển đến ảnh ${idx + 1}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentIndex(idx);
+                    }}
+                    className={cn(
+                      "h-2 rounded-full transition-all cursor-pointer",
+                      idx === currentIndex
+                        ? "w-6 bg-primary"
+                        : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

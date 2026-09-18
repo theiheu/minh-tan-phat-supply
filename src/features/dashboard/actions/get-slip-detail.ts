@@ -88,14 +88,27 @@ export interface GetSlipDetailResult {
 function variantLabelFor(variants: {
   attributes?: unknown;
   unit?: string | null;
+  units?: { name?: string | null; symbol?: string | null } | null;
+  sku_attribute_values?: Array<{
+    text_value?: string | null;
+    legacy_text_value?: string | null;
+    numeric_value?: number | null;
+    units?: { symbol?: string | null } | null;
+  }> | null;
 } | null): string {
+  if (variants?.sku_attribute_values && variants.sku_attribute_values.length > 0) {
+    const vals = variants.sku_attribute_values
+      .map((av) => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null))
+      .filter(Boolean);
+    if (vals.length > 0) return vals.join(" · ");
+  }
   if (variants?.attributes && typeof variants.attributes === "object" && !Array.isArray(variants.attributes)) {
     const values = Object.values(variants.attributes as Record<string, unknown>).filter(
       (v) => typeof v === "string" && v.length > 0,
     );
     if (values.length > 0) return values.join(" · ");
   }
-  return variants?.unit ?? "—";
+  return variants?.units?.symbol || variants?.units?.name || variants?.unit || "—";
 }
 
 function cleanTimeline(events: (SlipTimelineEvent | null)[]): SlipTimelineEvent[] {
@@ -138,7 +151,7 @@ export async function getSlipDetail(
       const { data: req, error } = await supabase
         .from("requisitions")
         .select(
-          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images, description)))",
+          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -161,7 +174,7 @@ export async function getSlipDetail(
       // Lấy lịch sử trả lại vật tư (tổng đã trả theo variant — dùng cho form trả trong modal).
       const { data: returnEvents } = await supabase
         .from("requisition_returns")
-        .select("id, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(attributes, unit, products(name)))")
+        .select("id, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))")
         .eq("requisition_id", req.id)
         .order("created_at", { ascending: true });
 
@@ -203,18 +216,18 @@ export async function getSlipDetail(
           supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
           supabase
             .from("defect_note_items")
-            .select("id, quantity, damage_detail, images, variants(attributes, unit, products(name))")
+            .select("id, quantity, damage_detail, images, variants(products(name), units(name, symbol))")
             .eq("defect_note_id", req.linked_defect_id),
         ]);
         if (dnote) {
           defectEvidence = {
             code: dnote.code,
             items: (ditems ?? []).map((it) => {
-              const v = it.variants as { unit?: string | null; products?: { name: string | null } | null } | null;
+              const v = it.variants as { units?: { symbol?: string | null; name?: string | null } | null; products?: { name: string | null } | null } | null;
               return {
                 id: it.id,
                 productName: v?.products?.name ?? null,
-                unit: v?.unit ?? null,
+                unit: v?.units?.symbol || v?.units?.name || null,
                 quantity: it.quantity,
                 damageDetail: it.damage_detail,
                 images: it.images ?? [],
@@ -297,7 +310,7 @@ export async function getSlipDetail(
       const { data: rec, error } = await supabase
         .from("receipts")
         .select(
-          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, variant_id, quantity, unit_cost, batch_no, expiry_date, variants(attributes, unit, products(name)))",
+          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, variant_id, quantity, unit_cost, batch_no, expiry_date, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -379,7 +392,7 @@ export async function getSlipDetail(
       const { data: iss, error } = await supabase
         .from("issues")
         .select(
-          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(attributes, unit, products(name)))",
+          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -445,7 +458,7 @@ export async function getSlipDetail(
       const { data: ex, error } = await supabase
         .from("exchange_notes")
         .select(
-          "id, code, linked_defect_id, status, rejection_reason, created_at, approved_at, issued_at, received_at, creator:profiles!exchange_notes_created_by_fkey(name), approver:profiles!exchange_notes_approved_by_fkey(name), issuer:profiles!exchange_notes_issued_by_fkey(name), receiver:profiles!exchange_notes_received_by_fkey(name), defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name))))",
+          "id, code, linked_defect_id, status, rejection_reason, created_at, approved_at, issued_at, received_at, creator:profiles!exchange_notes_created_by_fkey(name), approver:profiles!exchange_notes_approved_by_fkey(name), issuer:profiles!exchange_notes_issued_by_fkey(name), receiver:profiles!exchange_notes_received_by_fkey(name), defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))))",
         )
         .eq("id", id)
         .single();
@@ -508,7 +521,7 @@ export async function getSlipDetail(
       const { data: def, error } = await supabase
         .from("defect_notes")
         .select(
-          "id, code, status, notes, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), location:stock_locations!defect_notes_source_location_id_fkey(name), items:defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(attributes, unit, products(name)))",
+          "id, code, status, notes, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), location:stock_locations!defect_notes_source_location_id_fkey(name), items:defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -568,7 +581,7 @@ export async function getSlipDetail(
       const { data: liq, error } = await supabase
         .from("liquidation_notes")
         .select(
-          "id, code, status, notes, reason, created_at, creator:profiles!liquidation_notes_created_by_fkey(name), approver:profiles!liquidation_notes_approved_by_fkey(name), items:liquidation_items(id, quantity, proceeds, notes, method, unit_value, variants(attributes, unit, products(name)))",
+          "id, code, status, notes, reason, created_at, creator:profiles!liquidation_notes_created_by_fkey(name), approver:profiles!liquidation_notes_approved_by_fkey(name), items:liquidation_items(id, quantity, proceeds, notes, method, unit_value, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -624,7 +637,7 @@ export async function getSlipDetail(
       const { data: rep, error } = await supabase
         .from("repair_orders")
         .select(
-          "id, code, vendor, status, total_cost, sent_at, expected_return_at, created_at, items:repair_order_items(id, quantity, repair_detail, cost, outcome, variants(attributes, unit, products(name)))",
+          "id, code, vendor, status, total_cost, sent_at, expected_return_at, created_at, items:repair_order_items(id, quantity, repair_detail, cost, outcome, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();

@@ -23,6 +23,7 @@ function ok(c: boolean, m: string) {
   if (!c) process.exit(1);
 }
 
+async function main() {
 const api = createClient(URL, ANON);
 const r = await api.auth.signInWithPassword({ email: "requester@mtp.local", password: "password123" });
 const m = await api.auth.signInWithPassword({ email: "manager@mtp.local", password: "password123" });
@@ -34,10 +35,11 @@ const managerId = m.data.user!.id;
 
 const { data: zone } = await rc.from("zones").select("id").limit(1).single();
 const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+const { data: tuom } = await rc.from("sku_transaction_units").select("id").eq("sku_id", variant!.id).eq("is_base", true).limit(1).single();
 ok(!!zone?.id && !!variant?.id, "có zone + variant");
 
 const created = await rc.rpc("create_requisition", {
-  p_items: [{ variant_id: variant!.id, quantity: 5 }],
+  p_items: [{ sku_id: variant!.id, transaction_unit_id: tuom!.id, entered_quantity: 5 }],
   p_zone_id: zone!.id,
   p_purpose: "Verify lịch sử trả lại",
   p_type: "new_supply",
@@ -54,7 +56,7 @@ if ((await mc.rpc("fulfill_requisition", { p_id: rid, p_by: managerId, p_notes: 
 // Trả 2/5 (requester — owner được quyền trả theo 0023)
 const ret = await rc.rpc("return_requisition_items", {
   p_requisition_id: rid,
-  p_items: [{ variant_id: variant!.id, quantity: 2 }],
+  p_items: [{ sku_id: variant!.id, transaction_unit_id: tuom!.id, entered_quantity: 2, quantity: 2 }],
   p_by: requesterId,
 });
 if (ret.error) throw ret.error;
@@ -63,7 +65,7 @@ console.log("đã trả 2/5");
 // Trả vượt (4 > còn lại 3) phải bị chặn
 const over = await rc.rpc("return_requisition_items", {
   p_requisition_id: rid,
-  p_items: [{ variant_id: variant!.id, quantity: 4 }],
+  p_items: [{ sku_id: variant!.id, transaction_unit_id: tuom!.id, entered_quantity: 4, quantity: 4 }],
   p_by: requesterId,
 });
 ok(!!over.error, "trả vượt số còn lại bị chặn: " + (over.error?.message ?? ""));
@@ -83,7 +85,7 @@ ok(totalReturned === 2, `tổng số lượng trả = 2 (thực tế ${totalRetu
 const { data: mv } = await mc
   .from("stock_movements")
   .select("movement_type, quantity")
-  .eq("ref_type", "requisition")
+  .eq("ref_type", "return")
   .eq("ref_id", rid)
   .eq("movement_type", "return_in");
 ok((mv ?? []).reduce((n, x) => n + x.quantity, 0) === 2, "stock_movements return_in tổng = 2");
@@ -129,3 +131,5 @@ const { data: otherEvents } = await client(otherSignIn.data.session!.access_toke
 ok((otherEvents?.length ?? 0) === 0, "requester khác không thấy lịch sử phiếu của người khác");
 
 console.log("PASS");
+}
+main().catch((e) => { console.error("FAIL:", e.message); process.exit(1); });

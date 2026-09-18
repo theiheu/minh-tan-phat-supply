@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/stores/cart-store";
 import type { VariantWithStock } from "@/features/products/types";
+import { TransactionUomSelect } from "@/features/catalog/components/transaction-uom-select";
+import type { TransactionUom } from "@/features/catalog/domain/types";
 
 interface QuickAddBottomSheetProps {
   productName: string;
@@ -28,6 +30,7 @@ export function QuickAddBottomSheet({
   onGoToCart,
 }: QuickAddBottomSheetProps) {
   const [qty, setQty] = useState(1);
+  const [selectedUom, setSelectedUom] = useState<TransactionUom | undefined>();
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
@@ -40,18 +43,25 @@ export function QuickAddBottomSheet({
 
   function handleAdd() {
     if (qty <= 0) return;
+    const displayUnit = selectedUom?.displayName || variant.unit || "món";
     addItem({
-      variantId: variant.id,
-      quantity: qty,
+      skuId: variant.id,
+      enteredQuantity: qty,
       name: productName,
       label: variant.unit || "Mặc định",
       unit: variant.unit || null,
       image,
       stock,
+      ...(selectedUom ? {
+        transactionUnitId: selectedUom.id,
+        transactionUnitName: selectedUom.displayName,
+        factorToBase: selectedUom.factorToBase,
+        baseUnitSymbol: variant.unit || null,
+      } : {}),
     });
 
     setAdded(true);
-    toast.success(`Đã thêm ${qty} ${variant.unit || "món"} vào giỏ hàng`);
+    toast.success(`Đã thêm ${qty} ${displayUnit} vào giỏ hàng`);
     if (onAdded) onAdded();
   }
 
@@ -92,6 +102,25 @@ export function QuickAddBottomSheet({
 
       {!added ? (
         <div className="space-y-3 pt-2">
+          {/* Chọn đơn vị giao dịch */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Đơn vị tính:</span>
+              {selectedUom && selectedUom.factorToBase > 1 && (
+                <span className="text-[11px] font-semibold text-primary">
+                  = {qty * selectedUom.factorToBase} {variant.unit || "đơn vị cơ sở"}
+                </span>
+              )}
+            </div>
+            <TransactionUomSelect
+              skuId={variant.id}
+              value={selectedUom?.id}
+              placeholder={variant.unit ? `ĐVT: ${variant.unit}` : "Chọn ĐVT"}
+              className="h-8 text-xs w-full"
+              onUomChange={(uom) => setSelectedUom(uom)}
+            />
+          </div>
+
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-muted-foreground">Số lượng cần:</span>
             <div className="flex items-center gap-1.5">

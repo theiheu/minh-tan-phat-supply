@@ -4,7 +4,7 @@ import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ListFilters } from "@/components/list-filters";
 import { Pagination } from "@/components/pagination";
 import { formatZoneLabel } from "@/lib/format-zone";
-import { ToolBorrowDialog, type ToolBorrowVariantOption } from "@/features/tools/components/tool-borrow-dialog";
+import { ToolBorrowDialog, type ToolBorrowSkuOption } from "@/features/tools/components/tool-borrow-dialog";
 import { ToolCard } from "@/features/tools/components/tool-card";
 import { requireProfile } from "@/lib/auth";
 import {
@@ -52,7 +52,7 @@ export default async function ToolsPage({
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
   const todayStr = new Date().toISOString().split("T")[0];
 
-  // 1. Fetch form options (variants, stock, zones, sub_zones, profiles for manager)
+  // 1. Fetch form options (skus, stock, zones, sub_zones, profiles for manager)
   const [
     cachedVariants,
     { data: stockData },
@@ -71,7 +71,7 @@ export default async function ToolsPage({
 
   const stockMap = new Map((stockData ?? []).map((s) => [s.variant_id, s.quantity ?? 0]));
 
-  const toolVariants: ToolBorrowVariantOption[] = cachedVariants.map((v) => ({
+  const toolSkus: ToolBorrowSkuOption[] = cachedVariants.map((v) => ({
     id: v.id,
     name: v.productName,
     detail: v.detail,
@@ -158,7 +158,7 @@ export default async function ToolsPage({
         quantity,
         returned_quantity,
         notes,
-        variants(attributes, unit, products(name, image_url))
+        variants(id, sku_code, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
       )
     `,
       { count: "exact" },
@@ -234,7 +234,7 @@ export default async function ToolsPage({
         </div>
 
         <ToolBorrowDialog
-          variants={toolVariants}
+          skus={toolSkus}
           zones={zones}
           subZones={subZones}
           borrowers={borrowers}
@@ -327,14 +327,14 @@ export default async function ToolsPage({
           <h3 className="text-base font-semibold">Không tìm thấy dụng cụ nào</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm">
             {activeTab === "my_tools"
-              ? "Bạn hiện không giữ dụng cụ nào. Hãy bấm \"Mượn dụng cụ\" để tạo phiếu mới khi cần."
+              ? "Bạn hiện không giữ dụng cụ nào. Hãy bấm Mượn dụng cụ để tạo phiếu mới khi cần."
               : activeTab === "all_borrowed"
                 ? "Hiện không có dụng cụ nào đang được mượn trên toàn trại."
                 : "Chưa có lịch sử mượn trả dụng cụ nào."}
           </p>
           <div className="mt-5">
             <ToolBorrowDialog
-              variants={toolVariants}
+              skus={toolSkus}
               zones={zones}
               subZones={subZones}
               borrowers={borrowers}
@@ -379,24 +379,34 @@ export default async function ToolsPage({
 
             return items.map((item) => {
               const variant = item.variants as {
-                attributes?: unknown;
-                unit?: string | null;
-                products?: { name?: string; image_url?: string | null } | null;
+                id?: string;
+                sku_code?: string | null;
+                products?: { name?: string; images?: string[] | null } | null;
+                units?: { name?: string | null; symbol?: string | null } | null;
+                sku_attribute_values?: Array<{
+                  text_value?: string | null;
+                  legacy_text_value?: string | null;
+                  numeric_value?: number | null;
+                  units?: { symbol?: string | null } | null;
+                }> | null;
               } | null;
 
               const productName = variant?.products?.name ?? "Dụng cụ";
-              const variantLbl = variantLabel(variant?.attributes, variant?.unit);
+              const attrVals = (variant?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+              const skuLbl = attrVals.length > 0 ? attrVals.join(" · ") : (variant?.units?.symbol || "");
+              const unit = variant?.units?.symbol || variant?.units?.name || undefined;
+              const imageUrl = (variant?.products?.images && variant.products.images.length > 0) ? variant.products.images[0] : undefined;
 
               return (
                 <ToolCard
                   key={item.id}
                   borrowingId={b.id}
                   code={b.code}
-                  variantId={item.variant_id}
+                  skuId={item.variant_id}
                   productName={productName}
-                  variantLabel={variantLbl}
-                  unit={variant?.unit}
-                  imageUrl={variant?.products?.image_url}
+                  skuLabel={skuLbl}
+                  unit={unit}
+                  imageUrl={imageUrl}
                   quantity={item.quantity}
                   returnedQuantity={item.returned_quantity}
                   borrowedAt={b.borrowed_at}

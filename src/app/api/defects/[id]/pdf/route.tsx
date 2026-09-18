@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("defect_note_items")
-    .select("quantity, damage_detail, variants(attributes, unit, products(name))")
+    .select("quantity, entered_quantity, damage_detail, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("defect_note_id", id);
 
   const qrCode = await generateQrDataUri(getSlipUrl(_req, `/defects`));
@@ -40,19 +40,36 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Kho nguồn", value: d.source?.name },
       ]}
       columns={[
+        { label: "Mã SKU", flex: 1.0 },
         { label: "Tên vật tư", flex: 1.5 },
-        { label: "Biến thể", flex: 1.3 },
+        { label: "Quy cách", flex: 1.3 },
         { label: "Đơn vị", flex: 0.7 },
         { label: "Số lượng", flex: 0.8, align: "right" },
-        { label: "Chi tiết hỏng", flex: 2.1 },
+        { label: "Chi tiết hỏng", flex: 2.0 },
       ]}
-      rows={(items ?? []).map((i) => [
-        i.variants?.products?.name ?? "—",
-        variantLabel(i.variants?.attributes, i.variants?.unit),
-        i.variants?.unit ?? "—",
-        i.quantity,
-        i.damage_detail ?? "",
-      ])}
+      rows={(items ?? []).map((i) => {
+        const v = i.variants as {
+          sku_code?: string | null;
+          products?: { name?: string | null } | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+        } | null;
+        const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+        const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+        return [
+          v?.sku_code ?? "—",
+          v?.products?.name ?? "—",
+          detail,
+          v?.units?.symbol || v?.units?.name || "—",
+          i.entered_quantity ?? i.quantity,
+          i.damage_detail ?? "",
+        ];
+      })}
       signers={["Người báo", "Người xác nhận"]}
     />,
   );

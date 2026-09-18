@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("liquidation_items")
-    .select("quantity, method, unit_value, proceeds, variants(attributes, unit, products(name))")
+    .select("quantity, method, unit_value, proceeds, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("liquidation_note_id", id);
 
   const qrCode = await generateQrDataUri(getSlipUrl(_req, `/liquidations`));
@@ -52,15 +52,29 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Giá trị", flex: 0.9, align: "right" },
         { label: "Tiền thu", flex: 0.9, align: "right" },
       ]}
-      rows={(items ?? []).map((i) => [
-        i.variants?.products?.name ?? "—",
-        variantLabel(i.variants?.attributes, i.variants?.unit),
-        i.variants?.unit ?? "—",
-        i.quantity,
-        LIQUIDATION_METHOD[i.method] ?? i.method,
-        i.unit_value != null ? formatVnd(i.unit_value) : "—",
-        formatVnd(i.proceeds ?? 0),
-      ])}
+      rows={(items ?? []).map((i) => {
+        const v = i.variants as {
+          products?: { name?: string | null } | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+        } | null;
+        const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+        const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+        return [
+          v?.products?.name ?? "—",
+          detail,
+          v?.units?.symbol || v?.units?.name || "—",
+          i.quantity,
+          LIQUIDATION_METHOD[i.method] ?? i.method,
+          i.unit_value != null ? formatVnd(i.unit_value) : "—",
+          formatVnd(i.proceeds ?? 0),
+        ];
+      })}
       signers={["Người lập", "Người duyệt", "Người nhận"]}
     />,
   );

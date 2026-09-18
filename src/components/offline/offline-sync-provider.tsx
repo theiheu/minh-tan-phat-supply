@@ -29,6 +29,14 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
 
     try {
       for (const item of pendingItems) {
+        if (item.schemaVersion !== "v2") {
+          updateStatus(
+            item.clientTempId,
+            "failed",
+            "Phiếu ngoại tuyến được tạo bằng dữ liệu cũ. Vui lòng xóa phiếu này và chọn lại SKU/đơn vị.",
+          );
+          continue;
+        }
         updateStatus(item.clientTempId, "syncing");
         try {
           const reqId = await createRequisition({
@@ -37,8 +45,9 @@ export function OfflineSyncProvider({ children }: { children: React.ReactNode })
             purpose: item.purpose,
             requesterId: item.requesterId,
             items: item.items.map((i) => ({
-              variantId: i.variantId,
-              quantity: i.quantity,
+              skuId: i.skuId,
+              transactionUnitId: i.transactionUnitId,
+              enteredQuantity: i.enteredQuantity,
             })),
           });
 

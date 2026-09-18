@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { matchesSearchTokens } from "@/lib/search";
 
 export interface SearchSelectOption {
   value: string;
@@ -60,7 +61,7 @@ export function SearchSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[320px] max-w-[90vw] p-0 border-2 border-border shadow-xl" align="start">
-        <Command>
+        <Command filter={(value, search) => (matchesSearchTokens(value, search) ? 1 : 0)}>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>

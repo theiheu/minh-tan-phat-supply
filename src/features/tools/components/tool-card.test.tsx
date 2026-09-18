@@ -28,8 +28,9 @@ describe("ToolCard", () => {
       <ToolCard
         borrowingId="b1"
         code="MDC-20260908-0001"
+        skuId="sku-1"
         productName="Máy hàn que"
-        variantLabel="250A Inverter"
+        skuLabel="250A Inverter"
         quantity={2}
         returnedQuantity={0}
         borrowedAt="2026-09-08T08:00:00Z"
@@ -56,6 +57,7 @@ describe("ToolCard", () => {
       <ToolCard
         borrowingId="b2"
         code="MDC-20260908-0002"
+        skuId="sku-2"
         productName="Máy khoan bê tông"
         quantity={1}
         returnedQuantity={0}
@@ -75,6 +77,7 @@ describe("ToolCard", () => {
       <ToolCard
         borrowingId="b3"
         code="MDC-20260908-0003"
+        skuId="sku-3"
         productName="Kìm bấm mạng"
         quantity={3}
         returnedQuantity={1}
@@ -97,6 +100,7 @@ describe("ToolCard", () => {
       <ToolCard
         borrowingId="b3-mgr"
         code="MDC-20260908-0003"
+        skuId="sku-3"
         productName="Kìm bấm mạng"
         quantity={3}
         returnedQuantity={1}
@@ -115,6 +119,7 @@ describe("ToolCard", () => {
       <ToolCard
         borrowingId="b4"
         code="MDC-20260908-0004"
+        skuId="sku-4"
         productName="Máy cắt sắt"
         quantity={1}
         returnedQuantity={1}
@@ -139,14 +144,14 @@ describe("ToolBorrowDialog", () => {
   });
 
   it("renders trigger and allows filling and submitting borrowing request", async () => {
-    const mockVariants = [
+    const mockSkus = [
       { id: "v-1", name: "Máy cắt sắt Bosch", detail: "GWS 750", availableStock: 5 },
       { id: "v-2", name: "Máy hàn que Jasic", detail: "ARC 200", availableStock: 2 },
     ];
 
     render(
       <ToolBorrowDialog
-        variants={mockVariants}
+        skus={mockSkus}
         zones={[{ id: "z-1", name: "Khu Trại A" }]}
       />,
     );
@@ -157,9 +162,9 @@ describe("ToolBorrowDialog", () => {
 
     expect(screen.getByRole("heading", { name: /Mượn dụng cụ/i })).toBeInTheDocument();
 
-    // Select variant
-    const variantSelect = screen.getByPlaceholderText(/Chọn dụng cụ cần mượn/i);
-    fireEvent.change(variantSelect, { target: { value: "Máy cắt sắt Bosch" } });
+    // Select SKU
+    const skuSelect = screen.getByPlaceholderText(/Chọn dụng cụ cần mượn/i);
+    fireEvent.change(skuSelect, { target: { value: "Máy cắt sắt Bosch" } });
     fireEvent.click(screen.getByText(/Máy cắt sắt Bosch/i));
 
     // Fill purpose
@@ -177,7 +182,7 @@ describe("ToolBorrowDialog", () => {
     await waitFor(() => {
       expect(createToolBorrowing).toHaveBeenCalledWith(
         expect.objectContaining({
-          items: [{ variantId: "v-1", quantity: 1 }],
+          items: [{ skuId: "v-1", quantity: 1 }],
           purpose: "Sửa chuồng heo A2",
         }),
       );
@@ -187,7 +192,7 @@ describe("ToolBorrowDialog", () => {
   it("supports quick preset +1 ngày and +7 ngày", () => {
     render(
       <ToolBorrowDialog
-        variants={[{ id: "v-1", name: "Máy cắt sắt", availableStock: 5 }]}
+        skus={[{ id: "v-1", name: "Máy cắt sắt", availableStock: 5 }]}
       />,
     );
 
@@ -216,7 +221,7 @@ describe("ToolReturnDialog", () => {
         borrowingId="b-10"
         code="MDC-20260908-0010"
         productName="Bộ cờ lê đa năng"
-        variantId="v-10"
+        skuId="v-10"
         quantity={3}
         returnedQuantity={1}
       />,
@@ -240,7 +245,7 @@ describe("ToolReturnDialog", () => {
     await waitFor(() => {
       expect(returnToolBorrowing).toHaveBeenCalledWith({
         borrowingId: "b-10",
-        items: [{ variantId: "v-10", quantity: 2 }],
+        items: [{ skuId: "v-10", quantity: 2 }],
         notes: "Dụng cụ hoạt động tốt, đã vệ sinh",
       });
     });
@@ -252,8 +257,8 @@ describe("ToolReturnDialog", () => {
         borrowingId="b-20"
         code="MDC-20260908-0020"
         items={[
-          { variantId: "v-1", name: "Máy mài góc", quantity: 2, returnedQuantity: 0 },
-          { variantId: "v-2", name: "Kìm chết", quantity: 1, returnedQuantity: 0 },
+          { skuId: "v-1", name: "Máy mài góc", quantity: 2, returnedQuantity: 0 },
+          { skuId: "v-2", name: "Kìm chết", quantity: 1, returnedQuantity: 0 },
         ]}
       />,
     );
@@ -270,8 +275,8 @@ describe("ToolReturnDialog", () => {
       expect(returnToolBorrowing).toHaveBeenCalledWith({
         borrowingId: "b-20",
         items: [
-          { variantId: "v-1", quantity: 2 },
-          { variantId: "v-2", quantity: 1 },
+          { skuId: "v-1", quantity: 2 },
+          { skuId: "v-2", quantity: 1 },
         ],
         notes: undefined,
       });

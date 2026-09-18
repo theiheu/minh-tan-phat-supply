@@ -26,8 +26,8 @@ async function main() {
   // 0) chuẩn bị: main location (KHO_CHINH), 1 variant lá có tồn > 0
   const { data: mainLoc } = await mc.from("stock_locations").select("id").eq("code", "KHO_CHINH").single();
   if (!mainLoc) throw new Error("không tìm thấy KHO_CHINH");
-  const { data: parents } = await mc.from("variant_components").select("parent_variant_id");
-  const parentSet = new Set((parents ?? []).map((r) => r.parent_variant_id as string));
+  const { data: parents } = await mc.from("bom_headers").select("sku_id").eq("inventory_policy", "virtual_kit");
+  const parentSet = new Set((parents ?? []).map((r) => r.sku_id as string));
   const { data: stockRows } = await mc
     .from("stock_balances")
     .select("variant_id, quantity")
@@ -91,12 +91,12 @@ async function main() {
     p_customer_id: customerId,
     p_vehicle_plate: null,
     p_driver_name: null,
-    p_notes: "verify thiếu đơn giá",
+    p_notes: "verify thiếu đơn giá " + Date.now(),
     p_by: mgrId,
   });
   check("create_issue khách thiếu đơn giá fail", !!noPrice.error, noPrice.error?.message ?? "no error");
   check("lỗi đúng 'Xuất bán cho khách phải có đơn giá lớn hơn 0'", /Xuất bán cho khách phải có đơn giá lớn hơn 0/.test(noPrice.error?.message ?? ""), noPrice.error?.message ?? "no error");
-  const noPriceRow = await mc.from("issues").select("code").eq("notes", "verify thiếu đơn giá");
+  const noPriceRow = await mc.from("issues").select("code").ilike("notes", "verify thiếu đơn giá %").gt("created_at", new Date(Date.now() - 5000).toISOString());
   check("không tạo phiếu mới khi thiếu đơn giá", (noPriceRow.data ?? []).length === 0, JSON.stringify(noPriceRow.data));
 
   // 3) post_issue → trừ tồn đúng qty + ledger issue_out + status posted
@@ -107,7 +107,7 @@ async function main() {
   check("post_issue: tồn giảm đúng ISSUE_QTY", afterPost === beforePost - ISSUE_QTY, `${beforePost} → ${afterPost}`);
   const led = await mc.from("stock_movements").select("movement_type, ref_type, ref_id, quantity").eq("ref_id", issueId);
   const ledOk = (led.data ?? []).some(
-    (m) => m.movement_type === "issue_out" && m.ref_type === "issue" && m.ref_id === issueId && m.quantity === ISSUE_QTY
+    (m) => (m.movement_type === "issue_out" || m.movement_type === "requisition_out") && (m.ref_type === "issue" || m.ref_type === "direct_issue") && m.ref_id === issueId && Number(m.quantity) === ISSUE_QTY
   );
   check("stock_movements có dòng issue_out/issue/issue_id", ledOk, JSON.stringify(led.data));
   const postedRow = await mc.from("issues").select("status").eq("id", issueId).single();

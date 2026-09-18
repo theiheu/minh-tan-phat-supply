@@ -140,8 +140,8 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
   React.useEffect(() => {
     if (open && mounted) {
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        inputRef.current?.focus();
+        messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
+        inputRef.current?.focus?.();
       }, 100);
     }
   }, [messages, open, mounted]);
@@ -298,6 +298,19 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
                       const toolName = tool.toolName;
                       const isComplete = "result" in tool;
 
+                      const getToolLabel = (name: string, done: boolean) => {
+                        if (name === "get_stock_balance") return done ? "Đã tra cứu tồn kho" : "Đang tra cứu tồn kho...";
+                        if (name === "get_fuel_dispense_report") return done ? "Đã lấy báo cáo xăng dầu" : "Đang lấy báo cáo xăng dầu...";
+                        if (name === "search_sop_knowledge") return done ? "Đã tra cứu tài liệu quy trình" : "Đang tra cứu tài liệu quy trình...";
+                        if (name === "get_low_stock_alerts") return done ? "Đã quét cảnh báo cạn kho" : "Đang quét cảnh báo cạn kho...";
+                        if (name === "draft_requisition") return done ? "Đã lập nháp phiếu yêu cầu" : "Đang lập nháp phiếu yêu cầu...";
+                        if (name === "search_catalog") return done ? "Đã tìm kiếm danh mục vật tư" : "Đang tìm kiếm danh mục vật tư...";
+                        if (name === "get_vehicles_list") return done ? "Đã lấy danh sách xe & định mức" : "Đang lấy danh sách xe & định mức...";
+                        if (name === "get_recent_requisitions") return done ? "Đã tra cứu phiếu cấp phát" : "Đang tra cứu phiếu cấp phát...";
+                        if (name === "get_recent_defects") return done ? "Đã tra cứu phiếu báo hỏng" : "Đang tra cứu phiếu báo hỏng...";
+                        return done ? `Đã hoàn thành ${name}` : `Đang thực thi ${name}...`;
+                      };
+
                       return (
                         <div
                           key={idx}
@@ -309,26 +322,23 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
                             <span className="size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20 shrink-0" />
                           )}
                           <span className="font-medium truncate">
-                            {toolName === "get_stock_balance" && "Đang tra cứu tồn kho..."}
-                            {toolName === "get_fuel_dispense_report" && "Đang lấy báo cáo xăng dầu..."}
-                            {toolName === "search_sop_knowledge" && "Đang tra cứu tài liệu quy trình..."}
-                            {toolName === "get_low_stock_alerts" && "Đang quét cảnh báo cạn kho..."}
-                            {toolName === "draft_requisition" && "Đang lập nháp phiếu yêu cầu..."}
-                            {toolName === "search_catalog" && "Đang tìm kiếm danh mục vật tư..."}
-                            {toolName === "get_vehicles_list" && "Đang lấy danh sách xe & định mức..."}
-                            {toolName === "get_recent_requisitions" && "Đang tra cứu phiếu cấp phát..."}
-                            {toolName === "get_recent_defects" && "Đang tra cứu phiếu báo hỏng..."}
-                            {!["get_stock_balance", "get_fuel_dispense_report", "search_sop_knowledge", "get_low_stock_alerts", "draft_requisition", "search_catalog", "get_vehicles_list", "get_recent_requisitions", "get_recent_defects"].includes(toolName) && ("Đang thực thi " + toolName + "...")}
+                            {getToolLabel(toolName, isComplete)}
                           </span>
                         </div>
                       );
                     })}
 
-                    {m.content && (
+                    {m.content ? (
                       isUser ? (
                         <div className="whitespace-pre-wrap break-words">{m.content}</div>
                       ) : (
                         <AIMarkdown content={m.content} />
+                      )
+                    ) : (
+                      !isUser && !isLoading && (
+                        <div className="text-xs text-muted-foreground italic py-1">
+                          Đã hoàn thành tra cứu dữ liệu.
+                        </div>
                       )
                     )}
                   </div>

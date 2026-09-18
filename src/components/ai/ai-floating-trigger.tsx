@@ -9,6 +9,7 @@ const STORAGE_KEY = "mtp_ai_copilot_fab_pos";
 const BUTTON_WIDTH = 140;
 const BUTTON_HEIGHT = 48;
 const PADDING = 12;
+const DRAG_THRESHOLD = 6;
 
 export function AIFloatingTrigger() {
   const [open, setOpen] = React.useState(false);
@@ -16,23 +17,28 @@ export function AIFloatingTrigger() {
   const [position, setPosition] = React.useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
 
-  const dragRef = React.useRef<{
-    startX: number;
-    startY: number;
-    initialX: number;
-    initialY: number;
-    hasMoved: boolean;
-  }>({
+  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const isPointerDownRef = React.useRef(false);
+  const isDraggingRef = React.useRef(false);
+  const hasJustDraggedRef = React.useRef(false);
+  const dragStartRef = React.useRef({
     startX: 0,
     startY: 0,
     initialX: 0,
     initialY: 0,
-    hasMoved: false,
   });
 
-  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const clampPosition = React.useCallback((x: number, y: number) => {
+    if (typeof window === "undefined") return { x, y };
+    const maxX = Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - PADDING);
+    const maxY = Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - PADDING);
+    return {
+      x: Math.min(Math.max(PADDING, x), maxX),
+      y: Math.min(Math.max(PADDING, y), maxY),
+    };
+  }, []);
 
-  // Initialize position
+  // Khởi tạo vị trí ban đầu
   React.useEffect(() => {
     setMounted(true);
 
@@ -49,146 +55,129 @@ export function AIFloatingTrigger() {
             parsed.y >= 0 &&
             parsed.y <= window.innerHeight
           ) {
-            // Keep within current window bounds
-            const maxX = Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - PADDING);
-            const maxY = Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - PADDING);
-            return {
-              x: Math.min(Math.max(PADDING, parsed.x), maxX),
-              y: Math.min(Math.max(PADDING, parsed.y), maxY),
-            };
+            return clampPosition(parsed.x, parsed.y);
           }
         } catch {
           // ignore corrupted json
         }
       }
 
-      // Default bottom-right (taking into account mobile bottom nav bar)
+      // Vị trí mặc định ở góc phải dưới (tránh thanh bottom nav trên mobile)
       const isMobile = window.innerWidth < 1024;
       const bottomOffset = isMobile ? 84 : 24;
       const rightOffset = isMobile ? 16 : 24;
 
-      return {
-        x: Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - rightOffset),
-        y: Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - bottomOffset),
-      };
+      return clampPosition(
+        window.innerWidth - BUTTON_WIDTH - rightOffset,
+        window.innerHeight - BUTTON_HEIGHT - bottomOffset
+      );
     };
 
     setPosition(getInitialPos());
 
-    // Update bounds on window resize
     const handleResize = () => {
       setPosition((prev) => {
         if (!prev) return getInitialPos();
-        const maxX = Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - PADDING);
-        const maxY = Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - PADDING);
-        return {
-          x: Math.min(Math.max(PADDING, prev.x), maxX),
-          y: Math.min(Math.max(PADDING, prev.y), maxY),
-        };
+        return clampPosition(prev.x, prev.y);
       });
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [clampPosition]);
 
-  // Mouse Drag Handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0 || !position) return; // Chỉ bắt chuột trái
+  // Pointer Drag Handlers (Hỗ trợ đồng nhất cả Mouse, Touch và Stylus)
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || !position) return;
 
-    dragRef.current = {
+    isPointerDownRef.current = true;
+    isDraggingRef.current = false;
+    dragStartRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       initialX: position.x,
       initialY: position.y,
-      hasMoved: false,
     };
-    setIsDragging(true);
+  };
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - dragRef.current.startX;
-      const deltaY = moveEvent.clientY - dragRef.current.startY;
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
 
-      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-        dragRef.current.hasMoved = true;
+    const deltaX = e.clientX - dragStartRef.current.startX;
+    const deltaY = e.clientY - dragStartRef.current.startY;
+    const distance = Math.hypot(deltaX, deltaY);
+
+    if (!isDraggingRef.current) {
+      if (distance > DRAG_THRESHOLD) {
+        isDraggingRef.current = true;
+        setIsDragging(true);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // ignore pointer capture errors if any
+        }
+      } else {
+        return;
+      }
+    }
+
+    const clamped = clampPosition(
+      dragStartRef.current.initialX + deltaX,
+      dragStartRef.current.initialY + deltaY
+    );
+    setPosition(clamped);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+    isPointerDownRef.current = false;
+
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      hasJustDraggedRef.current = true;
+      setTimeout(() => {
+        hasJustDraggedRef.current = false;
+      }, 150);
+
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // ignore
       }
 
-      const maxX = Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - PADDING);
-      const maxY = Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - PADDING);
-
-      const newX = Math.min(Math.max(PADDING, dragRef.current.initialX + deltaX), maxX);
-      const newY = Math.min(Math.max(PADDING, dragRef.current.initialY + deltaY), maxY);
-
-      setPosition({ x: newX, y: newY });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-
-      // Save position to localStorage
+      // Lưu tọa độ mới vào localStorage
       setPosition((latest) => {
         if (latest) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(latest));
         }
         return latest;
       });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  };
-
-  // Touch Drag Handlers (Mobile)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!position || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-
-    dragRef.current = {
-      startX: touch.clientX,
-      startY: touch.clientY,
-      initialX: position.x,
-      initialY: position.y,
-      hasMoved: false,
-    };
-    setIsDragging(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-
-    const deltaX = touch.clientX - dragRef.current.startX;
-    const deltaY = touch.clientY - dragRef.current.startY;
-
-    if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-      dragRef.current.hasMoved = true;
     }
-
-    const maxX = Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - PADDING);
-    const maxY = Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - PADDING);
-
-    const newX = Math.min(Math.max(PADDING, dragRef.current.initialX + deltaX), maxX);
-    const newY = Math.min(Math.max(PADDING, dragRef.current.initialY + deltaY), maxY);
-
-    setPosition({ x: newX, y: newY });
   };
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    setPosition((latest) => {
-      if (latest) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(latest));
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current) return;
+    isPointerDownRef.current = false;
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch {
+        // ignore
       }
-      return latest;
-    });
+    }
   };
 
-  const handleClick = () => {
-    // Nếu vừa kéo rê nút thì không kích hoạt click mở drawer
-    if (dragRef.current.hasMoved) {
-      dragRef.current.hasMoved = false;
+  const handleClick = (e: React.MouseEvent) => {
+    if (hasJustDraggedRef.current || isDraggingRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
       return;
     }
     setOpen(true);
@@ -207,25 +196,26 @@ export function AIFloatingTrigger() {
           transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
           touchAction: "none",
         }}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         className={cn(
-          "fixed top-0 left-0 z-40 select-none",
-          isDragging ? "cursor-grabbing scale-105 shadow-2xl opacity-90" : "cursor-grab",
-          !isDragging && "transition-transform duration-75 ease-out"
+          "fixed top-0 left-0 z-40 select-none transition-opacity duration-200",
+          open && "opacity-0 pointer-events-none",
+          isDragging ? "cursor-grabbing shadow-2xl opacity-90" : "cursor-grab",
+          !isDragging && "transition-transform duration-100 ease-out"
         )}
       >
         <button
           type="button"
           onClick={handleClick}
           className={cn(
-            "group relative flex items-center gap-2 rounded-full",
+            "group relative flex items-center gap-2 rounded-full cursor-pointer",
             "bg-linear-to-r from-primary via-primary/95 to-amber-500",
             "text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-primary/25",
             "pl-2.5 pr-4 py-2.5 sm:py-3",
-            "border border-white/20 active:scale-95 transition-all",
+            "border border-white/20 active:scale-95 transition-transform",
             "h-12 w-[140px] justify-between"
           )}
           aria-label="Mở trợ lý AI Copilot (Ctrl+J)"
@@ -235,15 +225,15 @@ export function AIFloatingTrigger() {
           <span className="absolute -inset-0.5 rounded-full bg-linear-to-r from-primary to-amber-400 opacity-40 blur-xs group-hover:opacity-75 transition duration-500 animate-pulse pointer-events-none" />
 
           {/* Grip drag handle icon */}
-          <div className="relative flex items-center justify-center text-white/60 group-hover:text-white transition-colors">
+          <div className="relative flex items-center justify-center text-white/60 group-hover:text-white transition-colors pointer-events-none">
             <GripVertical className="size-3.5" />
           </div>
 
-          <div className="relative flex items-center justify-center size-5 shrink-0">
+          <div className="relative flex items-center justify-center size-5 shrink-0 pointer-events-none">
             <Sparkles className="size-4.5 text-amber-200 animate-[spin_4s_linear_infinite]" />
           </div>
 
-          <div className="relative flex items-center gap-1 font-semibold text-xs sm:text-sm tracking-wide shrink-0">
+          <div className="relative flex items-center gap-1 font-semibold text-xs sm:text-sm tracking-wide shrink-0 pointer-events-none">
             <span>AI Copilot</span>
           </div>
         </button>

@@ -28,7 +28,7 @@ import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-i
 import { createToolBorrowing } from "../actions";
 import { cn } from "@/lib/utils";
 
-export interface ToolBorrowVariantOption {
+export interface ToolBorrowSkuOption {
   id: string;
   name: string;
   detail?: string;
@@ -36,12 +36,16 @@ export interface ToolBorrowVariantOption {
   availableStock?: number;
 }
 
+export type ToolBorrowVariantOption = ToolBorrowSkuOption;
+
 export interface ToolBorrowDialogProps {
-  variants?: ToolBorrowVariantOption[];
+  skus?: ToolBorrowSkuOption[];
+  variants?: ToolBorrowSkuOption[];
   zones?: { id: string; name: string }[];
   subZones?: { id: string; zone_id: string; name: string }[];
   borrowers?: { id: string; fullName: string; username?: string }[];
   isManager?: boolean;
+  defaultSkuId?: string;
   defaultVariantId?: string;
   defaultZoneId?: string;
   defaultSubZoneId?: string;
@@ -63,11 +67,13 @@ function getFutureDate(days: number): string {
 }
 
 export function ToolBorrowDialog({
-  variants = [],
+  skus,
+  variants,
   zones = [],
   subZones = [],
   borrowers = [],
   isManager = false,
+  defaultSkuId,
   defaultVariantId,
   defaultZoneId,
   defaultSubZoneId,
@@ -84,7 +90,10 @@ export function ToolBorrowDialog({
   const isOpen = isControlled ? controlledOpen : internalOpen;
   const setIsOpen = isControlled ? controlledOnOpenChange ?? (() => {}) : setInternalOpen;
 
-  const [variantId, setVariantId] = useState(defaultVariantId ?? (variants.length === 1 ? variants[0].id : ""));
+  const skuList = skus ?? variants ?? [];
+  const initialSkuId = defaultSkuId ?? defaultVariantId ?? (skuList.length === 1 ? skuList[0].id : "");
+
+  const [skuId, setSkuId] = useState(initialSkuId);
   const [quantity, setQuantity] = useState("1");
   const [zoneId, setZoneId] = useState(defaultZoneId ?? "none");
   const [subZoneId, setSubZoneId] = useState(defaultSubZoneId ?? "");
@@ -93,20 +102,20 @@ export function ToolBorrowDialog({
   const [purpose, setPurpose] = useState("");
   const [pending, startTransition] = useTransition();
 
-  const selectedVariant = variants.find((v) => v.id === variantId);
-  const maxStock = selectedVariant?.availableStock !== undefined ? selectedVariant.availableStock : 999;
+  const selectedSku = skuList.find((s) => s.id === skuId);
+  const maxStock = selectedSku?.availableStock !== undefined ? selectedSku.availableStock : 999;
   const numQty = Math.max(1, parseInt(quantity, 10) || 1);
 
-  const variantOptions: ComboboxInputOption[] = variants.map((v) => ({
-    value: v.id,
-    label: v.name,
-    detail: [v.detail, v.unit ? `ĐVT: ${v.unit}` : null].filter(Boolean).join(" · "),
-    hint: v.availableStock !== undefined ? `Tồn: ${v.availableStock}` : undefined,
-    text: v.detail ? `${v.name} (${v.detail})` : v.name,
+  const skuOptions: ComboboxInputOption[] = skuList.map((s) => ({
+    value: s.id,
+    label: s.name,
+    detail: [s.detail, s.unit ? `ĐVT: ${s.unit}` : null].filter(Boolean).join(" · "),
+    hint: s.availableStock !== undefined ? `Tồn: ${s.availableStock}` : undefined,
+    text: s.detail ? `${s.name} (${s.detail})` : s.name,
   }));
 
   const resetForm = () => {
-    setVariantId(defaultVariantId ?? (variants.length === 1 ? variants[0].id : ""));
+    setSkuId(defaultSkuId ?? defaultVariantId ?? (skuList.length === 1 ? skuList[0].id : ""));
     setQuantity("1");
     setZoneId(defaultZoneId ?? "none");
     setSubZoneId(defaultSubZoneId ?? "");
@@ -127,7 +136,7 @@ export function ToolBorrowDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!variantId) {
+    if (!skuId) {
       toast.error("Vui lòng chọn dụng cụ cần mượn");
       return;
     }
@@ -137,8 +146,8 @@ export function ToolBorrowDialog({
       return;
     }
 
-    if (selectedVariant?.availableStock !== undefined && numQty > selectedVariant.availableStock) {
-      toast.error(`Số lượng mượn không được vượt quá tồn kho khả dụng (${selectedVariant.availableStock})`);
+    if (selectedSku?.availableStock !== undefined && numQty > selectedSku.availableStock) {
+      toast.error(`Số lượng mượn không được vượt quá tồn kho khả dụng (${selectedSku.availableStock})`);
       return;
     }
 
@@ -150,7 +159,7 @@ export function ToolBorrowDialog({
     startTransition(async () => {
       try {
         const borrowingId = await createToolBorrowing({
-          items: [{ variantId, quantity: numQty }],
+          items: [{ skuId, quantity: numQty }],
           zoneId: zoneId !== "none" ? zoneId : undefined,
           subZoneId: zoneId !== "none" && subZoneId ? subZoneId : undefined,
           purpose: purpose.trim(),
@@ -203,28 +212,28 @@ export function ToolBorrowDialog({
               <Label className="text-sm font-medium">
                 Dụng cụ / Thiết bị <span className="text-destructive">*</span>
               </Label>
-              {variants.length > 0 ? (
+              {skuList.length > 0 ? (
                 <ComboboxInput
-                  value={variantId}
+                  value={skuId}
                   onChange={(val) => {
-                    setVariantId(val);
+                    setSkuId(val);
                     setQuantity("1");
                   }}
-                  options={variantOptions}
+                  options={skuOptions}
                   placeholder="Chọn dụng cụ cần mượn…"
                   emptyText="Không tìm thấy dụng cụ phù hợp."
                 />
               ) : (
                 <Input
                   placeholder="Chọn dụng cụ cần mượn…"
-                  value={variantId}
-                  onChange={(e) => setVariantId(e.target.value)}
+                  value={skuId}
+                  onChange={(e) => setSkuId(e.target.value)}
                   disabled
                 />
               )}
-              {selectedVariant?.availableStock !== undefined && (
+              {selectedSku?.availableStock !== undefined && (
                 <div className="text-xs text-muted-foreground">
-                  Tồn kho khả dụng: <span className="font-semibold text-foreground">{selectedVariant.availableStock}</span> {selectedVariant.unit || "cái"}
+                  Tồn kho khả dụng: <span className="font-semibold text-foreground">{selectedSku.availableStock}</span> {selectedSku.unit || "cái"}
                 </div>
               )}
             </div>
@@ -267,8 +276,8 @@ export function ToolBorrowDialog({
                 >
                   <Plus className="size-4" />
                 </Button>
-                {selectedVariant?.unit && (
-                  <span className="text-sm text-muted-foreground">{selectedVariant.unit}</span>
+                {selectedSku?.unit && (
+                  <span className="text-sm text-muted-foreground">{selectedSku.unit}</span>
                 )}
               </div>
             </div>
@@ -391,7 +400,7 @@ export function ToolBorrowDialog({
             </Button>
             <Button
               type="submit"
-              disabled={pending || !variantId || !purpose.trim()}
+              disabled={pending || !skuId || !purpose.trim()}
               className="gap-1.5"
             >
               {pending && <Loader2 className="size-4 animate-spin" />}

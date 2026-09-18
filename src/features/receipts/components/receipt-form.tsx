@@ -16,27 +16,29 @@ import { uploadReceiptInvoiceImage } from "../upload";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { canDeleteInvoiceImage } from "@/lib/images";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { variantLabel } from "@/lib/labels";
+import { SkuSelector } from "@/features/catalog/components/sku-selector";
+import { TransactionUomSelect } from "@/features/catalog/components/transaction-uom-select";
+import type { SkuSelectOption } from "@/features/catalog/domain/types";
 
 export interface ItemDraft {
-  variantId: string;
-  quantity: string;
+  skuId: string;
+  transactionUnitId: string;
+  enteredQuantity: string;
   unitCost: string;
   batchNo: string;
   expiryDate: string;
+  trackingPolicy: string;
 }
 
-export interface VariantOption {
-  id: string;
-  name: string;
-  detail: string;
-  isTrackableLot: boolean;
-}
+const EMPTY: ItemDraft = { skuId: "", transactionUnitId: "", enteredQuantity: "1", unitCost: "", batchNo: "", expiryDate: "", trackingPolicy: "none" };
 
-const EMPTY: ItemDraft = { variantId: "", quantity: "1", unitCost: "", batchNo: "", expiryDate: "" };
 
 export function ReceiptForm({
   suppliers,
   variants,
+  categories = [],
   receiptId,
   receiptCode,
   receiptStatus,
@@ -50,7 +52,8 @@ export function ReceiptForm({
   onCancel,
 }: {
   suppliers: { id: string; name: string }[];
-  variants: VariantOption[];
+  variants?: never;
+  categories?: { id: string; name: string }[];
   receiptId?: string;
   receiptCode?: string;
   receiptStatus?: string;
@@ -70,23 +73,12 @@ export function ReceiptForm({
   const [notes, setNotes] = useState(initialNotes);
   const [invoiceImages, setInvoiceImages] = useState<string[]>(initialInvoiceImages);
   const [uploadingInvoices, setUploadingInvoices] = useState(false);
-  const [items, setItems] = useState<ItemDraft[]>(
+  // unused in new UI
+    const [items, setItems] = useState<ItemDraft[]>(
     initialItems && initialItems.length > 0 ? initialItems : [EMPTY],
   );
   const [pending, startTransition] = useTransition();
 
-  // Options cho ô gõ-tìm chọn vật tư: dòng 1 = tên, dòng 2 = biến thể · đơn vị,
-  // ô sau khi chọn hiện "Tên — biến thể" để biết chính xác đã chọn biến thể nào.
-  const variantOptions = useMemo(
-    () =>
-      variants.map((v) => ({
-        value: v.id,
-        label: v.name,
-        detail: v.detail,
-        text: `${v.name} — ${v.detail}`,
-      })),
-    [variants],
-  );
   const supplierOptions = useMemo(
     () => suppliers.map((s) => ({ value: s.id, label: s.name })),
     [suppliers],
@@ -118,7 +110,7 @@ export function ReceiptForm({
   }
 
   async function run(postAfterSave: boolean) {
-    const valid = items.filter((i) => i.variantId && Number(i.quantity) > 0);
+    const valid = items.filter((i) => i.skuId && Number(i.enteredQuantity) > 0);
     if (valid.length === 0) return toast.error("Thêm ít nhất 1 vật tư");
 
     startTransition(async () => {
@@ -128,11 +120,14 @@ export function ReceiptForm({
           notes: notes.trim() ? notes : undefined,
           invoiceImages,
           items: valid.map((i) => ({
-            variantId: i.variantId,
-            quantity: Number(i.quantity),
+            skuId: i.skuId,
+            transactionUnitId: i.transactionUnitId || undefined,
+            enteredQuantity: Number(i.enteredQuantity),
             unitCost: Number(i.unitCost) || 0,
-            batchNo: i.batchNo || undefined,
-            expiryDate: i.expiryDate || undefined,
+            allocations: (i.batchNo || i.expiryDate) ? [{
+               lot_number: i.batchNo || undefined,
+               expiry_date: i.expiryDate || undefined
+            }] : undefined,
           })),
         };
 
@@ -287,13 +282,19 @@ export function ReceiptForm({
       </Card>
 
       <Card className="border-2 border-border shadow-xs rounded-xl">
-        <CardHeader className="pb-3 border-b border-border/60">
-          <CardTitle className="text-base font-semibold">Vật tư nhập</CardTitle>
+        <CardHeader className="pb-3 border-b border-border/60 flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base font-semibold">Vật tư nhập</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Chọn vật tư từ danh mục hoặc tạo mới nếu chưa có.
+            </p>
+          </div>
+
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-2">
             {items.map((it, i) => {
-              const trackable = variants.find((v) => v.id === it.variantId)?.isTrackableLot;
+              const trackable = it.trackingPolicy === "lot" || it.trackingPolicy === "lot_expiry";
               return (
                 <div key={i} className="relative rounded-xl border-2 border-border/80 bg-muted/30 p-3">
                   <Button
@@ -307,19 +308,17 @@ export function ReceiptForm({
                     <Trash2 className="size-4" />
                   </Button>
                   <div className="grid grid-cols-1 gap-2.5 pr-9 sm:grid-cols-2 sm:pr-9 lg:grid-cols-12 lg:pr-10">
-                    <div className={cn("space-y-1 sm:col-span-2", trackable ? "lg:col-span-5" : "lg:col-span-6")}>
+                    <div className={cn("space-y-1 sm:col-span-2", trackable ? "lg:col-span-4" : "lg:col-span-5")}>
                       <Label className="text-xs font-semibold">Vật tư</Label>
-                      <ComboboxInput
-                        value={it.variantId}
-                        onChange={(v) => setItem(i, { variantId: v })}
-                        options={variantOptions}
-                        placeholder="Chọn hoặc gõ tên vật tư…"
-                        emptyText="Không tìm thấy vật tư."
-                      />
+                      <SkuSelector value={it.skuId} onSelect={(sku) => setItem(i, { skuId: sku.skuId, trackingPolicy: sku.trackingPolicy })} />
                     </div>
-                    <div className={cn("space-y-1", trackable ? "lg:col-span-2" : "lg:col-span-3")}>
+                    <div className="space-y-1 lg:col-span-2">
+                       <Label className="text-xs font-semibold">Đơn vị nhập</Label>
+                       <TransactionUomSelect skuId={it.skuId} value={it.transactionUnitId} onValueChange={(v) => setItem(i, { transactionUnitId: v })} disabled={!it.skuId} />
+                    </div>
+                    <div className={cn("space-y-1", trackable ? "lg:col-span-1" : "lg:col-span-2")}>
                       <Label className="text-xs font-semibold">Số lượng</Label>
-                      <Input type="number" min="1" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} />
+                      <Input type="number" min="1" value={it.enteredQuantity} onChange={(e) => setItem(i, { enteredQuantity: e.target.value })} />
                     </div>
                     <div className={cn("space-y-1", trackable ? "lg:col-span-2" : "lg:col-span-3")}>
                       <Label className="text-xs font-semibold">Đơn giá</Label>
@@ -381,6 +380,8 @@ export function ReceiptForm({
                 : "Lưu & Nhập kho ngay"}
         </Button>
       </div>
+
+      
     </div>
   );
 }

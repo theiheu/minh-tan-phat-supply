@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BrandLoading } from "@/components/brand-loading";
 import { LoginForm } from "./login-form";
 import { ThemeToggle } from "./theme-toggle";
+
+export const metadata: Metadata = {
+  title: "Đăng nhập",
+  description: "Đăng nhập Hệ thống Quản lý Kho & Vật tư Trại Gà Minh Tân Phát",
+};
 
 export default function LoginPage() {
   return (

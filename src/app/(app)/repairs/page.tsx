@@ -46,7 +46,7 @@ export default async function RepairsPage({
   let query = supabase
     .from("repair_orders")
     .select(
-      "id, code, vendor, sent_at, expected_return_at, status, total_cost, created_at, repair_order_items(id, quantity, variants(attributes, unit, products(name)))",
+      "id, code, vendor, sent_at, expected_return_at, status, total_cost, created_at, repair_order_items(id, quantity, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -114,11 +114,18 @@ export default async function RepairsPage({
                       order={{
                         id: r.id,
                         status: r.status,
-                        items: (r.repair_order_items ?? []).map((i) => ({
-                          id: i.id,
-                          label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
-                          quantity: i.quantity,
-                        })),
+                        items: (r.repair_order_items ?? []).map((i) => {
+                          const v = i.variants;
+                          const pName = v?.products?.name ?? "Vật tư";
+                          const uSymbol = v?.units?.symbol || v?.units?.name || "—";
+                          const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+                          const detail = attrVals.length > 0 ? attrVals.join(" · ") : uSymbol;
+                          return {
+                            id: i.id,
+                            label: `${pName} — ${detail}`,
+                            quantity: i.quantity,
+                          };
+                        }),
                       }}
                     />
                     <DevDocTools kind="repair" id={r.id} code={r.code} docName="phiếu sửa" canReopen={r.status === "returned"} isDev={isDev} compact />

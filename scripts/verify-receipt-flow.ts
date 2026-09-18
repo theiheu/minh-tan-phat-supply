@@ -21,11 +21,24 @@ async function main() {
 
   const { data: zone } = await rc.from("zones").select("id").limit(1).single();
   const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+  const { data: tuom } = await rc.from("sku_transaction_units").select("id, factor_to_base").eq("sku_id", variant!.id).eq("is_base", true).limit(1).single();
+  // Pre-test cleanup: cancel all previously-approved requisitions for test isolation
+  const { data: leftoverApproved } = await mc.from("requisitions")
+    .select("id").eq("status","approved");
+  for (const r of leftoverApproved ?? []) {
+    await mc.rpc("cancel_requisition", { p_id: r.id, p_by: mgr.data.user!.id });
+  }
+  const { data: leftoverPendingReqs } = await rc.from("requisitions")
+    .select("id").eq("status","pending");
+  for (const r of leftoverPendingReqs ?? []) {
+    await rc.rpc("cancel_requisition", { p_id: r.id, p_by: req.data.user!.id });
+  }
+
   const stockInitial = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
 
   // 1. requester tạo + gửi phiếu yêu cầu 10 (chờ duyệt - pending)
   const created = await rc.rpc("create_requisition", {
-    p_items: [{ variant_id: variant!.id, quantity: 10 }],
+    p_items: [{ sku_id: variant!.id, entered_quantity: 10, transaction_unit_id: tuom!.id }],
     p_zone_id: zone!.id,
     p_purpose: "Nhập để cấp phát",
     p_type: "new_supply",
@@ -42,7 +55,7 @@ async function main() {
   // Kết quả mong đợi: post_receipt KHÔNG tự động duyệt hay cấp phát phiếu pending này.
   const NOTE = "Nhập bổ sung cho khu vực cấp phát — kiểm thử ghi chú";
   const receipt1 = await mc.rpc("create_receipt", {
-    p_items: [{ variant_id: variant!.id, quantity: 20, unit_cost: 1000, batch_no: null, expiry_date: null }],
+    p_items: [{ sku_id: variant!.id, entered_quantity: 20, transaction_unit_id: tuom!.id, unit_cost: 1000, allocations: null }],
     p_supplier_id: null,
     p_notes: NOTE,
     p_by: mgr.data.user!.id,
@@ -65,7 +78,7 @@ async function main() {
   // 4. Nhập tiếp phiếu nhập 2 (quantity: 30). Lúc này phiếu yêu cầu ĐÃ DUYỆT (approved).
   // Kết quả mong đợi: post_receipt tự động cấp phát phiếu yêu cầu đã duyệt này!
   const receipt2 = await mc.rpc("create_receipt", {
-    p_items: [{ variant_id: variant!.id, quantity: 30, unit_cost: 1000, batch_no: null, expiry_date: null }],
+    p_items: [{ sku_id: variant!.id, entered_quantity: 30, transaction_unit_id: tuom!.id, unit_cost: 1000, allocations: null }],
     p_supplier_id: null,
     p_notes: NOTE,
     p_by: mgr.data.user!.id,
@@ -97,7 +110,7 @@ async function main() {
 
   // Regression: gọi create_receipt KHÔNG kèm p_notes (3 tham số)
   const noNotes = await mc.rpc("create_receipt", {
-    p_items: [{ variant_id: variant!.id, quantity: 1, unit_cost: null, batch_no: null, expiry_date: null }],
+    p_items: [{ sku_id: variant!.id, entered_quantity: 1, transaction_unit_id: tuom!.id, unit_cost: null, allocations: null }],
     p_supplier_id: null,
     p_by: mgr.data.user!.id,
   });

@@ -26,12 +26,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("issue_items")
-    .select("quantity, unit_price, variants(attributes, unit, products(name))")
+    .select("quantity, entered_quantity, unit_price, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol))")
     .eq("issue_id", id);
 
   const isSale = doc.destination_type === "customer";
-  const total = (items ?? []).reduce((n, i) => n + i.quantity * (i.unit_price ?? 0), 0);
-  const totalQty = (items ?? []).reduce((n, i) => n + i.quantity, 0);
+  const total = (items ?? []).reduce((n, i) => n + (i.entered_quantity ?? i.quantity) * (i.unit_price ?? 0), 0);
+  const totalQty = (items ?? []).reduce((n, i) => n + (i.entered_quantity ?? i.quantity), 0);
 
   const destFields: { label: string; value?: string | null }[] =
     doc.destination_type === "customer"
@@ -79,13 +79,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
               { label: "GHI CHÚ", flex: 1.2 },
             ]
       }
-      rows={(items ?? []).map((i) => [
-        i.variants?.products?.name ?? "—",
-        i.variants?.unit ?? "—",
-        i.quantity,
-        ...(isSale ? [formatVnd(i.unit_price ?? 0), formatVnd(i.quantity * (i.unit_price ?? 0))] : []),
-        "",
-      ])}
+      rows={(items ?? []).map((i) => {
+        const v = i.variants as { products?: { name?: string | null } | null; units?: { name?: string | null; symbol?: string | null } | null } | null;
+        const name = i.sku_name_snapshot || v?.products?.name || "—";
+        const unit = i.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—";
+        const qty = i.entered_quantity ?? i.quantity;
+        return [
+          name,
+          unit,
+          qty,
+          ...(isSale ? [formatVnd(i.unit_price ?? 0), formatVnd(qty * (i.unit_price ?? 0))] : []),
+          "",
+        ];
+      })}
       totals={isSale ? [{ left: "TỔNG CỘNG", right: formatVnd(total) }] : [{ left: "TỔNG CỘNG", right: `Tổng số lượng: ${totalQty}` }]}
       amountInWords={isSale ? `Thành tiền bằng chữ: ${formatAmountInWords(total)}` : undefined}
       signers={

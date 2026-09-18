@@ -11,6 +11,10 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("@/features/catalog/components/transaction-uom-select", () => ({
+  TransactionUomSelect: () => null,
+}));
+
 describe("QuickAddBottomSheet", () => {
   const mockVariant: VariantWithStock = {
     id: "var-123",
@@ -96,8 +100,8 @@ describe("QuickAddBottomSheet", () => {
     const items = useCartStore.getState().items;
     expect(items).toHaveLength(1);
     expect(items[0]).toEqual({
-      variantId: "var-123",
-      quantity: 3,
+      skuId: "var-123",
+      enteredQuantity: 3,
       name: "Máy khoan pin Bosch",
       label: "cái",
       unit: "cái",

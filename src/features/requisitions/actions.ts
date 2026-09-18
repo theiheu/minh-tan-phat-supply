@@ -31,19 +31,23 @@ export async function createRequisition(input: RequisitionInput) {
   const parsed = requisitionSchema.parse(input);
 
   const supabase = await createClient();
-  const items = parsed.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity }));
+  const items = parsed.items.map((i) => ({
+    sku_id: i.skuId,
+    transaction_unit_id: i.transactionUnitId ?? null,
+    entered_quantity: i.enteredQuantity
+  }));
 
-  // Kiểm tra tính hợp lệ của variant_id (tránh lỗi khóa ngoại do giỏ hàng cũ lưu trong localStorage trên máy người dùng)
-  const variantIds = items.map((i) => i.variant_id);
-  const { data: validVariants, error: checkError } = await supabase
+  // Kiểm tra tính hợp lệ của sku_id (tránh lỗi khóa ngoại do giỏ hàng cũ lưu trong localStorage trên máy người dùng)
+  const skuIds = items.map((i) => i.sku_id);
+  const { data: validSkus, error: checkError } = await supabase
     .from("variants")
     .select("id")
-    .in("id", variantIds);
+    .in("id", skuIds);
 
   if (checkError) throw new Error(checkError.message);
 
-  const validIds = new Set((validVariants ?? []).map((v) => v.id));
-  const invalid = variantIds.filter((id) => !validIds.has(id));
+  const validIds = new Set((validSkus ?? []).map((v) => v.id));
+  const invalid = skuIds.filter((id) => !validIds.has(id));
   if (invalid.length > 0) {
     throw new Error(
       "Một số vật tư trong giỏ hàng không còn tồn tại trong hệ thống (do giỏ hàng cũ trên máy). Vui lòng xóa giỏ hàng và chọn lại vật tư từ Kho."
@@ -60,7 +64,7 @@ export async function createRequisition(input: RequisitionInput) {
     p_type: "new_supply",
     p_linked_defect_id: null as unknown as string,
     p_requester_id: requesterId,
-    p_sub_zone_id: parsed.subZoneId ?? null,
+    p_sub_zone_id: (parsed.subZoneId ?? null) as unknown as string,
   });
 
   if (error) {
@@ -143,7 +147,7 @@ export async function fulfillRequisition(id: string) {
   // Kiểm tra tồn kho trước khi cấp phát để báo lỗi rõ ràng nếu thiếu hàng
   const { data: reqItems } = await supabase
     .from("requisition_items")
-    .select("variant_id, quantity, variants(attributes, unit, products(name))")
+    .select("variant_id, quantity, variants(products(name), units(name, symbol))")
     .eq("requisition_id", id);
 
   if (reqItems && reqItems.length > 0) {
@@ -294,12 +298,12 @@ export async function cancelRequisition(id: string) {
   revalidatePath(`/requisitions/${id}`);
 }
 
-export async function returnRequisitionItems(requisitionId: string, items: { variantId: string; quantity: number }[]) {
+export async function returnRequisitionItems(requisitionId: string, items: { skuId: string; transactionUnitId?: string; enteredQuantity: number }[]) {
   const profile = await requireProfile();
   const supabase = await createClient();
   const { error } = await supabase.rpc("return_requisition_items", {
     p_requisition_id: requisitionId,
-    p_items: items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
+    p_items: items.map((i) => ({ sku_id: i.skuId, transaction_unit_id: i.transactionUnitId ?? null, entered_quantity: i.enteredQuantity, quantity: i.enteredQuantity })),
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);

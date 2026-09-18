@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Calendar, ClipboardList, Milestone, Package, PackageX, User } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronRight, ClipboardList, Milestone, Package, PackageX, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,14 +46,14 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
 
   const { data: noteItems } = await supabase
     .from("exchange_note_items")
-    .select("id, variant_id, quantity, variants(attributes, unit, products(name))")
+    .select("id, variant_id, quantity, entered_quantity, transaction_unit_id, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("exchange_note_id", id);
 
   // Chứng cứ HONG liên kết (để manager đối chiếu trước khi duyệt/cấp).
   const { data: defectItems } = note?.defect?.id
     ? await supabase
         .from("defect_note_items")
-        .select("id, quantity, damage_detail, images, variants(attributes, unit, products(name))")
+        .select("id, quantity, entered_quantity, transaction_unit_id, damage_detail, images, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
         .eq("defect_note_id", note.defect.id)
     : { data: [] };
 
@@ -67,6 +67,16 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-4">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/defects" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <ArrowLeft className="size-3.5" />
+          Vật tư hỏng
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="font-mono text-foreground font-medium">{note.code}</span>
+      </nav>
+
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -153,18 +163,37 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
               )}
               {(noteItems ?? []).map((i) => {
                 const variants = i.variants as {
-                  attributes?: unknown;
-                  unit?: string | null;
+                  id?: string;
+                  sku_code?: string | null;
+                  units?: { name?: string | null; symbol?: string | null } | null;
                   products?: { name?: string | null } | null;
+                  sku_attribute_values?: Array<{
+                    text_value?: string | null;
+                    legacy_text_value?: string | null;
+                    numeric_value?: number | null;
+                    units?: { symbol?: string | null } | null;
+                  }> | null;
                 } | null;
+                const attrVals = (variants?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+                const detail = attrVals.length > 0 ? attrVals.join(" · ") : (variants?.units?.symbol || "—");
+                const unit = variants?.units?.symbol || variants?.units?.name || "—";
                 return (
                   <TableRow key={i.id}>
-                    <TableCell className="font-medium">{variants?.products?.name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {variantLabel(variants?.attributes, variants?.unit)}
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>{variants?.products?.name ?? "—"}</span>
+                        {variants?.sku_code && (
+                          <Badge variant="outline" className="font-mono text-[11px] px-1.5 py-0">
+                            {variants.sku_code}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{variants?.unit ?? "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums">{i.quantity}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {detail}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{unit}</TableCell>
+                    <TableCell className="text-right tabular-nums">{i.entered_quantity ?? i.quantity}</TableCell>
                   </TableRow>
                 );
               })}
@@ -208,15 +237,26 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
               )}
               {(defectItems ?? []).map((it) => {
                 const variants = it.variants as {
-                  attributes?: unknown;
-                  unit?: string | null;
+                  id?: string;
+                  sku_code?: string | null;
+                  units?: { name?: string | null; symbol?: string | null } | null;
                   products?: { name?: string | null } | null;
                 } | null;
+                const unit = variants?.units?.symbol || variants?.units?.name || "—";
                 return (
                   <TableRow key={it.id}>
-                    <TableCell className="font-medium">{variants?.products?.name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{variants?.unit ?? "—"}</TableCell>
-                    <TableCell className="tabular-nums">{it.quantity}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>{variants?.products?.name ?? "—"}</span>
+                        {variants?.sku_code && (
+                          <Badge variant="outline" className="font-mono text-[11px] px-1.5 py-0">
+                            {variants.sku_code}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{unit}</TableCell>
+                    <TableCell className="tabular-nums">{it.entered_quantity ?? it.quantity}</TableCell>
                     <TableCell className="max-w-[320px] text-muted-foreground">{it.damage_detail ?? "—"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">

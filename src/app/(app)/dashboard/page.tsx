@@ -100,24 +100,25 @@ async function loadDashboard() {
 
   const [
     products,
-    activeRequisitions,
+    pendingOrApprovedRequisitions,
     pendingReceipts,
     pendingExchanges,
     pendingLiquidations,
     pendingDefects,
+    issuedRequisitions,
     issuedExchanges,
     postedReceipts,
     activities,
   ] = await Promise.all([
     supabase.from("products").select("*", { count: "exact", head: true }).is("deleted_at", null),
 
-    // Các phiếu yêu cầu cần xử lý (chưa nhận: draft, pending, approved, issued) - tối đa 50 phiếu mới nhất
+    // Các phiếu yêu cầu cần xử lý (chưa cấp: draft, pending, approved) - tối đa 50 phiếu mới nhất
     supabase
       .from("requisitions")
       .select(
         "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
       )
-      .in("status", ["draft", "pending", "approved", "issued"])
+      .in("status", ["draft", "pending", "approved"])
       .order("created_at", { ascending: false })
       .limit(50),
 
@@ -157,6 +158,16 @@ async function loadDashboard() {
       .order("created_at", { ascending: false })
       .limit(50),
 
+    // Các phiếu yêu cầu đã cấp chưa nhận
+    supabase
+      .from("requisitions")
+      .select(
+        "id, code, purpose, status, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
+      )
+      .eq("status", "issued")
+      .order("created_at", { ascending: false })
+      .limit(50),
+
     // Các phiếu đổi mới đã cấp chưa nhận
     supabase
       .from("exchange_notes")
@@ -181,9 +192,9 @@ async function loadDashboard() {
     loadAuditActivities(supabase),
   ]);
 
-  const reqList = activeRequisitions.data ?? [];
-  const pendingReqList = reqList.filter((r) => r.status === "pending" || r.status === "draft");
-  const issuedReqList = reqList.filter((r) => r.status === "issued");
+  const processingReqList = (pendingOrApprovedRequisitions.data ?? []).filter((r) => r.status !== "issued");
+  const pendingReqList = processingReqList.filter((r) => r.status === "pending" || r.status === "draft");
+  const issuedReqList = issuedRequisitions.data ?? [];
 
   // Gom nhóm danh sách phiếu chờ duyệt
   const pendingItems: ModalDocumentItem[] = [
@@ -342,8 +353,8 @@ async function loadDashboard() {
 
   return {
     statsData,
-    recentRequisitions: reqList,
-    totalPendingRequisitionsCount: reqList.length,
+    recentRequisitions: processingReqList,
+    totalPendingRequisitionsCount: processingReqList.length,
     activities,
   };
 }

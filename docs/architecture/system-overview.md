@@ -1,6 +1,8 @@
 # 🏗️ KIẾN TRÚC TỔNG QUAN HỆ THỐNG — MINH TÂN PHÁT SUPPLY
 
-> Tài liệu kỹ thuật giải thích toàn diện về kiến trúc phần mềm, cấu trúc luồng dữ liệu, các lớp bảo mật, cơ chế ngoại tuyến PWA và công nghệ in ấn của hệ thống **Minh Tân Phát Supply**.
+> Tài liệu kỹ thuật giải thích toàn diện về kiến trúc phần mềm, cấu trúc luồng dữ liệu, các lớp bảo mật, AI Copilot, cơ chế ngoại tuyến PWA và công nghệ in ấn của hệ thống **Minh Tân Phát Supply**.
+>
+> **Trạng thái schema:** Đang trong giai đoạn tiền cutover — schema SKU mới (migrations 0072–0086) đã được additive vào database, nhưng runtime chính vẫn dùng Variant schema cũ cho đến khi cutover được thực hiện. Xem [CONTEXT.md](../../CONTEXT.md) để hiểu rõ các thuật ngữ.
 
 ---
 
@@ -61,7 +63,9 @@ flowchart TD
 | **Bảo mật & Auth** | **GoTrue + Row Level Security (RLS)** | Đăng nhập Username/Password, mã hóa phiên làm việc qua HTTP-only cookies (`@supabase/ssr`), phân quyền chi tiết 7 vai trò. |
 | **Ngoại tuyến & PWA** | **Serwist + IndexedDB** | Service worker cache tĩnh các trang web và bảng dữ liệu sản phẩm, cho phép thao tác ở góc chuồng mất sóng. |
 | **In ấn & Tem nhãn** | **@react-pdf/renderer + QRCode** | Xuất phiếu kho chuẩn A4/A5 và tem QR vector độ nét cao, nhúng font tiếng Việt UTF-8 `Be Vietnam Pro`. |
-| **Báo cáo & Xuất liệu** | **ExcelJS + XLSX** | Xuất dữ liệu kế toán, sổ cái kho, báo cáo tiêu hao xe cơ giới định dạng Excel có công thức và định dạng chuẩn. |
+| **Báo cáo & Xuất liệu** | **ExcelJS** | Xuất dữ liệu kế toán, sổ cái kho, báo cáo tiêu hao xe cơ giới định dạng Excel có công thức và định dạng chuẩn. |
+| **AI Copilot** | **ai SDK + @ai-sdk/openai** | Trợ lý AI RAG nội bộ — chat với dữ liệu vận hành trại, quản lý knowledge base. |
+| **Testing** | **Vitest + Testing Library** | 349+ automated tests, 61 test suites. |
 
 ---
 
@@ -103,6 +107,11 @@ src/
 │   ├── fuel/                         # Actions quét QR camera, Tính định mức L/100km & L/h
 │   ├── stocktake/                    # Actions mở phiên kiểm đếm, Cân bằng tồn
 │   ├── reports/                      # Truy vấn tài chính, XNT, Chi phí chuồng, Thẻ kho
+│   ├── assemblies/                   # Lắp ráp / tháo ráp bộ vật tư
+│   ├── catalog/                      # SKU Catalog domain layer (kiến trúc SKU mới)
+│   ├── inventory-posting/            # Posting Kernel append-only (kiến trúc mới)
+│   ├── ai-admin/                     # AI Copilot management & RAG
+│   ├── notifications/                # Email notification helpers
 │   └── pdf/                          # Vector PDF Layouts, Brand Header, QR Print Studio
 │
 ├── lib/                              # Thư viện dùng chung & Helpers
@@ -161,3 +170,15 @@ Hệ thống nhúng trực tiếp bộ thư viện in ấn vector `@react-pdf/re
 * **Độ sắc nét tuyệt đối:** In chuẩn vector không bị vỡ hạt như chụp ảnh màn hình.
 * **Mẫu in chuẩn nhận diện thương hiệu:** Mọi phiếu in (Phiếu nhập, Phiếu xuất, Phiếu cấp dầu, Phiếu yêu cầu) đều mang logo Trang trại Lê Văn Dương, địa chỉ, số điện thoại và 4 ô ký tên trách nhiệm (Người lập, Thủ kho, Người nhận, Kế toán).
 * **Mã QR tra cứu tức thời:** Trên mỗi phiếu in đều có mã QR chứa URL tra cứu trực tiếp lịch sử của phiếu trên phần mềm.
+
+---
+
+## 7. AI COPILOT — TRỢ LÝ AI NỘI BỘ
+
+AI Copilot là một floating chat bubble tích hợp ngay trong dashboard ứng dụng:
+
+- **RAG (Retrieval-Augmented Generation):** Câu hỏi từ người dùng được tìm kiếm trong knowledge base nội bộ (tài liệu vận hành, quy trình nghiệp vụ) trước khi trả lời bằng LLM.
+- **AI Admin Panel (`/admin/ai-copilot`):** Upload tài liệu nội bộ (PDF, DOCX), quản lý documents, xem lịch sử conversations.
+- **API endpoints:** `/api/ai/chat`, `/api/ai/quick-prompts`, `/api/ai/admin/`
+- **LLM backend:** `@ai-sdk/openai` + `ai` SDK. Model và key cấu hình qua env vars.
+- **Sync knowledge:** `pnpm sync:knowledge` để đồng bộ tài liệu mới vào knowledge base.

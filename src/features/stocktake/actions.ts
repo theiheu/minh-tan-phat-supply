@@ -63,19 +63,41 @@ export async function createStocktake(locationId: string, name: string) {
 
 export async function postStocktake(
   sessionId: string,
-  items: { itemId: string; actualQty: number; notes: string }[],
+  items: {
+    itemId: string;
+    actualQty: number;
+    notes: string;
+    transactionUnitId?: string | null;
+    enteredQuantity?: number | null;
+    conversionFactorSnapshot?: number | null;
+  }[],
 ) {
   const profile = await requireProfile();
   const supabase = await createClient();
   // Chỉ các dòng ĐÃ KIỂM được gửi lên (client lọc sẵn); RPC post_stocktake cũng
   // chỉ xử lý checked = true nên dòng chưa kiểm không bao giờ đụng tồn kho.
   for (const it of items) {
+    const patch: {
+      actual_qty: number;
+      notes: string;
+      transaction_unit_id?: string | null;
+      entered_quantity?: number | null;
+      conversion_factor_snapshot?: number | null;
+    } = {
+      actual_qty: it.actualQty,
+      notes: it.notes,
+    };
+    if (it.transactionUnitId !== undefined) patch.transaction_unit_id = it.transactionUnitId;
+    if (it.enteredQuantity !== undefined) patch.entered_quantity = it.enteredQuantity;
+    if (it.conversionFactorSnapshot !== undefined) patch.conversion_factor_snapshot = it.conversionFactorSnapshot;
+
     const { error } = await supabase
       .from("stocktake_items")
-      .update({ actual_qty: it.actualQty, notes: it.notes })
+      .update(patch)
       .eq("id", it.itemId);
     if (error) throw new Error(error.message);
   }
+
   const { error } = await supabase.rpc("post_stocktake", { p_session_id: sessionId, p_by: profile.id });
   if (error) throw new Error(error.message);
 
@@ -106,7 +128,6 @@ export async function postStocktake(
 export async function toggleStocktakeItemChecked(itemId: string, checked: boolean) {
   await requireProfile();
   const supabase = await createClient();
-  // Chỉ dòng thuộc phiếu draft mới được đánh dấu (posted đã đóng, chỉ xem).
   const { data: item } = await supabase.from("stocktake_items").select("session_id").eq("id", itemId).single();
   if (!item) throw new Error("Không tìm thấy dòng kiểm kê");
   const { data: session } = await supabase
@@ -120,9 +141,6 @@ export async function toggleStocktakeItemChecked(itemId: string, checked: boolea
   revalidatePath("/stocktake");
 }
 
-// ---- Công cụ DEV (chỉ superuser) — RPC phía DB tự kiểm is_superuser() ----
-
-/** Mở lại phiếu đã chốt về nháp (đảo bút toán) để dev sửa số liệu rồi chốt lại. */
 export async function reopenStocktake(sessionId: string) {
   const profile = await requireProfile();
   const supabase = await createClient();
@@ -132,7 +150,6 @@ export async function reopenStocktake(sessionId: string) {
   revalidatePath("/products");
 }
 
-/** Xoá phiếu kiểm kê (đã chốt sẽ đảo bút toán trước khi xoá). */
 export async function deleteStocktake(sessionId: string) {
   const profile = await requireProfile();
   const supabase = await createClient();

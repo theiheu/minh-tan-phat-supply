@@ -9,7 +9,8 @@ import { returnRequisitionItems } from "../actions";
 
 interface Item {
   id: string;
-  variantId: string;
+  skuId: string;
+  transactionUnitId?: string;
   label: string;
   quantity: number;
   /** Số lượng đã trả lại kho trước đó (để cap ô nhập theo phần còn lại). */
@@ -35,16 +36,18 @@ export function ReturnItems({
     // không tự chặn — gõ 99 khi còn 3 sẽ bị RPC reject cả batch.
     const returns = items
       .map((i) => ({
-        variantId: i.variantId,
+        skuId: i.skuId,
+        transactionUnitId: i.transactionUnitId,
         remaining: Math.max(0, i.quantity - i.returned),
         typed: Number(qty[i.id]),
       }))
       .filter((r) => r.remaining > 0)
-      .map(({ variantId, remaining, typed }) => ({
-        variantId,
-        quantity: Math.min(typed, remaining),
+      .map(({ skuId, transactionUnitId, remaining, typed }) => ({
+        skuId,
+        transactionUnitId,
+        enteredQuantity: Math.min(typed, remaining),
       }))
-      .filter((r) => r.quantity > 0);
+      .filter((r) => r.enteredQuantity > 0);
     if (returns.length === 0) return toast.error("Nhập số lượng cần trả");
     startTransition(async () => {
       try {

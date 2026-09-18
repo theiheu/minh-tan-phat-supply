@@ -33,7 +33,7 @@ export function AppShell({ profile, children }: { profile: Profile; children: Re
       <Sidebar profile={profile} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 p-4 pb-24 lg:pb-6">{children}</main>
+        <main className="flex-1 p-2.5 sm:p-4 pb-24 lg:pb-6">{children}</main>
       </div>
       <MobileNav profile={profile} />
       <CartDrawer />

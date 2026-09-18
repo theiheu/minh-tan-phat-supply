@@ -57,7 +57,7 @@ export function SubnavTabs({
   return (
     <div
       className={cn(
-        "overflow-x-auto border-b pb-0.5 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0",
+        "overflow-x-auto border-b pb-0.5 scrollbar-none -mx-2.5 px-2.5 sm:-mx-4 sm:px-4",
         className,
       )}
     >

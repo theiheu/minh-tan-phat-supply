@@ -9,7 +9,7 @@ describe("useOfflineQueueStore", () => {
 
   it("enqueues a new offline requisition item", () => {
     const id = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
+      items: [{ skuId: "v1", enteredQuantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
       zoneId: "z1",
       purpose: "Thay bóng hỏng chuồng 2",
       requesterId: "u1",
@@ -26,7 +26,7 @@ describe("useOfflineQueueStore", () => {
 
   it("supports setting submitAfterCreate to false", () => {
     const id = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
+      items: [{ skuId: "v1", enteredQuantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
       zoneId: "z1",
       purpose: "Lưu nháp",
       submitAfterCreate: false,
@@ -39,13 +39,13 @@ describe("useOfflineQueueStore", () => {
 
   it("dequeues an item by clientTempId", () => {
     const id1 = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 2, name: "Món 1", label: "L1", unit: "cái" }],
+      items: [{ skuId: "v1", enteredQuantity: 2, name: "Món 1", label: "L1", unit: "cái" }],
       zoneId: "z1",
       purpose: "P1",
       requesterId: "u1",
     });
     const id2 = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v2", quantity: 3, name: "Món 2", label: "L2", unit: "cái" }],
+      items: [{ skuId: "v2", enteredQuantity: 3, name: "Món 2", label: "L2", unit: "cái" }],
       zoneId: "z1",
       purpose: "P2",
       requesterId: "u1",
@@ -60,7 +60,7 @@ describe("useOfflineQueueStore", () => {
 
   it("updates status and error of a queued item", () => {
     const id = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 1, name: "Món 1", label: "L1", unit: "cái" }],
+      items: [{ skuId: "v1", enteredQuantity: 1, name: "Món 1", label: "L1", unit: "cái" }],
       zoneId: "z1",
       purpose: "P1",
       requesterId: "u1",
@@ -77,12 +77,12 @@ describe("useOfflineQueueStore", () => {
 
   it("clears failed items and clears all items", () => {
     const id1 = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 1, name: "Món 1", label: "L1", unit: "cái" }],
+      items: [{ skuId: "v1", enteredQuantity: 1, name: "Món 1", label: "L1", unit: "cái" }],
       zoneId: "z1",
       purpose: "P1",
     });
     const id2 = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v2", quantity: 2, name: "Món 2", label: "L2", unit: "cái" }],
+      items: [{ skuId: "v2", enteredQuantity: 2, name: "Món 2", label: "L2", unit: "cái" }],
       zoneId: "z2",
       purpose: "P2",
     });

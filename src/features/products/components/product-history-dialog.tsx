@@ -185,7 +185,7 @@ export function ProductHistoryDialog({
   const variantInfo = useMemo(() => {
     const map = new Map<string, { label: string; unit: string | null }>();
     for (const v of variants) {
-      map.set(v.id, { label: variantLabel(v.attributes, v.unit), unit: v.unit });
+      map.set(v.id, { label: variantLabel(v.attributes, v.unit), unit: v.unit ?? null });
     }
     return map;
   }, [variants]);

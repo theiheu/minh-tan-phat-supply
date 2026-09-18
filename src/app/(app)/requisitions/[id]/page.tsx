@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
+  ArrowLeft,
   Calendar,
+  ChevronRight,
   ClipboardList,
   MapPin,
   Milestone,
@@ -157,7 +159,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   const { data: items } = await supabase
     .from("requisition_items")
     .select(
-      "id, variant_id, quantity, variants(attributes, unit, price, images, products(name, images, description))",
+      "id, variant_id, quantity, entered_quantity, transaction_unit_id, uom_name_snapshot, conversion_factor_snapshot, transaction_units:sku_transaction_units(display_name, factor_to_base), variants(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))",
     )
     .eq("requisition_id", id);
 
@@ -178,7 +180,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   const { data: returnEvents } = await supabase
     .from("requisition_returns")
     .select(
-      "id, returned_by, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(attributes, unit, products(name)))",
+      "id, returned_by, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
     )
     .eq("requisition_id", id)
     .order("created_at", { ascending: false });
@@ -191,21 +193,43 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     }
   }
 
-  const materialItems: MaterialItemView[] = (items ?? []).map((i) => ({
-    id: i.id,
-    variantId: i.variant_id,
-    productName: (i.variants as { products?: { name?: string | null } | null } | null)?.products?.name ?? null,
-    description: (i.variants as { products?: { description?: string | null } | null } | null)?.products?.description ?? null,
-    attributes: (i.variants as { attributes?: unknown } | null)?.attributes ?? null,
-    unit: (i.variants as { unit?: string | null } | null)?.unit ?? null,
-    quantity: i.quantity,
-    returned: returnedByVariant.get(i.variant_id) ?? 0,
-    images: [
-      ...((i.variants as { images?: string[] | null } | null)?.images ?? []),
-      ...((i.variants as { products?: { images?: string[] | null } | null } | null)?.products?.images ?? []),
-    ],
-    stock: i.variant_id ? (stockByVariant.get(i.variant_id) ?? null) : null,
-  }));
+  const materialItems: MaterialItemView[] = (items ?? []).map((i) => {
+    const v = i.variants as {
+      products?: { name?: string | null; description?: string | null; images?: string[] | null } | null;
+      units?: { name?: string | null; symbol?: string | null } | null;
+      images?: string[] | null;
+      sku_attribute_values?: Array<{
+        text_value?: string | null;
+        legacy_text_value?: string | null;
+        numeric_value?: number | null;
+        units?: { symbol?: string | null } | null;
+      }> | null;
+    } | null;
+    const tu = (i.transaction_units as { display_name?: string | null; factor_to_base?: number | null } | null);
+    const txUnitName = i.uom_name_snapshot || tu?.display_name || null;
+    const factorToBase = i.conversion_factor_snapshot || tu?.factor_to_base || null;
+    const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+    const attrObj: Record<string, string> = {};
+    if (attrVals.length > 0) attrObj["Quy cách"] = attrVals.join(" · ");
+    return {
+      id: i.id,
+      variantId: i.variant_id,
+      productName: v?.products?.name ?? null,
+      description: v?.products?.description ?? null,
+      attributes: attrVals.length > 0 ? attrObj : null,
+      unit: v?.units?.symbol || v?.units?.name || null,
+      quantity: i.quantity,
+      enteredQuantity: i.entered_quantity ?? null,
+      transactionUnitName: txUnitName,
+      factorToBase: factorToBase ? Number(factorToBase) : null,
+      returned: returnedByVariant.get(i.variant_id) ?? 0,
+      images: [
+        ...(v?.images ?? []),
+        ...(v?.products?.images ?? []),
+      ],
+      stock: i.variant_id ? (stockByVariant.get(i.variant_id) ?? null) : null,
+    };
+  });
 
   // ---- Chứng cứ vật tư hỏng (phiếu Đổi mới) ----
   let defectEvidence: {
@@ -224,18 +248,18 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
       supabase
         .from("defect_note_items")
-        .select("id, quantity, damage_detail, images, variants(attributes, unit, products(name))")
+        .select("id, quantity, damage_detail, images, variants(products(name), units(name, symbol))")
         .eq("defect_note_id", req.linked_defect_id),
     ]);
     if (dnote) {
       defectEvidence = {
         code: dnote.code,
         items: (ditems ?? []).map((it) => {
-          const v = it.variants as { unit?: string | null; products?: { name: string | null } | null } | null;
+          const v = it.variants as { units?: { symbol?: string | null; name?: string | null } | null; products?: { name: string | null } | null } | null;
           return {
             id: it.id,
             productName: v?.products?.name ?? null,
-            unit: v?.unit ?? null,
+            unit: v?.units?.symbol || v?.units?.name || null,
             quantity: it.quantity,
             damageDetail: it.damage_detail,
             images: it.images ?? [],
@@ -332,6 +356,16 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
 
   return (
     <div className="space-y-4">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/requisitions" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <ArrowLeft className="size-3.5" />
+          Phiếu yêu cầu
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="font-mono text-foreground font-medium">{req.code}</span>
+      </nav>
+
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -431,13 +465,28 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               </div>
               <ReturnItems
                 requisitionId={req.id}
-                items={(items ?? []).map((i) => ({
-                  id: i.id,
-                  variantId: i.variant_id,
-                  label: `${i.variants?.products?.name ?? "Vật tư"} — ${variantLabel(i.variants?.attributes, i.variants?.unit)}`,
-                  quantity: i.quantity,
-                  returned: returnedByVariant.get(i.variant_id ?? "") ?? 0,
-                }))}
+                items={(items ?? []).map((i) => {
+                  const v = i.variants as {
+                    products?: { name?: string | null } | null;
+                    units?: { name?: string | null; symbol?: string | null } | null;
+                    sku_attribute_values?: Array<{
+                      text_value?: string | null;
+                      legacy_text_value?: string | null;
+                      numeric_value?: number | null;
+                      units?: { symbol?: string | null } | null;
+                    }> | null;
+                  } | null;
+                  const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+                  return {
+                    id: i.id,
+                    skuId: i.variant_id,
+                    transactionUnitId: (i as { transaction_unit_id?: string | null }).transaction_unit_id ?? undefined,
+                    label: `${v?.products?.name ?? "Vật tư"} — ${detail}`,
+                    quantity: i.quantity,
+                    returned: returnedByVariant.get(i.variant_id ?? "") ?? 0,
+                  };
+                })}
               />
             </div>
           )}

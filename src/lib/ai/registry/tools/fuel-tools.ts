@@ -18,21 +18,27 @@ export const fuelTools = {
   get_fuel_dispense_report: tool({
     description: "Tra cứu lịch sử và báo cáo cấp phát nhiên liệu (Xăng, Dầu Diesel) theo khoảng ngày hoặc phương tiện.",
     parameters: z.object({
-      startDate: z.string().optional().default("").describe("Ngày bắt đầu định dạng YYYY-MM-DD"),
-      endDate: z.string().optional().default("").describe("Ngày kết thúc định dạng YYYY-MM-DD"),
+      startDate: z.string().optional().describe("Ngày bắt đầu định dạng YYYY-MM-DD"),
+      endDate: z.string().optional().describe("Ngày kết thúc định dạng YYYY-MM-DD"),
+      start_date: z.string().optional().describe("Ngày bắt đầu thay thế"),
+      end_date: z.string().optional().describe("Ngày kết thúc thay thế"),
       limit: z.number().optional().default(10),
-    }),
-    execute: async ({ startDate = "", endDate = "", limit = 10 }: { startDate?: string; endDate?: string; limit?: number }) => {
+    }).passthrough(),
+    execute: async (rawArgs: { startDate?: string; endDate?: string; start_date?: string; end_date?: string; limit?: number }) => {
       try {
+        const startDate = (rawArgs.startDate || rawArgs.start_date || "").trim();
+        const endDate = (rawArgs.endDate || rawArgs.end_date || "").trim();
+        const limit = typeof rawArgs.limit === "number" ? rawArgs.limit : 10;
+
         const supabase = createAdminClient();
         const rpcClient = supabase as unknown as {
           rpc: (fn: string, params: Record<string, unknown>) => Promise<{ data: FuelSummaryRow[] | null; error: Error | null }>;
         };
 
         const { data, error } = await rpcClient.rpc("ai_get_fuel_summary", {
-          p_start_date: startDate.trim() || null,
-          p_end_date: endDate.trim() || null,
-          p_limit: limit || 10,
+          p_start_date: startDate || null,
+          p_end_date: endDate || null,
+          p_limit: limit,
         });
 
         if (error) {
@@ -63,7 +69,7 @@ export const fuelTools = {
 
   get_vehicles_list: tool({
     description: "Tra cứu danh sách xe, máy phát điện, máy xúc và định mức tiêu hao nhiên liệu hiện tại.",
-    parameters: z.object({}),
+    parameters: z.object({}).passthrough(),
     execute: async () => {
       try {
         const supabase = createAdminClient();

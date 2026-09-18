@@ -26,9 +26,9 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("Tool Schemas", () => {
-  it("validates borrowing input correctly", () => {
+  it("validates borrowing input correctly with skuId", () => {
     const valid = toolBorrowingSchema.safeParse({
-      items: [{ variantId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
+      items: [{ skuId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
       purpose: "Hàn máng ăn",
       expectedReturnDate: "2026-09-10",
     });
@@ -37,7 +37,7 @@ describe("Tool Schemas", () => {
 
   it("rejects borrowing with empty purpose or zero quantity", () => {
     const invalid = toolBorrowingSchema.safeParse({
-      items: [{ variantId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 0 }],
+      items: [{ skuId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 0 }],
       purpose: "",
     });
     expect(invalid.success).toBe(false);
@@ -51,10 +51,10 @@ describe("Tool Schemas", () => {
     expect(invalid.success).toBe(false);
   });
 
-  it("validates tool return input correctly", () => {
+  it("validates tool return input correctly with skuId", () => {
     const valid = toolReturnSchema.safeParse({
       borrowingId: "47814b7e-9762-42da-91ef-07755efcfa77",
-      items: [{ variantId: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 1 }],
+      items: [{ skuId: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 1 }],
       notes: "Trả máy hàn nguyên vẹn",
     });
     expect(valid.success).toBe(true);
@@ -87,7 +87,7 @@ describe("Tool Server Actions", () => {
   describe("createToolBorrowing", () => {
     it("creates a tool borrowing record via RPC and revalidates paths", async () => {
       const input = {
-        items: [{ variantId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
+        items: [{ skuId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
         zoneId: "55814b7e-9762-42da-91ef-07755efcfa88",
         purpose: "Hàn máng ăn chuồng 2",
         expectedReturnDate: "2026-09-12",
@@ -97,7 +97,11 @@ describe("Tool Server Actions", () => {
 
       expect(mockRequireProfile).toHaveBeenCalled();
       expect(mockRpc).toHaveBeenCalledWith("create_tool_borrowing", {
-        p_items: [{ variant_id: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
+        p_items: [{
+          sku_id: "47814b7e-9762-42da-91ef-07755efcfa77",
+          variant_id: "47814b7e-9762-42da-91ef-07755efcfa77",
+          quantity: 2,
+        }],
         p_zone_id: "55814b7e-9762-42da-91ef-07755efcfa88",
         p_purpose: "Hàn máng ăn chuồng 2",
         p_expected_return_date: "2026-09-12",
@@ -114,7 +118,7 @@ describe("Tool Server Actions", () => {
 
       await expect(
         createToolBorrowing({
-          items: [{ variantId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
+          items: [{ skuId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
           purpose: "Hàn khung quạt",
         }),
       ).rejects.toThrow("Không đủ tồn kho");
@@ -125,7 +129,7 @@ describe("Tool Server Actions", () => {
     it("calls return_tool_borrowing RPC with manager auth and revalidates paths", async () => {
       const input = {
         borrowingId: "47814b7e-9762-42da-91ef-07755efcfa77",
-        items: [{ variantId: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 1 }],
+        items: [{ skuId: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 1 }],
         notes: "Dụng cụ tốt",
       };
 
@@ -134,7 +138,11 @@ describe("Tool Server Actions", () => {
       expect(mockRequireManager).toHaveBeenCalled();
       expect(mockRpc).toHaveBeenCalledWith("return_tool_borrowing", {
         p_borrowing_id: "47814b7e-9762-42da-91ef-07755efcfa77",
-        p_items: [{ variant_id: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 1 }],
+        p_items: [{
+          sku_id: "55814b7e-9762-42da-91ef-07755efcfa88",
+          variant_id: "55814b7e-9762-42da-91ef-07755efcfa88",
+          quantity: 1,
+        }],
         p_notes: "Dụng cụ tốt",
         p_by: "manager-456",
       });
@@ -148,7 +156,7 @@ describe("Tool Server Actions", () => {
       await expect(
         returnToolBorrowing({
           borrowingId: "47814b7e-9762-42da-91ef-07755efcfa77",
-          items: [{ variantId: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 5 }],
+          items: [{ skuId: "55814b7e-9762-42da-91ef-07755efcfa88", quantity: 5 }],
         }),
       ).rejects.toThrow("Số lượng trả vượt quá số mượn");
     });

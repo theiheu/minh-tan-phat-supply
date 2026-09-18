@@ -1,5 +1,47 @@
 # Kế hoạch phân công agent khắc phục hậu kiểm catalog cutover
 
+## 0. Approved consolidation amendment — 2026-09-18
+
+The repository owner approved a stronger cleanup direction after the original remediation plan was written:
+
+- Both local and current production databases contain disposable fake data; no business rows need preservation.
+- Preserve all currently used business workflows, but not legacy schema names, compatibility aliases, obsolete UI owners, generated evidence, or historical fake data.
+- Replace the incremental 0001–0087 runtime chain with one clean canonical baseline migration.
+- Canonical persistence names are `skus` and `sku_id`; `variants`, `variant_id`, `variant_stock`, and Variant-domain APIs are retired rather than retained as compatibility owners.
+- Local database reset is authorized as part of implementation.
+- Production reset is in scope conceptually but still requires a separate final confirmation naming the exact environment/container/project immediately before execution.
+- Fake database dumps, generated cutover evidence, obsolete scripts/assets/docs, and unreachable code may be deleted after reference checks.
+- pnpm is the only package-manager owner for install, CI, build, and deploy.
+
+### Revised execution path
+
+1. Inventory the effective live local schema and all runtime consumers.
+2. Generate and review one clean baseline schema using canonical SKU naming and all active workflows/RLS/functions.
+3. Replace the historical migration chain and seed against an empty database.
+4. Reset local Supabase and regenerate TypeScript database types.
+5. Migrate application/runtime identifiers and queries from Variant to SKU; delete compatibility owners.
+6. Fix the confirmed ledger, UOM/lot, return-idempotency, virtual-kit, auto-fulfill, AI, dependency, CI, and deployment defects.
+7. Delete fake backups/evidence and dead files only after bounded reference checks.
+8. Run fresh database reset, SQL/RLS/kernel verification, lint, typecheck, tests, build, and production dependency audit.
+9. Commit coherent slices on `chore/repository-consolidation-2026-09-18`.
+10. Ask for exact scoped production-reset confirmation; never infer it from plan approval.
+
+### Revised migration authority
+
+The earlier rule “do not edit historical migrations” is superseded for this consolidation branch because every database is disposable and the owner selected a squash. The runtime migration directory must end with one reviewed baseline migration plus future migrations only. Historical migration intent remains recoverable from Git history; it must not remain as an active second schema authority.
+
+### Revised Definition of Done
+
+- A clean database can be created from the baseline and seed without replaying 87 historical migrations.
+- The physical table is `skus`; active document and stock foreign keys use `sku_id`.
+- No active source, SQL, generated type, route parameter, or user-facing domain label depends on legacy Variant semantics, except an explicitly documented external-input parser if evidence requires one.
+- Stock Ledger is append-only and all inventory changes use the canonical posting/reversal owner.
+- All active workflows pass focused and full verification.
+- Repository contains no fake DB dumps, generated cutover logs, obsolete Next/Vercel assets, dead presentation scripts, or superseded root documentation.
+- Repository Git status is clean after scoped commits; production reset remains separately authorized.
+
+---
+
 **Ngày lập:** 2026-09-18  
 **Trạng thái:** Sẵn sàng phân công trên source/local; mọi thao tác production và persistent-state vẫn bị khóa bởi approval gate.  
 **Mục tiêu:** Chuyển các phát hiện của audit repository thành các work package độc lập, có owner, phạm vi file, thứ tự phụ thuộc, cách sửa cụ thể, kiểm thử bắt buộc và điều kiện nghiệm thu rõ ràng để nhiều agent có thể thực thi mà không giẫm chân nhau.

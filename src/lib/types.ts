@@ -64,8 +64,23 @@ export function canDeleteDoc(role: string | null | undefined): boolean {
 }
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-export type Product = Database["public"]["Tables"]["products"]["Row"];
-export type Variant = Database["public"]["Tables"]["variants"]["Row"];
+type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type VariantRow = Database["public"]["Tables"]["variants"]["Row"];
+
+/** Runtime projection for product catalog view. */
+export type Product = Omit<ProductRow, "catalog_status" | "internal_notes" | "search_keywords"> & {
+  options?: string[];
+  categoryName?: string | null;
+};
+/** Runtime projection for SKU/variant with computed display fields. */
+export type Variant = Omit<
+  VariantRow,
+  "allow_fraction" | "base_unit_id" | "inventory_policy" | "sku_code" | "sku_status" | "tracking_policy"
+> & {
+  unit?: string | null;
+  attributes?: Record<string, string> | null;
+  is_trackable_lot?: boolean;
+};
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type Customer = Database["public"]["Tables"]["customers"]["Row"];
 export type Zone = Database["public"]["Tables"]["zones"]["Row"];

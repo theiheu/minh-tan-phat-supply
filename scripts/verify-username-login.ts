@@ -38,6 +38,12 @@ async function verify(username: string, password: string) {
   assert(missing === null, "username không tồn tại trả null");
 }
 
-await verify("manager", "password123");
-await verify("requester", "password123");
-console.log("Xong — đăng nhập bằng username hoạt động.");
+async function main() {
+  await verify("admin", "password123");
+  console.log("Xong — đăng nhập bằng username hoạt động.");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

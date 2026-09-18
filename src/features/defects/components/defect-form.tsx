@@ -8,27 +8,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
-import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-input";
+import { SkuSelector } from "@/features/catalog/components/sku-selector";
+import { TransactionUomSelect } from "@/features/catalog/components/transaction-uom-select";
 import { recordDefect, requestRepair } from "../actions";
 import { createExchange } from "@/features/exchanges/actions";
 import { uploadDefectImage } from "../upload";
 import { ZoomableImage } from "@/components/image-lightbox";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 type Intent = "record" | "exchange" | "repair";
 
-interface ItemDraft {
-  variantId: string;
-  quantity: string;
+export interface ItemDraft {
+  skuId: string;
+  transactionUnitId: string;
+  enteredQuantity: string;
   damageDetail: string;
   note: string;
   images: string[];
   uploading: boolean;
+  trackingPolicy?: string;
 }
 
 const EMPTY: ItemDraft = {
-  variantId: "",
-  quantity: "1",
+  skuId: "",
+  transactionUnitId: "",
+  enteredQuantity: "1",
   damageDetail: "",
   note: "",
   images: [],
@@ -43,13 +47,13 @@ const INTENTS: { key: Intent; label: string; hint: string }[] = [
 
 export function DefectForm({
   sourceLocationId,
-  variants,
+  variants: _variants,
   onSuccess,
   onCancel,
 }: {
   /** Kho nguồn mặc định — server đã resolve = Kho chính. */
   sourceLocationId: string;
-  variants: { id: string; name: string; detail: string }[];
+  variants?: unknown;
   onSuccess?: (id: string) => void;
   onCancel?: () => void;
 }) {
@@ -57,14 +61,6 @@ export function DefectForm({
   const [intent, setIntent] = useState<Intent>("record");
   const [items, setItems] = useState<ItemDraft[]>([EMPTY]);
   const [pending, startTransition] = useTransition();
-
-  // Mỗi biến thể: tên chính = tên vật tư, dòng phụ = quy cách · đơn vị.
-  const variantOptions: ComboboxInputOption[] = variants.map((v) => ({
-    value: v.id,
-    label: v.name,
-    detail: v.detail,
-    text: v.detail ? `${v.name} — ${v.detail}` : v.name,
-  }));
 
   function setItem(i: number, patch: Partial<ItemDraft>) {
     setItems((arr) => arr.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
@@ -93,18 +89,20 @@ export function DefectForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const valid = items.filter(
-      (i) => i.variantId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.quantity) > 0,
+      (i) => i.skuId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.enteredQuantity) > 0,
     );
     if (valid.length === 0)
-      return toast.error("Nhập ít nhất 1 dòng đầy đủ: tên, số lượng, mô tả và 1 ảnh");
+      return toast.error("Nhập ít nhất 1 dòng đầy đủ: vật tư, số lượng, mô tả và 1 ảnh");
 
     startTransition(async () => {
       try {
         const noteId = await recordDefect({
           sourceLocationId,
           items: valid.map((i) => ({
-            variantId: i.variantId,
-            quantity: Number(i.quantity),
+            skuId: i.skuId,
+            transactionUnitId: i.transactionUnitId || undefined,
+            enteredQuantity: Number(i.enteredQuantity),
+            quantity: Number(i.enteredQuantity),
             damageDetail: i.damageDetail.trim(),
             note: i.note.trim(),
             images: i.images,
@@ -196,12 +194,12 @@ export function DefectForm({
         <CardHeader className="p-4 pb-3 sm:p-5 sm:pb-3 border-b border-border/60">
           <CardTitle className="text-base font-semibold">Chi tiết các dòng hỏng</CardTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Mỗi dòng: chọn tên, ghi số lượng + mô tả, thêm ít nhất 1 ảnh.
+            Mỗi dòng: chọn vật tư, quy cách/đơn vị, số lượng + mô tả, thêm ít nhất 1 ảnh.
           </p>
         </CardHeader>
         <CardContent className="space-y-4 px-4 pb-4 sm:px-5 sm:pb-5">
           {items.map((it, i) => {
-            const done = !!it.variantId && it.damageDetail.trim().length > 0 && it.images.length >= 1;
+            const done = !!it.skuId && it.damageDetail.trim().length > 0 && it.images.length >= 1;
             return (
               <div
                 key={i}
@@ -228,17 +226,30 @@ export function DefectForm({
                   </Button>
                 </div>
 
-                {/* Chọn tên */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Tên vật tư</Label>
-                  <ComboboxInput
-                    value={it.variantId}
-                    onChange={(v) => setItem(i, { variantId: v })}
-                    options={variantOptions}
-                    placeholder="Gõ tên để tìm…"
-                    emptyText="Không tìm thấy."
-                    inputClassName={fieldClass}
-                  />
+                {/* Chọn vật tư (SKU) & Đơn vị */}
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-12">
+                  <div className="space-y-1 sm:col-span-8">
+                    <Label className="text-xs font-semibold">Vật tư (SKU)</Label>
+                    <SkuSelector
+                      value={it.skuId}
+                      onSelect={(sku) => {
+                        if (sku.inventoryPolicy === "virtual_kit") {
+                          toast.warning("Gói ảo không có tồn kho vật lý. Vui lòng chọn linh kiện thành phần bị hỏng.");
+                          return;
+                        }
+                        setItem(i, { skuId: sku.skuId, trackingPolicy: sku.trackingPolicy });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 sm:col-span-4">
+                    <Label className="text-xs font-semibold">Đơn vị tính</Label>
+                    <TransactionUomSelect
+                      skuId={it.skuId}
+                      value={it.transactionUnitId}
+                      onValueChange={(v) => setItem(i, { transactionUnitId: v })}
+                      disabled={!it.skuId}
+                    />
+                  </div>
                 </div>
 
                 {/* Số lượng + mô tả */}
@@ -249,8 +260,8 @@ export function DefectForm({
                       type="number"
                       inputMode="numeric"
                       min="1"
-                      value={it.quantity}
-                      onChange={(e) => setItem(i, { quantity: e.target.value })}
+                      value={it.enteredQuantity}
+                      onChange={(e) => setItem(i, { enteredQuantity: e.target.value })}
                       className={fieldClass}
                     />
                   </div>

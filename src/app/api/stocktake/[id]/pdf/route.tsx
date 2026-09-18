@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("stocktake_items")
-    .select("system_qty, actual_qty, checked, notes, variants(attributes, unit, products(name))")
+    .select("system_qty, actual_qty, checked, notes, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("session_id", id)
     .order("variant_id", { ascending: true });
 
@@ -54,15 +54,29 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "CHÊNH LỆCH", flex: 0.8, align: "right" },
         { label: "GHI CHÚ", flex: 1.4 },
       ]}
-      rows={rows.map((i) => [
-        i.variants?.products?.name ?? "—",
-        variantLabel(i.variants?.attributes, i.variants?.unit),
-        i.variants?.unit ?? "—",
-        i.system_qty,
-        i.actual_qty,
-        i.actual_qty - i.system_qty,
-        i.notes ?? "",
-      ])}
+      rows={rows.map((i) => {
+        const v = i.variants as {
+          products?: { name?: string | null } | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+        } | null;
+        const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+        const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+        return [
+          v?.products?.name ?? "—",
+          detail,
+          v?.units?.symbol || v?.units?.name || "—",
+          i.system_qty,
+          i.actual_qty,
+          i.actual_qty - i.system_qty,
+          i.notes ?? "",
+        ];
+      })}
       signers={["Người kiểm kê", "Thủ kho", "Người duyệt"]}
     />,
   );

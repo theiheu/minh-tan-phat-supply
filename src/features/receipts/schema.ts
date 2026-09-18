@@ -1,11 +1,14 @@
 import { z } from "zod";
 
 export const receiptItemSchema = z.object({
-  variantId: z.string().uuid(),
-  quantity: z.number().int().positive(),
+  skuId: z.string().uuid(),
+  transactionUnitId: z.string().uuid().optional(),
+  enteredQuantity: z.number().positive(),
   unitCost: z.number().nonnegative(),
-  batchNo: z.string().optional(),
-  expiryDate: z.string().optional(),
+  allocations: z.array(z.object({
+    lot_number: z.string().optional(),
+    expiry_date: z.string().optional()
+  })).optional(),
 });
 
 export const receiptSchema = z.object({

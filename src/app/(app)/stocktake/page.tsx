@@ -43,7 +43,7 @@ export default async function StocktakePage({
   let sessionQuery = supabase
     .from("stocktake_sessions")
     .select(
-      "id, code, name, status, created_at, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, checked, notes, system_qty, actual_qty, variants(attributes, unit, images, products(id, name, description, images, categories(name))))",
+      "id, code, name, status, created_at, posted_at, location:stock_locations!stocktake_sessions_location_id_fkey(name), stocktake_items(id, checked, notes, system_qty, actual_qty, entered_quantity, transaction_unit_id, conversion_factor_snapshot, snapshot_quality, variants(id, sku_code, images, units(name, symbol), products(id, name, description, images, categories(name)), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -66,21 +66,45 @@ export default async function StocktakePage({
     status: s.status,
     createdAt: s.created_at,
     postedAt: s.posted_at,
-    items: (s.stocktake_items ?? []).map((i) => ({
-      id: i.id,
-      checked: i.checked,
-      notes: i.notes ?? "",
-      productId: i.variants?.products?.id ?? "",
-      productName: i.variants?.products?.name ?? "Vật tư",
-      description: i.variants?.products?.description ?? null,
-      categoryName: i.variants?.products?.categories?.name ?? null,
-      productImages: i.variants?.products?.images ?? [],
-      attributes: i.variants?.attributes ?? null,
-      unit: i.variants?.unit ?? null,
-      variantImages: i.variants?.images ?? [],
-      systemQty: i.system_qty,
-      actualQty: i.actual_qty,
-    })),
+    items: (s.stocktake_items ?? []).map((i) => {
+      const v = i.variants as {
+        id?: string;
+        sku_code?: string | null;
+        images?: string[] | null;
+        units?: { name?: string | null; symbol?: string | null } | null;
+        products?: { id: string; name?: string | null; description?: string | null; images?: string[] | null; categories?: { name?: string | null } | null } | null;
+        sku_attribute_values?: Array<{
+          text_value?: string | null;
+          legacy_text_value?: string | null;
+          numeric_value?: number | null;
+          units?: { symbol?: string | null } | null;
+        }> | null;
+      } | null;
+      const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+      const attrObj: Record<string, string> = {};
+      if (attrVals.length > 0) attrObj["Quy cách"] = attrVals.join(" · ");
+      return {
+        id: i.id,
+        checked: i.checked,
+        notes: i.notes ?? "",
+        skuId: v?.id,
+        skuCode: v?.sku_code ?? undefined,
+        productId: v?.products?.id ?? "",
+        productName: v?.products?.name ?? "Vật tư",
+        description: v?.products?.description ?? null,
+        categoryName: v?.products?.categories?.name ?? null,
+        productImages: v?.products?.images ?? [],
+        attributes: attrVals.length > 0 ? attrObj : null,
+        unit: v?.units?.symbol || v?.units?.name || null,
+        variantImages: v?.images ?? [],
+        systemQty: i.system_qty,
+        actualQty: i.actual_qty,
+        enteredQuantity: i.entered_quantity,
+        transactionUnitId: i.transaction_unit_id,
+        conversionFactorSnapshot: i.conversion_factor_snapshot,
+        snapshotQuality: i.snapshot_quality,
+      };
+    }),
   }));
 
   const statusOptions = STATUSES.map((s) => ({ value: s, label: STOCKTAKE_STATUS[s] }));

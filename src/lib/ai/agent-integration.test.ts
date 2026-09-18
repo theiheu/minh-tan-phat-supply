@@ -148,6 +148,89 @@ describe("AI Agent & Tools Unit Tests", () => {
     expect(result.draft.productName).toBe("Bạt che chuồng 4x50m");
   });
 
+  it("should clean natural language query and handle aliases in get_stock_balance", async () => {
+    mockRpc.mockResolvedValueOnce({
+      data: [
+        {
+          product_name: "Bạc đạn gối UCF",
+          category_name: "Vòng bi - Bạc đạn",
+          attributes: {},
+          unit: "Cái",
+          total_stock: 0,
+          min_stock: 0,
+          location_details: "Kho chính Minh Tân Phát: 0 Cái",
+        },
+      ],
+      error: null,
+    });
+
+    const tool = inventoryTools.get_stock_balance as unknown as ToolExec<Record<string, unknown>, { productName: string }[]>;
+    const result = await tool.execute({
+      reason: "Tra cứu tồn kho thực tế của các loại bạc đạn ở các kho hiện tại.",
+      limit: 10,
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith("ai_get_stock_summary", {
+      p_query: "bạc đạn",
+      p_limit: 10,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].productName).toBe("Bạc đạn gối UCF");
+  });
+
+  it("should split multi-term queries with conjunctions in get_stock_balance", async () => {
+    mockRpc
+      .mockResolvedValueOnce({
+        data: [
+          {
+            variant_id: "v-1",
+            product_name: "Động cơ điện 1.5kW",
+            category_name: "Điện",
+            attributes: {},
+            unit: "Cái",
+            total_stock: 5,
+            min_stock: 1,
+            location_details: "Kho chính: 5 Cái",
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            variant_id: "v-2",
+            product_name: "Van bi đồng phi 27",
+            category_name: "Cơ khí",
+            attributes: {},
+            unit: "Cái",
+            total_stock: 10,
+            min_stock: 2,
+            location_details: "Kho chính: 10 Cái",
+          },
+        ],
+        error: null,
+      });
+
+    const tool = inventoryTools.get_stock_balance as unknown as ToolExec<{ searchTerm: string; limit?: number }, { productName: string }[]>;
+    const result = await tool.execute({
+      searchTerm: "động cơ điện và van bi",
+      limit: 10,
+    });
+
+    expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(mockRpc).toHaveBeenNthCalledWith(1, "ai_get_stock_summary", {
+      p_query: "động cơ điện",
+      p_limit: 5,
+    });
+    expect(mockRpc).toHaveBeenNthCalledWith(2, "ai_get_stock_summary", {
+      p_query: "van bi",
+      p_limit: 5,
+    });
+    expect(result).toHaveLength(2);
+    expect(result[0].productName).toBe("Động cơ điện 1.5kW");
+    expect(result[1].productName).toBe("Van bi đồng phi 27");
+  });
+
   it("should enforce RBAC tool availability", () => {
     const requesterTools = getRegisteredTools("requester") as Record<string, unknown>;
     expect(requesterTools.get_stock_balance).toBeDefined();

@@ -20,11 +20,31 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const report = req.nextUrl.searchParams.get("report") ?? "stock";
 
-  const { data: variants } = await supabase.from("variants").select("id, attributes, unit, products(name)");
+  const { data: variants } = await supabase.from("variants").select(`
+    id, sku_code,
+    units(name, symbol),
+    products(name),
+    sku_attribute_values(
+      text_value, numeric_value, boolean_value, legacy_text_value,
+      attribute_definitions(name),
+      units(symbol)
+    )
+  `);
   const map = new Map((variants ?? []).map((v) => [v.id, v]));
   const label = (id: string | null) => {
     const v = id ? map.get(id) : undefined;
-    return v ? variantLabel(v.attributes, v.unit) : "—";
+    if (!v) return "—";
+    const unitObj = v.units as { name?: string; symbol?: string } | null;
+    const unit = unitObj?.symbol || unitObj?.name || "—";
+    const attrVals = ((v as unknown as { sku_attribute_values?: Array<{ text_value?: string | null; legacy_text_value?: string | null; numeric_value?: number | null; units?: { symbol?: string | null } | null }> }).sku_attribute_values ?? []).map((av) => {
+      return av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null);
+    }).filter(Boolean);
+    return attrVals.length > 0 ? attrVals.join(" · ") : (unit !== "—" ? unit : "Mặc định");
+  };
+  const unitOf = (id: string | null) => {
+    const v = id ? map.get(id) : undefined;
+    const unitObj = v?.units as { name?: string; symbol?: string } | null;
+    return unitObj?.symbol || unitObj?.name || "—";
   };
 
   let rows: Record<string, unknown>[] = [];
@@ -35,7 +55,7 @@ export async function GET(req: NextRequest) {
     rows = (data ?? []).map((r) => ({
       "Vật tư": map.get(r.variant_id ?? "")?.products?.name ?? "—",
       "Biến thể": label(r.variant_id),
-      "Đơn vị tính": map.get(r.variant_id ?? "")?.unit ?? "—",
+      "Đơn vị tính": unitOf(r.variant_id),
       "Tồn": r.quantity ?? 0,
       "Tối thiểu": r.min_stock ?? 0,
     }));
@@ -49,7 +69,7 @@ export async function GET(req: NextRequest) {
     rows = (data ?? []).map((m) => ({
       "Vật tư": map.get(m.variant_id)?.products?.name ?? "—",
       "Biến thể": label(m.variant_id),
-      "Đơn vị tính": map.get(m.variant_id)?.unit ?? "—",
+      "Đơn vị tính": unitOf(m.variant_id),
       "Loại": m.movement_type,
       "Số lượng": m.quantity,
       "Thời gian": m.created_at,

@@ -4,16 +4,31 @@ import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import type { Json } from "@/types/database.types";
 
 export async function transferStock(input: {
-  items: { variantId: string; quantity: number }[];
+  items: {
+    skuId?: string;
+    variantId?: string;
+    enteredQuantity?: number;
+    quantity?: number;
+    transactionUnitId?: string | null;
+    allocations?: Record<string, unknown>[];
+  }[];
   fromLocationId: string;
   toLocationId: string;
 }) {
   const profile = await requireProfile();
   const supabase = await createClient();
   const { error } = await supabase.rpc("transfer_stock", {
-    p_items: input.items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
+    p_items: input.items.map((i) => ({
+      sku_id: i.skuId || i.variantId,
+      variant_id: i.skuId || i.variantId,
+      entered_quantity: i.enteredQuantity ?? i.quantity,
+      quantity: i.enteredQuantity ?? i.quantity,
+      transaction_unit_id: i.transactionUnitId ?? null,
+      allocations: i.allocations ?? null,
+    })) as unknown as Json,
     p_from_loc: input.fromLocationId,
     p_to_loc: input.toLocationId,
     p_by: profile.id,
@@ -39,15 +54,18 @@ export async function transferStock(input: {
 }
 
 export async function adjustStock(input: {
-  variantId: string;
+  skuId?: string;
+  variantId?: string;
   locationId: string;
   delta: number;
   reason: string;
 }) {
+  const skuId = input.skuId || input.variantId;
+  if (!skuId) throw new Error("Chưa chọn vật tư cần điều chỉnh");
   const profile = await requireProfile();
   const supabase = await createClient();
   const { error } = await supabase.rpc("adjust_stock", {
-    p_variant_id: input.variantId,
+    p_variant_id: skuId,
     p_location_id: input.locationId,
     p_delta: input.delta,
     p_reason: input.reason,

@@ -39,7 +39,7 @@ describe("OfflineSyncProvider", () => {
     (submitRequisition as Mock).mockResolvedValue(undefined);
 
     useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
+      items: [{ skuId: "v1", enteredQuantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
       zoneId: "z1",
       purpose: "Sửa điện",
       requesterId: "user-1",
@@ -60,7 +60,7 @@ describe("OfflineSyncProvider", () => {
         zoneId: "z1",
         purpose: "Sửa điện",
         requesterId: "user-1",
-        items: [{ variantId: "v1", quantity: 2 }],
+        items: [{ skuId: "v1", enteredQuantity: 2 }],
       });
       expect(submitRequisition).toHaveBeenCalledTimes(1);
       expect(submitRequisition).toHaveBeenCalledWith("req-1");
@@ -77,7 +77,7 @@ describe("OfflineSyncProvider", () => {
     (submitRequisition as Mock).mockResolvedValue(undefined);
 
     useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
+      items: [{ skuId: "v1", enteredQuantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
       zoneId: "z1",
       purpose: "Lưu nháp sửa điện",
       submitAfterCreate: false,
@@ -106,7 +106,7 @@ describe("OfflineSyncProvider", () => {
     (createRequisition as Mock).mockRejectedValue(new Error("Server error"));
 
     const id = useOfflineQueueStore.getState().enqueue({
-      items: [{ variantId: "v1", quantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
+      items: [{ skuId: "v1", enteredQuantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
       zoneId: "z1",
       purpose: "Sửa điện",
     });
@@ -141,7 +141,7 @@ describe("OfflineSyncProvider", () => {
 
     await act(async () => {
       useOfflineQueueStore.getState().enqueue({
-        items: [{ variantId: "v1", quantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
+        items: [{ skuId: "v1", enteredQuantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
         zoneId: "z1",
         purpose: "Thay bóng",
       });
@@ -154,4 +154,28 @@ describe("OfflineSyncProvider", () => {
       expect(useOfflineQueueStore.getState().queue.length).toBe(0);
     });
   });
+
+  it("rejects legacy queue payloads instead of replaying them", async () => {
+    useOfflineQueueStore.setState({
+      queue: [{
+        clientTempId: "legacy-1",
+        items: [{ variantId: "v1", quantity: 2, name: "Cáp điện", label: "2.5mm", unit: "m" }],
+        zoneId: "z1",
+        purpose: "Legacy payload",
+        createdAt: new Date().toISOString(),
+        retryCount: 0,
+        status: "pending",
+      } as unknown as import("@/stores/offline-queue-store").OfflineRequisition],
+    });
+
+    render(<OfflineSyncProvider><div>Content</div></OfflineSyncProvider>);
+
+    await vi.waitFor(() => {
+      expect(createRequisition).not.toHaveBeenCalled();
+      const legacy = useOfflineQueueStore.getState().queue[0];
+      expect(legacy.status).toBe("failed");
+      expect(legacy.lastError).toContain("chọn lại SKU/đơn vị");
+    });
+  });
+
 });

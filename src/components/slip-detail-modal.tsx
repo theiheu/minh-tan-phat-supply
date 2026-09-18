@@ -650,7 +650,7 @@ export function SlipDetailModal({
                     onSuccess={reloadDetail}
                     items={detail.items.map((i) => ({
                       id: i.id,
-                      variantId: i.variantId ?? "",
+                      skuId: i.variantId ?? "",
                       label: `${i.productName} — ${i.variantLabel}`,
                       quantity: i.quantity,
                       returned: i.returned ?? 0,

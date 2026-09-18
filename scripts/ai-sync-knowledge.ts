@@ -30,6 +30,7 @@ if (!supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const isForce = process.argv.includes("--force") || process.argv.includes("-f");
 
 function computeHash(content: string): string {
   return crypto.createHash("sha256").update(content, "utf8").digest("hex");
@@ -68,15 +69,27 @@ function chunkMarkdown(content: string, maxChunkLength = 1000): string[] {
   return chunks.length > 0 ? chunks : [content];
 }
 
-async function syncUserGuides() {
-  const docsDir = path.resolve(process.cwd(), "docs/user-guide");
+interface DocTarget {
+  dir: string;
+  category: "sop" | "user_guide" | "catalog" | "policy" | "general";
+  sourcePrefix: string;
+}
+
+const TARGETS: DocTarget[] = [
+  { dir: "docs/user-guide", category: "sop", sourcePrefix: "user-guide" },
+  { dir: "docs/architecture", category: "general", sourcePrefix: "architecture" },
+  { dir: "docs/reference", category: "catalog", sourcePrefix: "reference" },
+  { dir: "docs/operations", category: "sop", sourcePrefix: "operations" },
+];
+
+async function syncDirectory(target: DocTarget) {
+  const docsDir = path.resolve(process.cwd(), target.dir);
   if (!fs.existsSync(docsDir)) {
-    console.log("⚠️ Không tìm thấy thư mục docs/user-guide");
-    return;
+    return { syncedCount: 0, skippedCount: 0 };
   }
 
   const files = fs.readdirSync(docsDir).filter((f) => f.endsWith(".md"));
-  console.log(`📂 Tìm thấy ${files.length} tài liệu hướng dẫn trong docs/user-guide/...`);
+  console.log(`\n📂 [${target.sourcePrefix.toUpperCase()}] Tìm thấy ${files.length} tài liệu trong ${target.dir}/...`);
 
   let syncedCount = 0;
   let skippedCount = 0;
@@ -84,7 +97,7 @@ async function syncUserGuides() {
   for (const file of files) {
     const filePath = path.join(docsDir, file);
     const content = fs.readFileSync(filePath, "utf8");
-    const sourceKey = `user-guide:${file}`;
+    const sourceKey = `${target.sourcePrefix}:${file}`;
     const hash = computeHash(content);
 
     // Lấy dòng tiêu đề đầu tiên từ file markdown
@@ -98,13 +111,13 @@ async function syncUserGuides() {
       .eq("source_key", sourceKey)
       .single();
 
-    if (existingDoc && existingDoc.content_hash === hash) {
-      console.log(`⏩ [BỎ QUA] ${file} (Không đổi - SHA256 khớp)`);
+    if (!isForce && existingDoc && existingDoc.content_hash === hash) {
+      console.log(`  ⏩ [BỎ QUA] ${file} (Không đổi - SHA256 khớp)`);
       skippedCount++;
       continue;
     }
 
-    console.log(`🔄 [ĐỒNG BỘ] Đang đánh chỉ mục ${file} -> "${title}"...`);
+    console.log(`  🔄 [ĐỒNG BỘ] Đang đánh chỉ mục ${file} -> "${title}"...`);
 
     // 2. Cập nhật hoặc tạo mới document
     let docId = existingDoc?.id;
@@ -114,7 +127,7 @@ async function syncUserGuides() {
         .update({
           title,
           content_hash: hash,
-          category: "sop",
+          category: target.category,
           updated_at: new Date().toISOString(),
         })
         .eq("id", docId);
@@ -128,14 +141,14 @@ async function syncUserGuides() {
           source_key: sourceKey,
           content_hash: hash,
           title,
-          category: "sop",
-          metadata: { fileName: file },
+          category: target.category,
+          metadata: { fileName: file, directory: target.dir },
         })
         .select("id")
         .single();
 
       if (insertError || !newDoc) {
-        console.error(`❌ Lỗi tạo document ${file}:`, insertError?.message);
+        console.error(`  ❌ Lỗi tạo document ${file}:`, insertError?.message);
         continue;
       }
       docId = newDoc.id;
@@ -147,24 +160,34 @@ async function syncUserGuides() {
       document_id: docId,
       chunk_index: idx,
       content: chunkText,
-      metadata: { file, sectionIndex: idx },
+      metadata: { file, sectionIndex: idx, category: target.category },
     }));
 
     const { error: chunkError } = await supabase.from("ai_knowledge_chunks").insert(chunkRows);
     if (chunkError) {
-      console.error(`❌ Lỗi chèn chunks cho ${file}:`, chunkError.message);
+      console.error(`  ❌ Lỗi chèn chunks cho ${file}:`, chunkError.message);
     } else {
       syncedCount++;
-      console.log(`   ✅ Đã lưu ${chunks.length} phân đoạn cho ${file}`);
+      console.log(`     ✅ Đã lưu ${chunks.length} phân đoạn cho ${file}`);
     }
   }
 
-  console.log(`\n🎉 Hoàn thành đồng bộ SOP: ${syncedCount} mới/cập nhật, ${skippedCount} bỏ qua (tiết kiệm token).`);
+  return { syncedCount, skippedCount };
 }
 
 async function main() {
-  console.log("🚀 Bắt đầu tiến trình Đồng bộ Tri thức AI (Incremental RAG Ingestion)...");
-  await syncUserGuides();
+  console.log(`🚀 Bắt đầu tiến trình Đồng bộ Tri thức AI (Incremental RAG Ingestion)${isForce ? " [CHẾ ĐỘ FORCE]" : ""}...`);
+  
+  let totalSynced = 0;
+  let totalSkipped = 0;
+
+  for (const target of TARGETS) {
+    const res = await syncDirectory(target);
+    totalSynced += res.syncedCount;
+    totalSkipped += res.skippedCount;
+  }
+
+  console.log(`\n🎉 Hoàn thành đồng bộ toàn bộ Tri thức AI: ${totalSynced} mới/cập nhật, ${totalSkipped} bỏ qua (tiết kiệm token).`);
 }
 
 main().catch(console.error);

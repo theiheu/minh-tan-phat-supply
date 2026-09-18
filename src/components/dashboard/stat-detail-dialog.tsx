@@ -144,16 +144,18 @@ export function StatDetailDialog({ type, onClose, items }: StatDetailDialogProps
               onValueChange={setSelectedTab}
               className="w-full sm:w-auto"
             >
-              <TabsList className="h-9 flex flex-wrap w-full sm:w-auto justify-start">
-                <TabsTrigger value="all" className="text-xs">
-                  Tất cả ({items.length})
-                </TabsTrigger>
-                {availableTypes.map((t) => (
-                  <TabsTrigger key={t.type} value={t.type} className="text-xs">
-                    {t.label} ({t.count})
+              <div className="w-full max-w-full overflow-x-auto pb-1 scrollbar-none">
+                <TabsList className="h-9 inline-flex flex-nowrap w-max sm:w-auto justify-start">
+                  <TabsTrigger value="all" className="text-xs shrink-0">
+                    Tất cả ({items.length})
                   </TabsTrigger>
-                ))}
-              </TabsList>
+                  {availableTypes.map((t) => (
+                    <TabsTrigger key={t.type} value={t.type} className="text-xs shrink-0">
+                      {t.label} ({t.count})
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
             </Tabs>
           ) : (
             <div />

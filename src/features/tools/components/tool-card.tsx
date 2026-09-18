@@ -12,8 +12,10 @@ import { cn } from "@/lib/utils";
 export interface ToolCardProps {
   borrowingId: string;
   code?: string;
+  skuId?: string;
   variantId?: string;
   productName: string;
+  skuLabel?: string | null;
   variantLabel?: string | null;
   unit?: string | null;
   imageUrl?: string | null;
@@ -50,8 +52,10 @@ function getOverdueDays(expectedReturnDate?: string | null): number {
 export function ToolCard({
   borrowingId,
   code,
+  skuId,
   variantId,
   productName,
+  skuLabel,
   variantLabel,
   unit,
   imageUrl,
@@ -72,6 +76,8 @@ export function ToolCard({
   const remaining = Math.max(0, quantity - (returnedQuantity ?? 0));
   const isFullyReturned = remaining === 0 || status === "returned";
   const overdueDays = !isFullyReturned ? getOverdueDays(expectedReturnDate) : 0;
+  const displayLabel = skuLabel ?? variantLabel;
+  const effectiveSkuId = skuId ?? variantId;
 
   return (
     <Card
@@ -105,8 +111,8 @@ export function ToolCard({
             )}
             <div>
               <div className="font-semibold text-base leading-snug line-clamp-1">{productName}</div>
-              {variantLabel && (
-                <div className="text-xs text-muted-foreground">{variantLabel}</div>
+              {displayLabel && (
+                <div className="text-xs text-muted-foreground">{displayLabel}</div>
               )}
             </div>
           </div>
@@ -215,9 +221,9 @@ export function ToolCard({
             <ToolReturnDialog
               borrowingId={borrowingId}
               code={code}
-              variantId={variantId}
+              skuId={effectiveSkuId}
               productName={productName}
-              variantLabel={variantLabel}
+              skuLabel={displayLabel}
               unit={unit}
               quantity={quantity}
               returnedQuantity={returnedQuantity}

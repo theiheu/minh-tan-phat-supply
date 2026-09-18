@@ -14,15 +14,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
-import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-input";
+import { SkuSelector } from "@/features/catalog/components/sku-selector";
+import { TransactionUomSelect } from "@/features/catalog/components/transaction-uom-select";
 import { updateDefect } from "../actions";
 import { uploadDefectImage } from "../upload";
 import { ZoomableImage } from "@/components/image-lightbox";
 import type { DefectListRow } from "./defects-list";
 
 interface ItemDraft {
-  variantId: string;
-  quantity: string;
+  skuId: string;
+  transactionUnitId: string;
+  enteredQuantity: string;
   damageDetail: string;
   note: string;
   images: string[];
@@ -30,8 +32,9 @@ interface ItemDraft {
 }
 
 const EMPTY: ItemDraft = {
-  variantId: "",
-  quantity: "1",
+  skuId: "",
+  transactionUnitId: "",
+  enteredQuantity: "1",
   damageDetail: "",
   note: "",
   images: [],
@@ -41,14 +44,14 @@ const EMPTY: ItemDraft = {
 export function DefectEditDialog({
   row,
   sourceLocationId,
-  variants,
+  variants: _variants,
   open,
   onOpenChange,
   onSuccess,
 }: {
   row: DefectListRow;
   sourceLocationId: string;
-  variants: { id: string; name: string; detail: string }[];
+  variants?: unknown;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -61,8 +64,9 @@ export function DefectEditDialog({
       if (row.items && row.items.length > 0) {
         setItems(
           row.items.map((i) => ({
-            variantId: i.variantId ?? "",
-            quantity: String(i.quantity ?? 1),
+            skuId: i.skuId ?? i.variantId ?? "",
+            transactionUnitId: i.transactionUnitId ?? "",
+            enteredQuantity: String(i.enteredQuantity ?? i.quantity ?? 1),
             damageDetail: i.damageDetail ?? "",
             note: i.note ?? "",
             images: i.images ?? [],
@@ -74,13 +78,6 @@ export function DefectEditDialog({
       }
     }
   }, [open, row]);
-
-  const variantOptions: ComboboxInputOption[] = variants.map((v) => ({
-    value: v.id,
-    label: v.name,
-    detail: v.detail,
-    text: v.detail ? `${v.name} — ${v.detail}` : v.name,
-  }));
 
   function setItem(i: number, patch: Partial<ItemDraft>) {
     setItems((arr) => arr.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
@@ -109,10 +106,10 @@ export function DefectEditDialog({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const valid = items.filter(
-      (i) => i.variantId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.quantity) > 0,
+      (i) => i.skuId && i.damageDetail.trim() && i.images.length >= 1 && Number(i.enteredQuantity) > 0,
     );
     if (valid.length === 0) {
-      return toast.error("Nhập ít nhất 1 dòng đầy đủ: tên, số lượng, mô tả và 1 ảnh");
+      return toast.error("Nhập ít nhất 1 dòng đầy đủ: vật tư, số lượng, mô tả và 1 ảnh");
     }
 
     startTransition(async () => {
@@ -120,8 +117,10 @@ export function DefectEditDialog({
         await updateDefect(row.id, {
           sourceLocationId: row.sourceLocationId ?? sourceLocationId,
           items: valid.map((i) => ({
-            variantId: i.variantId,
-            quantity: Number(i.quantity),
+            skuId: i.skuId,
+            transactionUnitId: i.transactionUnitId || undefined,
+            enteredQuantity: Number(i.enteredQuantity),
+            quantity: Number(i.enteredQuantity),
             damageDetail: i.damageDetail.trim(),
             note: i.note.trim(),
             images: i.images,
@@ -173,37 +172,51 @@ export function DefectEditDialog({
                 <CardContent className="space-y-3 p-3 pt-0">
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
                     <div className="sm:col-span-8 space-y-1">
-                      <Label className="text-xs">Vật tư hỏng <span className="text-destructive">*</span></Label>
-                      <ComboboxInput
-                        options={variantOptions}
-                        value={it.variantId}
-                        onChange={(v) => setItem(idx, { variantId: v })}
-                        placeholder="Chọn vật tư…"
-                        emptyText="Không tìm thấy vật tư"
+                      <Label className="text-xs">Vật tư (SKU) <span className="text-destructive">*</span></Label>
+                      <SkuSelector
+                        value={it.skuId}
+                        onSelect={(sku) => {
+                          if (sku.inventoryPolicy === "virtual_kit") {
+                            toast.warning("Gói ảo không có tồn kho vật lý. Vui lòng chọn linh kiện thành phần bị hỏng.");
+                            return;
+                          }
+                          setItem(idx, { skuId: sku.skuId });
+                        }}
                       />
                     </div>
+                    <div className="sm:col-span-4 space-y-1">
+                      <Label className="text-xs">Đơn vị tính</Label>
+                      <TransactionUomSelect
+                        skuId={it.skuId}
+                        value={it.transactionUnitId}
+                        onValueChange={(v) => setItem(idx, { transactionUnitId: v })}
+                        disabled={!it.skuId}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
                     <div className="sm:col-span-4 space-y-1">
                       <Label className="text-xs">Số lượng hỏng <span className="text-destructive">*</span></Label>
                       <Input
                         type="number"
                         min="1"
-                        value={it.quantity}
-                        onChange={(e) => setItem(idx, { quantity: e.target.value })}
+                        value={it.enteredQuantity}
+                        onChange={(e) => setItem(idx, { enteredQuantity: e.target.value })}
                         className="h-9"
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs">
-                      Mô tả hỏng hóc <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      value={it.damageDetail}
-                      onChange={(e) => setItem(idx, { damageDetail: e.target.value })}
-                      placeholder="Mô tả chi tiết vị trí/tình trạng hỏng…"
-                      className="h-9"
-                    />
+                    <div className="sm:col-span-8 space-y-1">
+                      <Label className="text-xs">
+                        Mô tả hỏng hóc <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        value={it.damageDetail}
+                        onChange={(e) => setItem(idx, { damageDetail: e.target.value })}
+                        placeholder="Mô tả chi tiết vị trí/tình trạng hỏng…"
+                        className="h-9"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-1">

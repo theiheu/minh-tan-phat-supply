@@ -147,40 +147,42 @@ export function PartnersReportTab({
         className="space-y-6"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="grid w-full grid-cols-2 sm:w-auto">
-            <TabsTrigger
-              value="suppliers"
-              onClick={() => setActiveTab("suppliers")}
-              className="gap-2"
-            >
-              <Building2 className="size-4" aria-hidden="true" />
-              <span>Nhà cung cấp</span>
-              {!isLoading && data?.suppliers && (
-                <Badge
-                  variant="secondary"
-                  className="ml-1 text-[11px] font-mono"
-                >
-                  {data.suppliers.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="customers"
-              onClick={() => setActiveTab("customers")}
-              className="gap-2"
-            >
-              <Users className="size-4" aria-hidden="true" />
-              <span>Khách hàng & Thương lái</span>
-              {!isLoading && data?.customers && (
-                <Badge
-                  variant="secondary"
-                  className="ml-1 text-[11px] font-mono"
-                >
-                  {data.customers.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full max-w-full overflow-x-auto pb-1 scrollbar-none sm:w-auto">
+            <TabsList className="inline-flex h-10 w-full sm:w-auto min-w-fit items-center justify-start gap-1 p-1">
+              <TabsTrigger
+                value="suppliers"
+                onClick={() => setActiveTab("suppliers")}
+                className="gap-2 shrink-0 text-xs sm:text-sm px-3 py-1.5"
+              >
+                <Building2 className="size-4" aria-hidden="true" />
+                <span>Nhà cung cấp</span>
+                {!isLoading && data?.suppliers && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-1 text-[11px] font-mono"
+                  >
+                    {data.suppliers.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="customers"
+                onClick={() => setActiveTab("customers")}
+                className="gap-2 shrink-0 text-xs sm:text-sm px-3 py-1.5"
+              >
+                <Users className="size-4" aria-hidden="true" />
+                <span>Khách hàng & Thương lái</span>
+                {!isLoading && data?.customers && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-1 text-[11px] font-mono"
+                  >
+                    {data.customers.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         {/* ----------------- SUBTAB 1: NHÀ CUNG CẤP (SUPPLIERS) ----------------- */}

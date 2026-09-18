@@ -18,6 +18,28 @@ vi.mock("../actions", () => ({
   submitRequisition: vi.fn(),
 }));
 
+vi.mock("@/features/catalog/components/sku-selector", () => ({
+  SkuSelector: ({ onSelect }: { onSelect: (sku: Record<string, unknown>) => void }) => (
+    <button
+      type="button"
+      onClick={() => onSelect({
+        skuId: "var-1",
+        productName: "Cầu dao tự động",
+        summary: "MCB 32A 2P",
+        baseUnitSymbol: "Cái",
+        defaultImage: null,
+        availableOnHand: 15,
+      })}
+    >
+      Cầu dao tự động
+    </button>
+  ),
+}));
+
+vi.mock("@/features/catalog/components/transaction-uom-select", () => ({
+  TransactionUomSelect: () => null,
+}));
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => ({
@@ -92,8 +114,8 @@ describe("RequisitionForm", () => {
     });
 
     useCartStore.getState().addItem({
-      variantId: "var-123",
-      quantity: 3,
+      skuId: "var-123",
+      enteredQuantity: 3,
       name: "Ốc vít M4",
       label: "M4x20",
       unit: "Con",
@@ -121,7 +143,9 @@ describe("RequisitionForm", () => {
     expect(queue[0].purpose).toBe("Sửa máy phát");
     expect(queue[0].items).toEqual([
       {
+        skuId: "var-123",
         variantId: "var-123",
+        enteredQuantity: 3,
         quantity: 3,
         name: "Ốc vít M4",
         label: "M4x20",
@@ -144,8 +168,8 @@ describe("RequisitionForm", () => {
     });
 
     useCartStore.getState().addItem({
-      variantId: "var-123",
-      quantity: 2,
+      skuId: "var-123",
+      enteredQuantity: 2,
       name: "Ốc vít M4",
       label: "M4x20",
       unit: "Con",
@@ -179,8 +203,8 @@ describe("RequisitionForm", () => {
     (createRequisition as Mock).mockRejectedValue(new Error("TypeError: Failed to fetch"));
 
     useCartStore.getState().addItem({
-      variantId: "var-456",
-      quantity: 5,
+      skuId: "var-456",
+      enteredQuantity: 5,
       name: "Dây cáp mạng",
       label: "Cat6 1m",
       unit: "Mét",
@@ -219,8 +243,8 @@ describe("RequisitionForm", () => {
     (submitRequisition as Mock).mockResolvedValue(undefined);
 
     useCartStore.getState().addItem({
-      variantId: "var-789",
-      quantity: 1,
+      skuId: "var-789",
+      enteredQuantity: 1,
       name: "Bóng đèn LED",
       label: "LED 20W",
       unit: "Cái",
@@ -245,7 +269,7 @@ describe("RequisitionForm", () => {
         zoneId: "z-1",
         purpose: "Thay bóng đèn hỏng",
         requesterId: undefined,
-        items: [{ variantId: "var-789", quantity: 1 }],
+        items: [{ skuId: "var-789", variantId: "var-789", enteredQuantity: 1, quantity: 1, transactionUnitId: undefined }],
       });
       expect(submitRequisition).toHaveBeenCalledWith("req-789");
       expect(useCartStore.getState().items.length).toBe(0);
@@ -260,8 +284,8 @@ describe("RequisitionForm", () => {
     (submitRequisition as Mock).mockResolvedValue(undefined);
 
     useCartStore.getState().addItem({
-      variantId: "var-100",
-      quantity: 2,
+      skuId: "var-100",
+      enteredQuantity: 2,
       name: "Tấm làm mát",
       label: "Cooling Pad 1.8m",
       unit: "Tấm",
@@ -289,7 +313,7 @@ describe("RequisitionForm", () => {
         subZoneId: undefined,
         purpose: "Thay tấm làm mát chung toàn khu",
         requesterId: undefined,
-        items: [{ variantId: "var-100", quantity: 2 }],
+        items: [{ skuId: "var-100", variantId: "var-100", enteredQuantity: 2, quantity: 2, transactionUnitId: undefined }],
       });
     });
   });
@@ -322,5 +346,15 @@ describe("RequisitionForm", () => {
     // Login usernames should not be displayed
     expect(screen.queryByText("tranthib")).not.toBeInTheDocument();
     expect(screen.queryByText("levanc")).not.toBeInTheDocument();
+  });
+
+  it("shows empty state when no items in cart", () => {
+    render(
+      <RequisitionForm
+        zones={[{ id: "z-1", name: "Khu vực A", description: null, created_at: "", updated_at: "", deleted_at: null }]}
+      />
+    );
+
+    expect(screen.getByText("Chưa có vật tư. Hãy thêm từ Kho vật tư.")).toBeInTheDocument();
   });
 });

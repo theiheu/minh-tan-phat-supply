@@ -27,11 +27,11 @@ export async function createReceipt(input: ReceiptInput) {
 
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({
-    variant_id: i.variantId,
-    quantity: i.quantity,
+    sku_id: i.skuId,
+    transaction_unit_id: i.transactionUnitId ?? null,
+    entered_quantity: i.enteredQuantity,
     unit_cost: i.unitCost,
-    batch_no: i.batchNo ?? null,
-    expiry_date: i.expiryDate ?? null,
+    allocations: i.allocations ?? []
   }));
 
   const { data, error } = await supabase.rpc("create_receipt", {
@@ -78,11 +78,11 @@ export async function updateReceipt(id: string, input: ReceiptInput) {
 
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({
-    variant_id: i.variantId,
-    quantity: i.quantity,
+    sku_id: i.skuId,
+    transaction_unit_id: i.transactionUnitId ?? null,
+    entered_quantity: i.enteredQuantity,
     unit_cost: i.unitCost,
-    batch_no: i.batchNo ?? null,
-    expiry_date: i.expiryDate ?? null,
+    allocations: i.allocations ?? []
   }));
 
   const { error } = await supabase.rpc("update_receipt", {

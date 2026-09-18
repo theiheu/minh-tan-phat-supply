@@ -22,7 +22,7 @@ export function DefectDialog({
   triggerClassName,
 }: {
   sourceLocationId: string;
-  variants: { id: string; name: string; detail: string }[];
+  variants?: unknown;
   triggerLabel?: string;
   triggerClassName?: string;
 }) {

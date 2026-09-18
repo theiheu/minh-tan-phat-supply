@@ -43,13 +43,18 @@ import { DefectEditDialog } from "./defect-edit-dialog";
 
 export interface DefectItemRow {
   id: string;
+  skuId?: string;
   variantId?: string;
   quantity: number;
+  enteredQuantity?: number | null;
+  transactionUnitId?: string | null;
+  uomName?: string | null;
+  skuCode?: string | null;
+  productName: string | null;
+  variantLabel: string;
   damageDetail: string | null;
   note: string | null;
   images: string[];
-  productName: string | null;
-  variantLabel: string;
 }
 
 export interface DefectLiveExchange {
@@ -704,11 +709,18 @@ function DefectDetailDialog({
           {row.items.map((it, idx) => (
             <div key={it.id} className="space-y-1.5 rounded-lg border p-3">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <span className="font-medium">
-                  {idx + 1}. {it.productName ?? "Vật tư"}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-medium">
+                    {idx + 1}. {it.productName ?? "Vật tư"}
+                  </span>
+                  {it.skuCode && (
+                    <Badge variant="outline" className="font-mono text-[11px] px-1.5 py-0">
+                      {it.skuCode}
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-sm text-muted-foreground">
-                  {it.variantLabel} · SL {it.quantity}
+                  {it.variantLabel} · SL {it.enteredQuantity ?? it.quantity}{it.uomName ? ` ${it.uomName}` : ""}
                 </span>
               </div>
               {it.damageDetail ? (

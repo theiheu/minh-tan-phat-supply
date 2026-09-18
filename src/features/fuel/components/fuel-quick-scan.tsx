@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { CheckCircle2, ChevronLeft, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -219,16 +219,18 @@ export function FuelQuickScan({
 
   return (
     <div className="mx-auto max-w-xl space-y-4 px-2 py-3">
-      {/* Header back button */}
-      <div className="flex items-center justify-between">
-        <Button asChild variant="ghost" size="sm" className="-ml-2 text-muted-foreground">
-          <Link href="/fuel">
-            <ChevronLeft className="mr-1 size-4" />
-            Quay lại Kho Dầu
-          </Link>
-        </Button>
-        <span className="text-xs font-semibold text-primary">TRẠM CẤP NHIÊN LIỆU</span>
-      </div>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link
+          href="/fuel"
+          className="flex items-center gap-1 hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="size-3.5" />
+          Kho Dầu
+        </Link>
+        <ChevronRight className="size-3.5 shrink-0" />
+        <span className="text-foreground font-medium">Trạm cấp nhiên liệu</span>
+      </nav>
 
       {/* STEP 1: SCANNING */}
       {step === "scanning" && (

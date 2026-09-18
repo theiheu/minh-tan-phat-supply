@@ -20,7 +20,11 @@ export function ProductImageGallery({ images, alt }: { images: string[]; alt: st
   const count = images.length;
 
   useEffect(() => {
+    setIndex(0);
     setFailedIndices(new Set());
+    if (scrollerRef.current) {
+      scrollerRef.current.scrollTo({ left: 0, behavior: "instant" });
+    }
   }, [images]);
 
   function syncIndex() {

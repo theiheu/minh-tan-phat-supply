@@ -22,16 +22,22 @@ async function issueMeta(id: string) {
 }
 
 export async function createIssue(input: IssueInput) {
-  const profile = await requireManager(); // trả profile chứa .id
+  const profile = await requireManager();
   const parsed = issueSchema.parse(input);
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({
-    variant_id: i.variantId,
-    quantity: i.quantity,
+    sku_id: i.skuId || i.variantId,
+    variant_id: i.skuId || i.variantId,
+    entered_quantity: i.enteredQuantity ?? i.quantity,
+    quantity: i.enteredQuantity ?? i.quantity,
+    transaction_unit_id: i.transactionUnitId ?? null,
     unit_price: i.unitPrice ?? null,
+    allocations: (i.batchNo || i.expiryDate) ? [{
+      lot_number: i.batchNo || undefined,
+      expiry_date: i.expiryDate || undefined,
+    }] : i.allocations ?? null,
   }));
-  // Args của RPC được typegen là string không rỗng — nullable uuid/text phải cast null
-  // (giống create_receipt: p_supplier_id: parsed.supplierId ?? (null as unknown as string)).
+
   const { data, error } = await supabase.rpc("create_issue", {
     p_items: items,
     p_destination_type: parsed.destinationType,

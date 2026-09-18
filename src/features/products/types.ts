@@ -1,10 +1,23 @@
 import type { Variant } from "@/lib/types";
 
+export type VariantComponentType = "assembly" | "unit_conversion";
+
+export type VariantComponentItem = {
+  variantId: string;
+  label: string;
+  unit: string | null;
+  quantity: number;
+  productId?: string;
+  productName?: string;
+};
+
 export interface VariantWithStock extends Variant {
+  sku_code?: string | null;
   stock: number;
   isComposite: boolean;
-  /** Nếu là bộ: danh sách linh kiện (cùng vật tư) kèm định mức — dùng để hiển thị cấu tạo. */
-  components?: { variantId: string; label: string; unit: string | null; quantity: number }[];
+  componentType?: VariantComponentType | null;
+  /** Nếu là bộ hoặc quy đổi: danh sách linh kiện kèm định mức — dùng để hiển thị cấu tạo. */
+  components?: VariantComponentItem[];
 }
 
 /** Một dòng biến thể (kèm tồn kho + cấu tạo bộ) dùng chung cho bảng quản trị và dialog quản lý biến thể. */
@@ -21,20 +34,22 @@ export interface AdminVariantRow {
   minStock: number;
   isTrackableLot: boolean;
   isDefault: boolean;
-  /** Biến thể này có cấu tạo bộ (parent trong variant_components). */
+  /** Biến thể này có cấu tạo bộ hoặc quy đổi (parent trong variant_components). */
   isComposite: boolean;
+  componentType?: VariantComponentType | null;
   /** Tồn Kho chính: bộ = số bộ còn ráp được (tự động theo linh kiện); thường = tồn thực. */
   quantity: number;
   /** Cấu tạo bộ khi isComposite (rỗng nếu chưa khai). */
-  components: { variantId: string; label: string; unit: string | null; quantity: number }[];
+  components: VariantComponentItem[];
 }
 
-export function isKitVariant(v: AdminVariantRow | VariantWithStock): boolean {
-  return v.isComposite;
+export function isKitVariant(v: { isComposite?: boolean; componentType?: VariantComponentType | null; components?: { length: number } }): boolean {
+  if (v.componentType) return v.componentType === "assembly";
+  return Boolean(v.isComposite);
 }
 
-export function hasKitVariant(rows: { isComposite: boolean }[]): boolean {
-  return rows.some((r) => r.isComposite);
+export function hasKitVariant(rows: { isComposite?: boolean; componentType?: VariantComponentType | null; components?: { length: number } }[]): boolean {
+  return rows.some(isKitVariant);
 }
 
 /** Dòng dữ liệu vật tư trong màn quản trị (đủ thông tin để mở modal sửa + quản lý biến thể/bộ). */

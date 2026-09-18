@@ -15,22 +15,22 @@ export function CartDrawer() {
   const items = useCartStore((s) => s.items);
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
-  const totalQty = items.reduce((n, i) => n + i.quantity, 0);
+  const totalQty = items.reduce((n, i) => n + i.enteredQuantity, 0);
 
   return (
     <Sheet open={isOpen} onOpenChange={setCartOpen}>
       <SheetContent side="right" className="flex w-full flex-col sm:max-w-sm">
-        <SheetHeader>
+        <SheetHeader className="px-3.5 sm:px-4">
           <SheetTitle>Yêu cầu vật tư</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4">
+        <div className="flex-1 overflow-y-auto px-3.5 sm:px-4">
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Yêu cầu vật tư trống.</p>
           ) : (
             <ul className="space-y-3">
               {items.map((i) => (
-                <li key={i.variantId} className="flex items-start gap-3 border-b pb-3">
+                <li key={i.skuId} className="flex items-start gap-3 border-b pb-3">
                   {i.image ? (
                     <ZoomableImage
                       src={i.image}
@@ -65,7 +65,7 @@ export function CartDrawer() {
                       variant="ghost"
                       size="icon-xs"
                       className="h-6 w-6 text-muted-foreground hover:bg-destructive/10 hover:text-destructive p-0"
-                      onClick={() => removeItem(i.variantId)}
+                      onClick={() => removeItem(i.skuId)}
                       aria-label="Xóa khỏi giỏ"
                     >
                       <Trash2 className="size-3.5" />
@@ -77,7 +77,7 @@ export function CartDrawer() {
                         variant="ghost"
                         size="icon-xs"
                         className="h-5 w-5 rounded text-foreground hover:bg-muted p-0"
-                        onClick={() => updateQty(i.variantId, Math.max(1, i.quantity - 1))}
+                        onClick={() => updateQty(i.skuId, Math.max(1, i.enteredQuantity - 1))}
                         aria-label="Giảm số lượng"
                       >
                         <Minus className="size-2.5" />
@@ -86,17 +86,17 @@ export function CartDrawer() {
                         type="number"
                         min="1"
                         className="h-5 w-7 border-0 bg-transparent text-center text-xs font-bold tabular-nums p-0 focus-visible:ring-0 shadow-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        value={i.quantity}
+                        value={i.enteredQuantity}
                         onChange={(e) => {
                           const val = parseInt(e.target.value, 10);
                           if (!isNaN(val) && val > 0) {
-                            updateQty(i.variantId, val);
+                            updateQty(i.skuId, val);
                           }
                         }}
                         onBlur={(e) => {
                           const val = parseInt(e.target.value, 10);
                           if (isNaN(val) || val < 1) {
-                            updateQty(i.variantId, 1);
+                            updateQty(i.skuId, 1);
                           }
                         }}
                       />
@@ -104,7 +104,7 @@ export function CartDrawer() {
                         variant="ghost"
                         size="icon-xs"
                         className="h-5 w-5 rounded text-foreground hover:bg-muted p-0"
-                        onClick={() => updateQty(i.variantId, i.quantity + 1)}
+                        onClick={() => updateQty(i.skuId, i.enteredQuantity + 1)}
                         aria-label="Tăng số lượng"
                       >
                         <Plus className="size-2.5" />
