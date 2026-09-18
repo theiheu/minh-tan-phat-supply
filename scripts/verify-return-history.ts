@@ -34,7 +34,7 @@ const requesterId = r.data.user!.id;
 const managerId = m.data.user!.id;
 
 const { data: zone } = await rc.from("zones").select("id").limit(1).single();
-const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+const { data: variant } = await rc.from("skus").select("id").limit(1).single();
 const { data: tuom } = await rc.from("sku_transaction_units").select("id").eq("sku_id", variant!.id).eq("is_base", true).limit(1).single();
 ok(!!zone?.id && !!variant?.id, "có zone + variant");
 
@@ -73,7 +73,7 @@ ok(!!over.error, "trả vượt số còn lại bị chặn: " + (over.error?.me
 // Lịch sử: requester (owner) đọc được
 const { data: events, error: evErr } = await rc
   .from("requisition_returns")
-  .select("id, returned_by, items:requisition_return_items(variant_id, quantity)")
+  .select("id, returned_by, items:requisition_return_items(sku_id, quantity)")
   .eq("requisition_id", rid);
 ok(!evErr, "requester đọc được requisition_returns");
 ok(events?.length === 1, `có đúng 1 sự kiện trả (thực tế ${events?.length})`);

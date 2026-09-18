@@ -40,7 +40,7 @@ export async function createRequisition(input: RequisitionInput) {
   // Kiểm tra tính hợp lệ của sku_id (tránh lỗi khóa ngoại do giỏ hàng cũ lưu trong localStorage trên máy người dùng)
   const skuIds = items.map((i) => i.sku_id);
   const { data: validSkus, error: checkError } = await supabase
-    .from("variants")
+    .from("skus")
     .select("id")
     .in("id", skuIds);
 
@@ -68,7 +68,7 @@ export async function createRequisition(input: RequisitionInput) {
   });
 
   if (error) {
-    if (error.message.includes("requisition_items_variant_id_fkey")) {
+    if (error.message.includes("requisition_items_sku_id_fkey")) {
       throw new Error(
         "Vật tư trong giỏ hàng không tồn tại trong cơ sở dữ liệu. Vui lòng xóa giỏ hàng và chọn lại từ Kho vật tư."
       );
@@ -147,25 +147,25 @@ export async function fulfillRequisition(id: string) {
   // Kiểm tra tồn kho trước khi cấp phát để báo lỗi rõ ràng nếu thiếu hàng
   const { data: reqItems } = await supabase
     .from("requisition_items")
-    .select("variant_id, quantity, variants(products(name), units(name, symbol))")
+    .select("sku_id, quantity, skus(products(name), units(name, symbol))")
     .eq("requisition_id", id);
 
   if (reqItems && reqItems.length > 0) {
-    const variantIds = reqItems.map((i) => i.variant_id);
+    const variantIds = reqItems.map((i) => i.sku_id);
     const { data: stockRows } = await supabase
-      .from("variant_stock")
-      .select("variant_id, quantity")
-      .in("variant_id", variantIds);
+      .from("sku_stock")
+      .select("sku_id, quantity")
+      .in("sku_id", variantIds);
 
-    const stockMap = new Map((stockRows ?? []).map((s) => [s.variant_id, s.quantity]));
-    const insufficient = reqItems.filter((i) => (stockMap.get(i.variant_id) ?? 0) < i.quantity);
+    const stockMap = new Map((stockRows ?? []).map((s) => [s.sku_id, s.quantity]));
+    const insufficient = reqItems.filter((i) => (stockMap.get(i.sku_id) ?? 0) < i.quantity);
 
     if (insufficient.length > 0) {
       const names = insufficient
         .map((i) => {
-          const v = i.variants as { unit?: string | null; products?: { name?: string | null } | null } | null;
+          const v = i.skus as { unit?: string | null; products?: { name?: string | null } | null } | null;
           const name = v?.products?.name ?? "Vật tư";
-          const currentStock = stockMap.get(i.variant_id) ?? 0;
+          const currentStock = stockMap.get(i.sku_id) ?? 0;
           return `"${name}" (cần ${i.quantity}, tồn hiện có ${currentStock})`;
         })
         .join(", ");

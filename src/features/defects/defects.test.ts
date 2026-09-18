@@ -168,7 +168,6 @@ describe("Defect Server Actions", () => {
         p_items: [
           {
             sku_id: validSkuId,
-            variant_id: validSkuId,
             transaction_unit_id: null,
             entered_quantity: 2,
             quantity: 2,
@@ -208,7 +207,7 @@ describe("Defect Server Actions", () => {
       expect(mockAdminInsert).toHaveBeenCalledWith([
         {
           defect_note_id: "defect-1",
-          variant_id: validSkuId,
+          sku_id: validSkuId,
           transaction_unit_id: null,
           entered_quantity: 5,
           quantity: 5,

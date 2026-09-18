@@ -27,7 +27,6 @@ export async function createIssue(input: IssueInput) {
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({
     sku_id: i.skuId || i.variantId,
-    variant_id: i.skuId || i.variantId,
     entered_quantity: i.enteredQuantity ?? i.quantity,
     quantity: i.enteredQuantity ?? i.quantity,
     transaction_unit_id: i.transactionUnitId ?? null,

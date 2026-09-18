@@ -19,7 +19,7 @@ async function main() {
   const { data: items } = await mc.from("bom_items").select("component_sku_id,base_quantity,wastage_percent").eq("bom_version_id",header.active_version_id);
   const { data: mainLoc } = await mc.from("stock_locations").select("id").eq("code","KHO_CHINH").single();
   for (const item of items ?? []) {
-    await mc.from("stock_balances").upsert({ variant_id:item.component_sku_id,location_id:mainLoc!.id,quantity:100,reserved_quantity:0 },{onConflict:"variant_id,location_id"});
+    await mc.from("stock_balances").upsert({ sku_id:item.component_sku_id,location_id:mainLoc!.id,quantity:100,reserved_quantity:0 },{onConflict:"sku_id,location_id"});
   }
   const created=await rc.rpc("create_requisition",{p_items:[{sku_id:header.sku_id,entered_quantity:2}],p_zone_id:zone.id,p_purpose:"Verify virtual kit reservation",p_type:"new_supply",p_linked_defect_id:null,p_requester_id:requesterId});
   if(created.error) throw created.error; const rid=created.data as string;

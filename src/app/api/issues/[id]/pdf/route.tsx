@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("issue_items")
-    .select("quantity, entered_quantity, unit_price, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol))")
+    .select("quantity, entered_quantity, unit_price, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol))")
     .eq("issue_id", id);
 
   const isSale = doc.destination_type === "customer";
@@ -80,7 +80,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             ]
       }
       rows={(items ?? []).map((i) => {
-        const v = i.variants as { products?: { name?: string | null } | null; units?: { name?: string | null; symbol?: string | null } | null } | null;
+        const v = i.skus as { products?: { name?: string | null } | null; units?: { name?: string | null; symbol?: string | null } | null } | null;
         const name = i.sku_name_snapshot || v?.products?.name || "—";
         const unit = i.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—";
         const qty = i.entered_quantity ?? i.quantity;

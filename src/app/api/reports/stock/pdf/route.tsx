@@ -30,14 +30,14 @@ export async function GET(req: Request) {
   if (!location) return new NextResponse("Thiếu tham số kho (location)", { status: 400 });
 
   // location_stock không có FK tới variants (view không khai FK được) nên PostgREST
-  // không cho embed variants(...) — join bằng JS như màn Báo cáo vẫn làm với variant_stock.
+  // không cho embed skus(...) — join bằng JS như màn Báo cáo vẫn làm với sku_stock.
   const [{ data: stockRows, error: stockErr }, { data: variants, error: variantsErr }] = await Promise.all([
     supabase
       .from("location_stock")
-      .select("variant_id, quantity")
+      .select("sku_id, quantity")
       .eq("location_id", location.id)
       .gt("quantity", 0),
-    supabase.from("variants").select(`
+    supabase.from("skus").select(`
       id, sku_code,
       units(name, symbol),
       products(name),
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
   const variantMap = new Map((variants ?? []).map((v) => [v.id, v]));
   const lines = (stockRows ?? [])
     .map((s) => {
-      const v = s.variant_id ? variantMap.get(s.variant_id) : undefined;
+      const v = s.sku_id ? variantMap.get(s.sku_id) : undefined;
       const unitObj = v?.units as { name?: string; symbol?: string } | null;
       const unit = unitObj?.symbol || unitObj?.name || "—";
       const attrVals = ((v as unknown as { sku_attribute_values?: Array<{ text_value?: string | null; legacy_text_value?: string | null; numeric_value?: number | null; units?: { symbol?: string | null } | null }> })?.sku_attribute_values ?? []).map((av) => {

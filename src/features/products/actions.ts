@@ -18,7 +18,7 @@ export async function getProductVariants(productId: string): Promise<ProductVari
   await requireManager();
   const supabase = await createClient();
   const map = await fetchProductVariantRows(supabase, [productId]);
-  return { variants: map.get(productId) ?? [] };
+  return { skus: map.get(productId) ?? [] };
 }
 
 /**
@@ -33,14 +33,14 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
   await requireProfile();
   const supabase = await createClient();
 
-  const { data: variantRows } = await supabase.from("variants").select("id").eq("product_id", productId);
+  const { data: variantRows } = await supabase.from("skus").select("id").eq("product_id", productId);
   const variantIds = (variantRows ?? []).map((v) => v.id);
   if (variantIds.length === 0) return [];
 
   // ---- Phiếu yêu cầu/cấp phát: 1 requisition_items + phiếu chứa nó (inner join). ----
   type RequisitionRow = {
     id: string;
-    variant_id: string;
+    sku_id: string;
     quantity: number;
     requisition: {
       code: string;
@@ -55,9 +55,9 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
   const { data: reqData, error: reqErr } = await supabase
     .from("requisition_items")
     .select(
-      "id, variant_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name))",
+      "id, sku_id, quantity, requisition:requisitions!requisition_items_requisition_id_fkey!inner(code, status, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name))",
     )
-    .in("variant_id", variantIds)
+    .in("sku_id", variantIds)
     // Lọc cột của quan hệ to-one đã inner join → bỏ phiếu nháp chưa gửi yêu cầu.
     .neq("requisition.status", "draft")
     .order("created_at", { ascending: false })
@@ -67,7 +67,7 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
   // ---- Phiếu xuất kho đã xuất (posted): 1 issue_items + phiếu chứa nó. ----
   type IssueRow = {
     id: string;
-    variant_id: string;
+    sku_id: string;
     quantity: number;
     issue: {
       code: string;
@@ -82,9 +82,9 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
   const { data: issueData, error: issueErr } = await supabase
     .from("issue_items")
     .select(
-      "id, variant_id, quantity, issue:issues!issue_items_issue_id_fkey!inner(code, status, updated_at, creator:profiles!issues_creator_id_fkey(name), zone:zones!issues_zone_id_fkey(name), sub_zone:sub_zones!issues_sub_zone_id_fkey(name), customer:customers!issues_customer_id_fkey(name))",
+      "id, sku_id, quantity, issue:issues!issue_items_issue_id_fkey!inner(code, status, updated_at, creator:profiles!issues_creator_id_fkey(name), zone:zones!issues_zone_id_fkey(name), sub_zone:sub_zones!issues_sub_zone_id_fkey(name), customer:customers!issues_customer_id_fkey(name))",
     )
-    .in("variant_id", variantIds)
+    .in("sku_id", variantIds)
     // Chỉ phiếu đã thực sự xuất kho mới tính là lịch sử cấp/xuất của vật tư.
     .eq("issue.status", "posted")
     .order("created_at", { ascending: false })
@@ -104,7 +104,7 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       requesterName: req.requester?.name ?? null,
       fulfillerName: req.fulfiller?.name ?? null,
       destinationName: formatZoneLabel(req.zone?.name, req.sub_zone?.name),
-      variantId: raw.variant_id,
+      variantId: raw.sku_id,
       quantity: raw.quantity,
     });
   }
@@ -121,7 +121,7 @@ export async function getProductHistory(productId: string): Promise<ProductHisto
       requesterName: null,
       fulfillerName: iss.creator?.name ?? null,
       destinationName: iss.customer?.name ?? formatZoneLabel(iss.zone?.name, iss.sub_zone?.name),
-      variantId: raw.variant_id,
+      variantId: raw.sku_id,
       quantity: raw.quantity,
     });
   }
@@ -143,14 +143,14 @@ export async function setDefaultVariant(productId: string, variantId: string) {
 
   // Bỏ mặc định của các biến thể khác trong cùng vật tư.
   const { error: unsetErr } = await supabase
-    .from("variants")
+    .from("skus")
     .update({ is_default: false })
     .eq("product_id", productId)
     .eq("is_default", true);
   if (unsetErr) throw new Error(unsetErr.message);
 
   const { error } = await supabase
-    .from("variants")
+    .from("skus")
     .update({ is_default: true })
     .eq("id", variantId);
   if (error) throw new Error(error.message);
@@ -172,7 +172,7 @@ export async function deleteProduct(id: string) {
 export async function lookupVariantByQrAction(variantId: string) {
   const supabase = await createClient();
   const { data: vRow } = await supabase
-    .from("variants")
+    .from("skus")
     .select("*, products(id, name, images), units(name, symbol)")
     .eq("id", variantId)
     .single();
@@ -180,9 +180,9 @@ export async function lookupVariantByQrAction(variantId: string) {
   if (!vRow) return null;
 
   const { data: stockRow } = await supabase
-    .from("variant_stock")
+    .from("sku_stock")
     .select("quantity")
-    .eq("variant_id", vRow.id)
+    .eq("sku_id", vRow.id)
     .maybeSingle();
 
   const pMeta = vRow.products as { name?: string; images?: string[] } | null;

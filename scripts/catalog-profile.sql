@@ -46,8 +46,8 @@ from public.variants v cross join lateral jsonb_each_text(v.attributes) entry
 group by entry.key order by sku_count desc, entry.key;
 
 \echo '=== components ==='
-select component_type, count(*) as rows, count(distinct parent_variant_id) as parents,
-       count(distinct child_variant_id) as children,
+select component_type, count(*) as rows, count(distinct parent_sku_id) as parents,
+       count(distinct child_sku_id) as children,
        min(quantity) as min_quantity, max(quantity) as max_quantity
 from public.variant_components group by component_type order by component_type;
 

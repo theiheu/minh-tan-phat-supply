@@ -88,7 +88,7 @@ async function run() {
   const { data: suppliers } = await admin.from("suppliers").select("id, name").limit(2);
   const supplierId = suppliers?.[0]?.id;
 
-  const { data: allVariants } = await admin.from("variants").select("id, price, unit, attributes, products(name)").order("id");
+  const { data: allVariants } = await admin.from("skus").select("id, price, unit, attributes, products(name)").order("id");
   const variants = allVariants ?? [];
 
   console.log("📦 4. Khởi tạo số dư tồn kho ban đầu tại Kho chính...");
@@ -96,11 +96,11 @@ async function run() {
     const qty = 100;
     await admin.from("stock_balances").insert({
       location_id: mainLoc,
-      variant_id: v.id,
+      sku_id: v.id,
       quantity: qty,
     });
     await admin.from("stock_movements").insert({
-      variant_id: v.id,
+      sku_id: v.id,
       from_location_id: null,
       to_location_id: mainLoc,
       quantity: qty,
@@ -134,7 +134,7 @@ async function run() {
   if (h1) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h1.id,
-      variant_id: v4,
+      sku_id: v4,
       quantity: 2,
       damageDetail: "Đứt tóc bóng úm đợt lạnh vừa rồi",
       note: "Cần đổi mới bóng úm sưởi ấm gà",
@@ -154,7 +154,7 @@ async function run() {
   if (h2) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h2.id,
-      variant_id: v2,
+      sku_id: v2,
       quantity: 1,
       damageDetail: "Cháy tụ khởi động quạt chuồng A2",
       note: "Đã tháo quạt chờ đổi cái mới",
@@ -170,7 +170,7 @@ async function run() {
     if (ex1) {
       await admin.from("exchange_note_items").insert({
         exchange_note_id: ex1.id,
-        variant_id: v2,
+        sku_id: v2,
         quantity: 1,
       });
     }
@@ -189,7 +189,7 @@ async function run() {
   if (h3) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h3.id,
-      variant_id: v3,
+      sku_id: v3,
       quantity: 3,
       damageDetail: "Nứt vỡ góc máng ăn do va chạm xe cám",
       note: "Gà làm rơi vãi thức ăn",
@@ -207,7 +207,7 @@ async function run() {
     if (ex2) {
       await admin.from("exchange_note_items").insert({
         exchange_note_id: ex2.id,
-        variant_id: v3,
+        sku_id: v3,
         quantity: 3,
       });
     }
@@ -227,7 +227,7 @@ async function run() {
   if (h4) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h4.id,
-      variant_id: v2,
+      sku_id: v2,
       quantity: 1,
       damageDetail: "Hỏng trục cánh quạt kêu to",
       note: "Đề nghị gửi thợ cơ điện sửa",
@@ -248,7 +248,7 @@ async function run() {
   if (h5) {
     const { data: item5 } = await admin.from("defect_note_items").insert({
       defect_note_id: h5.id,
-      variant_id: v2,
+      sku_id: v2,
       quantity: 1,
       damageDetail: "Cháy bạc đạn động cơ",
       note: "Gửi sửa Nam Phát",
@@ -286,7 +286,7 @@ async function run() {
   if (h6) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h6.id,
-      variant_id: v5,
+      sku_id: v5,
       quantity: 5,
       damageDetail: "Rò rỉ ren van nước",
       note: "Đã đổi mới xong",
@@ -308,7 +308,7 @@ async function run() {
     if (ex3) {
       await admin.from("exchange_note_items").insert({
         exchange_note_id: ex3.id,
-        variant_id: v5,
+        sku_id: v5,
         quantity: 5,
       });
     }
@@ -327,7 +327,7 @@ async function run() {
   if (h7) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h7.id,
-      variant_id: v3,
+      sku_id: v3,
       quantity: 2,
       damageDetail: "Hàn gia cố mối ghép",
       note: "Đã sửa xong về kho",
@@ -348,7 +348,7 @@ async function run() {
   if (req1) {
     await admin.from("requisition_items").insert({
       requisition_id: req1.id,
-      variant_id: v1,
+      sku_id: v1,
       quantity: 10,
     });
   }
@@ -367,7 +367,7 @@ async function run() {
   if (req2) {
     await admin.from("requisition_items").insert({
       requisition_id: req2.id,
-      variant_id: variants.find((v) => getProductName(v).includes("Vimekon"))?.id ?? v1,
+      sku_id: variants.find((v) => getProductName(v).includes("Vimekon"))?.id ?? v1,
       quantity: 5,
     });
   }
@@ -388,7 +388,7 @@ async function run() {
   if (req3) {
     await admin.from("requisition_items").insert({
       requisition_id: req3.id,
-      variant_id: v6,
+      sku_id: v6,
       quantity: 2,
     });
   }
@@ -411,7 +411,7 @@ async function run() {
   if (req4) {
     await admin.from("requisition_items").insert({
       requisition_id: req4.id,
-      variant_id: variants.find((v) => getProductName(v).includes("Vắc-xin"))?.id ?? v1,
+      sku_id: variants.find((v) => getProductName(v).includes("Vắc-xin"))?.id ?? v1,
       quantity: 20,
     });
   }
@@ -429,7 +429,7 @@ async function run() {
   if (rc1) {
     await admin.from("receipt_items").insert({
       receipt_id: rc1.id,
-      variant_id: v1,
+      sku_id: v1,
       quantity: 50,
       unit_cost: 380000,
     });
@@ -448,7 +448,7 @@ async function run() {
   if (is1) {
     await admin.from("issue_items").insert({
       issue_id: is1.id,
-      variant_id: v1,
+      sku_id: v1,
       quantity: 20,
       unit_price: 420000,
     });
@@ -465,7 +465,7 @@ async function run() {
   if (lq1) {
     await admin.from("liquidation_items").insert({
       liquidation_note_id: lq1.id,
-      variant_id: v3,
+      sku_id: v3,
       quantity: 10,
     });
   }

@@ -99,7 +99,6 @@ describe("Tool Server Actions", () => {
       expect(mockRpc).toHaveBeenCalledWith("create_tool_borrowing", {
         p_items: [{
           sku_id: "47814b7e-9762-42da-91ef-07755efcfa77",
-          variant_id: "47814b7e-9762-42da-91ef-07755efcfa77",
           quantity: 2,
         }],
         p_zone_id: "55814b7e-9762-42da-91ef-07755efcfa88",
@@ -140,7 +139,6 @@ describe("Tool Server Actions", () => {
         p_borrowing_id: "47814b7e-9762-42da-91ef-07755efcfa77",
         p_items: [{
           sku_id: "55814b7e-9762-42da-91ef-07755efcfa88",
-          variant_id: "55814b7e-9762-42da-91ef-07755efcfa88",
           quantity: 1,
         }],
         p_notes: "Dụng cụ tốt",

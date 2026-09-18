@@ -17,7 +17,7 @@ async function main() {
   const { data: reqs } = await admin.from("profiles").select("id, zone_id").eq("role", "requester").limit(1);
   ok(!!reqs?.[0], "có requester (chạy scripts/bootstrap.ts trước nếu chưa)");
 
-  const { data: variants } = await admin.from("variants").select("id").limit(1);
+  const { data: variants } = await admin.from("skus").select("id").limit(1);
   ok((variants?.length ?? 0) > 0, "có biến thể vật tư");
 
   const { data: locs } = await admin.from("stock_locations").select("id, name").limit(10);
@@ -25,7 +25,7 @@ async function main() {
 
   const { data: stock } = await admin
     .from("stock_balances")
-    .select("variant_id, location_id, quantity")
+    .select("sku_id, location_id, quantity")
     .gt("quantity", 0)
     .limit(1);
   ok((stock?.length ?? 0) > 0, "có tồn kho > 0 (cho luồng ghi nhận hỏng/cấp phát)");

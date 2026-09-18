@@ -50,7 +50,7 @@ export async function executeAssembly(
 
   // 1. Kiểm tra SKU có chính sách stocked_assembly
   const { data: sku, error: skuErr } = await admin
-    .from("variants")
+    .from("skus")
     .select("id, sku_code, inventory_policy")
     .eq("id", parsed.kitSkuId)
     .single();
@@ -125,7 +125,7 @@ export async function executeDisassembly(
 
   // 1. Kiểm tra SKU có chính sách stocked_assembly
   const { data: sku, error: skuErr } = await admin
-    .from("variants")
+    .from("skus")
     .select("id, sku_code, inventory_policy")
     .eq("id", parsed.kitSkuId)
     .single();
@@ -237,7 +237,7 @@ export async function getSkuBomDetails(
 
   // 1. Lấy thông tin SKU
   const { data: sku, error: skuErr } = await supabase
-    .from("variants")
+    .from("skus")
     .select(`
       id, sku_code, inventory_policy,
       products(name),
@@ -327,7 +327,7 @@ export async function getSkuBomDetails(
 
   if (componentSkuIds.length > 0) {
     const { data: compSkus } = await supabase
-      .from("variants")
+      .from("skus")
       .select("id, sku_code, products(name), units(symbol)")
       .in("id", componentSkuIds);
 
@@ -343,8 +343,8 @@ export async function getSkuBomDetails(
 
     let balQuery = supabase
       .from("stock_balances")
-      .select("variant_id, location_id, quantity, reserved_quantity")
-      .in("variant_id", [...componentSkuIds, skuId]);
+      .select("sku_id, location_id, quantity, reserved_quantity")
+      .in("sku_id", [...componentSkuIds, skuId]);
 
     if (locationId) {
       balQuery = balQuery.eq("location_id", locationId);
@@ -354,8 +354,8 @@ export async function getSkuBomDetails(
 
     for (const b of balances || []) {
       const avail = Math.max(0, Number(b.quantity || 0) - Number(b.reserved_quantity || 0));
-      const cur = balanceMap.get(b.variant_id) || 0;
-      balanceMap.set(b.variant_id, cur + avail);
+      const cur = balanceMap.get(b.sku_id) || 0;
+      balanceMap.set(b.sku_id, cur + avail);
     }
   }
 

@@ -27,14 +27,14 @@ async function main() {
   const managerId = mgr.data.user!.id;
 
   // Dữ liệu nền: variant có tồn + kho chính
-  const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+  const { data: variant } = await rc.from("skus").select("id").limit(1).single();
   const { data: mainLoc } = await mc.from("stock_locations").select("id").eq("code", "KHO_CHINH").single();
   const { data: defectLoc } = await mc.from("stock_locations").select("id").eq("code", "KHO_HONG").single();
   const srcLoc = mainLoc;
 
   // Bơm tồn cho variant (nếu thiếu) qua RPC adjust_stock để chắc chắn đủ
   await mc.rpc("adjust_stock", {
-    p_variant_id: variant!.id,
+    p_sku_id: variant!.id,
     p_location_id: mainLoc!.id,
     p_delta: 100,
     p_reason: "verify-exchange-repair seed",
@@ -42,16 +42,16 @@ async function main() {
   });
 
   // 1. Lập HONG staging đủ ảnh — chỉ khai báo, KHÔNG trừ Kho chính
-  const stockMainBefore = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockMainBefore = await mc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
   const defect = await rc.rpc("record_defect", {
-    p_items: [{ variant_id: variant!.id, quantity: 2, damage_detail: "Nứt vỡ", damage_type: "broken", severity: "medium", images: ["https://example.com/broken.jpg"] }],
+    p_items: [{ sku_id: variant!.id, quantity: 2, damage_detail: "Nứt vỡ", damage_type: "broken", severity: "medium", images: ["https://example.com/broken.jpg"] }],
     p_source_loc: srcLoc!.id,
     p_by: requesterId,
   });
   if (defect.error) throw defect.error;
   const noteId = defect.data as string;
   ok(!!noteId, "tạo HONG staging");
-  const stockMainAfterRecord = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockMainAfterRecord = await mc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
   ok(
     stockMainBefore.data!.quantity === stockMainAfterRecord.data!.quantity,
     "record_defect KHÔNG trừ Kho chính (chỉ khai báo)",
@@ -80,21 +80,21 @@ async function main() {
   ok(!!approveReq.error, "requester không duyệt được: " + (approveReq.error?.message ?? "UNEXPECTED SUCCESS"));
 
   // 7. Cấp phát → trừ Kho chính 2 (vật tư mới) + THU đồ hỏng về Kho hỏng 2 (chỉ cộng)
-  const stockBefore = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockBefore = await mc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
   const defectStockBefore = await mc
     .from("stock_balances")
     .select("quantity")
-    .eq("variant_id", variant!.id)
+    .eq("sku_id", variant!.id)
     .eq("location_id", defectLoc!.id)
     .maybeSingle();
   const issue = await mc.rpc("issue_exchange", { p_id: exId, p_by: managerId });
   ok(!issue.error, "issue_exchange: " + (issue.error?.message ?? "ok"));
-  const stockAfter = await mc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockAfter = await mc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
   ok(stockBefore.data!.quantity - 2 === stockAfter.data!.quantity, "stock Kho chính giảm đúng 2 (cấp mới)");
   const defectStockAfter = await mc
     .from("stock_balances")
     .select("quantity")
-    .eq("variant_id", variant!.id)
+    .eq("sku_id", variant!.id)
     .eq("location_id", defectLoc!.id)
     .maybeSingle();
   const dBefore = defectStockBefore.data?.quantity ?? 0;
@@ -115,7 +115,7 @@ async function main() {
 
   // 10. HONG khác: đề nghị sửa → xác nhận sửa (send_to_repair) xoá cờ
   const defect2 = await rc.rpc("record_defect", {
-    p_items: [{ variant_id: variant!.id, quantity: 1, damage_detail: "Hỏng điện", damage_type: "electrical", severity: "light", images: ["https://example.com/b2.jpg"] }],
+    p_items: [{ sku_id: variant!.id, quantity: 1, damage_detail: "Hỏng điện", damage_type: "electrical", severity: "light", images: ["https://example.com/b2.jpg"] }],
     p_source_loc: srcLoc!.id,
     p_by: requesterId,
   });

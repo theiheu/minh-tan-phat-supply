@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("receipt_items")
-    .select("quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("receipt_id", id);
 
   const total = (items ?? []).reduce((n, i) => n + (i.entered_quantity ?? i.quantity) * (i.unit_cost ?? 0), 0);
@@ -55,7 +55,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Hạn sử dụng", flex: 0.9 },
       ]}
       rows={(items ?? []).map((i) => {
-        const v = i.variants as {
+        const v = i.skus as {
           products?: { name?: string | null } | null;
           units?: { name?: string | null; symbol?: string | null } | null;
           sku_attribute_values?: Array<{

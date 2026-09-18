@@ -55,7 +55,7 @@ export function ProductQrScannerDialog({
       const parsed = parseProductQrText(rawCode);
 
       try {
-        if (parsed.type === "variant_id") {
+        if (parsed.type === "sku_id") {
           const result = await lookupVariantByQrAction(parsed.value);
           if (result) {
             if (typeof navigator !== "undefined" && navigator.vibrate) {

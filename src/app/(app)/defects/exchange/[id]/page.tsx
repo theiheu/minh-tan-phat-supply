@@ -46,14 +46,14 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
 
   const { data: noteItems } = await supabase
     .from("exchange_note_items")
-    .select("id, variant_id, quantity, entered_quantity, transaction_unit_id, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("id, sku_id, quantity, entered_quantity, transaction_unit_id, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("exchange_note_id", id);
 
   // Chứng cứ HONG liên kết (để manager đối chiếu trước khi duyệt/cấp).
   const { data: defectItems } = note?.defect?.id
     ? await supabase
         .from("defect_note_items")
-        .select("id, quantity, entered_quantity, transaction_unit_id, damage_detail, images, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+        .select("id, quantity, entered_quantity, transaction_unit_id, damage_detail, images, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
         .eq("defect_note_id", note.defect.id)
     : { data: [] };
 
@@ -162,7 +162,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
                 </TableRow>
               )}
               {(noteItems ?? []).map((i) => {
-                const variants = i.variants as {
+                const variants = i.skus as {
                   id?: string;
                   sku_code?: string | null;
                   units?: { name?: string | null; symbol?: string | null } | null;
@@ -236,7 +236,7 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
                 </TableRow>
               )}
               {(defectItems ?? []).map((it) => {
-                const variants = it.variants as {
+                const variants = it.skus as {
                   id?: string;
                   sku_code?: string | null;
                   units?: { name?: string | null; symbol?: string | null } | null;

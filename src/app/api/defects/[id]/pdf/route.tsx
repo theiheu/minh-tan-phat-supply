@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("defect_note_items")
-    .select("quantity, entered_quantity, damage_detail, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("quantity, entered_quantity, damage_detail, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("defect_note_id", id);
 
   const qrCode = await generateQrDataUri(getSlipUrl(_req, `/defects`));
@@ -48,7 +48,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Chi tiết hỏng", flex: 2.0 },
       ]}
       rows={(items ?? []).map((i) => {
-        const v = i.variants as {
+        const v = i.skus as {
           sku_code?: string | null;
           products?: { name?: string | null } | null;
           units?: { name?: string | null; symbol?: string | null } | null;

@@ -232,7 +232,7 @@ async function main() {
     description: string;
     images: string[];
     options: string[];
-    variants: {
+    skus: {
       attributes: Record<string, string>;
       price: number;
       unit: string;
@@ -250,7 +250,7 @@ async function main() {
       description: "Động cơ điện vỏ nhôm tản nhiệt nhanh, dây đồng 100%, chuyên dùng cho hệ thống quạt hút chuồng trại.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Công suất", "Điện áp"],
-      variants: [
+      skus: [
         {
           attributes: { "Công suất": "1.5kW", "Điện áp": "380V" },
           price: 1850000,
@@ -281,7 +281,7 @@ async function main() {
       description: "Tủ điều khiển tự động bật/tắt quạt hút, bơm giàn mát theo ngưỡng nhiệt độ và độ ẩm cài đặt.",
       images: ["https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600"],
       options: ["Quy mô"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy mô": "Tủ 4 quạt 1 bơm" },
           price: 4500000,
@@ -305,7 +305,7 @@ async function main() {
       description: "Đầu dò cảm biến độ chính xác cao SHT30, vỏ bảo vệ chống bụi và khí amoniac (NH3) chuồng trại.",
       images: ["https://images.unsplash.com/photo-1518770660439-4636190af475?w=600"],
       options: ["Kiểu dáng"],
-      variants: [
+      skus: [
         {
           attributes: { "Kiểu dáng": "Gắn tường" },
           price: 350000,
@@ -329,7 +329,7 @@ async function main() {
       description: "Bóng thủy tinh tôi nhiệt chống nổ khi gặp nước, chuyên dụng sưởi úm gia cầm non đợt rét.",
       images: ["https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=600"],
       options: ["Công suất"],
-      variants: [
+      skus: [
         {
           attributes: { "Công suất": "175W đui xoáy E27" },
           price: 75000,
@@ -353,7 +353,7 @@ async function main() {
       description: "Contactor đóng ngắt động cơ điện, cuộn hút 220V/380V độ bền cơ học cao.",
       images: ["https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600"],
       options: ["Model"],
-      variants: [
+      skus: [
         {
           attributes: { "Model": "LC1E1810M5 (18A)" },
           price: 260000,
@@ -379,7 +379,7 @@ async function main() {
       description: "Cánh quạt hút gió công nghiệp kích thước khung 1380x1380, lưu lượng 44.000 m3/h.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Chất liệu"],
-      variants: [
+      skus: [
         {
           attributes: { "Chất liệu": "Inox 430 dập gân" },
           price: 520000,
@@ -403,7 +403,7 @@ async function main() {
       description: "Lọc nhớt cao cấp lọc sạch mạt kim loại và cặn bẩn, bảo vệ piston xylanh.",
       images: ["https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600"],
       options: ["Dòng xe"],
-      variants: [
+      skus: [
         {
           attributes: { "Dòng xe": "Isuzu QKR / 4JB1" },
           price: 125000,
@@ -427,7 +427,7 @@ async function main() {
       description: "Lõi lọc giấy xenlulozo kết hợp lưới thép bảo vệ, lọc bụi công suất lớn cho máy Cummins/Perkins.",
       images: ["https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600"],
       options: ["Loại lọc"],
-      variants: [
+      skus: [
         {
           attributes: { "Loại lọc": "Bộ lọc gió kép Donaldson" },
           price: 450000,
@@ -446,7 +446,7 @@ async function main() {
       description: "Ủng cao su chống trơn trượt, kháng hóa chất tẩy rửa chuồng trại và axit nhẹ.",
       images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600"],
       options: ["Kích cỡ"],
-      variants: [
+      skus: [
         {
           attributes: { "Kích cỡ": "Size 40 (Đen đế vàng)" },
           price: 85000,
@@ -477,7 +477,7 @@ async function main() {
       description: "Chống bụi mịn, vi rút dịch cúm gia cầm và hóa chất phun khử trùng toàn thân.",
       images: ["https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600"],
       options: ["Kích cỡ"],
-      variants: [
+      skus: [
         {
           attributes: { "Kích cỡ": "Size L" },
           price: 48000,
@@ -501,7 +501,7 @@ async function main() {
       description: "Găng tay dẻo dai chống rách khi tiêm phòng vaccine và mổ khám bệnh phẩm gia súc gia cầm.",
       images: ["https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600"],
       options: ["Size"],
-      variants: [
+      skus: [
         {
           attributes: { "Size": "Hộp 50 đôi Size M" },
           price: 75000,
@@ -525,7 +525,7 @@ async function main() {
       description: "Động cơ không chổi than mạnh mẽ, 2 pin 4.0Ah, mở ốc khung chuồng và dàn quạt dễ dàng.",
       images: ["https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600"],
       options: ["Bộ phụ kiện"],
-      variants: [
+      skus: [
         {
           attributes: { "Bộ phụ kiện": "Full box kèm 2 pin 4Ah + sạc" },
           price: 1850000,
@@ -544,7 +544,7 @@ async function main() {
       description: "Máng nhựa nguyên sinh chịu va đập, vành chống rơi vãi cám tiết kiệm 5-10% thức ăn.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Dung tích"],
-      variants: [
+      skus: [
         {
           attributes: { "Dung tích": "Máng vàng 8kg" },
           price: 72000,
@@ -568,7 +568,7 @@ async function main() {
       description: "Núm ti inox 304 không rỉ sét, bi xoay 360 độ nhạy nước, không bị rò rỉ làm ướt đệm lót.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "Ren xoáy phi 27 inox 304" },
           price: 19500,
@@ -585,7 +585,7 @@ async function main() {
       description: "Thiết bị định lượng thuốc hòa tan theo lưu lượng nước tự động, tỷ lệ chính xác từ 0.2% đến 2%.",
       images: ["https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600"],
       options: ["Model"],
-      variants: [
+      skus: [
         {
           attributes: { "Model": "Dosatron D25RE2 (Pháp)" },
           price: 7800000,
@@ -602,7 +602,7 @@ async function main() {
       description: "Tấm sàn nan dày chịu tải trọng trên 300kg, chống đọng phân và dễ vệ sinh xịt rửa.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Kích thước"],
-      variants: [
+      skus: [
         {
           attributes: { "Kích thước": "50cm x 100cm (Nan chữ nhật)" },
           price: 95000,
@@ -628,7 +628,7 @@ async function main() {
       description: "Van đồng đúc dày dặn chống rỉ sét, chịu áp lực nước cao cấp cho đường ống cấp nước uống chuồng.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Đường kính"],
-      variants: [
+      skus: [
         {
           attributes: { "Đường kính": "DN20 (Phi 27)" },
           price: 85000,
@@ -659,7 +659,7 @@ async function main() {
       description: "Ống cao su 3 lớp bố vải chịu áp lực 20 bar, dùng cho bơm rửa chuồng và dẫn khí nén.",
       images: ["https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "Phi 25 (Cuộn 50 mét)" },
           price: 720000,
@@ -676,7 +676,7 @@ async function main() {
       description: "Bơm cánh đồng lưu lượng lớn 6-18 m3/h, dùng bơm trung chuyển bể chứa giàn làm mát.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Model"],
-      variants: [
+      skus: [
         {
           attributes: { "Model": "Pentax CM100 (2HP - 220V)" },
           price: 5400000,
@@ -695,7 +695,7 @@ async function main() {
       description: "Vòng bi có nắp chắn bụi cao su 2 bên, chịu tốc độ cao cho động cơ quạt hút trang trại.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Mã vòng bi"],
-      variants: [
+      skus: [
         {
           attributes: { "Mã vòng bi": "SKF 6204-2RSH/C3" },
           price: 58000,
@@ -726,7 +726,7 @@ async function main() {
       description: "Gối đỡ trục quạt hút và băng tải chuyển cám, vỏ gang đúc chịu lực va đập.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Mã gối"],
-      variants: [
+      skus: [
         {
           attributes: { "Mã gối": "Asahi UCP 205 (Trục 25mm)" },
           price: 125000,
@@ -752,7 +752,7 @@ async function main() {
       description: "Dây curoa bản B truyền động puly quạt hút thông gió chuồng gà, chạy êm và bền bỉ.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "Bando B52" },
           price: 68000,
@@ -783,7 +783,7 @@ async function main() {
       description: "Xích tải dùng cho dàn tời kéo máng ăn và hệ thống gom trứng tự động.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Mã xích"],
-      variants: [
+      skus: [
         {
           attributes: { "Mã xích": "KANA 40-1R (Hộp 3.048m)" },
           price: 390000,
@@ -809,7 +809,7 @@ async function main() {
       description: "Dầu nhớt cao cấp kéo dài chu kỳ thay nhớt lên đến 20%, dùng cho xe tải và máy phát điện.",
       images: ["https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=600"],
       options: ["Quy cách đóng gói"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách đóng gói": "Xô 18 Lít" },
           price: 1420000,
@@ -833,7 +833,7 @@ async function main() {
       description: "Mỡ chịu nhiệt độ cao 180°C, kháng nước cực tốt, bảo vệ gối bi quạt và trục máy móc.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "Xô 15kg" },
           price: 1250000,
@@ -857,7 +857,7 @@ async function main() {
       description: "Thuốc khử trùng tiêu độc diệt vi khuẩn, nấm và virus dịch tả, an toàn khi phun có gia cầm.",
       images: ["https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600"],
       options: ["Trọng lượng"],
-      variants: [
+      skus: [
         {
           attributes: { "Trọng lượng": "Gói 1kg" },
           price: 175000,
@@ -881,7 +881,7 @@ async function main() {
       description: "Chế phẩm oxy già 50% tẩy sạch màng sinh học biofilm và cặn vôi trong ống nước tự động.",
       images: ["https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600"],
       options: ["Dung tích"],
-      variants: [
+      skus: [
         {
           attributes: { "Dung tích": "Can 10 Lít" },
           price: 890000,
@@ -900,7 +900,7 @@ async function main() {
       description: "Que hàn hồ quang ổn định, mối hàn ngấu đẹp, ít bắn tóe khi gia cố chuồng trại.",
       images: ["https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600"],
       options: ["Đường kính"],
-      variants: [
+      skus: [
         {
           attributes: { "Đường kính": "Phi 2.5mm (Hộp 2.5kg)" },
           price: 88000,
@@ -924,7 +924,7 @@ async function main() {
       description: "Đá cắt thép không gỉ và sắt hộp kích thước 355x3x25.4mm, cắt ngọt không cháy phôi.",
       images: ["https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600"],
       options: ["Đóng gói"],
-      variants: [
+      skus: [
         {
           attributes: { "Đóng gói": "Hộp 25 viên (355x3x25.4)" },
           price: 560000,
@@ -943,7 +943,7 @@ async function main() {
       description: "Bulong không rỉ sét trong môi trường ẩm ướt chuồng trại, kèm tán và long đền phẳng.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Kích thước"],
-      variants: [
+      skus: [
         {
           attributes: { "Kích thước": "M8 x 30mm (Bịch 50 bộ)" },
           price: 95000,
@@ -974,7 +974,7 @@ async function main() {
       description: "Đầu lục giác 8mm có đệm cao su EPDM chống dột nước mái chuồng trại.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "5.5 x 50mm (Bịch 200 con)" },
           price: 130000,
@@ -991,7 +991,7 @@ async function main() {
       description: "Dây lạt nhựa buộc cố định đường dây điện và lưới thép chuồng gà.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Kích cỡ"],
-      variants: [
+      skus: [
         {
           attributes: { "Kích cỡ": "4 x 200mm (Bịch 100 sợi)" },
           price: 19000,
@@ -1017,7 +1017,7 @@ async function main() {
       description: "Bạt tráng phủ chống thấm tuyệt đối, may viền đóng khoen che chắn gió rét cho chuồng hở.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Khổ bạt"],
-      variants: [
+      skus: [
         {
           attributes: { "Khổ bạt": "Khổ 4m x 50m (Cuộn 200m2)" },
           price: 980000,
@@ -1041,7 +1041,7 @@ async function main() {
       description: "Dây thừng dẻo dai buộc dàn tời bạt và kéo rèm che chuồng trại.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Kích cỡ"],
-      variants: [
+      skus: [
         {
           attributes: { "Kích cỡ": "Phi 8mm (Cuộn 200m)" },
           price: 340000,
@@ -1065,7 +1065,7 @@ async function main() {
       description: "Màng co dẻo bọc bao cám và vắc xin bảo quản chống ẩm mốc khi lưu kho.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Trọng lượng"],
-      variants: [
+      skus: [
         {
           attributes: { "Trọng lượng": "Khổ 50cm (Cuộn 3.2kg)" },
           price: 120000,
@@ -1084,7 +1084,7 @@ async function main() {
       description: "Vôi tôi hoạt tính cao rắc lối đi, hố sát trùng và xử lý đáy chuồng trước khi vào đàn mới.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "Bao 25kg" },
           price: 48000,
@@ -1101,7 +1101,7 @@ async function main() {
       description: "Men ủ phân và phân hủy mùn cưa trấu đệm lót chuồng, giảm mùi hôi khí amoniac tới 90%.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Quy cách"],
-      variants: [
+      skus: [
         {
           attributes: { "Quy cách": "Gói 1kg" },
           price: 68000,
@@ -1137,10 +1137,10 @@ async function main() {
     }
     totalProductsCount++;
 
-    for (let i = 0; i < item.variants.length; i++) {
-      const v = item.variants[i];
+    for (let i = 0; i < item.skus.length; i++) {
+      const v = item.skus[i];
       const isDefault = v.is_default ?? i === 0;
-      const { error: vErr } = await admin.from("variants").insert({
+      const { error: vErr } = await admin.from("skus").insert({
         product_id: prod.id,
         attributes: v.attributes,
         price: v.price,
@@ -1161,7 +1161,7 @@ async function main() {
 
   // Lấy danh sách toàn bộ variants đã tạo
   const { data: allVariants } = await admin
-    .from("variants")
+    .from("skus")
     .select("id, price, unit, attributes, products(name, category_id)")
     .order("id");
 
@@ -1185,12 +1185,12 @@ async function main() {
     const qty = Math.floor(Math.random() * 80) + 40; // 40 - 120 món
     await admin.from("stock_balances").insert({
       location_id: mainLoc,
-      variant_id: v.id,
+      sku_id: v.id,
       quantity: qty,
     });
 
     await admin.from("stock_movements").insert({
-      variant_id: v.id,
+      sku_id: v.id,
       from_location_id: null,
       to_location_id: mainLoc,
       movement_type: "receipt_in",
@@ -1232,7 +1232,7 @@ async function main() {
   if (h1) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h1.id,
-      variant_id: vBong,
+      sku_id: vBong,
       quantity: 3,
       damage_detail: "Đứt tóc sợi đốt bóng úm do chập điện nhánh",
       damage_type: "electrical",
@@ -1259,7 +1259,7 @@ async function main() {
   if (h2) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h2.id,
-      variant_id: vQuat,
+      sku_id: vQuat,
       quantity: 1,
       damage_detail: "Cánh quạt bị va quẹt biến dạng gây rung lắc mạnh",
       damage_type: "broken",
@@ -1282,7 +1282,7 @@ async function main() {
     if (dm1) {
       await admin.from("exchange_note_items").insert({
         exchange_note_id: dm1.id,
-        variant_id: vQuat,
+        sku_id: vQuat,
         quantity: 1,
       });
     }
@@ -1307,7 +1307,7 @@ async function main() {
   if (h3) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h3.id,
-      variant_id: vMang,
+      sku_id: vMang,
       quantity: 4,
       damage_detail: "Nứt vỡ góc máng ăn do va chạm xe cám",
       damage_type: "cracked",
@@ -1332,7 +1332,7 @@ async function main() {
     if (dm2) {
       await admin.from("exchange_note_items").insert({
         exchange_note_id: dm2.id,
-        variant_id: vMang,
+        sku_id: vMang,
         quantity: 4,
       });
     }
@@ -1359,7 +1359,7 @@ async function main() {
       .from("defect_note_items")
       .insert({
         defect_note_id: h4.id,
-        variant_id: vMotor,
+        sku_id: vMotor,
         quantity: 2,
         damage_detail: "Cháy cuộn dây pha B do sụt áp nguồn",
         damage_type: "electrical",
@@ -1388,7 +1388,7 @@ async function main() {
       await admin.from("repair_order_items").insert({
         repair_order_id: rep1.id,
         defect_item_id: dni4.id,
-        variant_id: vMotor,
+        sku_id: vMotor,
         quantity: 2,
         repair_detail: "Quấn lại cuộn dây đồng 100% và thay thế 2 vòng bi SKF 6205",
         cost: 950000,
@@ -1415,7 +1415,7 @@ async function main() {
   if (h5) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h5.id,
-      variant_id: vVan,
+      sku_id: vVan,
       quantity: 5,
       damage_detail: "Rách gioăng teflon chặn bi",
       damage_type: "worn",
@@ -1444,7 +1444,7 @@ async function main() {
     if (dm3) {
       await admin.from("exchange_note_items").insert({
         exchange_note_id: dm3.id,
-        variant_id: vVan,
+        sku_id: vVan,
         quantity: 5,
       });
     }
@@ -1469,7 +1469,7 @@ async function main() {
   if (h6) {
     await admin.from("defect_note_items").insert({
       defect_note_id: h6.id,
-      variant_id: findVariant("Bơm nước"),
+      sku_id: findVariant("Bơm nước"),
       quantity: 1,
       damage_detail: "Kẹt phốt cơ khí và mòn cánh bơm đồng",
       damage_type: "worn",
@@ -1502,8 +1502,8 @@ async function main() {
 
   if (req1) {
     await admin.from("requisition_items").insert([
-      { requisition_id: req1.id, variant_id: vUng, quantity: 5 },
-      { requisition_id: req1.id, variant_id: findVariant("Găng tay"), quantity: 10 },
+      { requisition_id: req1.id, sku_id: vUng, quantity: 5 },
+      { requisition_id: req1.id, sku_id: findVariant("Găng tay"), quantity: 10 },
     ]);
   }
 
@@ -1523,8 +1523,8 @@ async function main() {
 
   if (req2) {
     await admin.from("requisition_items").insert([
-      { requisition_id: req2.id, variant_id: vVimekon, quantity: 8 },
-      { requisition_id: req2.id, variant_id: findVariant("Bộ quần áo bảo hộ"), quantity: 15 },
+      { requisition_id: req2.id, sku_id: vVimekon, quantity: 8 },
+      { requisition_id: req2.id, sku_id: findVariant("Bộ quần áo bảo hộ"), quantity: 15 },
     ]);
   }
 
@@ -1546,9 +1546,9 @@ async function main() {
 
   if (req3) {
     await admin.from("requisition_items").insert([
-      { requisition_id: req3.id, variant_id: findVariant("Dây curoa"), quantity: 6 },
-      { requisition_id: req3.id, variant_id: findVariant("Vòng bi"), quantity: 8 },
-      { requisition_id: req3.id, variant_id: findVariant("Mỡ bôi trơn"), quantity: 2 },
+      { requisition_id: req3.id, sku_id: findVariant("Dây curoa"), quantity: 6 },
+      { requisition_id: req3.id, sku_id: findVariant("Vòng bi"), quantity: 8 },
+      { requisition_id: req3.id, sku_id: findVariant("Mỡ bôi trơn"), quantity: 2 },
     ]);
   }
 
@@ -1572,8 +1572,8 @@ async function main() {
 
   if (req4) {
     await admin.from("requisition_items").insert([
-      { requisition_id: req4.id, variant_id: vBong, quantity: 15 },
-      { requisition_id: req4.id, variant_id: findVariant("Dây rút"), quantity: 5 },
+      { requisition_id: req4.id, sku_id: vBong, quantity: 15 },
+      { requisition_id: req4.id, sku_id: findVariant("Dây rút"), quantity: 5 },
     ]);
   }
 
@@ -1599,8 +1599,8 @@ async function main() {
 
   if (req5) {
     await admin.from("requisition_items").insert([
-      { requisition_id: req5.id, variant_id: findVariant("Vôi bột"), quantity: 20 },
-      { requisition_id: req5.id, variant_id: findVariant("Bạt nhựa"), quantity: 2 },
+      { requisition_id: req5.id, sku_id: findVariant("Vôi bột"), quantity: 20 },
+      { requisition_id: req5.id, sku_id: findVariant("Bạt nhựa"), quantity: 2 },
     ]);
   }
 
@@ -1622,7 +1622,7 @@ async function main() {
 
   if (req6) {
     await admin.from("requisition_items").insert([
-      { requisition_id: req6.id, variant_id: findVariant("Máy siết bulong"), quantity: 3 },
+      { requisition_id: req6.id, sku_id: findVariant("Máy siết bulong"), quantity: 3 },
     ]);
   }
 
@@ -1649,8 +1649,8 @@ async function main() {
 
   if (rc1) {
     await admin.from("receipt_items").insert([
-      { receipt_id: rc1.id, variant_id: vMotor, quantity: 5, unit_cost: 2300000 },
-      { receipt_id: rc1.id, variant_id: findVariant("Khởi động từ"), quantity: 10, unit_cost: 310000 },
+      { receipt_id: rc1.id, sku_id: vMotor, quantity: 5, unit_cost: 2300000 },
+      { receipt_id: rc1.id, sku_id: findVariant("Khởi động từ"), quantity: 10, unit_cost: 310000 },
     ]);
   }
 
@@ -1672,8 +1672,8 @@ async function main() {
 
   if (rc2) {
     await admin.from("receipt_items").insert([
-      { receipt_id: rc2.id, variant_id: vVimekon, quantity: 40, unit_cost: 160000 },
-      { receipt_id: rc2.id, variant_id: findVariant("Hóa chất tẩy cặn"), quantity: 10, unit_cost: 820000 },
+      { receipt_id: rc2.id, sku_id: vVimekon, quantity: 40, unit_cost: 160000 },
+      { receipt_id: rc2.id, sku_id: findVariant("Hóa chất tẩy cặn"), quantity: 10, unit_cost: 820000 },
     ]);
   }
 
@@ -1697,7 +1697,7 @@ async function main() {
     await admin.from("receipt_items").insert([
       {
         receipt_id: rc3.id,
-        variant_id: findVariant("Bulong lục giác"),
+        sku_id: findVariant("Bulong lục giác"),
         quantity: 30,
         unit_cost: 110000,
         batch_no: "TD-2026-08A",
@@ -1705,7 +1705,7 @@ async function main() {
       },
       {
         receipt_id: rc3.id,
-        variant_id: findVariant("Vít tự khoan"),
+        sku_id: findVariant("Vít tự khoan"),
         quantity: 25,
         unit_cost: 120000,
         batch_no: "TD-2026-08B",
@@ -1713,7 +1713,7 @@ async function main() {
       },
       {
         receipt_id: rc3.id,
-        variant_id: findVariant("Que hàn điện"),
+        sku_id: findVariant("Que hàn điện"),
         quantity: 20,
         unit_cost: 150000,
         batch_no: "KT-421-99",
@@ -1749,8 +1749,8 @@ async function main() {
 
   if (is1) {
     await admin.from("issue_items").insert([
-      { issue_id: is1.id, variant_id: vMang, quantity: 15, unit_price: 85000 },
-      { issue_id: is1.id, variant_id: vBong, quantity: 20, unit_price: 90000 },
+      { issue_id: is1.id, sku_id: vMang, quantity: 15, unit_price: 85000 },
+      { issue_id: is1.id, sku_id: vBong, quantity: 20, unit_price: 90000 },
     ]);
   }
 
@@ -1774,9 +1774,9 @@ async function main() {
 
   if (is2) {
     await admin.from("issue_items").insert([
-      { issue_id: is2.id, variant_id: vMang, quantity: 20, unit_price: 88000 },
-      { issue_id: is2.id, variant_id: findVariant("Núm uống"), quantity: 50, unit_price: 22000 },
-      { issue_id: is2.id, variant_id: findVariant("Tấm lót sàn"), quantity: 30, unit_price: 105000 },
+      { issue_id: is2.id, sku_id: vMang, quantity: 20, unit_price: 88000 },
+      { issue_id: is2.id, sku_id: findVariant("Núm uống"), quantity: 50, unit_price: 22000 },
+      { issue_id: is2.id, sku_id: findVariant("Tấm lót sàn"), quantity: 30, unit_price: 105000 },
     ]);
   }
 
@@ -1800,8 +1800,8 @@ async function main() {
 
   if (is3) {
     await admin.from("issue_items").insert([
-      { issue_id: is3.id, variant_id: findVariant("Bạt nhựa"), quantity: 3, unit_price: 0 },
-      { issue_id: is3.id, variant_id: findVariant("Dây thừng"), quantity: 4, unit_price: 0 },
+      { issue_id: is3.id, sku_id: findVariant("Bạt nhựa"), quantity: 3, unit_price: 0 },
+      { issue_id: is3.id, sku_id: findVariant("Dây thừng"), quantity: 4, unit_price: 0 },
     ]);
   }
 
@@ -1825,8 +1825,8 @@ async function main() {
 
   if (is4) {
     await admin.from("issue_items").insert([
-      { issue_id: is4.id, variant_id: findVariant("Dosatron"), quantity: 1, unit_price: 8500000 },
-      { issue_id: is4.id, variant_id: findVariant("Cảm biến"), quantity: 4, unit_price: 420000 },
+      { issue_id: is4.id, sku_id: findVariant("Dosatron"), quantity: 1, unit_price: 8500000 },
+      { issue_id: is4.id, sku_id: findVariant("Cảm biến"), quantity: 4, unit_price: 420000 },
     ]);
   }
 
@@ -1857,7 +1857,7 @@ async function main() {
     await admin.from("liquidation_items").insert([
       {
         liquidation_note_id: lq1.id,
-        variant_id: vMang,
+        sku_id: vMang,
         quantity: 12,
         method: "sale",
         unit_value: 10000,
@@ -1866,7 +1866,7 @@ async function main() {
       },
       {
         liquidation_note_id: lq1.id,
-        variant_id: vQuat,
+        sku_id: vQuat,
         quantity: 2,
         method: "sale",
         unit_value: 50000,
@@ -1902,7 +1902,7 @@ async function main() {
     for (const sv of sampleVariants) {
       await admin.from("stocktake_items").insert({
         session_id: st1.id,
-        variant_id: sv.id,
+        sku_id: sv.id,
         system_qty: 50,
         actual_qty: 50,
         checked: true,
@@ -1932,7 +1932,7 @@ async function main() {
       const sv = sampleVariants2[i];
       await admin.from("stocktake_items").insert({
         session_id: st2.id,
-        variant_id: sv.id,
+        sku_id: sv.id,
         system_qty: 60,
         actual_qty: i % 2 === 0 ? 60 : 58,
         checked: i < 3,

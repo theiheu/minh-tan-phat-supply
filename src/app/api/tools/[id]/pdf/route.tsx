@@ -50,7 +50,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       quantity,
       returned_quantity,
       notes,
-      variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
+      skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
     `)
     .eq("borrowing_id", id);
 
@@ -84,7 +84,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "Ghi chú", flex: 1.2 },
       ]}
       rows={(items ?? []).map((i) => {
-        const v = i.variants as {
+        const v = i.skus as {
           products?: { name?: string | null } | null;
           units?: { name?: string | null; symbol?: string | null } | null;
           sku_attribute_values?: Array<{

@@ -45,7 +45,7 @@ export function parseDateBoundary(dateStr: string, isEnd = false): number {
 }
 
 export interface MovementInput {
-  variant_id?: string;
+  sku_id?: string;
   variantId?: string;
   movement_type?: string;
   movementType?: string;
@@ -100,7 +100,7 @@ export function calculateStockLedger(
   }
 
   for (const m of movements) {
-    const variantId = m.variant_id || m.variantId;
+    const variantId = m.sku_id || m.variantId;
     if (!variantId) continue;
 
     const mType = m.movement_type || m.movementType || "";

@@ -30,7 +30,6 @@ export async function recordDefect(input: DefectInput) {
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({
     sku_id: i.skuId || i.variantId,
-    variant_id: i.skuId || i.variantId,
     transaction_unit_id: i.transactionUnitId ?? null,
     entered_quantity: i.enteredQuantity ?? i.quantity,
     quantity: i.enteredQuantity ?? i.quantity,
@@ -155,7 +154,7 @@ export async function updateDefect(id: string, input: DefectInput) {
 
   const itemsToInsert = parsed.items.map((i) => ({
     defect_note_id: id,
-    variant_id: (i.skuId || i.variantId) as string,
+    sku_id: (i.skuId || i.variantId) as string,
     transaction_unit_id: i.transactionUnitId ?? null,
     entered_quantity: (i.enteredQuantity ?? i.quantity)!,
     quantity: (i.enteredQuantity ?? i.quantity)!,

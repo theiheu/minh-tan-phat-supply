@@ -11,7 +11,7 @@ interface StockSummaryRow {
   total_stock: number | string;
   min_stock: number;
   location_details: string;
-  variant_id?: string;
+  sku_id?: string;
   product_id?: string;
 }
 
@@ -69,7 +69,7 @@ export const inventoryTools = {
             for (const res of results) {
               if (res.data && Array.isArray(res.data)) {
                 for (const row of res.data) {
-                  const key = row.variant_id || `${row.product_name}_${row.unit}`;
+                  const key = row.sku_id || `${row.product_name}_${row.unit}`;
                   if (!seenVariantIds.has(key)) {
                     seenVariantIds.add(key);
                     rows.push(row);
@@ -124,7 +124,7 @@ export const inventoryTools = {
 
         let q = supabase
           .from("products")
-          .select("id, name, description, categories(name), variants(id, min_stock, sku_code)")
+          .select("id, name, description, categories(name), skus(id, min_stock, sku_code)")
           .is("deleted_at", null)
           .limit(10);
 
@@ -149,7 +149,7 @@ export const inventoryTools = {
           name: p.name,
           description: p.description,
           category: (p.categories as unknown as { name: string })?.name || "Chưa phân loại",
-          variantsCount: p.variants?.length || 0,
+          variantsCount: p.skus?.length || 0,
         }));
       } catch (err) {
         return { error: err instanceof Error ? err.message : "Lỗi tìm kiếm danh mục" };

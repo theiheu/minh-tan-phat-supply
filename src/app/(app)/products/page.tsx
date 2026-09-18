@@ -5,7 +5,6 @@ import { Pagination } from "@/components/pagination";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { ProductCard } from "@/features/products/components/product-card";
 import { ProductSearchBar } from "@/features/products/components/product-search-bar";
-import { CartDrawer } from "@/features/products/components/cart-drawer";
 import type { VariantWithStock } from "@/features/products/types";
 import { getCachedCategories } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
@@ -120,7 +119,7 @@ export default async function ProductsPage({
   if (productIds.length > 0) {
     const [{ data: variantRows }, { data: stockRows }] = await Promise.all([
       supabase
-        .from("variants")
+        .from("skus")
         .select(`
           id, sku_code, product_id, is_default, images, min_stock, sku_status, price, tracking_policy, inventory_policy,
           units(name, symbol),
@@ -136,16 +135,16 @@ export default async function ProductsPage({
         .order("is_default", { ascending: false }),
       supabase
         .from("stock_balances")
-        .select("variant_id, quantity, reserved_quantity")
-        .in("variant_id", (
-          await supabase.from("variants").select("id").in("product_id", productIds)
+        .select("sku_id, quantity, reserved_quantity")
+        .in("sku_id", (
+          await supabase.from("skus").select("id").in("product_id", productIds)
         ).data?.map(v => v.id) || []),
     ]);
 
     const stockMap = new Map<string, number>();
     for (const s of stockRows || []) {
-      const current = stockMap.get(s.variant_id) || 0;
-      stockMap.set(s.variant_id, current + Math.max(0, Number(s.quantity) - Number(s.reserved_quantity || 0)));
+      const current = stockMap.get(s.sku_id) || 0;
+      stockMap.set(s.sku_id, current + Math.max(0, Number(s.quantity) - Number(s.reserved_quantity || 0)));
     }
 
     const productPadMapByProduct = new Map<string, Map<string, number>>();
@@ -282,7 +281,7 @@ export default async function ProductsPage({
               <ProductCard
                 key={p.id}
                 product={productObj}
-                variants={variantsByProduct.get(p.id) ?? []}
+                skus={variantsByProduct.get(p.id) ?? []}
                 categoryIconKey={p.category_id ? categoryIconMap.get(p.category_id) : null}
                 canManage={canManage}
                 categories={categories}
@@ -299,7 +298,6 @@ export default async function ProductsPage({
         </div>
       )}
 
-      <CartDrawer />
     </div>
   );
 }

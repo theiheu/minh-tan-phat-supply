@@ -18,33 +18,33 @@ const CHECKS: Check[] = [
   {
     metric: "All products have valid SKU rows",
     expected: "0",
-    query: "select count(*)::text from public.products p where not exists (select 1 from public.variants v where v.product_id = p.id)",
+    query: "select count(*)::text from public.products p where not exists (select 1 from public.skus v where v.product_id = p.id)",
   },
   {
     metric: "No orphan document item references",
     expected: "0",
     query: `select count(*)::text from (
-      select id from public.receipt_items ri where not exists (select 1 from public.variants v where v.id = ri.variant_id)
-      union all select id from public.issue_items ii where not exists (select 1 from public.variants v where v.id = ii.variant_id)
-      union all select id from public.requisition_items reqi where not exists (select 1 from public.variants v where v.id = reqi.variant_id)
-      union all select id from public.requisition_return_items rri where not exists (select 1 from public.variants v where v.id = rri.variant_id)
-      union all select id from public.defect_note_items dni where not exists (select 1 from public.variants v where v.id = dni.variant_id)
-      union all select id from public.exchange_note_items eni where not exists (select 1 from public.variants v where v.id = eni.variant_id)
-      union all select id from public.repair_order_items roi where not exists (select 1 from public.variants v where v.id = roi.variant_id)
-      union all select id from public.liquidation_items li where not exists (select 1 from public.variants v where v.id = li.variant_id)
-      union all select id from public.tool_borrowing_items tbi where not exists (select 1 from public.variants v where v.id = tbi.variant_id)
-      union all select id from public.stocktake_items sti where not exists (select 1 from public.variants v where v.id = sti.variant_id)
+      select id from public.receipt_items ri where not exists (select 1 from public.skus v where v.id = ri.sku_id)
+      union all select id from public.issue_items ii where not exists (select 1 from public.skus v where v.id = ii.sku_id)
+      union all select id from public.requisition_items reqi where not exists (select 1 from public.skus v where v.id = reqi.sku_id)
+      union all select id from public.requisition_return_items rri where not exists (select 1 from public.skus v where v.id = rri.sku_id)
+      union all select id from public.defect_note_items dni where not exists (select 1 from public.skus v where v.id = dni.sku_id)
+      union all select id from public.exchange_note_items eni where not exists (select 1 from public.skus v where v.id = eni.sku_id)
+      union all select id from public.repair_order_items roi where not exists (select 1 from public.skus v where v.id = roi.sku_id)
+      union all select id from public.liquidation_items li where not exists (select 1 from public.skus v where v.id = li.sku_id)
+      union all select id from public.tool_borrowing_items tbi where not exists (select 1 from public.skus v where v.id = tbi.sku_id)
+      union all select id from public.stocktake_items sti where not exists (select 1 from public.skus v where v.id = sti.sku_id)
     ) orphans`,
   },
   {
     metric: "No orphan stock balance references",
     expected: "0",
-    query: "select count(*)::text from public.stock_balances sb where not exists (select 1 from public.variants v where v.id = sb.variant_id)",
+    query: "select count(*)::text from public.stock_balances sb where not exists (select 1 from public.skus v where v.id = sb.sku_id)",
   },
   {
     metric: "No orphan stock movement references",
     expected: "0",
-    query: "select count(*)::text from public.stock_movements sm where not exists (select 1 from public.variants v where v.id = sm.variant_id)",
+    query: "select count(*)::text from public.stock_movements sm where not exists (select 1 from public.skus v where v.id = sm.sku_id)",
   },
   {
     metric: "Active BOM headers have valid active versions",
@@ -54,12 +54,12 @@ const CHECKS: Check[] = [
   {
     metric: "All SKU transaction units have valid SKU references",
     expected: "0",
-    query: "select count(*)::text from public.sku_transaction_units stu where not exists (select 1 from public.variants v where v.id = stu.sku_id)",
+    query: "select count(*)::text from public.sku_transaction_units stu where not exists (select 1 from public.skus v where v.id = stu.sku_id)",
   },
   {
     metric: "All SKU attribute values have valid SKU references",
     expected: "0",
-    query: "select count(*)::text from public.sku_attribute_values sav where not exists (select 1 from public.variants v where v.id = sav.sku_id)",
+    query: "select count(*)::text from public.sku_attribute_values sav where not exists (select 1 from public.skus v where v.id = sav.sku_id)",
   },
   {
     metric: "No invalid BOM item loops",

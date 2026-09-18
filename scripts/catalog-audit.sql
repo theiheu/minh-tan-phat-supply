@@ -15,18 +15,18 @@ invalid_bom_items as (
   where bh.sku_id = bi.component_sku_id or bi.base_quantity <= 0
 ),
 orphan_refs as (
-  select 'defect_note_items' source, d.id from public.defect_note_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'exchange_note_items', d.id from public.exchange_note_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'issue_items', d.id from public.issue_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'liquidation_items', d.id from public.liquidation_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'receipt_items', d.id from public.receipt_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'repair_order_items', d.id from public.repair_order_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'requisition_items', d.id from public.requisition_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'requisition_return_items', d.id from public.requisition_return_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'stock_balances', d.id from public.stock_balances d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'stock_movements', d.id from public.stock_movements d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'stocktake_items', d.id from public.stocktake_items d left join public.variants v on v.id=d.variant_id where v.id is null
-  union all select 'tool_borrowing_items', d.id from public.tool_borrowing_items d left join public.variants v on v.id=d.variant_id where v.id is null
+  select 'defect_note_items' source, d.id from public.defect_note_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'exchange_note_items', d.id from public.exchange_note_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'issue_items', d.id from public.issue_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'liquidation_items', d.id from public.liquidation_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'receipt_items', d.id from public.receipt_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'repair_order_items', d.id from public.repair_order_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'requisition_items', d.id from public.requisition_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'requisition_return_items', d.id from public.requisition_return_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'stock_balances', d.id from public.stock_balances d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'stock_movements', d.id from public.stock_movements d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'stocktake_items', d.id from public.stocktake_items d left join public.variants v on v.id=d.sku_id where v.id is null
+  union all select 'tool_borrowing_items', d.id from public.tool_borrowing_items d left join public.variants v on v.id=d.sku_id where v.id is null
 )
 select * from (values
  ('skus_missing_base_unit', (select count(*) from missing_base_units)),

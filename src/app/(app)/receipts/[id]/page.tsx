@@ -79,7 +79,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
   // ---- Vật tư nhập ----
   const { data: items } = await supabase
     .from("receipt_items")
-    .select("id, quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("id, quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("receipt_id", id)
     .order("created_at", { ascending: true });
 
@@ -212,7 +212,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                   </TableRow>
                 )}
                 {(items ?? []).map((it) => {
-                  const v = it.variants as {
+                  const v = it.skus as {
                     products?: { name?: string | null } | null;
                     units?: { name?: string | null; symbol?: string | null } | null;
                     sku_attribute_values?: Array<{

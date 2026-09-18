@@ -46,7 +46,7 @@ export default async function RepairsPage({
   let query = supabase
     .from("repair_orders")
     .select(
-      "id, code, vendor, sent_at, expected_return_at, status, total_cost, created_at, repair_order_items(id, quantity, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+      "id, code, vendor, sent_at, expected_return_at, status, total_cost, created_at, repair_order_items(id, quantity, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -115,7 +115,7 @@ export default async function RepairsPage({
                         id: r.id,
                         status: r.status,
                         items: (r.repair_order_items ?? []).map((i) => {
-                          const v = i.variants;
+                          const v = i.skus;
                           const pName = v?.products?.name ?? "Vật tư";
                           const uSymbol = v?.units?.symbol || v?.units?.name || "—";
                           const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);

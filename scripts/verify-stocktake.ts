@@ -49,11 +49,11 @@ async function main() {
   // 2) Kiểm tra danh sách items trong kỳ kiểm kê: KHÔNG được chứa SKU virtual_kit
   const { data: items } = await mc
     .from("stocktake_items")
-    .select("id, variant_id, system_qty, actual_qty, snapshot_quality, variants(inventory_policy)")
+    .select("id, sku_id, system_qty, actual_qty, snapshot_quality, skus(inventory_policy)")
     .eq("session_id", sessionId);
 
   const hasVirtualKit = (items ?? []).some((i) => {
-    const v = Array.isArray(i.variants) ? i.variants[0] : i.variants;
+    const v = Array.isArray(i.skus) ? i.skus[0] : i.skus;
     return (v as { inventory_policy?: string | null } | null)?.inventory_policy === "virtual_kit";
   });
   check("Không bao gồm bộ ảo (virtual kit) trong kiểm kê vật lý", !hasVirtualKit);
@@ -65,13 +65,13 @@ async function main() {
     const { data } = await mc
       .from("stock_balances")
       .select("quantity")
-      .eq("variant_id", varId)
+      .eq("sku_id", varId)
       .eq("location_id", main.id)
       .single();
     return Number(data?.quantity ?? 0);
   };
 
-  const beforeBal = await getVariantBalance(testItem.variant_id);
+  const beforeBal = await getVariantBalance(testItem.sku_id);
   const VARIANCE = 5;
 
   // 3) Cập nhật dòng đã kiểm: actual_qty = system_qty + 5
@@ -84,7 +84,7 @@ async function main() {
   const posted = await mc.rpc("post_stocktake", { p_session_id: sessionId, p_by: mgrId });
   if (posted.error) throw posted.error;
 
-  const afterBal = await getVariantBalance(testItem.variant_id);
+  const afterBal = await getVariantBalance(testItem.sku_id);
   check("post_stocktake điều chỉnh tồn kho đúng mức chênh lệch (+5)", afterBal === beforeBal + VARIANCE, `${beforeBal} → ${afterBal}`);
 
   const { data: sessionDoc } = await mc.from("stocktake_sessions").select("status, posted_at").eq("id", sessionId).single();
@@ -104,7 +104,7 @@ async function main() {
   const ownerRevert = await oc.rpc("revert_stocktake", { p_session_id: sessionId, p_by: ownerId });
   if (ownerRevert.error) throw ownerRevert.error;
 
-  const revertedBal = await getVariantBalance(testItem.variant_id);
+  const revertedBal = await getVariantBalance(testItem.sku_id);
   check("revert_stocktake đảo bút toán và khôi phục tồn ban đầu", revertedBal === beforeBal, `${afterBal} → ${revertedBal}`);
 
   const { data: revertedSession } = await mc.from("stocktake_sessions").select("status").eq("id", sessionId).single();

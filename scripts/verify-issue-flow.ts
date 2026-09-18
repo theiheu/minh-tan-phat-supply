@@ -30,19 +30,19 @@ async function main() {
   const parentSet = new Set((parents ?? []).map((r) => r.sku_id as string));
   const { data: stockRows } = await mc
     .from("stock_balances")
-    .select("variant_id, quantity")
+    .select("sku_id, quantity")
     .eq("location_id", mainLoc.id)
     .gt("quantity", 10);
   const cand = (stockRows ?? [])
-    .filter((s) => !parentSet.has(s.variant_id as string))
+    .filter((s) => !parentSet.has(s.sku_id as string))
     .sort((a, b) => (b.quantity as number) - (a.quantity as number))[0];
   if (!cand) throw new Error("không có variant lá nào tồn > 10 tại KHO_CHINH");
-  const variantId = cand.variant_id as string;
+  const variantId = cand.sku_id as string;
   const balanceAt = async () => {
     const { data } = await mc
       .from("stock_balances")
       .select("quantity")
-      .eq("variant_id", variantId)
+      .eq("sku_id", variantId)
       .eq("location_id", mainLoc.id)
       .single();
     return data?.quantity as number;
@@ -63,7 +63,7 @@ async function main() {
   const ISSUE_QTY = 2;
   const beforeCreate = await balanceAt();
   const created = await mc.rpc("create_issue", {
-    p_items: [{ variant_id: variantId, quantity: ISSUE_QTY, unit_price: 15000 }],
+    p_items: [{ sku_id: variantId, quantity: ISSUE_QTY, unit_price: 15000 }],
     p_destination_type: "customer",
     p_zone_id: null,
     p_customer_id: customerId,
@@ -80,12 +80,12 @@ async function main() {
   check("phiếu draft, destination customer", issueRow.data?.status === "draft" && issueRow.data?.destination_type === "customer" && issueRow.data?.customer_id === customerId);
   const afterCreate = await balanceAt();
   check("tạo draft không đổi tồn", afterCreate === beforeCreate, `${beforeCreate} → ${afterCreate}`);
-  const item = await mc.from("issue_items").select("variant_id, quantity, unit_price").eq("issue_id", issueId).single();
-  check("issue_items ghi đúng item + unit_price 15000", item.data?.variant_id === variantId && item.data?.quantity === ISSUE_QTY && Number(item.data?.unit_price) === 15000, JSON.stringify(item.data));
+  const item = await mc.from("issue_items").select("sku_id, quantity, unit_price").eq("issue_id", issueId).single();
+  check("issue_items ghi đúng item + unit_price 15000", item.data?.sku_id === variantId && item.data?.quantity === ISSUE_QTY && Number(item.data?.unit_price) === 15000, JSON.stringify(item.data));
 
   // 2b) 0038: create_issue customer với unit_price null → phải fail (giá bán > 0)
   const noPrice = await mc.rpc("create_issue", {
-    p_items: [{ variant_id: variantId, quantity: 1, unit_price: null }],
+    p_items: [{ sku_id: variantId, quantity: 1, unit_price: null }],
     p_destination_type: "customer",
     p_zone_id: null,
     p_customer_id: customerId,
@@ -123,7 +123,7 @@ async function main() {
   const balNow = await balanceAt();
   const overQty = balNow + 5; // chắc chắn vượt tồn hiện tại
   const zoneIssue = await mc.rpc("create_issue", {
-    p_items: [{ variant_id: variantId, quantity: overQty, unit_price: 10000 }],
+    p_items: [{ sku_id: variantId, quantity: overQty, unit_price: 10000 }],
     p_destination_type: "zone",
     p_zone_id: zone.id,
     p_customer_id: null,

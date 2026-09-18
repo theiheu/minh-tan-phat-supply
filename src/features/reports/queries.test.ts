@@ -45,11 +45,11 @@ describe("Report Queries", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({
-                data: [{ variant_id: "var-1", quantity: 50 }],
+                data: [{ sku_id: "var-1", quantity: 50 }],
                 error: null,
               }),
-              then: (fn: (res: { data: { variant_id: string; quantity: number }[]; error: null }) => unknown) =>
-                fn({ data: [{ variant_id: "var-1", quantity: 50 }], error: null }),
+              then: (fn: (res: { data: { sku_id: string; quantity: number }[]; error: null }) => unknown) =>
+                fn({ data: [{ sku_id: "var-1", quantity: 50 }], error: null }),
             }),
           };
         }
@@ -97,14 +97,14 @@ describe("Report Queries", () => {
                         status: "posted",
                         destination_type: "customer",
                         created_at: "2026-09-10T00:00:00Z",
-                        issue_items: [{ quantity: 5, unit_price: 120000, variant_id: "var-1" }],
+                        issue_items: [{ quantity: 5, unit_price: 120000, sku_id: "var-1" }],
                       },
                       {
                         id: "iss-2",
                         status: "posted",
                         destination_type: "zone",
                         created_at: "2026-09-12T00:00:00Z",
-                        issue_items: [{ quantity: 3, unit_price: 100000, variant_id: "var-1" }],
+                        issue_items: [{ quantity: 3, unit_price: 100000, sku_id: "var-1" }],
                       },
                     ],
                     error: null,
@@ -280,8 +280,8 @@ describe("Report Queries", () => {
                             {
                               quantity: 10,
                               unit_price: 25000,
-                              variant_id: "v1",
-                              variants: {
+                              sku_id: "v1",
+                              skus: {
                                 unit: "cái",
                                 attributes: { type: "Inox" },
                                 products: { name: "Vòi nước" },
@@ -553,7 +553,7 @@ describe("Report Queries", () => {
                     data: [
                       {
                         id: "m-1",
-                        variant_id: "var-1",
+                        sku_id: "var-1",
                         movement_type: "receipt_in",
                         quantity: 50,
                         ref_type: "receipt",
@@ -566,7 +566,7 @@ describe("Report Queries", () => {
                       },
                       {
                         id: "m-2",
-                        variant_id: "var-1",
+                        sku_id: "var-1",
                         movement_type: "issue_out",
                         quantity: 20,
                         ref_type: "issue",

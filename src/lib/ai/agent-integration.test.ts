@@ -183,7 +183,7 @@ describe("AI Agent & Tools Unit Tests", () => {
       .mockResolvedValueOnce({
         data: [
           {
-            variant_id: "v-1",
+            sku_id: "v-1",
             product_name: "Động cơ điện 1.5kW",
             category_name: "Điện",
             attributes: {},
@@ -198,7 +198,7 @@ describe("AI Agent & Tools Unit Tests", () => {
       .mockResolvedValueOnce({
         data: [
           {
-            variant_id: "v-2",
+            sku_id: "v-2",
             product_name: "Van bi đồng phi 27",
             category_name: "Cơ khí",
             attributes: {},

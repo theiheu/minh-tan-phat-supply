@@ -25,9 +25,9 @@ async function main() {
   const mc = client(mgrToken);
 
   const { data: zone } = await rc.from("zones").select("id").limit(1).single();
-  const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+  const { data: variant } = await rc.from("skus").select("id").limit(1).single();
   const { data: tuom } = await rc.from("sku_transaction_units").select("id").eq("sku_id", variant!.id).eq("is_base", true).limit(1).single();
-  const stockBefore = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockBefore = await rc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
 
   // 1. create draft
   const created = await rc.rpc("create_requisition", {
@@ -66,7 +66,7 @@ async function main() {
   if (r.error) throw r.error;
   console.log("5. received");
 
-  const stockAfter = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockAfter = await rc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
   const reqRow = await rc.from("requisitions").select("status").eq("id", rid).single();
   const led = await rc.from("stock_movements").select("movement_type, quantity").eq("ref_id", rid);
 

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const report = req.nextUrl.searchParams.get("report") ?? "stock";
 
-  const { data: variants } = await supabase.from("variants").select(`
+  const { data: variants } = await supabase.from("skus").select(`
     id, sku_code,
     units(name, symbol),
     products(name),
@@ -51,11 +51,11 @@ export async function GET(req: NextRequest) {
   let filename = "report.csv";
 
   if (report === "stock") {
-    const { data } = await supabase.from("variant_stock").select("variant_id, quantity, min_stock").limit(1000);
+    const { data } = await supabase.from("sku_stock").select("sku_id, quantity, min_stock").limit(1000);
     rows = (data ?? []).map((r) => ({
-      "Vật tư": map.get(r.variant_id ?? "")?.products?.name ?? "—",
-      "Biến thể": label(r.variant_id),
-      "Đơn vị tính": unitOf(r.variant_id),
+      "Vật tư": map.get(r.sku_id ?? "")?.products?.name ?? "—",
+      "Biến thể": label(r.sku_id),
+      "Đơn vị tính": unitOf(r.sku_id),
       "Tồn": r.quantity ?? 0,
       "Tối thiểu": r.min_stock ?? 0,
     }));
@@ -63,13 +63,13 @@ export async function GET(req: NextRequest) {
   } else if (report === "movements") {
     const { data } = await supabase
       .from("stock_movements")
-      .select("variant_id, movement_type, quantity, created_at")
+      .select("sku_id, movement_type, quantity, created_at")
       .order("created_at", { ascending: false })
       .limit(1000);
     rows = (data ?? []).map((m) => ({
-      "Vật tư": map.get(m.variant_id)?.products?.name ?? "—",
-      "Biến thể": label(m.variant_id),
-      "Đơn vị tính": unitOf(m.variant_id),
+      "Vật tư": map.get(m.sku_id)?.products?.name ?? "—",
+      "Biến thể": label(m.sku_id),
+      "Đơn vị tính": unitOf(m.sku_id),
       "Loại": m.movement_type,
       "Số lượng": m.quantity,
       "Thời gian": m.created_at,

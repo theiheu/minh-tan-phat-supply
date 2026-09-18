@@ -43,15 +43,15 @@ export default async function NewReceiptPage({
       supabase.from("requisitions").select("code, purpose").eq("id", requisitionId).single(),
       supabase
         .from("requisition_items")
-        .select("variant_id, quantity")
+        .select("sku_id, quantity")
         .eq("requisition_id", requisitionId),
     ]);
 
     if (reqItems && reqItems.length > 0) {
       initialItems = reqItems
-        .filter((it) => !compositeIds.has(it.variant_id))
+        .filter((it) => !compositeIds.has(it.sku_id))
         .map((it) => ({
-          skuId: it.variant_id,
+          skuId: it.sku_id,
           transactionUnitId: "",
           enteredQuantity: String(it.quantity),
           unitCost: "",

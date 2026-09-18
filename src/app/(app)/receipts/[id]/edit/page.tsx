@@ -46,7 +46,7 @@ export default async function EditReceiptPage({ params }: { params: Promise<{ id
   const initialItems: ItemDraft[] = (receiptItems ?? []).map((it) => {
     const rec = it as typeof it & { transaction_unit_id?: string | null; entered_quantity?: number | null; trackingPolicy?: string };
     return {
-      skuId: rec.variant_id,
+      skuId: rec.sku_id,
       transactionUnitId: rec.transaction_unit_id ?? "",
       enteredQuantity: rec.entered_quantity !== null && rec.entered_quantity !== undefined ? String(rec.entered_quantity) : String(rec.quantity),
       unitCost: rec.unit_cost != null ? String(rec.unit_cost) : "",

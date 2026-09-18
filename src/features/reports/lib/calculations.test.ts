@@ -13,13 +13,13 @@ describe("Report calculations", () => {
       const currentBalances = new Map<string, number>([["var-1", 100]]);
       const movements = [
         {
-          variant_id: "var-1",
+          sku_id: "var-1",
           movement_type: "receipt_in",
           quantity: 50,
           created_at: "2026-09-10T10:00:00Z",
         },
         {
-          variant_id: "var-1",
+          sku_id: "var-1",
           movement_type: "issue_out",
           quantity: 20,
           created_at: "2026-09-15T10:00:00Z",
@@ -48,27 +48,27 @@ describe("Report calculations", () => {
       const movements = [
         // Before period (August): +40
         {
-          variant_id: "var-1",
+          sku_id: "var-1",
           movement_type: "receipt_in",
           quantity: 40,
           created_at: "2026-08-15T10:00:00Z",
         },
         // In period (September): +50 in, -10 out => net +40
         {
-          variant_id: "var-1",
+          sku_id: "var-1",
           movement_type: "receipt_in",
           quantity: 50,
           created_at: "2026-09-05T10:00:00Z",
         },
         {
-          variant_id: "var-1",
+          sku_id: "var-1",
           movement_type: "issue_out",
           quantity: 10,
           created_at: "2026-09-20T10:00:00Z",
         },
         // After period (October): +50 in
         {
-          variant_id: "var-1",
+          sku_id: "var-1",
           movement_type: "receipt_in",
           quantity: 50,
           created_at: "2026-10-02T10:00:00Z",
@@ -98,21 +98,21 @@ describe("Report calculations", () => {
     it("handles all IN and OUT movement types", () => {
       const currentBalances = new Map<string, number>([["var-2", 200]]);
       const movements = [
-        { variant_id: "var-2", movement_type: "receipt_in", quantity: 10, created_at: "2026-09-02T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "return_in", quantity: 5, created_at: "2026-09-03T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "repair_return_in", quantity: 3, created_at: "2026-09-04T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "adjustment_in", quantity: 2, created_at: "2026-09-05T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "defect_collect_in", quantity: 4, created_at: "2026-09-06T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "tool_return_in", quantity: 1, created_at: "2026-09-07T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "receipt_in", quantity: 10, created_at: "2026-09-02T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "return_in", quantity: 5, created_at: "2026-09-03T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "repair_return_in", quantity: 3, created_at: "2026-09-04T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "adjustment_in", quantity: 2, created_at: "2026-09-05T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "defect_collect_in", quantity: 4, created_at: "2026-09-06T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "tool_return_in", quantity: 1, created_at: "2026-09-07T00:00:00Z" },
 
-        { variant_id: "var-2", movement_type: "issue_out", quantity: 6, created_at: "2026-09-08T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "requisition_out", quantity: 4, created_at: "2026-09-09T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "defect_out", quantity: 2, created_at: "2026-09-10T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "repair_out", quantity: 3, created_at: "2026-09-11T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "liquidation_out", quantity: 1, created_at: "2026-09-12T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "adjustment_out", quantity: 1, created_at: "2026-09-13T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "exchange_out", quantity: 2, created_at: "2026-09-14T00:00:00Z" },
-        { variant_id: "var-2", movement_type: "tool_borrow_out", quantity: 1, created_at: "2026-09-15T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "issue_out", quantity: 6, created_at: "2026-09-08T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "requisition_out", quantity: 4, created_at: "2026-09-09T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "defect_out", quantity: 2, created_at: "2026-09-10T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "repair_out", quantity: 3, created_at: "2026-09-11T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "liquidation_out", quantity: 1, created_at: "2026-09-12T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "adjustment_out", quantity: 1, created_at: "2026-09-13T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "exchange_out", quantity: 2, created_at: "2026-09-14T00:00:00Z" },
+        { sku_id: "var-2", movement_type: "tool_borrow_out", quantity: 1, created_at: "2026-09-15T00:00:00Z" },
       ];
 
       const result = calculateStockLedger(
@@ -138,7 +138,7 @@ describe("Report calculations", () => {
         ["var-idle", 50],
       ]);
       const movements: Array<{
-        variant_id: string;
+        sku_id: string;
         movement_type: string;
         quantity: number;
         created_at: string;
@@ -420,9 +420,9 @@ describe("Report calculations", () => {
 
     it("calculates stock ledger without currentBalances map using before-period history", () => {
       const movements = [
-        { variant_id: "v-nb", movement_type: "receipt_in", quantity: 80, created_at: "2026-08-01T00:00:00Z" },
-        { variant_id: "v-nb", movement_type: "issue_out", quantity: 30, created_at: "2026-08-15T00:00:00Z" },
-        { variant_id: "v-nb", movement_type: "receipt_in", quantity: 40, created_at: "2026-09-10T00:00:00Z" },
+        { sku_id: "v-nb", movement_type: "receipt_in", quantity: 80, created_at: "2026-08-01T00:00:00Z" },
+        { sku_id: "v-nb", movement_type: "issue_out", quantity: 30, created_at: "2026-08-15T00:00:00Z" },
+        { sku_id: "v-nb", movement_type: "receipt_in", quantity: 40, created_at: "2026-09-10T00:00:00Z" },
       ];
       const result = calculateStockLedger(movements, new Map(), "2026-09-01", "2026-09-30");
       const row = result.get("v-nb");

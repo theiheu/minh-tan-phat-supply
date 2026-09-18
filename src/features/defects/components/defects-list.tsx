@@ -379,7 +379,7 @@ export function DefectsList({
         <DefectEditDialog
           row={editingRow}
           sourceLocationId={sourceLocationId}
-          variants={variants}
+          skus={variants}
           open={!!editingRow}
           onOpenChange={(o) => (!o ? setEditingRow(null) : undefined)}
           onSuccess={() => {

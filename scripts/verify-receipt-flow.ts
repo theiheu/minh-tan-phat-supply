@@ -20,7 +20,7 @@ async function main() {
   const mc = client(mgr.data.session!.access_token);
 
   const { data: zone } = await rc.from("zones").select("id").limit(1).single();
-  const { data: variant } = await rc.from("variants").select("id").limit(1).single();
+  const { data: variant } = await rc.from("skus").select("id").limit(1).single();
   const { data: tuom } = await rc.from("sku_transaction_units").select("id, factor_to_base").eq("sku_id", variant!.id).eq("is_base", true).limit(1).single();
   // Pre-test cleanup: cancel all previously-approved requisitions for test isolation
   const { data: leftoverApproved } = await mc.from("requisitions")
@@ -34,7 +34,7 @@ async function main() {
     await rc.rpc("cancel_requisition", { p_id: r.id, p_by: req.data.user!.id });
   }
 
-  const stockInitial = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockInitial = await rc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
 
   // 1. requester tạo + gửi phiếu yêu cầu 10 (chờ duyệt - pending)
   const created = await rc.rpc("create_requisition", {
@@ -120,7 +120,7 @@ async function main() {
   if (cancelled.error) throw cancelled.error;
   console.log("create_receipt without p_notes (3 args): OK");
 
-  const stockAfter = await rc.from("variant_stock").select("quantity").eq("variant_id", variant!.id).single();
+  const stockAfter = await rc.from("sku_stock").select("quantity").eq("sku_id", variant!.id).single();
   const reqRow = await rc.from("requisitions").select("status").eq("id", rid).single();
   const receiptRow = await mc.from("receipts").select("status").eq("id", receipt2Id).single();
   const led = await mc.from("stock_movements").select("movement_type, quantity").eq("ref_id", receipt2Id);

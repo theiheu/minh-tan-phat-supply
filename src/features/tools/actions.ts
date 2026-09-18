@@ -36,7 +36,6 @@ export async function createToolBorrowing(input: ToolBorrowingInput) {
   const { data, error } = await supabase.rpc("create_tool_borrowing", {
     p_items: parsed.items.map((i) => ({
       sku_id: i.skuId,
-      variant_id: i.skuId,
       quantity: i.quantity,
     })),
     p_zone_id: (parsed.zoneId ?? null) as unknown as string,
@@ -89,7 +88,6 @@ export async function returnToolBorrowing(input: ToolReturnInput) {
     p_borrowing_id: parsed.borrowingId,
     p_items: parsed.items.map((i) => ({
       sku_id: i.skuId,
-      variant_id: i.skuId,
       quantity: i.quantity,
     })),
     p_notes: parsed.notes || "",

@@ -16,13 +16,13 @@ async function main() {
   const mc = client(mgr.data.session!.access_token);
   const managerId = mgr.data.user!.id;
 
-  const { data: variant } = await mc.from("variants").select("id").limit(1).single();
+  const { data: variant } = await mc.from("skus").select("id").limit(1).single();
   const { data: main } = await mc.from("stock_locations").select("id").eq("code", "KHO_CHINH").single();
   const { data: hong } = await mc.from("stock_locations").select("id").eq("code", "KHO_HONG").single();
   const { data: sua } = await mc.from("stock_locations").select("id").eq("code", "KHO_DANG_SUA").single();
 
   async function bal(locId: string) {
-    const r = await mc.from("stock_balances").select("quantity").eq("variant_id", variant!.id).eq("location_id", locId).maybeSingle();
+    const r = await mc.from("stock_balances").select("quantity").eq("sku_id", variant!.id).eq("location_id", locId).maybeSingle();
     return r.data?.quantity ?? 0;
   }
 
@@ -31,7 +31,7 @@ async function main() {
 
   // 1. record defect (5)
   const defect = await mc.rpc("record_defect", {
-    p_items: [{ variant_id: variant!.id, quantity: 5, damage_detail: "nứt", damage_type: "cracked", severity: "medium", images: [] }],
+    p_items: [{ sku_id: variant!.id, quantity: 5, damage_detail: "nứt", damage_type: "cracked", severity: "medium", images: [] }],
     p_source_loc: main!.id,
     p_by: managerId,
   });
@@ -63,7 +63,7 @@ async function main() {
   if (done.error) throw done.error;
   console.log("3. completed, main:", await bal(main!.id), "sua:", await bal(sua!.id));
 
-  const led = await mc.from("stock_movements").select("movement_type").eq("variant_id", variant!.id).order("created_at", { ascending: false }).limit(3);
+  const led = await mc.from("stock_movements").select("movement_type").eq("sku_id", variant!.id).order("created_at", { ascending: false }).limit(3);
   console.log("ledger (3 gần nhất):", JSON.stringify(led.data?.map((l) => l.movement_type)));
   const ok = mainBefore === (await bal(main!.id));
   console.log(ok ? "PASS (stock về đúng)" : "FAIL");

@@ -62,7 +62,7 @@ export interface AdminProductRow {
   categoryId: string | null;
   categoryName: string | null;
   createdAt: string;
-  variants: AdminVariantRow[];
+  skus: AdminVariantRow[];
   /** Vật tư có dòng bộ (lắp ráp) — tồn vật tư = số bộ còn ráp được. */
   isKit: boolean;
   /** Số tồn hiển thị: bộ → số bộ còn ráp được; còn lại → tổng theo từng dòng. */
@@ -71,7 +71,7 @@ export interface AdminProductRow {
 
 /** Payload trả về cho dialog quản lý biến thể của 1 vật tư. */
 export interface ProductVariantsPayload {
-  variants: AdminVariantRow[];
+  skus: AdminVariantRow[];
 }
 
 /** Loại phiếu xuất một dòng lịch sử của vật tư. */

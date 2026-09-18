@@ -49,7 +49,7 @@ async function run() {
     const imageA = `http://127.0.0.1:54321/storage/v1/object/public/receipt-images/${managerAId}/test-image-a.jpg`;
     const imageB = `http://127.0.0.1:54321/storage/v1/object/public/receipt-images/${managerBId}/test-image-b.jpg`;
 
-    const { data: variant } = await clientA.from("variants").select("id").limit(1).single();
+    const { data: variant } = await clientA.from("skus").select("id").limit(1).single();
     assert(variant, "Variant needed");
 
     // 3. Manager A creates a receipt with imageA

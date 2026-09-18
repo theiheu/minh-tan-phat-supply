@@ -147,7 +147,7 @@ export const getCachedVariantOptions = unstable_cache(
     const admin = createAdminClient();
     const [{ data }, { data: padRows }] = await Promise.all([
       admin
-        .from("variants")
+        .from("skus")
         .select(`
           id, product_id, sku_code, price, tracking_policy, images,
           units(name, symbol),

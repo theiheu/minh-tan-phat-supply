@@ -43,7 +43,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
   // ---- Dòng vật tư xuất (giữ thứ tự nhập) ----
   const { data: items } = await supabase
     .from("issue_items")
-    .select("id, quantity, entered_quantity, transaction_unit_id, unit_price, sku_name_snapshot, uom_name_snapshot, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("id, quantity, entered_quantity, transaction_unit_id, unit_price, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("issue_id", id)
     .order("created_at", { ascending: true });
 
@@ -202,7 +202,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                   </TableRow>
                 )}
                 {(items ?? []).map((it, idx) => {
-                  const v = it.variants as {
+                  const v = it.skus as {
                     products?: { name?: string | null } | null;
                     units?: { name?: string | null; symbol?: string | null } | null;
                     sku_attribute_values?: Array<{

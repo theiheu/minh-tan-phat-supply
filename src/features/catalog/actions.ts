@@ -207,7 +207,7 @@ export async function activateProduct(productId: string): Promise<void> {
   const profile = await requireManager();
   const supabase = await createClient();
   const { data: skuCount } = await supabase
-    .from("variants")
+    .from("skus")
     .select("id", { count: "exact", head: true })
     .eq("product_id", productId)
     .eq("sku_status", "active");
@@ -311,7 +311,7 @@ export async function addSku(input: SkuInput): Promise<string> {
   const resolvedBaseUnitId = await ensureUnit(parsed.baseUnitId, supabase);
   // Conflict check for duplicate attribute combination is enforced by DB unique index.
   const { data, error } = await supabase
-    .from("variants")
+    .from("skus")
     .insert({
       product_id: parsed.productId,
       sku_code: parsed.skuCode || null,
@@ -434,13 +434,13 @@ export async function changeSkuStatus(input: SkuStatusInput): Promise<void> {
   const parsed = skuStatusSchema.parse(input);
   const supabase = await createClient();
   if (parsed.status === "inactive") {
-    const { count } = await supabase.from("stock_balances").select("id", { count: "exact", head: true }).eq("variant_id", parsed.skuId).gt("quantity", 0);
+    const { count } = await supabase.from("stock_balances").select("id", { count: "exact", head: true }).eq("sku_id", parsed.skuId).gt("quantity", 0);
     if (Number(count) > 0) throw new Error("Không thể ngừng SKU đang có tồn kho.");
     const { count: resCount } = await supabase.from("stock_reservations").select("id", { count: "exact", head: true }).eq("sku_id", parsed.skuId).in("status", ["active", "partially_consumed"]);
     if (Number(resCount) > 0) throw new Error("Không thể ngừng SKU đang có reservation active.");
   }
-  const { data: before } = await supabase.from("variants").select("sku_status,product_id").eq("id", parsed.skuId).single();
-  await supabase.from("variants").update({ sku_status: parsed.status, updated_at: new Date().toISOString() }).eq("id", parsed.skuId);
+  const { data: before } = await supabase.from("skus").select("sku_status,product_id").eq("id", parsed.skuId).single();
+  await supabase.from("skus").update({ sku_status: parsed.status, updated_at: new Date().toISOString() }).eq("id", parsed.skuId);
   await supabase.from("audit_logs").insert({
     actor_id: profile.id,
     action: `catalog.sku.set_${parsed.status}`,
@@ -459,7 +459,7 @@ export async function updateSkuImages(input: UpdateSkuImagesInput): Promise<void
   const supabase = await createClient();
 
   const { data: before } = await supabase
-    .from("variants")
+    .from("skus")
     .select("id, product_id, sku_code, images")
     .eq("id", parsed.skuId)
     .single();
@@ -467,7 +467,7 @@ export async function updateSkuImages(input: UpdateSkuImagesInput): Promise<void
   if (!before) throw new Error("Không tìm thấy SKU");
 
   const { error } = await supabase
-    .from("variants")
+    .from("skus")
     .update({
       images: parsed.images || [],
       updated_at: new Date().toISOString(),
@@ -496,7 +496,7 @@ export async function updateSku(input: UpdateSkuInput): Promise<void> {
   const resolvedBaseUnitId = await ensureUnit(parsed.baseUnitId, supabase);
 
   const { data: before, error: bErr } = await supabase
-    .from("variants")
+    .from("skus")
     .select("id, product_id, sku_code, base_unit_id, min_stock, price, tracking_policy, inventory_policy, allow_fraction, images")
     .eq("id", parsed.skuId)
     .single();
@@ -505,7 +505,7 @@ export async function updateSku(input: UpdateSkuInput): Promise<void> {
 
   // Update variants record
   const { error: updErr } = await supabase
-    .from("variants")
+    .from("skus")
     .update({
       sku_code: parsed.skuCode || null,
       base_unit_id: resolvedBaseUnitId,
@@ -723,7 +723,7 @@ export async function updateProductAxes(input: UpdateProductAxesInput): Promise<
         .eq("attribute_definition_id", pad.attribute_definition_id);
 
       // Xóa giá trị thuộc tính tương ứng trên các SKU của sản phẩm này
-      const { data: skuRows } = await supabase.from("variants").select("id").eq("product_id", productId);
+      const { data: skuRows } = await supabase.from("skus").select("id").eq("product_id", productId);
       const skuIds = (skuRows ?? []).map((s) => s.id);
       if (skuIds.length > 0) {
         await supabase
@@ -752,7 +752,7 @@ export async function deleteSku(skuId: string): Promise<void> {
   const supabase = await createClient();
 
   const { data: variant, error: vErr } = await supabase
-    .from("variants")
+    .from("skus")
     .select("id, product_id, sku_code")
     .eq("id", skuId)
     .single();
@@ -763,7 +763,7 @@ export async function deleteSku(skuId: string): Promise<void> {
   const { data: balances } = await supabase
     .from("stock_balances")
     .select("quantity, reserved_quantity")
-    .eq("variant_id", skuId);
+    .eq("sku_id", skuId);
 
   const hasStock = (balances ?? []).some(
     (b) => Number(b.quantity ?? 0) > 0 || Number(b.reserved_quantity ?? 0) > 0
@@ -781,12 +781,12 @@ export async function deleteSku(skuId: string): Promise<void> {
     { count: repCount },
     { count: exCount },
   ] = await Promise.all([
-    supabase.from("requisition_items").select("id", { count: "exact", head: true }).eq("variant_id", skuId),
-    supabase.from("receipt_items").select("id", { count: "exact", head: true }).eq("variant_id", skuId),
-    supabase.from("issue_items").select("id", { count: "exact", head: true }).eq("variant_id", skuId),
-    supabase.from("stocktake_items").select("id", { count: "exact", head: true }).eq("variant_id", skuId),
-    supabase.from("repair_order_items").select("id", { count: "exact", head: true }).eq("variant_id", skuId),
-    supabase.from("exchange_note_items").select("id", { count: "exact", head: true }).eq("variant_id", skuId),
+    supabase.from("requisition_items").select("id", { count: "exact", head: true }).eq("sku_id", skuId),
+    supabase.from("receipt_items").select("id", { count: "exact", head: true }).eq("sku_id", skuId),
+    supabase.from("issue_items").select("id", { count: "exact", head: true }).eq("sku_id", skuId),
+    supabase.from("stocktake_items").select("id", { count: "exact", head: true }).eq("sku_id", skuId),
+    supabase.from("repair_order_items").select("id", { count: "exact", head: true }).eq("sku_id", skuId),
+    supabase.from("exchange_note_items").select("id", { count: "exact", head: true }).eq("sku_id", skuId),
   ]);
 
   if (
@@ -806,8 +806,8 @@ export async function deleteSku(skuId: string): Promise<void> {
   await supabase.from("barcode_registry").delete().eq("sku_id", skuId);
   await supabase.from("sku_transaction_units").delete().eq("sku_id", skuId);
   await supabase.from("sku_attribute_values").delete().eq("sku_id", skuId);
-  await supabase.from("stock_balances").delete().eq("variant_id", skuId);
-  const { error: delErr } = await supabase.from("variants").delete().eq("id", skuId);
+  await supabase.from("stock_balances").delete().eq("sku_id", skuId);
+  const { error: delErr } = await supabase.from("skus").delete().eq("id", skuId);
   if (delErr) throw new Error(delErr.message);
 
   await supabase.from("audit_logs").insert({
@@ -899,7 +899,7 @@ export async function updateTransactionUom(input: UpdateTransactionUomInput): Pr
     after: { displayName: parsed.displayName, factor: parsed.factorToBase },
   });
 
-  const { data: sku } = await supabase.from("variants").select("product_id").eq("id", uom.sku_id).single();
+  const { data: sku } = await supabase.from("skus").select("product_id").eq("id", uom.sku_id).single();
   revalidateCatalog(sku?.product_id);
 }
 
@@ -928,7 +928,7 @@ export async function deleteTransactionUom(uomId: string): Promise<void> {
     entity_id: uomId,
   });
 
-  const { data: sku } = await supabase.from("variants").select("product_id").eq("id", uom.sku_id).single();
+  const { data: sku } = await supabase.from("skus").select("product_id").eq("id", uom.sku_id).single();
   revalidateCatalog(sku?.product_id);
 }
 
@@ -946,7 +946,7 @@ export async function saveBomComponents(
 
   // 1. Update variant inventory_policy
   const { data: sku, error: skuErr } = await supabase
-    .from("variants")
+    .from("skus")
     .update({ inventory_policy: inventoryPolicy })
     .eq("id", skuId)
     .select("product_id")
@@ -1226,7 +1226,7 @@ export async function createCompleteProduct(input: CreateCompleteProductInput): 
     const skuCode = sku.skuCode?.trim() || null;
 
     const { data: skuRow, error: skuErr } = await supabase
-      .from("variants")
+      .from("skus")
       .insert({
         product_id: prod.id,
         sku_code: skuCode,

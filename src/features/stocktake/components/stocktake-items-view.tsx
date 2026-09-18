@@ -285,7 +285,7 @@ export function StocktakeItemsView({
                       )}
                     </div>
                     <div className="truncate text-xs text-muted-foreground">
-                      {group.variants.length} biến thể
+                      {group.skus.length} biến thể
                       {group.description ? ` · ${group.description}` : ""}
                     </div>
                   </div>
@@ -301,7 +301,7 @@ export function StocktakeItemsView({
                 {isExpanded && (
                   /* Biến thể THỤT VÀO dưới vật tư chính (vẽ đường lề trái cho rõ là cấp con) */
                   <div className="ml-3 divide-y border-l-2 border-muted/60 py-0.5 pl-1 pr-1 sm:ml-4 sm:pl-2">
-                    {group.variants.map((item) => {
+                    {group.skus.map((item) => {
                       const val = quantities[item.id] ?? String(item.actualQty);
                       const diff = (Number(val) || 0) - item.systemQty;
                       const diffCls =

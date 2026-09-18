@@ -186,7 +186,7 @@ export function RequisitionForm({
           return;
         }
 
-        if (msg.includes("giỏ hàng") || msg.includes("variant_id")) {
+        if (msg.includes("giỏ hàng") || msg.includes("sku_id")) {
           toast.error(msg, {
             action: {
               label: "Xóa giỏ hàng",

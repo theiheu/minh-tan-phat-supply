@@ -61,7 +61,7 @@ export default async function ToolsPage({
     { data: profilesData },
   ] = await Promise.all([
     getCachedVariantOptions(),
-    supabase.from("variant_stock").select("variant_id, quantity"),
+    supabase.from("sku_stock").select("sku_id, quantity"),
     getCachedZones(),
     getCachedSubZones(),
     isManager
@@ -69,7 +69,7 @@ export default async function ToolsPage({
       : Promise.resolve({ data: null }),
   ]);
 
-  const stockMap = new Map((stockData ?? []).map((s) => [s.variant_id, s.quantity ?? 0]));
+  const stockMap = new Map((stockData ?? []).map((s) => [s.sku_id, s.quantity ?? 0]));
 
   const toolSkus: ToolBorrowSkuOption[] = cachedVariants.map((v) => ({
     id: v.id,
@@ -154,11 +154,11 @@ export default async function ToolsPage({
       issued_by_profile:profiles!tool_borrowings_issued_by_fkey(name),
       tool_borrowing_items(
         id,
-        variant_id,
+        sku_id,
         quantity,
         returned_quantity,
         notes,
-        variants(id, sku_code, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
+        skus(id, sku_code, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
       )
     `,
       { count: "exact" },
@@ -378,7 +378,7 @@ export default async function ToolsPage({
             }
 
             return items.map((item) => {
-              const variant = item.variants as {
+              const variant = item.skus as {
                 id?: string;
                 sku_code?: string | null;
                 products?: { name?: string; images?: string[] | null } | null;
@@ -402,7 +402,7 @@ export default async function ToolsPage({
                   key={item.id}
                   borrowingId={b.id}
                   code={b.code}
-                  skuId={item.variant_id}
+                  skuId={item.sku_id}
                   productName={productName}
                   skuLabel={skuLbl}
                   unit={unit}

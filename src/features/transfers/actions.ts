@@ -23,7 +23,6 @@ export async function transferStock(input: {
   const { error } = await supabase.rpc("transfer_stock", {
     p_items: input.items.map((i) => ({
       sku_id: i.skuId || i.variantId,
-      variant_id: i.skuId || i.variantId,
       entered_quantity: i.enteredQuantity ?? i.quantity,
       quantity: i.enteredQuantity ?? i.quantity,
       transaction_unit_id: i.transactionUnitId ?? null,
@@ -65,7 +64,7 @@ export async function adjustStock(input: {
   const profile = await requireProfile();
   const supabase = await createClient();
   const { error } = await supabase.rpc("adjust_stock", {
-    p_variant_id: skuId,
+    p_sku_id: skuId,
     p_location_id: input.locationId,
     p_delta: input.delta,
     p_reason: input.reason,

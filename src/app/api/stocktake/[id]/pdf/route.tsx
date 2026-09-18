@@ -25,9 +25,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("stocktake_items")
-    .select("system_qty, actual_qty, checked, notes, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("system_qty, actual_qty, checked, notes, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("session_id", id)
-    .order("variant_id", { ascending: true });
+    .order("sku_id", { ascending: true });
 
   // Phiếu đã chốt chỉ in các dòng đã kiểm (khớp màn hình); phiếu draft in đủ để cầm đi kiểm.
   const isPosted = session.status === "posted";
@@ -55,7 +55,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         { label: "GHI CHÚ", flex: 1.4 },
       ]}
       rows={rows.map((i) => {
-        const v = i.variants as {
+        const v = i.skus as {
           products?: { name?: string | null } | null;
           units?: { name?: string | null; symbol?: string | null } | null;
           sku_attribute_values?: Array<{

@@ -40,7 +40,7 @@ export async function createLiquidation(input: z.infer<typeof liquidationSchema>
   const parsed = liquidationSchema.parse(input);
   const supabase = await createClient();
   const items = parsed.items.map((i) => ({
-    variant_id: i.variantId,
+    sku_id: i.variantId,
     quantity: i.quantity,
     method: i.method,
     unit_value: i.unitValue,

@@ -31,23 +31,23 @@ async function main() {
   // 2) Chọn 1 SKU tiêu chuẩn có tồn > 10 tại kho chính
   const { data: stockRows } = await mc
     .from("stock_balances")
-    .select("variant_id, quantity, variants(inventory_policy, tracking_policy, products(name))")
+    .select("sku_id, quantity, skus(inventory_policy, tracking_policy, products(name))")
     .eq("location_id", mainLoc.id)
     .gt("quantity", 10);
 
   const cand = (stockRows ?? []).find((s) => {
-    const v = Array.isArray(s.variants) ? s.variants[0] : s.variants;
+    const v = Array.isArray(s.skus) ? s.skus[0] : s.skus;
     const policy = (v as { inventory_policy?: string | null } | null)?.inventory_policy;
     return policy === "normal" || !policy;
   });
   if (!cand) throw new Error("Không có SKU tiêu chuẩn nào tồn > 10 tại KHO_CHINH");
-  const skuId = cand.variant_id;
+  const skuId = cand.sku_id;
 
   const getBalance = async (locId: string) => {
     const { data } = await mc
       .from("stock_balances")
       .select("quantity")
-      .eq("variant_id", skuId)
+      .eq("sku_id", skuId)
       .eq("location_id", locId)
       .maybeSingle();
     return Number(data?.quantity ?? 0);
@@ -78,7 +78,7 @@ async function main() {
   const { data: movements } = await mc
     .from("stock_movements")
     .select("movement_type, ref_type, quantity, from_location_id, to_location_id")
-    .eq("variant_id", skuId)
+    .eq("sku_id", skuId)
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -109,7 +109,7 @@ async function main() {
   const preAdjust = await getBalance(destLoc.id);
   const ADJUST_DELTA = 2;
   const adjRes = await mc.rpc("adjust_stock", {
-    p_variant_id: skuId,
+    p_sku_id: skuId,
     p_location_id: destLoc.id,
     p_delta: ADJUST_DELTA,
     p_reason: "Kiểm tra điều chỉnh thủ công tăng 2",
@@ -121,7 +121,7 @@ async function main() {
 
   // 8) Test adjust_stock giảm
   const adjNegRes = await mc.rpc("adjust_stock", {
-    p_variant_id: skuId,
+    p_sku_id: skuId,
     p_location_id: destLoc.id,
     p_delta: -ADJUST_DELTA,
     p_reason: "Kiểm tra điều chỉnh thủ công giảm 2",
@@ -133,7 +133,7 @@ async function main() {
 
   // 9) Negative test: adjust thiếu lý do
   const noReasonAdj = await mc.rpc("adjust_stock", {
-    p_variant_id: skuId,
+    p_sku_id: skuId,
     p_location_id: destLoc.id,
     p_delta: 1,
     p_reason: "   ",

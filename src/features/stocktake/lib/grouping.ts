@@ -12,7 +12,7 @@ export interface StocktakeGroup {
   categoryName: string | null;
   /** Ảnh dùng cho thẻ vật tư chính: ảnh sản phẩm, thiếu thì lấy ảnh biến thể. */
   images: string[];
-  variants: StocktakeItemView[];
+  skus: StocktakeItemView[];
 }
 
 /** Gom danh sách biến thể → nhóm theo vật tư chính, sắp theo tên (biến thể theo nhãn). */
@@ -27,24 +27,24 @@ export function groupByProduct(items: StocktakeItemView[]): StocktakeGroup[] {
         description: it.description,
         categoryName: it.categoryName,
         images: [],
-        variants: [],
+        skus: [],
       };
       map.set(it.productId, g);
     }
-    g.variants.push(it);
+    g.skus.push(it);
   }
   const groups = [...map.values()];
   groups.sort((a, b) => a.productName.localeCompare(b.productName, "vi"));
   for (const g of groups) {
-    g.variants.sort((a, b) =>
+    g.skus.sort((a, b) =>
       variantLabel(a.attributes, a.unit).localeCompare(variantLabel(b.attributes, b.unit), "vi"),
     );
     // Ảnh đại diện: ảnh sản phẩm trước, thiếu thì gom ảnh các biến thể.
-    const productImages = g.variants[0]?.productImages ?? [];
+    const productImages = g.skus[0]?.productImages ?? [];
     if (productImages.length > 0) {
       g.images = productImages;
     } else {
-      g.images = [...new Set(g.variants.flatMap((v) => v.variantImages ?? []))];
+      g.images = [...new Set(g.skus.flatMap((v) => v.variantImages ?? []))];
     }
   }
   return groups;
@@ -56,13 +56,13 @@ export function paginateGroups(groups: StocktakeGroup[], pageSize: number): Stoc
   let cur: StocktakeGroup[] = [];
   let curRows = 0;
   for (const g of groups) {
-    if (curRows > 0 && curRows + g.variants.length > pageSize) {
+    if (curRows > 0 && curRows + g.skus.length > pageSize) {
       pages.push(cur);
       cur = [];
       curRows = 0;
     }
     cur.push(g);
-    curRows += g.variants.length;
+    curRows += g.skus.length;
   }
   if (cur.length > 0) pages.push(cur);
   return pages.length > 0 ? pages : [[]];
