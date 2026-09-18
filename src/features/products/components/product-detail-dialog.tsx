@@ -113,7 +113,7 @@ export function ProductDetailDialog({
   open,
   onOpenChange,
   product,
-  variants,
+  variants: variants,
   categoryName,
   searchQuery,
   canManage = false,

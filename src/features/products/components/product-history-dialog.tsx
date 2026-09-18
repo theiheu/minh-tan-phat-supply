@@ -151,7 +151,7 @@ export function ProductHistoryDialog({
   onOpenChange,
   productName,
   productId,
-  variants,
+  variants: variants,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;

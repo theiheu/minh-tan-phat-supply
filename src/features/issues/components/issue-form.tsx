@@ -50,14 +50,14 @@ export function IssueForm({
   zones,
   subZones = [],
   customers,
-  variants: _variants,
+  skus: _skus,
   onSuccess,
   onCancel,
 }: {
   zones: { id: string; name: string }[];
   subZones?: { id: string; zone_id: string; name: string }[];
   customers: { id: string; name: string }[];
-  variants?: { id: string; name?: string; detail?: string; isTrackableLot?: boolean; price?: number | null; label?: string }[];
+  skus?: { id: string; name?: string; detail?: string; isTrackableLot?: boolean; price?: number | null; label?: string }[];
   onSuccess?: (id: string) => void;
   onCancel?: () => void;
 }) {

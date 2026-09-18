@@ -20,5 +20,5 @@ export default async function NewIssuePage() {
     price: v.price,
   }));
 
-  return <IssueForm zones={zones} customers={customers} variants={variantOptions} />;
+  return <IssueForm zones={zones} customers={customers} skus={variantOptions} />;
 }

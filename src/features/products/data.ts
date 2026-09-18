@@ -15,7 +15,7 @@ export async function fetchCompositeVariantIds(client: SupabaseClient<DB>): Prom
 
 /**
  * Trả về Map product_id → danh sách dòng biến thể đầy đủ (label, tồn Kho chính, cấu tạo bộ).
- * Tồn của biến thể bộ = số bộ còn ráp được do view variant_stock tính (min linh kiện/định mức).
+ * Tồn của biến thể bộ = số bộ còn ráp được do view sku_stock tính (min linh kiện/định mức).
  */
 export async function fetchProductVariantRows(
   client: SupabaseClient<DB>,
@@ -28,7 +28,7 @@ export async function fetchProductVariantRows(
 
   const [{ data: variantRows }, { data: padRows }] = await Promise.all([
     client
-      .from("variants")
+      .from("skus")
       .select(`
         id, product_id, sku_code, is_default, images, min_stock, sku_status, price, tracking_policy, inventory_policy, created_at,
         units(name, symbol),
@@ -63,8 +63,8 @@ export async function fetchProductVariantRows(
   const variantIds = variants.map((v) => v.id);
   const [{ data: stockRows }, { data: bomData }] = await Promise.all([
     variantIds.length
-      ? client.from("variant_stock").select("variant_id, quantity").in("variant_id", variantIds)
-      : Promise.resolve({ data: [] as { variant_id: string; quantity: number | null }[] }),
+      ? client.from("sku_stock").select("sku_id, quantity").in("sku_id", variantIds)
+      : Promise.resolve({ data: [] as { sku_id: string; quantity: number | null }[] }),
     variantIds.length
       ? client
           .from("bom_headers")
@@ -74,7 +74,7 @@ export async function fetchProductVariantRows(
               id,
               bom_items(
                 component_sku_id, base_quantity,
-                variants:variants!bom_items_component_sku_id_fkey(
+                skus:skus!bom_items_component_sku_id_fkey(
                   id, product_id, sku_code,
                   units(name, symbol),
                   products(id, name)
@@ -86,7 +86,7 @@ export async function fetchProductVariantRows(
       : Promise.resolve({ data: [] }),
   ]);
 
-  const stockMap = new Map((stockRows ?? []).map((s) => [s.variant_id, s.quantity ?? 0]));
+  const stockMap = new Map((stockRows ?? []).map((s) => [s.sku_id, s.quantity ?? 0]));
 
   const compsByParent = new Map<string, NonNullable<AdminVariantRow["components"]>>();
   const typeByParent = new Map<string, VariantComponentType>();

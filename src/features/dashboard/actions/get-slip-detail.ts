@@ -151,7 +151,7 @@ export async function getSlipDetail(
       const { data: req, error } = await supabase
         .from("requisitions")
         .select(
-          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, variant_id, quantity, variants(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, sku_id, quantity, skus(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -159,34 +159,34 @@ export async function getSlipDetail(
       if (error || !req) return { detail: null, currentUser, error: "Không tìm thấy phiếu yêu cầu" };
 
       // Lấy tồn kho hiện tại từng vật tư
-      const variantIds = [...new Set((req.items ?? []).map((i) => i.variant_id).filter((v): v is string => Boolean(v)))];
+      const variantIds = [...new Set((req.items ?? []).map((i) => i.sku_id).filter((v): v is string => Boolean(v)))];
       const stockByVariant = new Map<string, number>();
       if (variantIds.length > 0) {
         const { data: stockRows } = await supabase
-          .from("variant_stock")
-          .select("variant_id, quantity")
-          .in("variant_id", variantIds);
+          .from("sku_stock")
+          .select("sku_id, quantity")
+          .in("sku_id", variantIds);
         for (const s of stockRows ?? []) {
-          if (s.variant_id != null && s.quantity != null) stockByVariant.set(s.variant_id, s.quantity);
+          if (s.sku_id != null && s.quantity != null) stockByVariant.set(s.sku_id, s.quantity);
         }
       }
 
       // Lấy lịch sử trả lại vật tư (tổng đã trả theo variant — dùng cho form trả trong modal).
       const { data: returnEvents } = await supabase
         .from("requisition_returns")
-        .select("id, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))")
+        .select("id, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(sku_id, quantity, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))")
         .eq("requisition_id", req.id)
         .order("created_at", { ascending: true });
 
       const returnedByVariant = new Map<string, number>();
-      for (const ev of (returnEvents ?? []) as { items?: { variant_id?: string | null; quantity: number }[] }[]) {
+      for (const ev of (returnEvents ?? []) as { items?: { sku_id?: string | null; quantity: number }[] }[]) {
         for (const it of ev.items ?? []) {
-          if (it.variant_id) returnedByVariant.set(it.variant_id, (returnedByVariant.get(it.variant_id) ?? 0) + it.quantity);
+          if (it.sku_id) returnedByVariant.set(it.sku_id, (returnedByVariant.get(it.sku_id) ?? 0) + it.quantity);
         }
       }
 
       const items = (req.items ?? []).map((it) => {
-        const v = it.variants as {
+        const v = it.skus as {
           attributes?: unknown;
           unit?: string | null;
           images?: string[] | null;
@@ -198,14 +198,14 @@ export async function getSlipDetail(
         ];
         return {
           id: it.id,
-          variantId: it.variant_id,
+          variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
           quantity: it.quantity,
           images,
-          stock: it.variant_id ? (stockByVariant.get(it.variant_id) ?? null) : null,
-          returned: it.variant_id ? (returnedByVariant.get(it.variant_id) ?? 0) : 0,
+          stock: it.sku_id ? (stockByVariant.get(it.sku_id) ?? null) : null,
+          returned: it.sku_id ? (returnedByVariant.get(it.sku_id) ?? 0) : 0,
         };
       });
 
@@ -216,14 +216,14 @@ export async function getSlipDetail(
           supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
           supabase
             .from("defect_note_items")
-            .select("id, quantity, damage_detail, images, variants(products(name), units(name, symbol))")
+            .select("id, quantity, damage_detail, images, skus(products(name), units(name, symbol))")
             .eq("defect_note_id", req.linked_defect_id),
         ]);
         if (dnote) {
           defectEvidence = {
             code: dnote.code,
             items: (ditems ?? []).map((it) => {
-              const v = it.variants as { units?: { symbol?: string | null; name?: string | null } | null; products?: { name: string | null } | null } | null;
+              const v = it.skus as { units?: { symbol?: string | null; name?: string | null } | null; products?: { name: string | null } | null } | null;
               return {
                 id: it.id,
                 productName: v?.products?.name ?? null,
@@ -244,12 +244,12 @@ export async function getSlipDetail(
           returnedBy?: { name?: string | null } | null;
           items?: {
             quantity: number;
-            variants?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+            skus?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
           }[];
         };
         const lines = (typed.items ?? []).map((it) => {
-          const name = it.variants?.products?.name ?? "Vật tư";
-          const label = variantLabelFor(it.variants ?? null);
+          const name = it.skus?.products?.name ?? "Vật tư";
+          const label = variantLabelFor(it.skus ?? null);
           return label && label !== "—" ? `${name} — ${label} × ${it.quantity}` : `${name} × ${it.quantity}`;
         });
         return {
@@ -310,7 +310,7 @@ export async function getSlipDetail(
       const { data: rec, error } = await supabase
         .from("receipts")
         .select(
-          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, variant_id, quantity, unit_cost, batch_no, expiry_date, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, sku_id, quantity, unit_cost, batch_no, expiry_date, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -318,10 +318,10 @@ export async function getSlipDetail(
       if (error || !rec) return { detail: null, currentUser, error: "Không tìm thấy phiếu nhập kho" };
 
       const items = (rec.items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
           id: it.id,
-          variantId: it.variant_id,
+          variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
@@ -392,7 +392,7 @@ export async function getSlipDetail(
       const { data: iss, error } = await supabase
         .from("issues")
         .select(
-          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, variant_id, quantity, unit_price, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, sku_id, quantity, unit_price, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -400,10 +400,10 @@ export async function getSlipDetail(
       if (error || !iss) return { detail: null, currentUser, error: "Không tìm thấy phiếu xuất kho" };
 
       const items = (iss.items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
           id: it.id,
-          variantId: it.variant_id,
+          variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
@@ -458,7 +458,7 @@ export async function getSlipDetail(
       const { data: ex, error } = await supabase
         .from("exchange_notes")
         .select(
-          "id, code, linked_defect_id, status, rejection_reason, created_at, approved_at, issued_at, received_at, creator:profiles!exchange_notes_created_by_fkey(name), approver:profiles!exchange_notes_approved_by_fkey(name), issuer:profiles!exchange_notes_issued_by_fkey(name), receiver:profiles!exchange_notes_received_by_fkey(name), defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))))",
+          "id, code, linked_defect_id, status, rejection_reason, created_at, approved_at, issued_at, received_at, creator:profiles!exchange_notes_created_by_fkey(name), approver:profiles!exchange_notes_approved_by_fkey(name), issuer:profiles!exchange_notes_issued_by_fkey(name), receiver:profiles!exchange_notes_received_by_fkey(name), defect:defect_notes!exchange_notes_linked_defect_id_fkey(code, defect_note_items(id, sku_id, quantity, damage_detail, note, images, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))))",
         )
         .eq("id", id)
         .single();
@@ -467,10 +467,10 @@ export async function getSlipDetail(
 
       const d = ex.defect;
       const items = (d?.defect_note_items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
           id: it.id,
-          variantId: it.variant_id,
+          variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
@@ -521,7 +521,7 @@ export async function getSlipDetail(
       const { data: def, error } = await supabase
         .from("defect_notes")
         .select(
-          "id, code, status, notes, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), location:stock_locations!defect_notes_source_location_id_fkey(name), items:defect_note_items(id, variant_id, quantity, damage_detail, note, images, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, status, notes, repair_requested_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), location:stock_locations!defect_notes_source_location_id_fkey(name), items:defect_note_items(id, sku_id, quantity, damage_detail, note, images, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -529,10 +529,10 @@ export async function getSlipDetail(
       if (error || !def) return { detail: null, currentUser, error: "Không tìm thấy phiếu báo hỏng" };
 
       const items = (def.items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
           id: it.id,
-          variantId: it.variant_id,
+          variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
           unit: v?.unit,
@@ -581,7 +581,7 @@ export async function getSlipDetail(
       const { data: liq, error } = await supabase
         .from("liquidation_notes")
         .select(
-          "id, code, status, notes, reason, created_at, creator:profiles!liquidation_notes_created_by_fkey(name), approver:profiles!liquidation_notes_approved_by_fkey(name), items:liquidation_items(id, quantity, proceeds, notes, method, unit_value, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, status, notes, reason, created_at, creator:profiles!liquidation_notes_created_by_fkey(name), approver:profiles!liquidation_notes_approved_by_fkey(name), items:liquidation_items(id, quantity, proceeds, notes, method, unit_value, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -589,7 +589,7 @@ export async function getSlipDetail(
       if (error || !liq) return { detail: null, currentUser, error: "Không tìm thấy phiếu thanh lý" };
 
       const items = (liq.items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
           id: it.id,
           productName: v?.products?.name ?? "Vật tư",
@@ -637,7 +637,7 @@ export async function getSlipDetail(
       const { data: rep, error } = await supabase
         .from("repair_orders")
         .select(
-          "id, code, vendor, status, total_cost, sent_at, expected_return_at, created_at, items:repair_order_items(id, quantity, repair_detail, cost, outcome, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, vendor, status, total_cost, sent_at, expected_return_at, created_at, items:repair_order_items(id, quantity, repair_detail, cost, outcome, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -645,7 +645,7 @@ export async function getSlipDetail(
       if (error || !rep) return { detail: null, currentUser, error: "Không tìm thấy phiếu sửa chữa" };
 
       const items = (rep.items ?? []).map((it) => {
-        const v = it.variants as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
         return {
           id: it.id,
           productName: v?.products?.name ?? "Vật tư",

@@ -77,7 +77,7 @@ export async function fetchGeneralReportData(params: {
     fuelTypesRes,
   ] = await Promise.all([
     supabase
-      .from("variants")
+      .from("skus")
       .select(`
         id, price, min_stock, product_id,
         units(name, symbol),
@@ -89,16 +89,16 @@ export async function fetchGeneralReportData(params: {
         )
       `),
     isSpecificLocation
-      ? supabase.from("stock_balances").select("variant_id, quantity").eq("location_id", locationId!)
-      : supabase.from("stock_balances").select("variant_id, quantity"),
+      ? supabase.from("stock_balances").select("sku_id, quantity").eq("location_id", locationId!)
+      : supabase.from("stock_balances").select("sku_id, quantity"),
     isSpecificLocation
       ? supabase
           .from("stock_movements")
-          .select("id, variant_id, movement_type, quantity, created_at, from_location_id, to_location_id")
+          .select("id, sku_id, movement_type, quantity, created_at, from_location_id, to_location_id")
           .or(`from_location_id.eq.${locationId},to_location_id.eq.${locationId}`)
       : supabase
           .from("stock_movements")
-          .select("id, variant_id, movement_type, quantity, created_at, from_location_id, to_location_id"),
+          .select("id, sku_id, movement_type, quantity, created_at, from_location_id, to_location_id"),
     supabase
       .from("receipts")
       .select("id, status, created_at, receipt_items(quantity, unit_cost)")
@@ -107,7 +107,7 @@ export async function fetchGeneralReportData(params: {
       .lte("created_at", lte),
     supabase
       .from("issues")
-      .select("id, status, destination_type, created_at, issue_items(quantity, unit_price, variant_id)")
+      .select("id, status, destination_type, created_at, issue_items(quantity, unit_price, sku_id)")
       .eq("status", "posted")
       .gte("created_at", gte)
       .lte("created_at", lte),
@@ -171,8 +171,8 @@ export async function fetchGeneralReportData(params: {
     currentBalances.set(v.id, 0);
   }
   for (const b of balancesRes.data ?? []) {
-    const current = currentBalances.get(b.variant_id) ?? 0;
-    currentBalances.set(b.variant_id, current + (b.quantity ?? 0));
+    const current = currentBalances.get(b.sku_id) ?? 0;
+    currentBalances.set(b.sku_id, current + (b.quantity ?? 0));
   }
 
   // 2. Adjust movements for location transfers if filtering by a specific warehouse
@@ -187,7 +187,7 @@ export async function fetchGeneralReportData(params: {
       }
     }
     return {
-      variant_id: m.variant_id,
+      sku_id: m.sku_id,
       movement_type: movementType,
       quantity: m.quantity,
       created_at: m.created_at,
@@ -268,7 +268,7 @@ export async function fetchGeneralReportData(params: {
       const unitPrice =
         item.unit_price !== null && item.unit_price !== undefined
           ? Number(item.unit_price)
-          : variantPriceMap.get(item.variant_id) ?? 0;
+          : variantPriceMap.get(item.sku_id) ?? 0;
       const amount = qty * unitPrice;
 
       if (issue.destination_type === "customer") {
@@ -369,7 +369,7 @@ export async function fetchZoneCostReportData(params: {
     supabase
       .from("issues")
       .select(
-        "id, zone_id, destination_type, status, zones(name), issue_items(quantity, unit_price, variant_id, variants(unit, attributes, products(name)))"
+        "id, zone_id, destination_type, status, zones(name), issue_items(quantity, unit_price, sku_id, skus(unit, attributes, products(name)))"
       )
       .eq("destination_type", "zone")
       .eq("status", "posted")
@@ -390,7 +390,7 @@ export async function fetchZoneCostReportData(params: {
   const mappedIssues: ZoneIssueInput[] = (issuesRes.data ?? []).map((issue) => {
     const zoneName = (issue.zones as { name?: string } | null)?.name || "";
     const items = (issue.issue_items ?? []).map((it) => {
-      const v = it.variants as { unit?: string | null; attributes?: unknown; products?: { name?: string } | null } | null;
+      const v = it.skus as { unit?: string | null; attributes?: unknown; products?: { name?: string } | null } | null;
       const productName = v?.products?.name || "Vật tư";
       const vLabel = v ? variantLabel(v.attributes, v.unit) : "";
       const unit = v?.unit || "cái";
@@ -635,7 +635,7 @@ export async function fetchStockCardData(params: {
 
   const [variantRes, locationRes, balancesRes, movementsRes, profilesRes] = await Promise.all([
     supabase
-      .from("variants")
+      .from("skus")
       .select(`
         id, sku_code,
         units(name, symbol),
@@ -652,23 +652,23 @@ export async function fetchStockCardData(params: {
       ? supabase.from("stock_locations").select("id, name").eq("id", locationId!).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     isSpecificLocation
-      ? supabase.from("stock_balances").select("quantity").eq("variant_id", variantId).eq("location_id", locationId!)
-      : supabase.from("stock_balances").select("quantity").eq("variant_id", variantId),
+      ? supabase.from("stock_balances").select("quantity").eq("sku_id", variantId).eq("location_id", locationId!)
+      : supabase.from("stock_balances").select("quantity").eq("sku_id", variantId),
     isSpecificLocation
       ? supabase
           .from("stock_movements")
           .select(
-            "id, variant_id, movement_type, quantity, ref_type, ref_id, notes, created_by, created_at, from_location_id, to_location_id"
+            "id, sku_id, movement_type, quantity, ref_type, ref_id, notes, created_by, created_at, from_location_id, to_location_id"
           )
-          .eq("variant_id", variantId)
+          .eq("sku_id", variantId)
           .or(`from_location_id.eq.${locationId},to_location_id.eq.${locationId}`)
           .order("created_at", { ascending: true })
       : supabase
           .from("stock_movements")
           .select(
-            "id, variant_id, movement_type, quantity, ref_type, ref_id, notes, created_by, created_at, from_location_id, to_location_id"
+            "id, sku_id, movement_type, quantity, ref_type, ref_id, notes, created_by, created_at, from_location_id, to_location_id"
           )
-          .eq("variant_id", variantId)
+          .eq("sku_id", variantId)
           .order("created_at", { ascending: true }),
     supabase.from("profiles").select("id, name"),
   ]);
@@ -865,7 +865,7 @@ export async function fetchRequisitionsReportData(params: {
       sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name),
       items:requisition_items(
         quantity,
-        variants(
+        skus(
           id,
           sku_code,
           units(name, symbol),

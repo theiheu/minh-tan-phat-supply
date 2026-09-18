@@ -47,13 +47,13 @@ interface AvailableVariant { id: string; label: string; stock: number; }
 
 export function LiquidationManager({
   notes,
-  variants,
+  skus,
   page = 1,
   totalPages = 1,
   isDev = false,
 }: {
   notes: { id: string; code: string; status: string; reason: string | null; items: { id: string; label: string; quantity: number; method: string }[] }[];
-  variants: AvailableVariant[];
+  skus: AvailableVariant[];
   /** Trang hiện tại (searchParams.page) — mặc định 1. */
   page?: number;
   /** Tổng số trang — mặc định 1 (ẩn phân trang). */
@@ -113,7 +113,7 @@ export function LiquidationManager({
                   <Select value={it.variantId} onValueChange={(v) => setItems((a) => a.map((r, idx) => idx === i ? { ...r, variantId: v } : r))}>
                     <SelectTrigger className="w-full"><SelectValue placeholder="Chọn" /></SelectTrigger>
                     <SelectContent>
-                      {variants.map((v) => <SelectItem key={v.id} value={v.id}>{v.label} (tồn {v.stock})</SelectItem>)}
+                      {skus.map((v) => <SelectItem key={v.id} value={v.id}>{v.label} (tồn {v.stock})</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

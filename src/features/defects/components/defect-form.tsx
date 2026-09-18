@@ -47,13 +47,13 @@ const INTENTS: { key: Intent; label: string; hint: string }[] = [
 
 export function DefectForm({
   sourceLocationId,
-  variants: _variants,
+  skus: _skus,
   onSuccess,
   onCancel,
 }: {
   /** Kho nguồn mặc định — server đã resolve = Kho chính. */
   sourceLocationId: string;
-  variants?: unknown;
+  skus?: unknown;
   onSuccess?: (id: string) => void;
   onCancel?: () => void;
 }) {

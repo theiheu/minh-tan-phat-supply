@@ -65,7 +65,7 @@ export function canDeleteDoc(role: string | null | undefined): boolean {
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type ProductRow = Database["public"]["Tables"]["products"]["Row"];
-type VariantRow = Database["public"]["Tables"]["variants"]["Row"];
+type VariantRow = Database["public"]["Tables"]["skus"]["Row"];
 
 /** Runtime projection for product catalog view. */
 export type Product = Omit<ProductRow, "catalog_status" | "internal_notes" | "search_keywords"> & {

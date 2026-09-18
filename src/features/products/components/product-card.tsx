@@ -17,14 +17,14 @@ import { ProductDetailDialog } from "./product-detail-dialog";
 
 export function ProductCard({
   product,
-  variants,
+  skus: variants,
   categoryIconKey,
   canManage = false,
   categories = [],
   searchQuery,
 }: {
   product: Product;
-  variants: VariantWithStock[];
+  skus: VariantWithStock[];
   categoryIconKey?: string | null;
   canManage?: boolean;
   categories?: { id: string; name: string }[];

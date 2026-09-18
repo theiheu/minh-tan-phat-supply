@@ -47,7 +47,7 @@ export function DefectDialog({
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pr-1">
           <DefectForm
             sourceLocationId={sourceLocationId}
-            variants={variants}
+            skus={variants}
             onSuccess={() => {
               setOpen(false);
               router.refresh();

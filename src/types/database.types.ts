@@ -381,20 +381,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "barcode_registry_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "barcode_registry_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
           {
@@ -444,20 +444,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: true
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "bom_headers_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: true
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "bom_headers_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: true
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
         ]
@@ -500,20 +500,20 @@ export type Database = {
             columns: ["component_sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "bom_items_component_sku_id_fkey"
             columns: ["component_sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "bom_items_component_sku_id_fkey"
             columns: ["component_sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
         ]
@@ -727,10 +727,10 @@ export type Database = {
           quantity: number
           resolution: Database["public"]["Enums"]["defect_resolution"] | null
           severity: Database["public"]["Enums"]["severity_level"] | null
+          sku_id: string
           snapshot_quality: string
           transaction_unit_id: string | null
           unit_cost: number | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -745,10 +745,10 @@ export type Database = {
           quantity?: number
           resolution?: Database["public"]["Enums"]["defect_resolution"] | null
           severity?: Database["public"]["Enums"]["severity_level"] | null
+          sku_id: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
           unit_cost?: number | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -763,10 +763,10 @@ export type Database = {
           quantity?: number
           resolution?: Database["public"]["Enums"]["defect_resolution"] | null
           severity?: Database["public"]["Enums"]["severity_level"] | null
+          sku_id?: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
           unit_cost?: number | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -777,31 +777,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "defect_note_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "defect_note_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "defect_note_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "defect_note_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "defect_note_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "defect_note_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "defect_note_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -887,9 +887,9 @@ export type Database = {
           exchange_note_id: string
           id: string
           quantity: number
+          sku_id: string
           snapshot_quality: string
           transaction_unit_id: string | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -897,9 +897,9 @@ export type Database = {
           exchange_note_id: string
           id?: string
           quantity: number
+          sku_id: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -907,9 +907,9 @@ export type Database = {
           exchange_note_id?: string
           id?: string
           quantity?: number
+          sku_id?: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -920,31 +920,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "exchange_note_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "exchange_note_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "exchange_note_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "exchange_note_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "exchange_note_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "exchange_note_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "exchange_note_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1351,20 +1351,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "inventory_lots_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "inventory_lots_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
         ]
@@ -1464,12 +1464,12 @@ export type Database = {
           id: string
           issue_id: string
           quantity: number
+          sku_id: string
           sku_name_snapshot: string | null
           snapshot_quality: string
           transaction_unit_id: string | null
           unit_price: number | null
           uom_name_snapshot: string | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -1478,12 +1478,12 @@ export type Database = {
           id?: string
           issue_id: string
           quantity: number
+          sku_id: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           transaction_unit_id?: string | null
           unit_price?: number | null
           uom_name_snapshot?: string | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -1492,12 +1492,12 @@ export type Database = {
           id?: string
           issue_id?: string
           quantity?: number
+          sku_id?: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           transaction_unit_id?: string | null
           unit_price?: number | null
           uom_name_snapshot?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -1508,31 +1508,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "issue_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "issue_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "issue_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "issue_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "issue_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "issue_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "issue_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1628,11 +1628,11 @@ export type Database = {
           notes: string | null
           proceeds: number
           quantity: number
+          sku_id: string
           snapshot_quality: string
           source_item_id: string | null
           transaction_unit_id: string | null
           unit_value: number | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -1644,11 +1644,11 @@ export type Database = {
           notes?: string | null
           proceeds?: number
           quantity?: number
+          sku_id: string
           snapshot_quality?: string
           source_item_id?: string | null
           transaction_unit_id?: string | null
           unit_value?: number | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -1660,11 +1660,11 @@ export type Database = {
           notes?: string | null
           proceeds?: number
           quantity?: number
+          sku_id?: string
           snapshot_quality?: string
           source_item_id?: string | null
           transaction_unit_id?: string | null
           unit_value?: number | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -1675,31 +1675,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "liquidation_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "liquidation_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "liquidation_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "liquidation_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "liquidation_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "liquidation_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "liquidation_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -2000,12 +2000,12 @@ export type Database = {
           id: string
           quantity: number
           receipt_id: string
+          sku_id: string
           sku_name_snapshot: string | null
           snapshot_quality: string
           transaction_unit_id: string | null
           unit_cost: number | null
           uom_name_snapshot: string | null
-          variant_id: string
         }
         Insert: {
           batch_no?: string | null
@@ -2016,12 +2016,12 @@ export type Database = {
           id?: string
           quantity: number
           receipt_id: string
+          sku_id: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           transaction_unit_id?: string | null
           unit_cost?: number | null
           uom_name_snapshot?: string | null
-          variant_id: string
         }
         Update: {
           batch_no?: string | null
@@ -2032,12 +2032,12 @@ export type Database = {
           id?: string
           quantity?: number
           receipt_id?: string
+          sku_id?: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           transaction_unit_id?: string | null
           unit_cost?: number | null
           uom_name_snapshot?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -2048,31 +2048,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "receipt_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "receipt_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "receipt_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receipt_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "receipt_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "receipt_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "receipt_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -2156,9 +2156,9 @@ export type Database = {
           quantity: number
           repair_detail: string | null
           repair_order_id: string
+          sku_id: string
           snapshot_quality: string
           transaction_unit_id: string | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -2171,9 +2171,9 @@ export type Database = {
           quantity?: number
           repair_detail?: string | null
           repair_order_id: string
+          sku_id: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -2186,9 +2186,9 @@ export type Database = {
           quantity?: number
           repair_detail?: string | null
           repair_order_id?: string
+          sku_id?: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -2206,31 +2206,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "repair_order_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "repair_order_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "repair_order_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "repair_order_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "repair_order_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "repair_order_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "repair_order_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -2296,11 +2296,11 @@ export type Database = {
           id: string
           quantity: number
           requisition_id: string
+          sku_id: string
           sku_name_snapshot: string | null
           snapshot_quality: string
           transaction_unit_id: string | null
           uom_name_snapshot: string | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -2309,11 +2309,11 @@ export type Database = {
           id?: string
           quantity: number
           requisition_id: string
+          sku_id: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           transaction_unit_id?: string | null
           uom_name_snapshot?: string | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -2322,11 +2322,11 @@ export type Database = {
           id?: string
           quantity?: number
           requisition_id?: string
+          sku_id?: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           transaction_unit_id?: string | null
           uom_name_snapshot?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -2337,31 +2337,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "requisition_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "requisition_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "requisition_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "requisition_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "requisition_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "requisition_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "requisition_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -2373,9 +2373,9 @@ export type Database = {
           id: string
           quantity: number
           return_id: string
+          sku_id: string
           snapshot_quality: string
           transaction_unit_id: string | null
-          variant_id: string
         }
         Insert: {
           conversion_factor_snapshot?: number | null
@@ -2383,9 +2383,9 @@ export type Database = {
           id?: string
           quantity: number
           return_id: string
+          sku_id: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id: string
         }
         Update: {
           conversion_factor_snapshot?: number | null
@@ -2393,9 +2393,9 @@ export type Database = {
           id?: string
           quantity?: number
           return_id?: string
+          sku_id?: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -2406,31 +2406,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "requisition_return_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "requisition_return_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "requisition_return_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "requisition_return_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "requisition_return_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "requisition_return_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "requisition_return_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -2638,20 +2638,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "serial_items_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "serial_items_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
         ]
@@ -2720,20 +2720,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "sku_attribute_values_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "sku_attribute_values_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
           {
@@ -2791,20 +2791,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "sku_prices_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "sku_prices_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
           {
@@ -2828,7 +2828,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_base: boolean
-          legacy_parent_variant_id: string | null
+          legacy_parent_sku_id: string | null
           sku_id: string
           unit_id: string
           updated_at: string
@@ -2844,7 +2844,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_base?: boolean
-          legacy_parent_variant_id?: string | null
+          legacy_parent_sku_id?: string | null
           sku_id: string
           unit_id: string
           updated_at?: string
@@ -2860,31 +2860,31 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_base?: boolean
-          legacy_parent_variant_id?: string | null
+          legacy_parent_sku_id?: string | null
           sku_id?: string
           unit_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "sku_transaction_units_legacy_parent_variant_id_fkey"
-            columns: ["legacy_parent_variant_id"]
+            foreignKeyName: "sku_transaction_units_legacy_parent_sku_id_fkey"
+            columns: ["legacy_parent_sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
-            foreignKeyName: "sku_transaction_units_legacy_parent_variant_id_fkey"
-            columns: ["legacy_parent_variant_id"]
+            foreignKeyName: "sku_transaction_units_legacy_parent_sku_id_fkey"
+            columns: ["legacy_parent_sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
-            foreignKeyName: "sku_transaction_units_legacy_parent_variant_id_fkey"
-            columns: ["legacy_parent_variant_id"]
+            foreignKeyName: "sku_transaction_units_legacy_parent_sku_id_fkey"
+            columns: ["legacy_parent_sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
           {
@@ -2892,20 +2892,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "sku_transaction_units_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "sku_transaction_units_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
           {
@@ -2917,6 +2917,72 @@ export type Database = {
           },
         ]
       }
+      skus: {
+        Row: {
+          allow_fraction: boolean
+          base_unit_id: string | null
+          created_at: string
+          id: string
+          images: string[]
+          inventory_policy: string
+          is_default: boolean
+          min_stock: number
+          price: number | null
+          product_id: string
+          sku_code: string | null
+          sku_status: string
+          tracking_policy: string
+          updated_at: string
+        }
+        Insert: {
+          allow_fraction?: boolean
+          base_unit_id?: string | null
+          created_at?: string
+          id?: string
+          images?: string[]
+          inventory_policy?: string
+          is_default?: boolean
+          min_stock?: number
+          price?: number | null
+          product_id: string
+          sku_code?: string | null
+          sku_status?: string
+          tracking_policy?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_fraction?: boolean
+          base_unit_id?: string | null
+          created_at?: string
+          id?: string
+          images?: string[]
+          inventory_policy?: string
+          is_default?: boolean
+          min_stock?: number
+          price?: number | null
+          product_id?: string
+          sku_code?: string | null
+          sku_status?: string
+          tracking_policy?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skus_base_unit_id_fkey"
+            columns: ["base_unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skus_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_balances: {
         Row: {
           base_unit_id: string | null
@@ -2924,8 +2990,8 @@ export type Database = {
           location_id: string
           quantity: number
           reserved_quantity: number
+          sku_id: string
           updated_at: string
-          variant_id: string
         }
         Insert: {
           base_unit_id?: string | null
@@ -2933,8 +2999,8 @@ export type Database = {
           location_id: string
           quantity?: number
           reserved_quantity?: number
+          sku_id: string
           updated_at?: string
-          variant_id: string
         }
         Update: {
           base_unit_id?: string | null
@@ -2942,8 +3008,8 @@ export type Database = {
           location_id?: string
           quantity?: number
           reserved_quantity?: number
+          sku_id?: string
           updated_at?: string
-          variant_id?: string
         }
         Relationships: [
           {
@@ -2961,24 +3027,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_balances_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "stock_balances_sku_id_fkey"
+            columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
-            foreignKeyName: "stock_balances_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "stock_balances_sku_id_fkey"
+            columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
-            foreignKeyName: "stock_balances_variant_id_fkey"
-            columns: ["variant_id"]
+            foreignKeyName: "stock_balances_sku_id_fkey"
+            columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
         ]
@@ -3080,13 +3146,13 @@ export type Database = {
           ref_id: string | null
           ref_type: string | null
           reversal_of_movement_id: string | null
+          sku_id: string
           sku_name_snapshot: string | null
           snapshot_quality: string
           to_location_id: string | null
           transaction_unit_id: string | null
           unit_cost: number | null
           uom_name_snapshot: string | null
-          variant_id: string
         }
         Insert: {
           base_quantity?: number | null
@@ -3105,13 +3171,13 @@ export type Database = {
           ref_id?: string | null
           ref_type?: string | null
           reversal_of_movement_id?: string | null
+          sku_id: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           to_location_id?: string | null
           transaction_unit_id?: string | null
           unit_cost?: number | null
           uom_name_snapshot?: string | null
-          variant_id: string
         }
         Update: {
           base_quantity?: number | null
@@ -3130,13 +3196,13 @@ export type Database = {
           ref_id?: string | null
           ref_type?: string | null
           reversal_of_movement_id?: string | null
+          sku_id?: string
           sku_name_snapshot?: string | null
           snapshot_quality?: string
           to_location_id?: string | null
           transaction_unit_id?: string | null
           unit_cost?: number | null
           uom_name_snapshot?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -3175,6 +3241,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "stock_movements_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "stock_movements_to_location_id_fkey"
             columns: ["to_location_id"]
             isOneToOne: false
@@ -3186,27 +3273,6 @@ export type Database = {
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_movements_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "stock_movements_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "stock_movements_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -3345,20 +3411,20 @@ export type Database = {
             columns: ["sku_id"]
             isOneToOne: false
             referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "stock_reservations_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
           },
           {
             foreignKeyName: "stock_reservations_sku_id_fkey"
             columns: ["sku_id"]
             isOneToOne: false
-            referencedRelation: "variants"
+            referencedRelation: "skus"
             referencedColumns: ["id"]
           },
         ]
@@ -3373,10 +3439,10 @@ export type Database = {
           id: string
           notes: string
           session_id: string
+          sku_id: string
           snapshot_quality: string
           system_qty: number
           transaction_unit_id: string | null
-          variant_id: string
         }
         Insert: {
           actual_qty?: number
@@ -3387,10 +3453,10 @@ export type Database = {
           id?: string
           notes?: string
           session_id: string
+          sku_id: string
           snapshot_quality?: string
           system_qty?: number
           transaction_unit_id?: string | null
-          variant_id: string
         }
         Update: {
           actual_qty?: number
@@ -3401,10 +3467,10 @@ export type Database = {
           id?: string
           notes?: string
           session_id?: string
+          sku_id?: string
           snapshot_quality?: string
           system_qty?: number
           transaction_unit_id?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -3415,31 +3481,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "stocktake_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "stocktake_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "stocktake_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "stocktake_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stocktake_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "stocktake_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "stocktake_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -3587,9 +3653,9 @@ export type Database = {
           notes: string | null
           quantity: number
           returned_quantity: number
+          sku_id: string
           snapshot_quality: string
           transaction_unit_id: string | null
-          variant_id: string
         }
         Insert: {
           borrowing_id: string
@@ -3599,9 +3665,9 @@ export type Database = {
           notes?: string | null
           quantity: number
           returned_quantity?: number
+          sku_id: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id: string
         }
         Update: {
           borrowing_id?: string
@@ -3611,9 +3677,9 @@ export type Database = {
           notes?: string | null
           quantity?: number
           returned_quantity?: number
+          sku_id?: string
           snapshot_quality?: string
           transaction_unit_id?: string | null
-          variant_id?: string
         }
         Relationships: [
           {
@@ -3624,31 +3690,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tool_borrowing_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "tool_borrowing_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "sku_stock"
+            referencedColumns: ["sku_id"]
+          },
+          {
+            foreignKeyName: "tool_borrowing_items_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "skus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tool_borrowing_items_transaction_unit_id_fkey"
             columns: ["transaction_unit_id"]
             isOneToOne: false
             referencedRelation: "sku_transaction_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "location_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variant_stock"
-            referencedColumns: ["variant_id"]
-          },
-          {
-            foreignKeyName: "tool_borrowing_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
@@ -3782,72 +3848,6 @@ export type Database = {
         }
         Relationships: []
       }
-      variants: {
-        Row: {
-          allow_fraction: boolean
-          base_unit_id: string | null
-          created_at: string
-          id: string
-          images: string[]
-          inventory_policy: string
-          is_default: boolean
-          min_stock: number
-          price: number | null
-          product_id: string
-          sku_code: string | null
-          sku_status: string
-          tracking_policy: string
-          updated_at: string
-        }
-        Insert: {
-          allow_fraction?: boolean
-          base_unit_id?: string | null
-          created_at?: string
-          id?: string
-          images?: string[]
-          inventory_policy?: string
-          is_default?: boolean
-          min_stock?: number
-          price?: number | null
-          product_id: string
-          sku_code?: string | null
-          sku_status?: string
-          tracking_policy?: string
-          updated_at?: string
-        }
-        Update: {
-          allow_fraction?: boolean
-          base_unit_id?: string | null
-          created_at?: string
-          id?: string
-          images?: string[]
-          inventory_policy?: string
-          is_default?: boolean
-          min_stock?: number
-          price?: number | null
-          product_id?: string
-          sku_code?: string | null
-          sku_status?: string
-          tracking_policy?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "variants_base_unit_id_fkey"
-            columns: ["base_unit_id"]
-            isOneToOne: false
-            referencedRelation: "units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "variants_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       vehicles: {
         Row: {
           code: string
@@ -3961,9 +3961,16 @@ export type Database = {
           location_id: string | null
           product_id: string | null
           quantity: number | null
-          variant_id: string | null
+          sku_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "skus_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_balances_location_id_fkey"
             columns: ["location_id"]
@@ -3971,26 +3978,19 @@ export type Database = {
             referencedRelation: "stock_locations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "variants_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
         ]
       }
-      variant_stock: {
+      sku_stock: {
         Row: {
           min_stock: number | null
           product_id: string | null
           quantity: number | null
+          sku_id: string | null
           unit: string | null
-          variant_id: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "variants_product_id_fkey"
+            foreignKeyName: "skus_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -4009,8 +4009,8 @@ export type Database = {
           p_qty: number
           p_ref_id: string
           p_ref_type: string
+          p_sku: string
           p_to: string
-          p_variant: string
         }
         Returns: undefined
       }
@@ -4073,7 +4073,7 @@ export type Database = {
           p_delta: number
           p_location_id: string
           p_reason: string
-          p_variant_id: string
+          p_sku_id: string
         }
         Returns: undefined
       }
@@ -4145,9 +4145,9 @@ export type Database = {
           price: number
           product_id: string
           product_name: string
+          sku_id: string
           total_stock: number
           unit: string
-          variant_id: string
         }[]
       }
       approve_exchange: {
@@ -4410,6 +4410,7 @@ export type Database = {
         Returns: undefined
       }
       next_code: { Args: { prefix: string; seq: unknown }; Returns: string }
+      next_sku_code: { Args: never; Returns: string }
       post_assembly: {
         Args: {
           p_actor: string
@@ -4579,10 +4580,10 @@ export type Database = {
         }[]
       }
       search_skus: {
-        Args: { p_query: string; p_limit?: number }
+        Args: { p_limit?: number; p_query: string }
         Returns: {
-          sku_id: string
           product_id: string
+          sku_id: string
         }[]
       }
       send_to_repair: {
@@ -4605,6 +4606,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      unaccent_text: { Args: { p_text: string }; Returns: string }
       update_defect_item_images: {
         Args: { p_by: string; p_images: string[]; p_item_id: string }
         Returns: undefined

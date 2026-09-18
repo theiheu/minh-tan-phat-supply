@@ -80,7 +80,7 @@ function mapUom(uom: {
 export const getSkuById = cache(async (skuId: string): Promise<CatalogSku | null> => {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("variants")
+    .from("skus")
     .select(`
       id,sku_code,sku_status,inventory_policy,tracking_policy,allow_fraction,
       base_unit_id,images,is_default,product_id,
@@ -153,8 +153,8 @@ export async function getSkuAvailability(skuId: string): Promise<SkuAvailability
   const supabase = await createClient();
   const { data } = await supabase
     .from("stock_balances")
-    .select("variant_id,location_id,quantity,reserved_quantity,stock_locations(code,name),units(symbol)")
-    .eq("variant_id", skuId)
+    .select("sku_id,location_id,quantity,reserved_quantity,stock_locations(code,name),units(symbol)")
+    .eq("sku_id", skuId)
     .gt("quantity", 0);
   if (!data) return [];
   return data.map((row) => {
@@ -259,7 +259,7 @@ export async function getAdminProductList(query: string, categoryId: string | nu
   const productIds = prods.map((p) => p.id);
   const [{ data: skus }, { data: padRows }] = await Promise.all([
     supabase
-      .from("variants")
+      .from("skus")
       .select(`
         id,sku_code,sku_status,inventory_policy,tracking_policy,allow_fraction,
         base_unit_id,images,is_default,product_id,
@@ -367,7 +367,7 @@ export async function searchSkus(query: string, limit = 30): Promise<SkuSelectOp
   }
 
   let dbq = supabase
-    .from("variants")
+    .from("skus")
     .select(`
       id,sku_code,sku_status,inventory_policy,tracking_policy,allow_fraction,
       base_unit_id,images,product_id,
@@ -458,7 +458,7 @@ export async function getTransactionUoms(skuId: string): Promise<TransactionUom[
       .eq("is_active", true)
       .order("is_base", { ascending: false })
       .order("display_name"),
-    supabase.from("variants").select("base_unit_id,units(symbol)").eq("id", skuId).single(),
+    supabase.from("skus").select("base_unit_id,units(symbol)").eq("id", skuId).single(),
   ]);
   const baseSymbol = ((baseRes.data?.units as { symbol: string } | null)?.symbol) ?? "";
   return (uomRes.data ?? []).map((u) => {
@@ -553,7 +553,7 @@ export async function getProductDetails(productId: string): Promise<ProductDetai
   if (pErr || !prod) return null;
 
   const { data: skuRows } = await supabase
-    .from("variants")
+    .from("skus")
     .select(`
       id, sku_code, sku_status, inventory_policy, tracking_policy, allow_fraction,
       base_unit_id, images, is_default, min_stock, price,
@@ -577,8 +577,8 @@ export async function getProductDetails(productId: string): Promise<ProductDetai
     skuIds.length > 0
       ? supabase
           .from("stock_balances")
-          .select("variant_id, location_id, quantity, reserved_quantity, stock_locations(code, name), variants(base_unit_id, units(symbol))")
-          .in("variant_id", skuIds)
+          .select("sku_id, location_id, quantity, reserved_quantity, stock_locations(code, name), skus(base_unit_id, units(symbol))")
+          .in("sku_id", skuIds)
       : Promise.resolve({ data: [] }),
     supabase
       .from("audit_logs")
@@ -589,7 +589,7 @@ export async function getProductDetails(productId: string): Promise<ProductDetai
     skuIds.length > 0
       ? supabase
           .from("bom_headers")
-          .select("id, sku_id, active_version_id, bom_versions(id, bom_items(component_sku_id, base_quantity, variants:variants!bom_items_component_sku_id_fkey(sku_code, products(name), units(symbol))))")
+          .select("id, sku_id, active_version_id, bom_versions(id, bom_items(component_sku_id, base_quantity, variants:skus!bom_items_component_sku_id_fkey(sku_code, products(name), units(symbol))))")
           .in("sku_id", skuIds)
       : Promise.resolve({ data: [] }),
     supabase
@@ -629,21 +629,21 @@ export async function getProductDetails(productId: string): Promise<ProductDetai
 
   for (const b of balanceRows ?? []) {
     const loc = b.stock_locations as { code: string; name: string } | null;
-    const sku = (skuRows ?? []).find((s) => s.id === b.variant_id);
+    const sku = (skuRows ?? []).find((s) => s.id === b.sku_id);
     const baseUnit = sku?.units as { symbol: string } | null;
     const qty = Number(b.quantity ?? 0);
     const res = Number(b.reserved_quantity ?? 0);
 
-    const current = skuStockMap.get(b.variant_id) ?? { onHand: 0, reserved: 0 };
-    skuStockMap.set(b.variant_id, {
+    const current = skuStockMap.get(b.sku_id) ?? { onHand: 0, reserved: 0 };
+    skuStockMap.set(b.sku_id, {
       onHand: current.onHand + qty,
       reserved: current.reserved + res,
     });
 
     if (qty > 0 || res > 0) {
       stockByLocation.push({
-        skuId: b.variant_id,
-        skuCode: sku?.sku_code ?? b.variant_id,
+        skuId: b.sku_id,
+        skuCode: sku?.sku_code ?? b.sku_id,
         locationId: b.location_id,
         locationCode: loc?.code ?? "",
         locationName: loc?.name ?? "",
@@ -657,14 +657,14 @@ export async function getProductDetails(productId: string): Promise<ProductDetai
 
   // BOM items list
   const bomItems: ProductDetailData["bomItems"] = [];
-  for (const bh of ((bomData ?? []) as unknown as Array<{ sku_id: string; active_version_id?: string | null; bom_versions?: Array<{ id: string; bom_items?: Array<{ component_sku_id: string; base_quantity: number | null; variants?: { sku_code: string | null; products?: { name: string } | null; units?: { symbol: string } | null } | null }> }> }>)) {
+  for (const bh of ((bomData ?? []) as unknown as Array<{ sku_id: string; active_version_id?: string | null; bom_versions?: Array<{ id: string; bom_items?: Array<{ component_sku_id: string; base_quantity: number | null; skus?: { sku_code: string | null; products?: { name: string } | null; units?: { symbol: string } | null } | null }> }> }>)) {
     // Chỉ đọc bom_items của active version
     const activeVersionId = bh.active_version_id;
     const parentSkuId = bh.sku_id;
     for (const bv of bh.bom_versions ?? []) {
       if (activeVersionId && bv.id !== activeVersionId) continue;
       for (const bi of bv.bom_items ?? []) {
-        const v = bi.variants as { sku_code: string | null; products: { name: string } | null; units: { symbol: string } | null } | null;
+        const v = bi.skus as { sku_code: string | null; products: { name: string } | null; units: { symbol: string } | null } | null;
         bomItems.push({
           parentSkuId,
           componentSkuId: bi.component_sku_id,

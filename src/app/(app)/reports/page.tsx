@@ -18,7 +18,7 @@ export default async function ReportsPage() {
     locationId: undefined,
   };
 
-  const [locationsData, variantsData, initialGeneralData] = await Promise.all([
+  const [locationsData, skusData, initialGeneralData] = await Promise.all([
     getCachedStockLocations(),
     getCachedVariantOptions(),
     fetchGeneralReportData({
@@ -33,7 +33,7 @@ export default async function ReportsPage() {
     name: l.name,
   }));
 
-  const variants: StockVariantOption[] = variantsData.map((v) => ({
+  const variants: StockVariantOption[] = skusData.map((v) => ({
     id: v.id,
     productName: v.productName,
     variantLabel: v.detail,

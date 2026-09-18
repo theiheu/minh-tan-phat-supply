@@ -51,27 +51,14 @@ cd "$PROD_DIR"
 
 # 3. Cài đặt dependencies (nếu có thay đổi)
 echo "==> [3/5] Cài đặt dependencies..."
-if command -v pnpm >/dev/null 2>&1; then
-  pnpm install
-elif command -v bun >/dev/null 2>&1; then
-  bun install
-else
-  npm install
-fi
+pnpm install --frozen-lockfile
 
 # 4. Build bản mới (ra .next-new để zero-downtime)
 echo "==> [4/5] Build Next.js Production (ra .next-new)..."
 rm -rf .next-new
-BUILD_CMD="pnpm build"
-if ! command -v pnpm >/dev/null 2>&1; then
-  if command -v bun >/dev/null 2>&1; then
-    BUILD_CMD="bun run build"
-  else
-    BUILD_CMD="npm run build"
-  fi
-fi
-
-if ! NEXT_DIST_DIR=.next-new $BUILD_CMD; then
+# Require frozen lockfile block from WP-14 reproducible builds.
+pnpm install --frozen-lockfile
+if ! NEXT_DIST_DIR=.next-new pnpm build; then
   rm -rf .next-new
   echo "❌ LỖI: Build thất bại — GIỮ NGUYÊN bản 3000 đang chạy, không restart!" >&2
   exit 1

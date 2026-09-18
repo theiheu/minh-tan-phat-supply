@@ -95,7 +95,7 @@ export default async function DefectsPage({
     const stagingNotes = await supabase
       .from("defect_notes")
       .select(
-        "id, code, reported_by, repair_requested_at, collected_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, variant_id, quantity, entered_quantity, transaction_unit_id, damage_detail, note, images, variants(id, sku_code, attributes, unit, products(name)))",
+        "id, code, reported_by, repair_requested_at, collected_at, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), defect_note_items(id, sku_id, quantity, entered_quantity, transaction_unit_id, damage_detail, note, images, skus(id, sku_code, attributes, unit, products(name)))",
       )
       .eq("status", "staging")
       .order("created_at", { ascending: false });
@@ -133,7 +133,7 @@ export default async function DefectsPage({
       const items = (d.defect_note_items ?? [])
         .filter((i) => !repairedItemIds.has(i.id))
         .map((i) => {
-          const variants = i.variants as {
+          const skus = i.skus as {
             id?: string;
             sku_code?: string | null;
             attributes?: unknown;
@@ -145,9 +145,9 @@ export default async function DefectsPage({
             noteId: d.id,
             quantity: i.quantity,
             enteredQuantity: i.entered_quantity,
-            skuCode: variants?.sku_code ?? null,
-            productName: variants?.products?.name ?? null,
-            variantLabel: variantLabelFor(variants),
+            skuCode: skus?.sku_code ?? null,
+            productName: skus?.products?.name ?? null,
+            variantLabel: variantLabelFor(skus),
             damageDetail: i.damage_detail,
             note: i.note,
             images: i.images ?? [],
@@ -233,7 +233,7 @@ export default async function DefectsPage({
   let query = supabase
     .from("defect_notes")
     .select(
-      "id, code, status, reported_by, repair_requested_at, collected_at, collected_by, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, variant_id, quantity, entered_quantity, transaction_unit_id, damage_detail, note, images, variants(id, sku_code, attributes, unit, products(name)))",
+      "id, code, status, reported_by, repair_requested_at, collected_at, collected_by, created_at, reporter:profiles!defect_notes_reported_by_fkey(name), source_location:stock_locations!defect_notes_source_location_id_fkey(name), defect_note_items(id, sku_id, quantity, entered_quantity, transaction_unit_id, damage_detail, note, images, skus(id, sku_code, attributes, unit, products(name)))",
       { count: "exact" },
     )
     .order("created_at", { ascending: false });
@@ -313,7 +313,7 @@ export default async function DefectsPage({
       repairRequested: !!d.repair_requested_at,
       liveExchange: liveByNote.get(d.id) ?? null,
       items: (d.defect_note_items ?? []).map((i) => {
-        const variants = i.variants as {
+        const skus = i.skus as {
           id?: string;
           sku_code?: string | null;
           attributes?: unknown;
@@ -322,14 +322,14 @@ export default async function DefectsPage({
         } | null;
         return {
           id: i.id,
-          skuId: i.variant_id,
-          variantId: i.variant_id,
+          skuId: i.sku_id,
+          variantId: i.sku_id,
           quantity: i.quantity,
           enteredQuantity: i.entered_quantity,
           transactionUnitId: i.transaction_unit_id,
-          skuCode: variants?.sku_code ?? null,
-          productName: variants?.products?.name ?? null,
-          variantLabel: variantLabelFor(variants),
+          skuCode: skus?.sku_code ?? null,
+          productName: skus?.products?.name ?? null,
+          variantLabel: variantLabelFor(skus),
           damageDetail: i.damage_detail,
           note: i.note,
           images: i.images ?? [],
@@ -440,17 +440,17 @@ export default async function DefectsPage({
 }
 
 // Helper nhãn biến thể (tách để type đơn giản trong map).
-function variantLabelFor(variants: {
+function variantLabelFor(skus: {
   attributes?: unknown;
   unit?: string | null;
 } | null): string {
-  if (variants?.attributes && typeof variants.attributes === "object" && !Array.isArray(variants.attributes)) {
-    const values = Object.values(variants.attributes as Record<string, unknown>).filter(
+  if (skus?.attributes && typeof skus.attributes === "object" && !Array.isArray(skus.attributes)) {
+    const values = Object.values(skus.attributes as Record<string, unknown>).filter(
       (v) => typeof v === "string" && v.length > 0,
     );
     if (values.length > 0) return values.join(" · ");
   }
-  return variants?.unit ?? "—";
+  return skus?.unit ?? "—";
 }
 
 function buildQueryString(params: Record<string, string | undefined>) {
@@ -471,7 +471,7 @@ function HeaderTabs({
   view: string;
   isManager: boolean;
   sourceLocationId: string;
-  variants: { id: string; name: string; detail: string }[];
+  variants?: { id: string; name: string; detail: string }[];
 }) {
   const tabs = [
     { href: "/defects", label: "Phiếu hỏng", active: view === "defect" },

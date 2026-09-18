@@ -44,14 +44,14 @@ const EMPTY: ItemDraft = {
 export function DefectEditDialog({
   row,
   sourceLocationId,
-  variants: _variants,
+  skus: _skus,
   open,
   onOpenChange,
   onSuccess,
 }: {
   row: DefectListRow;
   sourceLocationId: string;
-  variants?: unknown;
+  skus?: unknown;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;

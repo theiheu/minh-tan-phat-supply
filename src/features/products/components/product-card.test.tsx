@@ -41,7 +41,7 @@ describe("ProductCard", () => {
   ];
 
   it("does not open dialog when viewing or closing image lightbox", () => {
-    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+    render(<ProductCard product={mockProduct} skus={mockVariants} />);
 
     // Find the image element / gallery container
     const img = screen.getAllByAltText("Găng tay cao su")[0];
@@ -62,7 +62,7 @@ describe("ProductCard", () => {
   });
 
   it("does not open ProductDetailDialog when closing image lightbox via backdrop click", () => {
-    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+    render(<ProductCard product={mockProduct} skus={mockVariants} />);
 
     const img = screen.getAllByAltText("Găng tay cao su")[0];
     fireEvent.click(img);
@@ -78,7 +78,7 @@ describe("ProductCard", () => {
   });
 
   it("does not open ProductDetailDialog when closing image lightbox via Escape key", () => {
-    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+    render(<ProductCard product={mockProduct} skus={mockVariants} />);
 
     const img = screen.getAllByAltText("Găng tay cao su")[0];
     fireEvent.click(img);
@@ -93,7 +93,7 @@ describe("ProductCard", () => {
   });
 
   it("does not open ProductDetailDialog when navigating gallery images or clicking history button", async () => {
-    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+    render(<ProductCard product={mockProduct} skus={mockVariants} />);
 
     // Click next button in card gallery
     const nextBtn = screen.getByRole("button", { name: "Ảnh sau" });
@@ -109,7 +109,7 @@ describe("ProductCard", () => {
   });
 
   it("quickly adds 1 unit to cart when clicking quick add button on single-variant card", () => {
-    render(<ProductCard product={mockProduct} variants={mockVariants} />);
+    render(<ProductCard product={mockProduct} skus={mockVariants} />);
 
     const quickAddBtn = screen.getByRole("button", { name: "Thêm nhanh Găng tay cao su vào giỏ" });
     expect(quickAddBtn).toBeInTheDocument();

@@ -49,7 +49,7 @@ export function IssueDialog({
           zones={zones}
           subZones={subZones}
           customers={customers}
-          variants={variants}
+          skus={variants}
           onSuccess={(id) => {
             setOpen(false);
             router.push(`/issues/${id}`);

@@ -159,20 +159,20 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   const { data: items } = await supabase
     .from("requisition_items")
     .select(
-      "id, variant_id, quantity, entered_quantity, transaction_unit_id, uom_name_snapshot, conversion_factor_snapshot, transaction_units:sku_transaction_units(display_name, factor_to_base), variants(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))",
+      "id, sku_id, quantity, entered_quantity, transaction_unit_id, uom_name_snapshot, conversion_factor_snapshot, transaction_units:sku_transaction_units(display_name, factor_to_base), skus(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))",
     )
     .eq("requisition_id", id);
 
   // ---- Tồn kho hiện tại từng vật tư (để quản kho đối chiếu khi cấp phát) ----
-  const variantIds = [...new Set((items ?? []).map((i) => i.variant_id).filter((v): v is string => Boolean(v)))];
+  const variantIds = [...new Set((items ?? []).map((i) => i.sku_id).filter((v): v is string => Boolean(v)))];
   const stockByVariant = new Map<string, number>();
   if (variantIds.length > 0) {
     const { data: stockRows } = await supabase
-      .from("variant_stock")
-      .select("variant_id, quantity")
-      .in("variant_id", variantIds);
+      .from("sku_stock")
+      .select("sku_id, quantity")
+      .in("sku_id", variantIds);
     for (const s of stockRows ?? []) {
-      if (s.variant_id != null && s.quantity != null) stockByVariant.set(s.variant_id, s.quantity);
+      if (s.sku_id != null && s.quantity != null) stockByVariant.set(s.sku_id, s.quantity);
     }
   }
 
@@ -180,7 +180,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   const { data: returnEvents } = await supabase
     .from("requisition_returns")
     .select(
-      "id, returned_by, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(variant_id, quantity, variants(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+      "id, returned_by, created_at, returnedBy:profiles!requisition_returns_returned_by_fkey(name), items:requisition_return_items(sku_id, quantity, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
     )
     .eq("requisition_id", id)
     .order("created_at", { ascending: false });
@@ -188,13 +188,13 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   // Tổng đã trả theo variant (qua mọi sự kiện) — dùng cho form trả và dòng vật tư.
   const returnedByVariant = new Map<string, number>();
   for (const ev of returnEvents ?? []) {
-    for (const it of (ev as { items?: { variant_id: string; quantity: number }[] }).items ?? []) {
-      returnedByVariant.set(it.variant_id, (returnedByVariant.get(it.variant_id) ?? 0) + it.quantity);
+    for (const it of (ev as { items?: { sku_id: string; quantity: number }[] }).items ?? []) {
+      returnedByVariant.set(it.sku_id, (returnedByVariant.get(it.sku_id) ?? 0) + it.quantity);
     }
   }
 
   const materialItems: MaterialItemView[] = (items ?? []).map((i) => {
-    const v = i.variants as {
+    const v = i.skus as {
       products?: { name?: string | null; description?: string | null; images?: string[] | null } | null;
       units?: { name?: string | null; symbol?: string | null } | null;
       images?: string[] | null;
@@ -213,7 +213,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     if (attrVals.length > 0) attrObj["Quy cách"] = attrVals.join(" · ");
     return {
       id: i.id,
-      variantId: i.variant_id,
+      variantId: i.sku_id,
       productName: v?.products?.name ?? null,
       description: v?.products?.description ?? null,
       attributes: attrVals.length > 0 ? attrObj : null,
@@ -222,12 +222,12 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       enteredQuantity: i.entered_quantity ?? null,
       transactionUnitName: txUnitName,
       factorToBase: factorToBase ? Number(factorToBase) : null,
-      returned: returnedByVariant.get(i.variant_id) ?? 0,
+      returned: returnedByVariant.get(i.sku_id) ?? 0,
       images: [
         ...(v?.images ?? []),
         ...(v?.products?.images ?? []),
       ],
-      stock: i.variant_id ? (stockByVariant.get(i.variant_id) ?? null) : null,
+      stock: i.sku_id ? (stockByVariant.get(i.sku_id) ?? null) : null,
     };
   });
 
@@ -248,14 +248,14 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       supabase.from("defect_notes").select("code").eq("id", req.linked_defect_id).single(),
       supabase
         .from("defect_note_items")
-        .select("id, quantity, damage_detail, images, variants(products(name), units(name, symbol))")
+        .select("id, quantity, damage_detail, images, skus(products(name), units(name, symbol))")
         .eq("defect_note_id", req.linked_defect_id),
     ]);
     if (dnote) {
       defectEvidence = {
         code: dnote.code,
         items: (ditems ?? []).map((it) => {
-          const v = it.variants as { units?: { symbol?: string | null; name?: string | null } | null; products?: { name: string | null } | null } | null;
+          const v = it.skus as { units?: { symbol?: string | null; name?: string | null } | null; products?: { name: string | null } | null } | null;
           return {
             id: it.id,
             productName: v?.products?.name ?? null,
@@ -329,12 +329,12 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       returnedBy?: { name?: string | null } | null;
       items?: {
         quantity: number;
-        variants?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        skus?: { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
       }[];
     };
     const lines = (typed.items ?? []).map((it) => {
-      const name = it.variants?.products?.name ?? "Vật tư";
-      const label = variantLabel(it.variants?.attributes, it.variants?.unit);
+      const name = it.skus?.products?.name ?? "Vật tư";
+      const label = variantLabel(it.skus?.attributes, it.skus?.unit);
       return label && label !== "—" ? `${name} — ${label} × ${it.quantity}` : `${name} × ${it.quantity}`;
     });
     return {
@@ -352,7 +352,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     !!profile &&
     (req.status === "issued" || req.status === "received") &&
     (isPrivileged(profile.role) || profile.id === req.requester_id) &&
-    (items ?? []).some((i) => (i.quantity ?? 0) - (returnedByVariant.get(i.variant_id ?? "") ?? 0) > 0);
+    (items ?? []).some((i) => (i.quantity ?? 0) - (returnedByVariant.get(i.sku_id ?? "") ?? 0) > 0);
 
   return (
     <div className="space-y-4">
@@ -466,7 +466,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
               <ReturnItems
                 requisitionId={req.id}
                 items={(items ?? []).map((i) => {
-                  const v = i.variants as {
+                  const v = i.skus as {
                     products?: { name?: string | null } | null;
                     units?: { name?: string | null; symbol?: string | null } | null;
                     sku_attribute_values?: Array<{
@@ -480,11 +480,11 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
                   const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
                   return {
                     id: i.id,
-                    skuId: i.variant_id,
+                    skuId: i.sku_id,
                     transactionUnitId: (i as { transaction_unit_id?: string | null }).transaction_unit_id ?? undefined,
                     label: `${v?.products?.name ?? "Vật tư"} — ${detail}`,
                     quantity: i.quantity,
-                    returned: returnedByVariant.get(i.variant_id ?? "") ?? 0,
+                    returned: returnedByVariant.get(i.sku_id ?? "") ?? 0,
                   };
                 })}
               />
