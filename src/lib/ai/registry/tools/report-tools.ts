@@ -1,9 +1,16 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AIUserContext } from "../index";
 
 const VALID_STATUSES = ["draft", "pending", "approved", "rejected", "received", "issued", "cancelled"] as const;
 type RequisitionStatus = (typeof VALID_STATUSES)[number];
+
+function checkPrivilege(ctx: any) {
+  const role = ctx?.userContext?.role || "requester";
+  const isPrivileged = ["owner", "accountant", "warehouse", "superuser"].includes(role);
+  if (!isPrivileged) throw new Error("Unauthorized tool execution: Requires privileged role.");
+}
 
 export const reportTools = {
   get_recent_requisitions: tool({
@@ -12,8 +19,9 @@ export const reportTools = {
       status: z.string().optional().default("all").describe("Trạng thái phiếu ('all', 'pending', 'approved',...)"),
       limit: z.number().optional().default(6).describe("Số lượng phiếu cần lấy"),
     }).passthrough(),
-    execute: async (rawArgs: { status?: string; limit?: number }) => {
+    execute: async (rawArgs: { status?: string; limit?: number }, ctx: any) => {
       try {
+        checkPrivilege(ctx);
         const status = rawArgs.status || "all";
         const limit = typeof rawArgs.limit === "number" ? rawArgs.limit : 6;
 
@@ -52,8 +60,9 @@ export const reportTools = {
     parameters: z.object({
       limit: z.number().optional().default(6).describe("Số lượng phiếu cần lấy"),
     }).passthrough(),
-    execute: async (rawArgs: { limit?: number }) => {
+    execute: async (rawArgs: { limit?: number }, ctx: any) => {
       try {
+        checkPrivilege(ctx);
         const limit = typeof rawArgs.limit === "number" ? rawArgs.limit : 6;
         const supabase = createAdminClient();
         const { data, error } = await supabase

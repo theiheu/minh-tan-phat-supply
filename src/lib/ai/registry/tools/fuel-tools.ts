@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AIUserContext } from "../index";
 
 interface FuelSummaryRow {
   dispense_id: string;
@@ -14,6 +15,12 @@ interface FuelSummaryRow {
   notes: string;
 }
 
+function checkPrivilege(ctx: any) {
+  const role = ctx?.userContext?.role || "requester";
+  const isPrivileged = ["owner", "accountant", "warehouse", "superuser"].includes(role);
+  if (!isPrivileged) throw new Error("Unauthorized tool execution: Requires privileged role.");
+}
+
 export const fuelTools = {
   get_fuel_dispense_report: tool({
     description: "Tra cứu lịch sử và báo cáo cấp phát nhiên liệu (Xăng, Dầu Diesel) theo khoảng ngày hoặc phương tiện.",
@@ -24,8 +31,9 @@ export const fuelTools = {
       end_date: z.string().optional().describe("Ngày kết thúc thay thế"),
       limit: z.number().optional().default(10),
     }).passthrough(),
-    execute: async (rawArgs: { startDate?: string; endDate?: string; start_date?: string; end_date?: string; limit?: number }) => {
+    execute: async (rawArgs: { startDate?: string; endDate?: string; start_date?: string; end_date?: string; limit?: number }, ctx: any) => {
       try {
+        checkPrivilege(ctx);
         const startDate = (rawArgs.startDate || rawArgs.start_date || "").trim();
         const endDate = (rawArgs.endDate || rawArgs.end_date || "").trim();
         const limit = typeof rawArgs.limit === "number" ? rawArgs.limit : 10;
@@ -70,8 +78,9 @@ export const fuelTools = {
   get_vehicles_list: tool({
     description: "Tra cứu danh sách xe, máy phát điện, máy xúc và định mức tiêu hao nhiên liệu hiện tại.",
     parameters: z.object({}).passthrough(),
-    execute: async () => {
+    execute: async (_args: any, ctx: any) => {
       try {
+        checkPrivilege(ctx);
         const supabase = createAdminClient();
         const { data, error } = await supabase
           .from("vehicles")

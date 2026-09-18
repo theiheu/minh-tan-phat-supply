@@ -4,26 +4,42 @@ import { reportTools } from "./tools/report-tools";
 import { sopTools } from "./tools/sop-tools";
 import { actionTools } from "./tools/action-tools";
 
-/**
- * Tập hợp toàn bộ công cụ nghiệp vụ của MTP Farm ERP Copilot.
- * Phân quyền theo role người dùng để đảm bảo an toàn thông tin.
- */
-export function getRegisteredTools(userRole?: string) {
-  const isPrivileged = ["owner", "accountant", "warehouse", "superuser"].includes(userRole || "");
+export interface AIUserContext {
+  userId: string;
+  role: string;
+  userName?: string;
+  requestId?: string;
+}
 
-  // Mọi user đều được dùng tra cứu kho cơ bản, SOP và lập nháp phiếu
-  const baseTools = {
-    ...inventoryTools,
-    ...sopTools,
-    ...actionTools,
+/**
+ * Mọi tool phải kiểm tra authorization trực tiếp qua userContext thay vì chỉ dựa vào registry filtering.
+ */
+export function getRegisteredTools(userContext: AIUserContext) {
+  const isPrivileged = ["owner", "accountant", "warehouse", "superuser"].includes(userContext.role || "requester");
+
+  const buildTools = (toolConfigs: Record<string, any>) => {
+    const wrapped: Record<string, any> = {};
+    for (const [key, config] of Object.entries(toolConfigs)) {
+      wrapped[key] = {
+        ...config,
+        // Bind the context to the original execute function
+        execute: async (args: any, toolsCtx?: any) => config.execute(args, { ...toolsCtx, userContext })
+      };
+    }
+    return wrapped;
   };
 
-  // Chỉ role quản lý/kho/kế toán mới được xem báo cáo chuyên sâu và nhiên liệu toàn trang trại
+  const baseTools = {
+    ...buildTools(inventoryTools),
+    ...buildTools(sopTools),
+    ...buildTools(actionTools),
+  };
+
   if (isPrivileged) {
     return {
       ...baseTools,
-      ...fuelTools,
-      ...reportTools,
+      ...buildTools(fuelTools),
+      ...buildTools(reportTools),
     };
   }
 

@@ -17,8 +17,10 @@ import { actionTools } from "./registry/tools/action-tools";
 import { getRegisteredTools } from "./registry";
 
 type ToolExec<TInput, TOutput> = {
-  execute: (input: TInput) => Promise<TOutput>;
+  execute: (input: TInput, ctx?: any) => Promise<TOutput>;
 };
+
+const adminCtx = { userContext: { role: "superuser" } };
 
 describe("AI Agent & Tools Unit Tests", () => {
   beforeEach(() => {
@@ -45,7 +47,7 @@ describe("AI Agent & Tools Unit Tests", () => {
     const result = await tool.execute({
       searchTerm: "động cơ",
       limit: 3,
-    });
+    }, adminCtx);
 
     expect(mockRpc).toHaveBeenCalledWith("ai_get_stock_summary", {
       p_query: "động cơ",
@@ -74,7 +76,7 @@ describe("AI Agent & Tools Unit Tests", () => {
     const tool = inventoryTools.get_low_stock_alerts as unknown as ToolExec<{ limit?: number }, { totalAlerts: number; items: { productName: string }[] }>;
     const result = await tool.execute({
       limit: 5,
-    });
+    }, adminCtx);
 
     expect(result.totalAlerts).toBe(1);
     expect(result.items[0].productName).toBe("Bóng sưởi 150W");
@@ -100,7 +102,7 @@ describe("AI Agent & Tools Unit Tests", () => {
     const tool = fuelTools.get_fuel_dispense_report as unknown as ToolExec<{ limit?: number }, { totalLiters: number; records: { vehicle: string }[] }>;
     const result = await tool.execute({
       limit: 3,
-    });
+    }, adminCtx);
 
     expect(result.totalLiters).toBe(50);
     expect(result.records[0].vehicle).toBe("Xe tải Isuzu (XE-01)");
@@ -124,7 +126,7 @@ describe("AI Agent & Tools Unit Tests", () => {
     const tool = sopTools.search_sop_knowledge as unknown as ToolExec<{ query: string }, { found: boolean; results: { title: string }[] }>;
     const result = await tool.execute({
       query: "đổi 1-1",
-    });
+    }, adminCtx);
 
     expect(result.found).toBe(true);
     expect(result.results[0].title).toContain("ĐỔI 1-1");
@@ -141,7 +143,7 @@ describe("AI Agent & Tools Unit Tests", () => {
       unit: "Cuộn",
       targetZone: "Chuồng Gà Đẻ 02",
       reason: "Bạt cũ bị rách do gió lớn",
-    });
+    }, adminCtx);
 
     expect(result.action).toBe("DRAFT_REQUISITION");
     expect(result.draft.quantity).toBe(5);
@@ -168,7 +170,7 @@ describe("AI Agent & Tools Unit Tests", () => {
     const result = await tool.execute({
       reason: "Tra cứu tồn kho thực tế của các loại bạc đạn ở các kho hiện tại.",
       limit: 10,
-    });
+    }, adminCtx);
 
     expect(mockRpc).toHaveBeenCalledWith("ai_get_stock_summary", {
       p_query: "bạc đạn",
@@ -215,7 +217,7 @@ describe("AI Agent & Tools Unit Tests", () => {
     const result = await tool.execute({
       searchTerm: "động cơ điện và van bi",
       limit: 10,
-    });
+    }, adminCtx);
 
     expect(mockRpc).toHaveBeenCalledTimes(2);
     expect(mockRpc).toHaveBeenNthCalledWith(1, "ai_get_stock_summary", {
@@ -232,11 +234,11 @@ describe("AI Agent & Tools Unit Tests", () => {
   });
 
   it("should enforce RBAC tool availability", () => {
-    const requesterTools = getRegisteredTools("requester") as Record<string, unknown>;
+    const requesterTools = getRegisteredTools({ userId: "1", role: "requester" }) as Record<string, unknown>;
     expect(requesterTools.get_stock_balance).toBeDefined();
     expect(requesterTools.get_fuel_dispense_report).toBeUndefined();
 
-    const accountantTools = getRegisteredTools("accountant") as Record<string, unknown>;
+    const accountantTools = getRegisteredTools({ userId: "2", role: "accountant" }) as Record<string, unknown>;
     expect(accountantTools.get_fuel_dispense_report).toBeDefined();
     expect(accountantTools.get_recent_requisitions).toBeDefined();
   });
