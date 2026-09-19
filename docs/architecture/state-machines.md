@@ -18,7 +18,9 @@ stateDiagram-v2
     pending --> cancelled: Người tạo hủy phiếu
     approved --> issued: Quản kho xuất kho & Giao hàng (fulfill_requisition)
     issued --> received: Người nhận bấm Xác nhận đã nhận đủ (receive_requisition)
+    received --> returned: Hoàn trả vật tư thừa về kho (return_requisition_items)
     received --> [*]: Hoàn tất vòng đời
+    returned --> [*]: Đã nhập lại kho phần thừa
     rejected --> [*]
     cancelled --> [*]
 ```
@@ -43,7 +45,7 @@ stateDiagram-v2
     [*] --> draft: Tạo phiếu nhập & Chụp ảnh hóa đơn (create_receipt)
     draft --> posted: Duyệt nhập kho & Tự động cấp phát (post_receipt)
     draft --> cancelled: Hủy phiếu nhập (cancel_receipt)
-    posted --> cancelled: Hoàn tác nhập kho (revert_receipt)
+    posted --> cancelled: Hoàn tác nhập kho - Reversal Movement (revert_receipt)
     posted --> [*]: Tồn kho đã cộng & Lưu sổ cái
     cancelled --> [*]
 ```
@@ -51,7 +53,7 @@ stateDiagram-v2
 ### Quy tắc tự động cấp phát khi nhập kho (Auto-Fulfill):
 1. Khi Quản kho bấm **Hoàn tất nhập kho (`post_receipt`)**, tồn kho sẽ được cộng ngay lập tức.
 2. Hệ thống tự động tìm các Phiếu yêu cầu **ĐÃ ĐƯỢC PHÊ DUYỆT (`approved`)** theo thứ tự thời gian tạo tăng dần (FIFO).
-3. Tự động xuất kho (`fulfill_requisition`) cho các phiếu này và gắn danh sách `linked_requisition_ids` vào phiếu nhập kho.
+3. Tự động xuất kho (`fulfill_requisition`) cho các phiếu này và lưu vết kết quả bền vững vào bảng audit và `linked_requisition_ids`.
 4. *Lưu ý quan trọng:* Các phiếu đang ở trạng thái `pending` (chưa duyệt) sẽ **không** bị tự động xuất hàng để đảm bảo nguyên tắc quản trị.
 
 ---
@@ -63,7 +65,7 @@ stateDiagram-v2
     [*] --> draft: Tạo phiếu xuất nội bộ / Bán hàng (create_issue)
     draft --> posted: Xác nhận xuất kho & Trừ tồn ngay (post_issue)
     draft --> cancelled: Hủy phiếu nháp
-    posted --> cancelled: Hoàn tác xuất kho (revert_issue)
+    posted --> cancelled: Hoàn tác xuất kho - Reversal Movement (revert_issue)
     posted --> [*]: Đã trừ tồn & Ghi nhận chi phí dãy chuồng
     cancelled --> [*]
 ```
@@ -74,10 +76,10 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Defect_Staging: Báo hỏng tại chuồng (record_defect)
+    [*] --> Defect_Staging: Báo hỏng tại chuồng kèm >= 1 ảnh (record_defect)
     Defect_Staging --> Quick_Exchange: Chọn Đổi 1-1 Cấp Tốc (create_exchange)
     Quick_Exchange --> Exchange_Approved: Duyệt đổi (approve_exchange)
-    Exchange_Approved --> Exchange_Issued: Xuất hàng mới từ Kho Tổng (issue_exchange)
+    Exchange_Approved --> Exchange_Issued: Xuất hàng mới từ Kho Tổng & nạp đồ hỏng (issue_exchange)
     Exchange_Issued --> Exchange_Received: Thợ nhận hàng mang đi lắp (receive_exchange)
     Defect_Staging --> Repair_Staging: Gom đi sửa chữa (send_to_repair)
     Defect_Staging --> Liquidation_Staging: Chuyển thanh lý ve chai (create_liquidation)
@@ -110,16 +112,28 @@ stateDiagram-v2
     returned --> [*]: Hoàn tất thu hồi dụng cụ
     cancelled --> [*]
 ```
-* **Cảnh báo quá hạn (Overdue Alert):** Khi `CURRENT_DATE > due_date` và `status = 'borrowed'`, hệ thống tự động gắn huy hiệu màu đỏ cảnh báo trên màn hình Quản kho và Kỹ thuật.
+* **Cảnh báo quá hạn (Overdue Alert):** Khi `CURRENT_DATE > due_date` và `status = 'borrowed'`, hệ thống tự động gắn huy hiệu màu đỏ cảnh báo trên màn hình Quản kho và gửi email đôn đốc thu hồi.
 
 ---
 
-## 7. PHIÊN KIỂM KÊ KHO (STOCKTAKE SESSIONS STATE MACHINE)
+## 7. TRẠM BỒN DẦU DIESEL & XE CƠ GIỚI (FUEL STATE MACHINE)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Fuel_Receipt: Xe bồn Petrolimex vào nhập dầu (create_fuel_receipt)
+    Fuel_Receipt --> Bulk_Tank: Tồn kho bồn dầu tăng
+    Bulk_Tank --> Dispense: Quét QR xe & Bơm dầu (create_fuel_dispense)
+    Dispense --> Verified_Usage: Trừ dầu bồn + Tính L/100km hoặc L/h + Đối soát định mức
+```
+
+---
+
+## 8. PHIÊN KIỂM KÊ KHO (STOCKTAKE SESSIONS STATE MACHINE)
 
 ```mermaid
 stateDiagram-v2
     [*] --> draft: Mở phiên kiểm kê vị trí kho (create_stocktake)
-    draft --> draft: Quét mã QR & Nhập số thực tế (Ghi nhận difference)
+    draft --> draft: Quét mã QR & Nhập số thực tế (Ghi nhận difference + ảnh)
     draft --> posted: Chủ trại / Kế toán duyệt cân bằng tồn kho (post_stocktake)
     draft --> cancelled: Hủy phiên kiểm kê
     posted --> [*]: Tồn kho tự động điều chỉnh khớp 100% thực tế

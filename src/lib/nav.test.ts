@@ -21,9 +21,15 @@ describe("nav", () => {
     expect(requesterItems.some((i) => i.href === "/receipts")).toBe(false);
     expect(requesterItems.some((i) => i.href.startsWith("/admin"))).toBe(false);
 
-    // Warehouse managers should see receipts and admin
+    // Warehouse managers should see receipts and admin products, but NOT users or ai-copilot
     expect(warehouseItems.some((i) => i.href === "/receipts")).toBe(true);
     expect(warehouseItems.some((i) => i.href === "/admin/products")).toBe(true);
+    expect(warehouseItems.some((i) => i.href === "/admin/users")).toBe(false);
+    expect(warehouseItems.some((i) => i.href === "/admin/ai-copilot")).toBe(false);
+
+    // Superusers should see users and ai-copilot
+    expect(superuserItems.some((i) => i.href === "/admin/users")).toBe(true);
+    expect(superuserItems.some((i) => i.href === "/admin/ai-copilot")).toBe(true);
   });
 
   it("filters groups by role properly", () => {

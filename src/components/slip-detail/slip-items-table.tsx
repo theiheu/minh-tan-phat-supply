@@ -78,7 +78,12 @@ export function SlipItemsTable({ detail }: SlipItemsTableProps) {
                   )}
                 </TableCell>
                 <TableCell className="font-medium text-xs text-foreground min-w-[180px]">
-                  <div className="font-medium text-foreground">{it.productName}</div>
+                  <div className="font-medium text-foreground">
+                    {it.productName}
+                    {it.variantLabel && it.variantLabel !== "—" && it.variantLabel !== it.unit && !it.productName.includes(it.variantLabel) && (
+                      <span className="text-muted-foreground font-normal"> - {it.variantLabel}</span>
+                    )}
+                  </div>
                   {it.stock !== undefined && it.stock !== null && (
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
                       <span>Tồn kho:</span>

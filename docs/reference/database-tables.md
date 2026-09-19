@@ -1,31 +1,34 @@
 # 📚 TỪ ĐIỂN BẢNG CƠ SỞ DỮ LIỆU (DATABASE TABLES DICTIONARY)
 
-> Tài liệu tham chiếu chi tiết toàn bộ 39 bảng cơ sở dữ liệu và 2 views của hệ thống **Minh Tân Phát Supply** trên nền tảng PostgreSQL 17 / Supabase.
+> Tài liệu tham chiếu chi tiết toàn bộ các bảng cơ sở dữ liệu và views của hệ thống **Minh Tân Phát Supply** trên nền tảng PostgreSQL 17 / Supabase.
 
 ---
 
 ## MỤC LỤC CÁC PHÂN NHÓM BẢNG
-1. [Tổ chức, Người dùng & Kiểm toán (5 bảng)](#1-tổ-chức-người-dùng--kiểm-toán)
-2. [Danh mục Hàng hóa & Đối tác (6 bảng)](#2-danh-mục-hàng-hóa--đối-tác)
-3. [Kho Hàng & Sổ Cái Tồn Kho (3 bảng + 2 views)](#3-kho-hàng--sổ-cái-tồn-kho)
-4. [Phiếu Nhập Kho từ Nhà Cung Cấp (2 bảng)](#4-phiếu-nhập-kho-từ-nhà-cung-cấp)
-5. [Phiếu Yêu Cầu & Cấp Phát Xuất Kho (6 bảng)](#5-phiếu-yêu-cầu--cấp-phát-xuất-kho)
-6. [Báo Hỏng, Đổi 1-1, Sửa Chữa & Thanh Lý (8 bảng)](#6-báo-hỏng-đổi-1-1-sửa-chữa--thanh-lý)
-7. [Dụng Cụ Đồ Nghề (2 bảng)](#7-dụng-cụ-đồ-nghề)
-8. [Trạm Bồn Dầu & Xe Cơ Giới (5 bảng)](#8-trạm-bồn-dầu--xe-cơ-giới)
-9. [Kiểm Kê Kho & Cân Bằng Tồn (2 bảng)](#9-kiểm-kê-kho--cân-bằng-tồn)
+1. [Tổ chức, Người dùng, Phân quyền & Kiểm toán (6 bảng)](#1-tổ-chức-người-dùng-phân-quyền--kiểm-toán)
+2. [Danh mục Hàng hóa, SKU, Thuộc tính & BOM (9 bảng)](#2-danh-mục-hàng-hóa-sku-thuộc-tính--bom)
+3. [Đối tác Nhà Cung Cấp & Khách Hàng (2 bảng)](#3-đối-tác-nhà-cung-cấp--khách-hàng)
+4. [Kho Hàng, Sổ Cái Tồn Kho & Lô Hàng (5 bảng + 2 views)](#4-kho-hàng-sổ-cái-tồn-kho--lô-hàng)
+5. [Phiếu Nhập Kho từ Nhà Cung Cấp (2 bảng)](#5-phiếu-nhập-kho-từ-nhà-cung-cấp)
+6. [Phiếu Yêu Cầu & Hoàn Trả Vật Tư (4 bảng)](#6-phiếu-yêu-cầu--hoàn-trả-vật-tư)
+7. [Phiếu Xuất Kho Cấp Phát & Bán Hàng (2 bảng)](#7-phiếu-xuất-kho-cấp-phát--bán-hàng)
+8. [Báo Hỏng, Đổi 1-1, Sửa Chữa & Thanh Lý (8 bảng)](#8-báo-hỏng-đổi-1-1-sửa-chữa--thanh-lý)
+9. [Dụng Cụ Đồ Nghề Dùng Chung (3 bảng)](#9-dụng-cụ-đồ-nghề-dùng-chung)
+10. [Trạm Bồn Dầu & Xe Cơ Giới (5 bảng)](#10-trạm-bồn-dầu--xe-cơ-giới)
+11. [Kiểm Kê Kho Định Kỳ (2 bảng)](#11-kiểm-kê-kho-định-kỳ)
+12. [AI Copilot & Tri Thức Vector (6 bảng)](#12-ai-copilot--tri-thức-vector)
 
 ---
 
-## 1. TỔ CHỨC, NGƯỜI DÙNG & KIỂM TOÁN
+## 1. TỔ CHỨC, NGƯỜI DÙNG, PHÂN QUYỀN & KIỂM TOÁN
 
 ### `zones` — Khu vực địa lý trang trại
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính khu vực |
-| `code` | `text` | `NOT NULL, UNIQUE` | Mã khu vực (VD: `KHU_A`, `KHU_B`, `CO_DIEN`) |
+| `code` | `text` | `NOT NULL, UNIQUE` | Mã khu vực (VD: `KHU_A`, `KHU_B`, `CO_DIEN`, `TRAM_DAU`) |
 | `name` | `text` | `NOT NULL` | Tên hiển thị (VD: `Khu A - Gà Đẻ`, `Xưởng Cơ Điện`) |
-| `description` | `text` | `NULL` | Mô tả chi tiết khu vực |
+| `description` | `text` | `NULL` | Mô tả chi tiết |
 | `created_at` | `timestamptz` | `DEFAULT now()` | Thời điểm tạo |
 
 ### `sub_zones` — Dãy chuồng / Phân xưởng trực thuộc
@@ -60,7 +63,7 @@
 | `before` | `jsonb` | `NULL` | Dữ liệu cũ trước khi sửa |
 | `after` | `jsonb` | `NULL` | Dữ liệu mới sau khi sửa |
 
-### `notifications` — Thông báo chuông đích danh
+### `notifications` — Thông báo chuông đích danh trong app
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính thông báo |
@@ -71,96 +74,253 @@
 | `link` | `text` | `NULL` | Đường dẫn chuyển hướng khi bấm vào |
 | `is_read` | `boolean` | `DEFAULT false` | Đã đọc hay chưa |
 
+### `email_delivery_attempts` — Nhật ký phân phối email SMTP
+| Cột | Kiểu | Ràng buộc | Diễn giải |
+|---|---|---|---|
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `recipient` | `text` | `NOT NULL` | Địa chỉ email người nhận |
+| `subject` | `text` | `NOT NULL` | Tiêu đề email |
+| `status` | `text` | `NOT NULL` | `pending`, `sent`, `failed` |
+| `error_message` | `text` | `NULL` | Chi tiết lỗi nếu gửi thất bại |
+| `attempt_count` | `integer` | `DEFAULT 0` | Số lần thử lại |
+
 ---
 
-## 2. DANH MỤC HÀNG HÓA & ĐỐI TÁC
+## 2. DANH MỤC HÀNG HÓA, SKU, THUỘC TÍNH & BOM
 
 ### `categories` — Danh mục ngành hàng
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
-| `name` | `text` | `NOT NULL` | Tên ngành hàng (VD: `Cơ điện`, `Thuốc thú y`, `Dụng cụ chuồng`) |
-| `icon` | `text` | `NULL` | Mã icon Lucide |
-| `display_order`| `integer` | `DEFAULT 0` | Thứ tự hiển thị trên menu |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính ngành hàng |
+| `name` | `text` | `NOT NULL` | Tên ngành hàng (VD: `Cơ điện`, `Thuốc thú y`) |
+| `icon` | `text` | `NULL` | Tên icon Lucide |
+| `display_order` | `integer` | `DEFAULT 0` | Thứ tự hiển thị |
 
-### `products` — Sản phẩm gốc
+### `products` — Sản phẩm gốc (Catalog Product Identity)
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính sản phẩm |
 | `code` | `text` | `NOT NULL, UNIQUE` | Mã sản phẩm (VD: `VT-MOTOR-1.5KW`) |
 | `name` | `text` | `NOT NULL` | Tên sản phẩm gốc |
 | `category_id` | `uuid` | `NULL, REFERENCES categories(id)` | Ngành hàng |
-| `base_unit` | `text` | `NOT NULL` | Đơn vị tính cơ sở nhỏ nhất (VD: `Cái`, `Hộp`, `ml`, `Kg`, `Mét`) |
-| `image_url` | `text` | `NULL` | Ảnh chụp thực tế của sản phẩm |
-| `manage_type` | `text` | `DEFAULT 'single'` | Kiểu quản lý: `single` (lẻ), `conversion` (quy đổi đa cấp), `multiple` (nhiều quy cách), `kit` (bộ) |
+| `base_unit` | `text` | `NOT NULL` | Tên đơn vị tính cơ sở |
+| `manage_type` | `text` | `DEFAULT 'single'` | `single` (lẻ), `conversion` (quy đổi), `multiple` (nhiều quy cách), `kit` (bộ) |
+| `image_url` | `text` | `NULL` | Ảnh sản phẩm đại diện |
+| `is_active` | `boolean` | `DEFAULT true` | Đang kinh doanh hay ngừng |
 
-### `variants` — Biến thể & Quy cách đóng gói đa cấp
+### `units` — Đơn vị tính chuẩn hóa (Canonical Units)
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính biến thể |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `code` | `text` | `NOT NULL, UNIQUE` | Mã đơn vị (VD: `cai`, `kg`, `lit`, `thung`) |
+| `name` | `text` | `NOT NULL` | Tên hiển thị (Cái, Kg, Lít, Thùng) |
+| `symbol` | `text` | `NULL` | Ký hiệu viết tắt |
+
+### `skus` — Dòng hàng SKU lưu kho duy nhất
+| Cột | Kiểu | Ràng buộc | Diễn giải |
+|---|---|---|---|
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính SKU |
 | `product_id` | `uuid` | `NOT NULL, REFERENCES products(id)` | Sản phẩm gốc |
-| `sku` | `text` | `NOT NULL, UNIQUE` | Mã SKU định danh duy nhất |
-| `name` | `text` | `NOT NULL` | Tên quy cách (VD: `Thùng (6 hộp 550ml)`, `Can 5 Lít`, `Bao 25kg`) |
-| `unit` | `text` | `NOT NULL` | Tên đơn vị đóng gói |
-| `conversion_factor` | `numeric` | `DEFAULT 1.0` | Hệ số quy đổi về đơn vị cơ sở (VD: 1 Thùng = 6 Hộp ➜ factor = 6) |
-| `price_buy` | `numeric` | `DEFAULT 0` | Đơn giá mua từ Nhà cung cấp |
-| `price_sell` | `numeric` | `DEFAULT 0` | Đơn giá xuất bán thương mại |
-| `min_stock` | `numeric` | `DEFAULT 0` | Ngưỡng tồn kho an toàn tối thiểu |
-| `is_default` | `boolean` | `DEFAULT false` | Biến thể mặc định |
+| `sku_code` | `text` | `NOT NULL, UNIQUE` | Mã SKU định danh duy nhất |
+| `name` | `text` | `NOT NULL` | Tên đầy đủ của SKU |
+| `base_unit_id` | `uuid` | `NOT NULL, REFERENCES units(id)` | Đơn vị cơ sở giữ tồn |
+| `kit_type` | `text` | `DEFAULT 'none'` | `none` (thường), `virtual` (bộ ảo), `assembled` (bộ ráp) |
+| `cost_price` | `numeric` | `DEFAULT 0` | Giá vốn mua |
+| `selling_price`| `numeric` | `DEFAULT 0` | Giá xuất bán |
+| `min_stock` | `numeric` | `DEFAULT 0` | Ngưỡng tồn an toàn tối thiểu |
 
-### `variant_components` — Định mức linh kiện theo bộ (BOM)
+### `sku_transaction_units` — Quy đổi đơn vị đóng gói đa cấp
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `parent_variant_id` | `uuid` | `REFERENCES variants(id)` | Biến thể cha (Bộ hoàn chỉnh) |
-| `child_variant_id` | `uuid` | `REFERENCES variants(id)` | Linh kiện con trực thuộc |
-| `quantity` | `numeric` | `NOT NULL` | Số lượng linh kiện cấu thành 1 bộ cha |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `sku_id` | `uuid` | `NOT NULL, REFERENCES skus(id)` | Khóa ngoại SKU |
+| `unit_id` | `uuid` | `NOT NULL, REFERENCES units(id)` | Đơn vị quy đổi (VD: Thùng) |
+| `conversion_rate` | `numeric` | `NOT NULL, CHECK > 0` | Hệ số nhân về Base UOM (1 Thùng = 6 Hộp ➜ rate = 6) |
+
+### `attribute_definitions` & `sku_attribute_values` — Thuộc tính kỹ thuật
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `attribute_definitions` | `id, code, name, data_type, is_variant_axis` | Định nghĩa thuộc tính (Hãng, Công suất, Kích cỡ) |
+| `sku_attribute_values` | `sku_id, attribute_id, value_text, value_number` | Giá trị cụ thể gắn cho SKU |
+
+### `bom_headers`, `bom_versions`, `bom_items` — Định mức linh kiện (BOM)
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `bom_headers` | `id, parent_sku_id, name` | Header định mức linh kiện của SKU cha |
+| `bom_versions` | `id, header_id, version_number, is_active` | Phiên bản BOM (hỗ trợ versioning bảo toàn lịch sử) |
+| `bom_items` | `id, version_id, component_sku_id, quantity` | Chi tiết linh kiện con và số lượng cấu thành |
+
+---
+
+## 3. ĐỐI TÁC NHÀ CUNG CẤP & KHÁCH HÀNG
 
 ### `suppliers` — Danh bạ Nhà Cung Cấp
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính NCC |
-| `code` | `text` | `NOT NULL, UNIQUE` | Mã nhà cung cấp (VD: `NCC-PETRO`, `NCC-DIEN-QUANG`) |
-| `name` | `text` | `NOT NULL` | Tên công ty / Cửa hàng |
-| `phone` | `text` | `NULL` | Số điện thoại liên hệ |
-| `address` | `text` | `NULL` | Địa chỉ nhà cung cấp |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `code` | `text` | `NOT NULL, UNIQUE` | Mã nhà cung cấp (VD: `NCC-PETRO`, `NCC-TAMHUNG`) |
+| `name` | `text` | `NOT NULL` | Tên đầy đủ công ty / cửa hàng |
+| `contact_person`| `text` | `NULL` | Người liên hệ |
+| `phone` | `text` | `NULL` | Số điện thoại |
+| `address` | `text` | `NULL` | Địa chỉ kinh doanh |
 
-### `customers` — Danh bạ Khách hàng thu mua
+### `customers` — Danh bạ Khách Hàng
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính khách hàng |
-| `code` | `text` | `NOT NULL, UNIQUE` | Mã khách hàng (VD: `KH-PHAN-BAYTHANG`) |
-| `name` | `text` | `NOT NULL` | Tên đại lý / Khách mua |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `code` | `text` | `NOT NULL, UNIQUE` | Mã khách hàng |
+| `name` | `text` | `NOT NULL` | Tên khách hàng / Đại lý / Thương lái |
 | `phone` | `text` | `NULL` | Số điện thoại |
+| `address` | `text` | `NULL` | Địa chỉ |
 
 ---
 
-## 3. KHO HÀNG & SỔ CÁI TỒN KHO
+## 4. KHO HÀNG, SỔ CÁI TỒN KHO & LÔ HÀNG
 
 ### `stock_locations` — Vị trí kho vật lý
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính kho |
-| `code` | `text` | `NOT NULL, UNIQUE` | Mã kho (VD: `MAIN`, `DEFECT`, `REPAIR`, `MEDICINE`) |
-| `name` | `text` | `NOT NULL` | Tên kho (Kho Tổng, Kho Hỏng, Kho Sửa Chữa, Kho Thuốc) |
-| `type` | `location_type` | `DEFAULT 'main'` | `main` (chính), `defect` (hỏng), `repair` (sửa), `other` |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `code` | `text` | `NOT NULL, UNIQUE` | `KHO_TONG`, `KHO_CO_DIEN`, `KHO_HONG`, `TRAM_DAU` |
+| `name` | `text` | `NOT NULL` | Tên kho |
+| `type` | `location_type` | `NOT NULL` | `main`, `defect`, `repair`, `other` |
 
 ### `stock_balances` — Tồn kho khả dụng thời gian thực
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
-| `location_id` | `uuid` | `NOT NULL, REFERENCES stock_locations(id)` | Vị trí kho |
-| `variant_id` | `uuid` | `NOT NULL, REFERENCES variants(id)` | Biến thể hàng hóa |
-| `quantity` | `numeric` | `NOT NULL, DEFAULT 0` | Số lượng tồn kho theo đơn vị cơ sở |
+| `location_id` | `uuid` | `REFERENCES stock_locations(id)` | Vị trí kho |
+| `sku_id` | `uuid` | `REFERENCES skus(id)` | SKU lưu kho |
+| `quantity` | `numeric` | `NOT NULL, DEFAULT 0` | Số lượng tồn theo Base UOM |
 
-### `stock_movements` — Sổ cái biến động kho (Audit Ledger)
+### `stock_movements` — Sổ cái biến động kho Append-Only
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính giao dịch |
-| `location_id` | `uuid` | `NOT NULL, REFERENCES stock_locations(id)` | Kho phát sinh biến động |
-| `variant_id` | `uuid` | `NOT NULL, REFERENCES variants(id)` | Biến thể |
-| `quantity_change` | `numeric` | `NOT NULL` | Số lượng thay đổi (+ tăng, - giảm) |
-| `movement_type` | `movement_type` | `NOT NULL` | `receipt_in`, `issue_out`, `transfer_in`, `transfer_out`, `defect_in`, `defect_out`, `repair_in`, `repair_out`, `stocktake_adjust`, `revert` |
-| `reference_type`| `text` | `NOT NULL` | Bảng chứng từ gốc (`receipts`, `issues`, `requisitions`...) |
-| `reference_id` | `uuid` | `NOT NULL` | Khóa chính chứng từ gốc |
-| `balance_after` | `numeric` | `NOT NULL` | Số dư tồn kho ngay sau giao dịch |
-| `created_by` | `uuid` | `REFERENCES profiles(id)` | Người thực hiện giao dịch |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính movement |
+| `location_id` | `uuid` | `NOT NULL, REFERENCES stock_locations(id)` | Vị trí kho biến động |
+| `sku_id` | `uuid` | `NOT NULL, REFERENCES skus(id)` | SKU biến động |
+| `quantity_change`| `numeric` | `NOT NULL` | Số lượng (+ tăng, - giảm) |
+| `movement_type` | `movement_type` | `NOT NULL` | `receipt_in`, `issue_out`, `exchange_out`, `defect_collect_in`, `transfer_out`, `transfer_in`, `stocktake_adjust`, `revert_reversal`... |
+| `reference_type`| `text` | `NOT NULL` | Tên bảng chứng từ phát sinh (`receipts`, `issues`, `requisitions`...) |
+| `reference_id` | `uuid` | `NOT NULL` | Khóa chính chứng từ phát sinh |
+| `balance_after` | `numeric` | `NOT NULL` | Số dư tồn kho tức thời sau biến động |
+| `created_by` | `uuid` | `REFERENCES profiles(id)` | Nhân sự thực hiện |
+| `created_at` | `timestamptz` | `DEFAULT now()` | Thời điểm ghi sổ |
+
+---
+
+## 5. PHIẾU NHẬP KHO TỪ NHÀ CUNG CẤP
+
+### `receipts` — Phiếu Nhập Kho
+| Cột | Kiểu | Ràng buộc | Diễn giải |
+|---|---|---|---|
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `code` | `text` | `NOT NULL, UNIQUE` | Mã phiếu (VD: `NK-202609-001`) |
+| `supplier_id` | `uuid` | `NOT NULL, REFERENCES suppliers(id)` | Nhà cung cấp |
+| `location_id` | `uuid` | `NOT NULL, REFERENCES stock_locations(id)` | Kho nhập hàng |
+| `status` | `receipt_status` | `DEFAULT 'draft'` | `draft`, `posted`, `cancelled` |
+| `invoice_no` | `text` | `NULL` | Số hóa đơn VAT / Phiếu giao hàng |
+| `invoice_images`| `text[]` | `DEFAULT '{}'` | Danh sách đường dẫn ảnh hóa đơn trên Supabase Storage |
+| `total_amount` | `numeric` | `DEFAULT 0` | Tổng giá trị tiền hàng |
+| `created_by` | `uuid` | `REFERENCES profiles(id)` | Người lập phiếu |
+
+### `receipt_items` — Chi tiết hàng nhập
+| Cột | Kiểu | Ràng buộc | Diễn giải |
+|---|---|---|---|
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính dòng |
+| `receipt_id` | `uuid` | `NOT NULL, REFERENCES receipts(id)` | Khóa ngoại phiếu nhập |
+| `sku_id` | `uuid` | `NOT NULL, REFERENCES skus(id)` | SKU nhập |
+| `quantity` | `numeric` | `NOT NULL, CHECK > 0` | Số lượng nhập |
+| `unit_cost` | `numeric` | `NOT NULL, DEFAULT 0` | Đơn giá mua |
+| `lot_number` | `text` | `NULL` | Số lô hàng |
+| `expiry_date` | `date` | `NULL` | Hạn sử dụng |
+
+---
+
+## 6. PHIẾU YÊU CẦU & HOÀN TRẢ VẬT TƯ
+
+### `requisitions` — Phiếu Yêu Cầu Cấp Phát
+| Cột | Kiểu | Ràng buộc | Diễn giải |
+|---|---|---|---|
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `code` | `text` | `NOT NULL, UNIQUE` | Mã phiếu (VD: `REQ-202609-001`) |
+| `requester_id` | `uuid` | `NOT NULL, REFERENCES profiles(id)` | Người lập yêu cầu |
+| `zone_id` | `uuid` | `NOT NULL, REFERENCES zones(id)` | Khu vực nhận |
+| `sub_zone_id` | `uuid` | `NULL, REFERENCES sub_zones(id)` | Dãy chuồng nhận chi tiết |
+| `priority` | `text` | `DEFAULT 'normal'` | `normal`, `urgent` |
+| `status` | `requisition_status` | `DEFAULT 'draft'` | `draft`, `pending`, `approved`, `issued`, `received`, `rejected`, `cancelled` |
+| `invoice_images`| `text[]` | `DEFAULT '{}'` | Ảnh chứng từ/hóa đơn đính kèm |
+
+### `requisition_returns` & `requisition_return_items` — Hoàn trả vật tư thừa
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `requisition_returns` | `id, code, requisition_id, returned_by, location_id, status` | Phiếu hoàn trả vật tư dùng thừa về kho |
+| `requisition_return_items` | `id, return_id, sku_id, quantity` | Chi tiết số lượng SKU hoàn trả |
+
+---
+
+## 7. PHIẾU XUẤT KHO CẤP PHÁT & BÁN HÀNG
+
+### `issues` & `issue_items` — Xuất Kho Trực Tiếp
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `issues` | `id, code, destination_type, zone_id, sub_zone_id, customer_id, location_id, status, notes, invoice_images` | Phiếu xuất kho nội bộ theo dãy chuồng hoặc xuất bán |
+| `issue_items` | `id, issue_id, sku_id, quantity, unit_price` | Chi tiết hàng xuất và đơn giá |
+
+---
+
+## 8. BÁO HỎNG, ĐỔI 1-1, SỬA CHỮA & THANH LÝ
+
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `defect_notes` | `id, code, zone_id, sub_zone_id, reporter_id, status` | Phiếu báo hỏng thiết bị tại chuồng |
+| `defect_note_items`| `id, defect_note_id, sku_id, quantity, damage_type, severity, images, note` | Chi tiết thiết bị hỏng kèm ảnh hiện trường |
+| `exchange_notes` | `id, code, defect_note_id, source_location_id, defect_location_id, status` | Phiếu đổi 1-1 cấp tốc 30s |
+| `exchange_note_items`| `id, exchange_id, sku_id, quantity` | Chi tiết thiết bị đổi mới |
+| `repair_orders` | `id, code, vendor_name, status, cost, notes` | Đơn gửi thiết bị đi sửa xưởng ngoài |
+| `repair_order_items`| `id, repair_order_id, defect_note_item_id, outcome` | Chi tiết thiết bị sửa và kết quả nghiệm thu |
+| `liquidation_notes`| `id, code, buyer_name, total_revenue, status` | Phiếu bán thanh lý phế liệu ve chai |
+| `liquidation_items`| `id, liquidation_id, defect_note_item_id, quantity, revenue` | Chi tiết món thanh lý |
+
+---
+
+## 9. DỤNG CỤ ĐỒ NGHỀ DÙNG CHUNG
+
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `tool_borrowings` | `id, code, borrower_id, zone_id, due_date, status, returned_at` | Phiếu mượn dụng cụ đồ nghề |
+| `tool_borrowing_items`| `id, borrowing_id, sku_id, quantity, returned_quantity` | Chi tiết dụng cụ và số lượng mượn/trả |
+| `tool_reminder_claims`| `id, borrowing_id, claimed_at` | Khóa chống lặp email nhắc nợ dụng cụ |
+
+---
+
+## 10. TRẠM BỒN DẦU & XE CƠ GIỚI
+
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `vehicles` | `id, code, name, type, license_plate, calc_unit, standard_rate, last_meter, qr_text, document_images` | Dàn xe cơ giới, định mức tiêu hao và ảnh cà vẹt |
+| `fuel_types` | `id, code, name, unit, is_active` | Danh mục loại nhiên liệu (Dầu DO 0.05S) |
+| `fuel_receipts` | `id, code, fuel_type_id, quantity, unit_cost, supplier_name, invoice_no` | Phiếu xe bồn Petrolimex nhập dầu vào trạm |
+| `fuel_dispenses`| `id, code, vehicle_id, fuel_type_id, dispensed_liters, current_meter, prev_meter, distance_or_hours, consumption_rate, status` | Lượt quét QR bơm dầu xe |
+| `fuel_movements`| `id, fuel_type_id, quantity_change, movement_type, reference_id, balance_after` | Sổ cái biến động bồn dầu |
+
+---
+
+## 11. KIỂM KÊ KHO ĐỊNH KỲ
+
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `stocktake_sessions`| `id, code, location_id, status, conducted_by, approved_by, notes` | Phiên kiểm kê kho |
+| `stocktake_items` | `id, session_id, sku_id, system_qty, actual_qty, difference, reason, image_url` | Chi tiết đếm thực tế và chênh lệch |
+
+---
+
+## 12. AI COPILOT & TRI THỨC VECTOR
+
+| Bảng | Cột chính | Diễn giải |
+|---|---|---|
+| `ai_knowledge_documents`| `id, title, category, source_key, content_hash` | Tài liệu SOP vận hành trại |
+| `ai_knowledge_chunks` | `id, document_id, chunk_index, content, embedding, tsv` | Phân mảnh văn bản và vector 1536 chiều |
+| `ai_conversations` | `id, user_id, title, created_at` | Phiên hội thoại với AI |
+| `ai_messages` | `id, conversation_id, role, content, tool_calls, tool_results` | Lịch sử tin nhắn hội thoại |
+| `ai_quick_prompts` | `id, label, prompt, icon, display_order, is_active` | Câu hỏi mẫu cài sẵn |
+| `ai_rate_limits` | `id, user_id, window_start, request_count` | Bộ đếm giới hạn tốc độ gọi API AI |

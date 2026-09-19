@@ -34,8 +34,8 @@ const EMPTY: ItemDraft = { skuId: "", transactionUnitId: "", enteredQuantity: "1
 
 export function ReceiptForm({
   suppliers,
-  _variants,
-  _categories = [],
+  variants: _variants,
+  categories: _categories = [],
   receiptId,
   receiptCode,
   receiptStatus,
@@ -43,6 +43,7 @@ export function ReceiptForm({
   initialNotes = "",
   initialInvoiceImages = [],
   initialItems,
+  initialLinkedRequisitionIds = [],
   currentUser,
   creatorId,
   onSuccess,
@@ -58,6 +59,7 @@ export function ReceiptForm({
   initialNotes?: string;
   initialInvoiceImages?: string[];
   initialItems?: ItemDraft[];
+  initialLinkedRequisitionIds?: string[];
   currentUser?: { id: string; role: string; name?: string | null } | null;
   creatorId?: string | null;
   onSuccess?: (id: string) => void;
@@ -69,6 +71,7 @@ export function ReceiptForm({
   const [supplierId, setSupplierId] = useState<string | null>(initialSupplierId);
   const [notes, setNotes] = useState(initialNotes);
   const [invoiceImages, setInvoiceImages] = useState<string[]>(initialInvoiceImages);
+  const [linkedRequisitionIds] = useState<string[]>(initialLinkedRequisitionIds);
   const [uploadingInvoices, setUploadingInvoices] = useState(false);
   // unused in new UI
     const [items, setItems] = useState<ItemDraft[]>(
@@ -116,6 +119,7 @@ export function ReceiptForm({
           supplierId,
           notes: notes.trim() ? notes : undefined,
           invoiceImages,
+          linkedRequisitionIds: linkedRequisitionIds.length > 0 ? linkedRequisitionIds : undefined,
           items: valid.map((i) => ({
             skuId: i.skuId,
             transactionUnitId: i.transactionUnitId || undefined,

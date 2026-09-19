@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 
 async function repairMeta(id: string) {
   try {
@@ -11,13 +11,37 @@ async function repairMeta(id: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("repair_orders")
-      .select("code, vendor, expected_return_at, notes, total_cost")
+      .select(`
+        code,
+        vendor,
+        expected_return_at,
+        notes,
+        total_cost,
+        items:repair_order_items(
+          quantity,
+          repair_detail,
+          skus(
+            products(name),
+            units(name, symbol)
+          )
+        )
+      `)
       .eq("id", id)
       .single();
     return data;
   } catch {
     return null;
   }
+}
+
+function formatRepairItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => ({
+    name: i.skus?.products?.name || "Thiết bị",
+    quantity: i.quantity,
+    unit: i.skus?.units?.name || i.skus?.units?.symbol || "",
+    note: i.repair_detail || undefined,
+  }));
 }
 
 export async function sendToRepair(input: {
@@ -40,25 +64,24 @@ export async function sendToRepair(input: {
 
   const repairId = data as string;
   let code = "PSC";
+  let meta: Awaited<ReturnType<typeof repairMeta>> = null;
   if (repairId) {
-    const meta = await repairMeta(repairId);
+    meta = await repairMeta(repairId);
     if (meta?.code) code = meta.code;
   }
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "repair",
-    title: `[Sửa chữa vật tư] ${code} - Đã gửi vật tư đi sửa chữa`,
-    body: `Đã bàn giao ${input.defectItemIds.length} vật tư cho đơn vị sửa chữa: ${input.vendor}.${input.expectedReturnAt ? ` Dự kiến hoàn thành: ${input.expectedReturnAt}` : ""}`,
-    link: "/repairs",
-    document: {
-      code,
-      type: "Lệnh sửa chữa vật tư",
-      status: "Đang sửa chữa",
-      statusVariant: "warning",
-      creatorName: profile.name,
-      locationName: input.vendor,
-      expectedDate: input.expectedReturnAt,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "repair.sent",
+      actorId: profile.id,
+      subject: { type: "repair", id: repairId },
+      payload: {
+        code,
+        vendorName: input.vendor,
+        items: formatRepairItems((meta as any)?.items),
+        notes: input.expectedReturnAt ? `Dự kiến: ${input.expectedReturnAt}` : undefined,
+      },
     },
   });
 
@@ -89,19 +112,19 @@ export async function completeRepair(input: {
   });
   if (error) throw new Error(error.message);
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "repair",
-    title: `[Sửa chữa vật tư] ${code} - Hoàn tất nghiệm thu sửa chữa`,
-    body: `Thủ kho ${profile.name} đã hoàn tất nghiệm thu ${outcomes.length} vật tư sửa chữa và cập nhật sổ kho.`,
-    link: "/repairs",
-    document: {
-      code,
-      type: "Lệnh sửa chữa vật tư",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
-      locationName: meta?.vendor,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "repair.accepted_and_returned",
+      actorId: profile.id,
+      subject: { type: "repair", id: input.repairId },
+      payload: {
+        code,
+        vendorName: meta?.vendor ?? "N/A",
+        cost: meta?.total_cost ?? undefined,
+        items: formatRepairItems((meta as any)?.items),
+        technicianName: profile.name,
+      },
     },
   });
 
@@ -120,20 +143,22 @@ export async function cancelRepair(id: string) {
   const { error } = await supabase.rpc("cancel_repair", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "repair",
-    title: `[Sửa chữa vật tư] ${code} - Đã hủy lệnh sửa chữa`,
-    body: `Lệnh sửa chữa vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/repairs",
-    document: {
-      code,
-      type: "Lệnh sửa chữa vật tư",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
-    },
-  });
+  try {
+    const { data: techUsers } = await supabase.from("profiles").select("id").in("role", ["technician", "warehouse", "owner"]).eq("is_active", true);
+    if (techUsers && techUsers.length > 0) {
+      await supabase.from("notifications").insert(
+        techUsers.map((u) => ({
+          user_id: u.id,
+          type: "repair",
+          title: `[Sửa chữa vật tư] ${code} - Đã hủy lệnh sửa chữa`,
+          body: `Lệnh sửa chữa vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
+          link: "/repairs",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[cancelRepair] In-app notification error:", err);
+  }
 
   revalidatePath("/repairs");
   revalidatePath("/defects");

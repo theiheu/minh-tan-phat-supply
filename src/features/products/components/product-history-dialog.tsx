@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { REQUISITION_STATUS, ISSUE_STATUS, statusBadgeVariant } from "@/lib/labels";
+import { REQUISITION_STATUS, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getProductHistory } from "../actions";
@@ -185,7 +185,7 @@ export function ProductHistoryDialog({
   const variantInfo = useMemo(() => {
     const map = new Map<string, { label: string; unit: string | null }>();
     for (const v of variants) {
-      map.set(v.id, { label: v.label || "", unit: v.unit ?? null });
+      map.set(v.id, { label: variantLabel(v.attributes, v.unit) || "", unit: v.unit ?? null });
     }
     return map;
   }, [variants]);

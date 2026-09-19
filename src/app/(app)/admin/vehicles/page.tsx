@@ -15,7 +15,7 @@ export default async function AdminVehiclesPage({
 }: {
   searchParams: Promise<{ q?: string; type?: string; status?: string; page?: string }>;
 }) {
-  await requireManager();
+  const profile = await requireManager();
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const type = sp.type && sp.type in VEHICLE_TYPE_LABELS ? sp.type : "";
@@ -25,7 +25,7 @@ export default async function AdminVehiclesPage({
 
   let vehiclesQuery = supabase
     .from("vehicles")
-    .select("id, code, name, type, zone_id, sub_zone_id, default_driver, fuel_type_id, current_odo, odo_unit, fuel_norm, qr_token, notes, is_active, zone:zones!vehicles_zone_id_fkey(name), sub_zone:sub_zones!vehicles_sub_zone_id_fkey(name), fuel_type:fuel_types!vehicles_fuel_type_id_fkey(name)", { count: "exact" })
+    .select("id, code, name, type, zone_id, sub_zone_id, default_driver, fuel_type_id, current_odo, odo_unit, fuel_norm, qr_token, notes, is_active, document_images, zone:zones!vehicles_zone_id_fkey(name), sub_zone:sub_zones!vehicles_sub_zone_id_fkey(name), fuel_type:fuel_types!vehicles_fuel_type_id_fkey(name)", { count: "exact" })
     .order("code")
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
@@ -60,11 +60,12 @@ export default async function AdminVehiclesPage({
     qrToken: vehicle.qr_token,
     notes: vehicle.notes,
     isActive: vehicle.is_active,
+    documentImages: vehicle.document_images ?? [],
   }));
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="admin" />
+      <SubnavTabs group="admin" userRole={profile.role} />
       <VehicleList
         vehicles={rows}
         fuelTypes={fuelTypesResult.data ?? []}

@@ -46,3 +46,11 @@ export interface KnowledgeChunkItem {
   content: string;
   metadata?: Record<string, unknown>;
 }
+
+export interface StandardizedKnowledgeDraft {
+  title: string;
+  category: "sop" | "user_guide" | "catalog" | "policy" | "general";
+  summary: string;
+  content: string;
+  keywords?: string[];
+}

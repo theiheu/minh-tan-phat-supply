@@ -59,7 +59,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           }> | null;
         } | null;
         const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
-        const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+        const detail = attrVals.length > 0 ? attrVals.join(" · ") : "—";
         return [
           v?.sku_code ?? "—",
           v?.products?.name ?? "—",

@@ -18,15 +18,15 @@ flowchart TD
     Warehouse --> Driver[🚛 driver - Tài xế xe ben / máy xúc]
 ```
 
-| STT | Mã Vai trò (Role) | Tên vai trò thực tế | Đối tượng đảm nhiệm | Trách nhiệm chính |
+| STT | Mã Vai trò (Role) | Tên vai trò thực tế | Đối tượng đảm nhiệm | Trách nhiệm chính & Giao diện Dashboard |
 |:---:|---|---|---|---|
-| 1 | `superuser` | **Quản trị hệ thống** | Kỹ sư CNTT / DevOps | Toàn quyền kỹ thuật, phân quyền người dùng, bảo mật, sao lưu, dọn dẹp dữ liệu test (`Force Purge`). |
-| 2 | `owner` | **Chủ trang trại** | Chủ trại / Ban Giám đốc | Xem toàn bộ báo cáo tài chính, giá vốn, lãi lỗ, duyệt thanh lý tài sản lớn, duyệt cân bằng kiểm kê kho, tạo/khóa tài khoản. |
-| 3 | `accountant` | **Kế toán kho & nội bộ** | Nhân viên kế toán | Quản lý giá mua, giá bán, hóa đơn đỏ VAT, công nợ NCC và khách hàng, duyệt sổ sách, xuất file Excel kế toán. |
-| 4 | `warehouse` | **Quản kho tổng** | Quản lý kho, Thủ kho | Toàn quyền xuất, nhập, điều chuyển kho, đổi 1-1 cấp tốc, quản lý trạm bồn dầu, mở và thực hiện kiểm kê kho. |
-| 5 | `technician` | **Kỹ thuật trưởng** | Kỹ sư cơ điện, Trưởng khu | Quản lý khu chuồng phụ trách, duyệt Cấp 1 phiếu xin cấp vật tư, gửi thiết bị đi sửa chữa và nghiệm thu. |
-| 6 | `requester` | **Người yêu cầu** | Công nhân chuồng, thợ phụ | Lập phiếu xin cấp vật tư trên điện thoại, mượn dụng cụ đồ nghề, chụp ảnh báo hỏng thiết bị, bấm xác nhận nhận hàng. |
-| 7 | `driver` | **Tài xế** | Lái xe ben, xe xúc, xe tải | Quét mã QR đổ dầu tại trạm bồn, cập nhật chỉ số ODO hoặc giờ máy hoạt động. |
+| 1 | `superuser` | **Quản trị hệ thống** | Kỹ sư CNTT / DevOps | Toàn quyền kỹ thuật, phân quyền, cấu hình hệ thống, AI Admin, dọn dẹp dữ liệu test (`admin_purge_user_data`). |
+| 2 | `owner` | **Chủ trang trại** | Chủ trại / Ban Giám đốc | Dashboard Executive KPI (tổng tài sản kho, chi phí chuồng), duyệt thanh lý lớn, duyệt cân bằng kiểm kê, quản trị nhân sự. |
+| 3 | `accountant` | **Kế toán kho & nội bộ** | Nhân viên kế toán | Dashboard Kế toán (giá mua/bán, chi phí theo khu, hóa đơn đỏ VAT, công nợ NCC/Khách hàng, xuất file Excel kế toán). |
+| 4 | `warehouse` | **Quản kho tổng** | Quản lý kho, Thủ kho | Dashboard Kho (phiếu chờ cấp phát, cảnh báo tồn kho thấp, mượn đồ quá hạn, kiểm kê, trạm bồn dầu). |
+| 5 | `technician` | **Kỹ thuật trưởng** | Kỹ sư cơ điện, Trưởng khu | Dashboard Kỹ thuật (duyệt Cấp 1 phiếu xin cấp, thiết bị đang gửi sửa ngoài, dụng cụ đang mượn, đổi 1-1 khẩn cấp). |
+| 6 | `requester` | **Người yêu cầu** | Công nhân chuồng, thợ phụ | Dashboard Cá nhân (giỏ hàng nhanh, danh sách phiếu đã duyệt chờ nhận, lịch sử trả hàng thừa, báo hỏng thiết bị). |
+| 7 | `driver` | **Tài xế** | Lái xe ben, xe xúc, xe tải | Dashboard Xe (xe phụ trách, quét QR bơm dầu trong 5 giây, tra cứu lịch sử tiêu hao L/100km & L/h). |
 
 ---
 
@@ -34,7 +34,12 @@ flowchart TD
 
 | Nhóm chức năng | Tác vụ cụ thể | `superuser` | `owner` | `accountant` | `warehouse` | `technician` | `requester` | `driver` |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Danh mục & Vật tư** | Xem danh mục & tra cứu tồn kho | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Dashboard** | Xem Dashboard KPI tổng thể & giá trị tài sản | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| | Xem Dashboard vận hành kho & tồn thấp | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| | Xem Dashboard kỹ thuật & thiết bị sửa | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| | Xem Dashboard phiếu cá nhân & giỏ hàng | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| | Xem Dashboard xe & đổ dầu | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| **Danh mục & Vật tư** | Xem danh mục & tra cứu tồn kho SKU | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | | Tạo mới / Sửa vật tư, biến thể, quy đổi đơn vị | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Xem giá mua, giá vốn và tổng giá trị kho | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | In mã QR dán kệ hàng & in thẻ kho | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
@@ -60,12 +65,15 @@ flowchart TD
 | **Kho Dầu & Xe cộ** | Nhập bồn dầu tổng Petrolimex | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Quét mã QR xe bơm dầu & nhập số ODO | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | | Cấu hình định mức tiêu hao xe ($L/100km$, $L/h$) | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| | Upload / Quản lý ảnh cà vẹt, đăng kiểm xe | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Kiểm kê & Điều chuyển**| Lập phiếu điều chuyển giữa các kho vật lý | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Mở phiên kiểm kê & quét QR đếm thực tế | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Phê duyệt cân bằng sai lệch kho (Chủ trại / Kế toán) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Báo cáo & Phân tích** | Báo cáo Doanh thu, Chi phí, Tổng hợp tài chính | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Báo cáo Chi phí vật tư theo từng Dãy chuồng | ✅ | ✅ | ✅ | ✅ | ✅ (khu mình) | ❌ | ❌ |
 | | Xuất file Excel báo cáo kho & sổ cái | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Trợ lý AI Copilot** | Trò chuyện hỏi đáp với AI Copilot RAG | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| | Quản trị tài liệu tri thức (`/admin/ai-copilot`) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Quản trị Tài khoản** | Tạo mới tài khoản nhân sự & Đổi vai trò | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Khóa tài khoản / Lưu trữ nhân viên nghỉ việc | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Kích hoạt lại nhân viên đi làm lại | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |

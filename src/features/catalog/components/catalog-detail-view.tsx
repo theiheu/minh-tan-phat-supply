@@ -43,6 +43,7 @@ import { MultiImagePicker } from "@/features/products/components/multi-image-pic
 import { appAssetUrl } from "@/lib/images";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 import type { ProductDetailData } from "../data";
+import { UnitCombobox } from "./unit-combobox";
 import type { CatalogUnit, SkuAttributeValue, TransactionUom } from "../domain/types";
 import {
   addSku,
@@ -841,17 +842,12 @@ export function CatalogDetailView({
                     )}
                     <div className="space-y-1">
                       <Label>Đơn vị tính cơ bản</Label>
-                      <Input
-                        placeholder="VD: Cái, Bộ, Mét, Hộp..."
+                      <UnitCombobox
                         value={newSkuUnitId}
-                        onChange={(e) => setNewSkuUnitId(e.target.value)}
-                        list="catalog-detail-units-list"
+                        onChange={setNewSkuUnitId}
+                        units={units}
+                        placeholder="Chọn hoặc nhập ĐVT (VD: Cái, Hộp, Bộ...)"
                       />
-                      <datalist id="catalog-detail-units-list">
-                        {units.map((u) => (
-                          <option key={u.id} value={u.name} />
-                        ))}
-                      </datalist>
                     </div>
                     <div className="space-y-1">
                       <Label>Tồn tối thiểu</Label>
@@ -995,7 +991,7 @@ export function CatalogDetailView({
                             )
                           )}
                         </TableCell>
-                        <TableCell>{s.baseUnitName} ({s.baseUnitSymbol})</TableCell>
+                        <TableCell>{s.baseUnitName || s.baseUnitSymbol || "—"}</TableCell>
                         <TableCell className="text-right font-medium tabular-nums">{s.stockOnHand}</TableCell>
                         <TableCell className="text-right font-bold tabular-nums text-foreground">{s.stockAvailable}</TableCell>
                         <TableCell className="text-right tabular-nums text-muted-foreground">{s.minStock}</TableCell>
@@ -1138,9 +1134,9 @@ export function CatalogDetailView({
                   <div key={s.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="font-semibold text-sm">
-                        SKU: <span className="font-mono">{s.skuCode}</span> ({s.baseUnitName})
+                        SKU: <span className="font-mono">{s.skuCode}</span> — {s.baseUnitName || s.baseUnitSymbol || "ĐVT"}
                       </div>
-                      <Badge variant="outline">ĐVT chuẩn: 1 {s.baseUnitSymbol}</Badge>
+                      <Badge variant="outline">ĐVT chuẩn: {s.baseUnitName || s.baseUnitSymbol}</Badge>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
@@ -1157,7 +1153,7 @@ export function CatalogDetailView({
                               </span>
                             )}
                             <Badge variant="secondary" className="font-bold text-[11px] mt-0.5">
-                              = {u.factorToBase} {s.baseUnitSymbol}
+                              = {u.factorToBase} {s.baseUnitName || s.baseUnitSymbol}
                             </Badge>
                           </div>
                           {!u.isBase && (
@@ -1463,11 +1459,11 @@ export function CatalogDetailView({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>Đơn vị tính cơ bản</Label>
-                  <Input
-                    placeholder="VD: Cái, Bộ, Mét, Hộp..."
+                  <UnitCombobox
                     value={editSkuUnitId}
-                    onChange={(e) => setEditSkuUnitId(e.target.value)}
-                    list="catalog-detail-units-list"
+                    onChange={setEditSkuUnitId}
+                    units={units}
+                    placeholder="Chọn hoặc nhập ĐVT (VD: Cái, Hộp, Bộ...)"
                   />
                 </div>
 

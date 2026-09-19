@@ -65,7 +65,7 @@ sudo systemctl restart mtp-web
 Phiếu xuất kho hoặc phiếu nhập kho in ra bị lỗi ô vuông hoặc dấu hỏi (?) ở các ký tự tiếng Việt có dấu.
 
 ### Nguyên nhân:
-Trình duyệt hoặc server thiếu bộ font vector tiếng Việt `Be Vietnam Pro`.
+Trình duyệt hoặc server thiếu bộ font vector tiếng Việt `Roboto-Regular` / `Roboto-Bold` trong thư mục `public/fonts/`.
 
 ### Cách khắc phục:
 ```bash

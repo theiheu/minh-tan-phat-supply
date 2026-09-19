@@ -372,7 +372,7 @@ describe("ProductDetailDialog", () => {
         is_default: false,
         is_trackable_lot: false,
         attributes: { "Quy cách lõi": "4.0 mm²" },
-        images: [], // No images -> should fallback to product images
+        images: [], // No images -> should leave empty, not taking product images
         created_at: "2025-01-01T00:00:00Z",
         updated_at: "2025-01-01T00:00:00Z",
         stock: 10,
@@ -415,11 +415,11 @@ describe("ProductDetailDialog", () => {
     const chip40 = screen.getByRole("button", { name: /4.0 mm²/i });
     fireEvent.click(chip40);
 
-    // Gallery should fallback to product default image
-    const fallbackImages = screen.getAllByRole("img");
-    const fallbackSrcs = fallbackImages.map((img) => img.getAttribute("src"));
-    expect(fallbackSrcs.some((s) => s?.includes("cable-default.jpg"))).toBe(true);
-    expect(fallbackSrcs.some((s) => s?.includes("cable-2.5-single-photo.jpg"))).toBe(false);
+    // Gallery should leave empty ("Chưa có hình ảnh"), not taking main product's default image
+    expect(screen.getByText(/Chưa có hình ảnh/i)).toBeInTheDocument();
+    const noImages = screen.queryAllByRole("img");
+    const noSrcs = noImages.map((img) => img.getAttribute("src"));
+    expect(noSrcs.some((s) => s?.includes("cable-default.jpg"))).toBe(false);
   });
 
   it("renders 'Sửa vật tư' button when canManage is true", () => {

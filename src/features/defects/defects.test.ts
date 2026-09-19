@@ -6,7 +6,6 @@ import { recordDefect, updateDefect, cancelDefect } from "./actions";
 const mockRpc = vi.fn();
 const mockRevalidatePath = vi.fn();
 const mockRequireProfile = vi.fn();
-const mockNotifyUsers = vi.fn();
 
 vi.mock("next/cache", () => ({
   revalidatePath: (path: string) => mockRevalidatePath(path),
@@ -16,9 +15,8 @@ vi.mock("@/lib/auth", () => ({
   requireProfile: () => mockRequireProfile(),
 }));
 
-vi.mock("@/lib/notifications", () => ({
-  getManagerIds: vi.fn().mockResolvedValue(["mgr-1"]),
-  notifyUsers: (...args: unknown[]) => mockNotifyUsers(...args),
+vi.mock("@/features/notifications/server/dispatch-business-event", () => ({
+  dispatchBusinessEvent: vi.fn().mockResolvedValue({ inAppDeliveredCount: 1, emailAttemptedCount: 1, errors: [] }),
 }));
 
 const mockAdminUpdate = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });

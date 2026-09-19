@@ -5,9 +5,9 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-const mockRequireProfile = vi.fn();
+const mockRequireSuperuser = vi.fn();
 vi.mock("@/lib/auth", () => ({
-  requireProfile: () => mockRequireProfile(),
+  requireSuperuser: () => mockRequireSuperuser(),
 }));
 
 const mockDeleteUser = vi.fn();
@@ -31,25 +31,25 @@ describe("delete-user and lifecycle Server Actions", () => {
     vi.clearAllMocks();
   });
 
-  it("chặn người dùng không có quyền xóa (như quản kho, kỹ thuật, người yêu cầu, tài xế)", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-wh", role: "warehouse" });
+  it("chặn người dùng không có quyền xóa (như quản kho, kỹ thuật, người yêu cầu, tài xế, kế toán, chủ trại)", async () => {
+    mockRequireSuperuser.mockResolvedValue({ id: "user-wh", role: "warehouse" });
     await expect(deleteUser({ userId: "target-1" })).rejects.toThrow(
-      "Chỉ kế toán, chủ trại hoặc quản trị hệ thống mới có quyền xóa tài khoản",
+      "Chỉ quản trị hệ thống mới có quyền xóa tài khoản",
     );
   });
 
   it("chặn tự xóa hoặc tự lưu trữ tài khoản của chính mình", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-owner", role: "owner" });
-    await expect(deleteUser({ userId: "user-owner" })).rejects.toThrow(
+    mockRequireSuperuser.mockResolvedValue({ id: "user-super", role: "superuser" });
+    await expect(deleteUser({ userId: "user-super" })).rejects.toThrow(
       "Không thể tự xóa tài khoản của chính mình",
     );
-    await expect(archiveUser({ userId: "user-owner" })).rejects.toThrow(
+    await expect(archiveUser({ userId: "user-super" })).rejects.toThrow(
       "Không thể tự lưu trữ tài khoản của chính mình",
     );
   });
 
   it("chặn xóa tài khoản hệ thống (is_protected = true)", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-owner", role: "owner" });
+    mockRequireSuperuser.mockResolvedValue({ id: "user-super", role: "superuser" });
     mockAdminFrom.mockReturnValue({
       select: () => ({
         eq: () => ({
@@ -64,7 +64,7 @@ describe("delete-user and lifecycle Server Actions", () => {
   });
 
   it("checkUserDeleteEligibility phân biệt chính xác tài khoản đã có lịch sử vs chưa có lịch sử", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-acc", role: "accountant" });
+    mockRequireSuperuser.mockResolvedValue({ id: "user-super", role: "superuser" });
 
     // Mock có 5 biến động kho
     mockAdminFrom.mockImplementation((table: string) => {
@@ -89,7 +89,7 @@ describe("delete-user and lifecycle Server Actions", () => {
   });
 
   it("cho phép Quản trị hệ thống (superuser) xóa sạch tài khoản cùng toàn bộ lịch sử (force = true)", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-super", role: "superuser" });
+    mockRequireSuperuser.mockResolvedValue({ id: "user-super", role: "superuser" });
     mockAdminRpc.mockResolvedValue({ error: null });
     mockDeleteUser.mockResolvedValue({ error: null });
 
@@ -117,7 +117,7 @@ describe("delete-user and lifecycle Server Actions", () => {
   });
 
   it("archiveUser cập nhật is_active = false và ghi audit log", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-acc", role: "accountant" });
+    mockRequireSuperuser.mockResolvedValue({ id: "user-super", role: "superuser" });
     const mockUpdate = vi.fn().mockReturnValue({ eq: () => Promise.resolve({ error: null }) });
     const mockInsert = vi.fn().mockReturnValue(Promise.resolve({ error: null }));
 
@@ -144,7 +144,7 @@ describe("delete-user and lifecycle Server Actions", () => {
   });
 
   it("reactivateUser cập nhật is_active = true và ghi audit log", async () => {
-    mockRequireProfile.mockResolvedValue({ id: "user-acc", role: "accountant" });
+    mockRequireSuperuser.mockResolvedValue({ id: "user-super", role: "superuser" });
     const mockUpdate = vi.fn().mockReturnValue({ eq: () => Promise.resolve({ error: null }) });
     const mockInsert = vi.fn().mockReturnValue(Promise.resolve({ error: null }));
 

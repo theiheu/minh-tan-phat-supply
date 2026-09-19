@@ -53,9 +53,9 @@ export function isDriver(role: string | null | undefined): boolean {
   return role === "driver";
 }
 
-/** true nếu có quyền xóa tài khoản người dùng (kế toán, chủ trại hoặc superuser). */
+/** true nếu có quyền quản trị tài khoản người dùng (chỉ superuser / quản trị viên). */
 export function canDeleteUsers(role: string | null | undefined): boolean {
-  return role === "superuser" || role === "owner" || role === "accountant";
+  return role === "superuser";
 }
 
 /** true nếu có quyền quản trị viên/chủ trại/dev được xóa và mở lại phiếu (owner, superuser). */

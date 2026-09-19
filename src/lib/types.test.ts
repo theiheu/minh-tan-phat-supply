@@ -26,15 +26,19 @@ describe("Role and Permission Helpers", () => {
   });
 
   describe("canDeleteUsers", () => {
-    it("returns true for superuser, owner, and accountant", () => {
+    it("returns true for superuser only", () => {
       expect(canDeleteUsers("superuser")).toBe(true);
-      expect(canDeleteUsers("owner")).toBe(true);
-      expect(canDeleteUsers("accountant")).toBe(true);
     });
 
     it("returns false for other roles", () => {
+      expect(canDeleteUsers("owner")).toBe(false);
+      expect(canDeleteUsers("accountant")).toBe(false);
       expect(canDeleteUsers("warehouse")).toBe(false);
+      expect(canDeleteUsers("technician")).toBe(false);
       expect(canDeleteUsers("requester")).toBe(false);
+      expect(canDeleteUsers("driver")).toBe(false);
+      expect(canDeleteUsers(null)).toBe(false);
+      expect(canDeleteUsers(undefined)).toBe(false);
     });
   });
 

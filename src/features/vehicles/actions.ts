@@ -51,6 +51,7 @@ export async function createVehicleAction(input: VehicleInput) {
       fuel_norm: parsed.fuelNorm ?? null,
       qr_token: qrToken,
       notes: parsed.notes ?? null,
+      document_images: parsed.documentImages ?? [],
     })
     .select("id")
     .single();
@@ -81,6 +82,23 @@ export async function updateVehicleAction(id: string, input: VehicleInput) {
       odo_unit: parsed.odoUnit,
       fuel_norm: parsed.fuelNorm ?? null,
       notes: parsed.notes ?? null,
+      document_images: parsed.documentImages ?? [],
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/vehicles");
+  revalidatePath("/vehicles");
+  revalidatePath("/fuel");
+}
+
+export async function updateVehicleDocumentsAction(id: string, documentImages: string[]) {
+  await requireManager();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("vehicles")
+    .update({
+      document_images: documentImages,
     })
     .eq("id", id);
 

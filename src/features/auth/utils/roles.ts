@@ -1,10 +1,11 @@
 import { isSuperuser } from "@/lib/types";
 
 // Danh sách vai trò theo đúng thứ tự phân cấp từ cao xuống thấp (Quản trị hệ thống -> Chủ trại -> Kế toán -> Quản kho -> Kỹ thuật -> Người yêu cầu -> Tài xế)
-export function roleOptionsFor(currentRole: string, userRole?: string): { value: string; label: string }[] {
+export function roleOptionsFor(currentRole: string, _userRole?: string): { value: string; label: string }[] {
   const options: { value: string; label: string }[] = [];
 
-  if (isSuperuser(currentRole) || userRole === "superuser") {
+  // Chỉ Quản trị hệ thống (superuser) mới có quyền gán vai trò Quản trị hệ thống
+  if (isSuperuser(currentRole)) {
     options.push({ value: "superuser", label: "Quản trị hệ thống" });
   }
 

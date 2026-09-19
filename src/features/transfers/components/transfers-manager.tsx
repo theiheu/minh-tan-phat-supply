@@ -34,7 +34,7 @@ const EMPTY_ITEM: TransferDraftItem = {
 
 export function TransfersManager({
   locations,
-  _variants,
+  variants: _variants,
 }: {
   locations: { id: string; name: string }[];
   variants?: { id: string; label: string }[];

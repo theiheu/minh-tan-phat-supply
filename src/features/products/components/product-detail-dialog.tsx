@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -25,6 +26,7 @@ import { ProductImageGallery } from "./product-image-gallery";
 import { cn } from "@/lib/utils";
 import { TransactionUomSelect } from "@/features/catalog/components/transaction-uom-select";
 import { useProductDetail } from "../hooks/use-product-detail";
+import { variantLabel } from "@/lib/labels";
 import { ProductSingleMode } from "./product-single-mode";
 import { ProductBatchMode } from "./product-batch-mode";
 
@@ -34,7 +36,7 @@ export function ProductDetailDialog({
   product,
   variants: variants,
   categoryName,
-  _searchQuery,
+  searchQuery: _searchQuery,
   canManage = false,
 }: {
   open: boolean;
@@ -64,6 +66,23 @@ export function ProductDetailDialog({
   const isOutOfStockRoot = (selectedVariant?.stock ?? 0) <= 0;
   const isLowStockRoot = !isOutOfStockRoot && (selectedVariant?.stock ?? 0) <= (selectedVariant?.min_stock ?? 0);
 
+  const selectedVariantLabel = useMemo(() => {
+    if (!selectedVariant) return "";
+    if (optionAxes && optionAxes.length > 0) {
+      const vals = optionAxes
+        .map((axis) => p.selectedAxisValues[axis] || (selectedVariant.attributes as Record<string, string>)?.[axis])
+        .filter(Boolean);
+      if (vals.length > 0) return vals.join(" · ");
+    }
+    if (selectedVariant.attributes && typeof selectedVariant.attributes === "object" && !Array.isArray(selectedVariant.attributes)) {
+      const values = Object.values(selectedVariant.attributes as Record<string, unknown>).filter(
+        (v) => typeof v === "string" && v.length > 0
+      );
+      if (values.length > 0) return values.join(" · ");
+    }
+    return selectedVariant.parsedHierarchy?.fullLabel || variantLabel(selectedVariant.attributes, selectedVariant.unit);
+  }, [selectedVariant, optionAxes, p.selectedAxisValues]);
+
   const handleAddToCart = () => {
     if (!selectedVariant) return;
 
@@ -74,9 +93,10 @@ export function ProductDetailDialog({
       factorToBase: selectedUom?.factorToBase ?? 1,
       enteredQuantity: quantity,
       name: product.name,
+      label: variantLabel(selectedVariant.attributes, selectedVariant.unit),
       unit: selectedUom?.displayName || selectedVariant.unit || null,
       baseUnitSymbol: selectedVariant.unit || null,
-      image: selectedVariant.images?.[0] ?? product.images?.[0] ?? null,
+      image: selectedVariant.images?.[0] ?? null,
       stock: selectedVariant.stock,
     });
 
@@ -105,8 +125,10 @@ export function ProductDetailDialog({
         skuId: v.id,
         enteredQuantity: qty,
         name: product.name,
+        label: variantLabel(v.attributes, v.unit),
         unit: v.unit ?? null,
-        image: v.images?.[0] ?? product.images?.[0] ?? null,
+        baseUnitSymbol: v.unit ?? null,
+        image: v.images?.[0] ?? null,
         stock: v.stock,
       });
     }
@@ -253,17 +275,17 @@ export function ProductDetailDialog({
           {/* Selected Variant Stock & Quantity Card (for Single Mode & Single-variant products) */}
           {(mode === "single" || variants.length === 1) && selectedVariant && (
             <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 rounded-lg bg-muted/40 border">
-              <div>
-                <span className="text-xs text-muted-foreground block">Đang chọn & Tồn khả dụng:</span>
-                <div className="flex items-baseline gap-2 mt-0.5">
+              <div className="space-y-1 min-w-0">
+                <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-sm font-bold text-foreground">
+                    {selectedVariantLabel}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    (Tồn: <strong className="text-foreground">{selectedVariant.stock}</strong> {selectedVariant.unit || "đơn vị"})
+                    (Tồn: <strong className={cn(selectedVariant.stock > 0 ? "text-foreground font-bold" : "text-destructive font-bold")}>{selectedVariant.stock}</strong> {selectedVariant.unit || "đơn vị"})
                   </span>
                 </div>
                 {selectedVariant.sku_code && (
-                  <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <span>Mã SKU:</span>
                     <span className="font-mono font-semibold text-foreground bg-background px-1.5 py-0.5 rounded border border-border/60">
                       {selectedVariant.sku_code}

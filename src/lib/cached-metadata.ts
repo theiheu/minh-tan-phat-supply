@@ -179,7 +179,7 @@ export const getCachedVariantOptions = unstable_cache(
 
     return (data ?? []).map((v) => {
       const product = v.products as unknown as { name: string; images?: string[] } | null;
-      const variantImage = (v.images && v.images.length > 0 ? v.images[0] : null) || (product?.images && product.images.length > 0 ? product.images[0] : null);
+      const variantImage = v.images && v.images.length > 0 ? v.images[0] : null;
       const unitObj = v.units as unknown as { name: string; symbol: string } | null;
       const unit = unitObj?.symbol || unitObj?.name || null;
 

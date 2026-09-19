@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireProfile } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { canDeleteUsers, isSuperuser } from "@/lib/types";
 
@@ -59,9 +59,9 @@ export async function checkUserDeleteEligibility(input: { userId: string }): Pro
   historyReason: string | null;
   isCallerSuperuser: boolean;
 }> {
-  const caller = await requireProfile();
+  const caller = await requireSuperuser();
   if (!canDeleteUsers(caller.role)) {
-    throw new Error("Chỉ kế toán, chủ trại hoặc quản trị hệ thống mới có quyền thao tác");
+    throw new Error("Chỉ quản trị hệ thống mới có quyền thao tác");
   }
 
   const admin = createAdminClient();
@@ -74,9 +74,9 @@ export async function checkUserDeleteEligibility(input: { userId: string }): Pro
 }
 
 export async function archiveUser(input: { userId: string }) {
-  const caller = await requireProfile();
+  const caller = await requireSuperuser();
   if (!canDeleteUsers(caller.role)) {
-    throw new Error("Chỉ kế toán, chủ trại hoặc quản trị hệ thống mới có quyền lưu trữ tài khoản");
+    throw new Error("Chỉ quản trị hệ thống mới có quyền lưu trữ tài khoản");
   }
 
   if (input.userId === caller.id) {
@@ -119,9 +119,9 @@ export async function archiveUser(input: { userId: string }) {
 }
 
 export async function reactivateUser(input: { userId: string }) {
-  const caller = await requireProfile();
+  const caller = await requireSuperuser();
   if (!canDeleteUsers(caller.role)) {
-    throw new Error("Chỉ kế toán, chủ trại hoặc quản trị hệ thống mới có quyền kích hoạt lại tài khoản");
+    throw new Error("Chỉ quản trị hệ thống mới có quyền kích hoạt lại tài khoản");
   }
 
   const admin = createAdminClient();
@@ -156,9 +156,9 @@ export async function reactivateUser(input: { userId: string }) {
 }
 
 export async function deleteUser(input: { userId: string; force?: boolean }) {
-  const caller = await requireProfile();
+  const caller = await requireSuperuser();
   if (!canDeleteUsers(caller.role)) {
-    throw new Error("Chỉ kế toán, chủ trại hoặc quản trị hệ thống mới có quyền xóa tài khoản");
+    throw new Error("Chỉ quản trị hệ thống mới có quyền xóa tài khoản");
   }
 
   if (input.userId === caller.id) {

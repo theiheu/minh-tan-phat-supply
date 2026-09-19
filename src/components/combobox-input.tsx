@@ -58,11 +58,11 @@ export function ComboboxInput({
 
   const filtered = useMemo(() => {
     const q = text.trim().toLowerCase();
-    if (!q) return options;
+    if (!q || q === chosenText.trim().toLowerCase()) return options;
     return options.filter((o) =>
       `${o.label} ${o.detail ?? ""} ${o.hint ?? ""}`.toLowerCase().includes(q),
     );
-  }, [options, text]);
+  }, [options, text, chosenText]);
 
   const visible = filtered.slice(0, MAX_VISIBLE);
   const hiddenCount = filtered.length - visible.length;
@@ -120,7 +120,11 @@ export function ComboboxInput({
           setOpen(true);
           if (e.target.value === "") onChange("");
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={(e) => {
+          setOpen(true);
+          e.target.select();
+        }}
+        onClick={() => setOpen(true)}
         onBlur={revertQuery}
         onKeyDown={handleKeyDown}
         className={cn("pr-8 text-sm", inputClassName)}

@@ -48,9 +48,11 @@ export const vehicleSchema = z.object({
     .max(500)
     .optional()
     .transform((v) => (v ? v : undefined)),
+  documentImages: z.array(z.string()).default([]),
 });
 
-export type VehicleInput = z.infer<typeof vehicleSchema>;
+export type VehicleInput = z.input<typeof vehicleSchema>;
+export type VehicleOutput = z.infer<typeof vehicleSchema>;
 
 export const VEHICLE_TYPE_LABELS: Record<string, string> = {
   truck: "Xe tải / Xe ben",

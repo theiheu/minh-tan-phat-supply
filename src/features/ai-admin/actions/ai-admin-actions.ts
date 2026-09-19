@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireManager } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface QuickPromptInput {
@@ -23,7 +23,7 @@ type DbAny = {
 
 // 1. Bật / Tắt hệ thống AI Copilot toàn trang trại
 export async function toggleAiSystem(enabled: boolean) {
-  const current = await requireManager();
+  const current = await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as DbAny;
 
@@ -47,7 +47,7 @@ export async function toggleAiSystem(enabled: boolean) {
 
 // 2. Cập nhật Model và Max Tokens
 export async function updateAiModelSettings(model: string, maxTokens: number) {
-  const current = await requireManager();
+  const current = await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as DbAny;
 
@@ -75,7 +75,7 @@ export async function updateAiModelSettings(model: string, maxTokens: number) {
 
 // 3. Thêm hoặc sửa câu hỏi gợi ý nhanh
 export async function upsertQuickPrompt(data: QuickPromptInput) {
-  await requireManager();
+  await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as DbAny;
 
@@ -104,7 +104,7 @@ export async function upsertQuickPrompt(data: QuickPromptInput) {
 
 // 4. Xóa câu hỏi gợi ý nhanh
 export async function deleteQuickPrompt(id: string) {
-  await requireManager();
+  await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as DbAny;
 
@@ -120,7 +120,7 @@ export async function deleteQuickPrompt(id: string) {
 
 // 5. Xóa phiên đàm thoại
 export async function deleteConversationAction(id: string) {
-  await requireManager();
+  await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as DbAny;
 
@@ -136,7 +136,7 @@ export async function deleteConversationAction(id: string) {
 
 // 6. Kích hoạt đồng bộ lại tài liệu SOP từ docs/user-guide
 export async function triggerSyncKnowledgeAction() {
-  await requireManager();
+  await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as DbAny;
 

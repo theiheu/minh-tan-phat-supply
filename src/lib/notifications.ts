@@ -5,8 +5,6 @@ import {
   type DocumentInfo,
 } from "./email";
 
-type Supabase = Awaited<ReturnType<typeof createClient>>;
-
 export interface NotifyOptions {
   userIds: (string | null | undefined)[];
   type: string;
@@ -21,26 +19,7 @@ export interface NotifyOptions {
 }
 
 /**
- * Lấy danh sách ID của tất cả Quản lý kho & Quản trị viên đang hoạt động
- */
-export async function getManagerIds(supabaseClient?: Supabase): Promise<string[]> {
-  try {
-    const supabase = supabaseClient ?? (await createClient());
-    if (!supabase || typeof supabase.from !== "function") return [];
-    const { data } = await supabase
-      .from("profiles")
-      .select("id")
-      .in("role", ["manager", "superuser"])
-      .eq("is_active", true);
-    return (data ?? []).map((p) => p.id);
-  } catch (err) {
-    console.error("[Notifications] Lỗi lấy danh sách manager IDs:", err);
-    return [];
-  }
-}
-
-/**
- * Gửi thông báo hợp nhất chuẩn MTP-ERP:
+ * Gửi thông báo hợp nhất chuẩn MTP-ERP (Admin / Broadcast API):
  * 1. Lưu thông báo vào bảng in-app notifications
  * 2. Gửi email thông báo tới người dùng có cấu hình email
  * Không bao giờ throw error làm gián đoạn nghiệp vụ chính.

@@ -7,6 +7,7 @@ import {
   Sliders,
   MessageSquare,
   BookOpen,
+  FilePlus2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -18,6 +19,7 @@ import { AICopilotSessionsTab } from "./tabs/ai-copilot-sessions-tab";
 import { AICopilotPromptsTab } from "./tabs/ai-copilot-prompts-tab";
 import { AICopilotKnowledgeTab } from "./tabs/ai-copilot-knowledge-tab";
 import { AICopilotSettingsTab } from "./tabs/ai-copilot-settings-tab";
+import { AICopilotIngestTab } from "./tabs/ai-copilot-ingest-tab";
 import {
   ConversationSession,
   QuickPromptItem,
@@ -41,8 +43,11 @@ export function AICopilotManager({
   initialConversations,
   initialKnowledgeDocs,
 }: AICopilotManagerProps) {
-  const [activeTab, setActiveTab] = React.useState<"sessions" | "prompts" | "settings" | "knowledge">("sessions");
+  const [activeTab, setActiveTab] = React.useState<
+    "sessions" | "ingest" | "knowledge" | "prompts" | "settings"
+  >("sessions");
   const [aiEnabled, setAiEnabled] = React.useState(initialSettings.ai_enabled);
+  const [knowledgeDocs, setKnowledgeDocs] = React.useState<KnowledgeDocItem[]>(initialKnowledgeDocs);
 
   const handleToggleAi = async (checked: boolean) => {
     setAiEnabled(checked);
@@ -53,6 +58,10 @@ export function AICopilotManager({
       toast.error(res.error || "Không thể cập nhật trạng thái.");
       setAiEnabled(!checked);
     }
+  };
+
+  const handleDocIngested = (newDoc: KnowledgeDocItem) => {
+    setKnowledgeDocs((prev) => [newDoc, ...prev]);
   };
 
   return (
@@ -71,7 +80,7 @@ export function AICopilotManager({
             </Badge>
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Kiểm soát phiên đàm thoại của người dùng, nạp tài liệu SOP trực tiếp và cấu hình mô hình AI Omniroute.
+            Kiểm soát phiên đàm thoại, nạp và chuẩn hóa tài liệu tri thức SOP tự động và cấu hình mô hình AI Omniroute.
           </p>
         </div>
 
@@ -98,15 +107,18 @@ export function AICopilotManager({
           <MessageSquare className="size-4" />
           <span>Lịch sử đàm thoại ({initialConversations.length})</span>
         </Button>
+
         <Button
-          variant={activeTab === "prompts" ? "default" : "ghost"}
+          variant={activeTab === "ingest" ? "default" : "ghost"}
           size="sm"
-          onClick={() => setActiveTab("prompts")}
-          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
+          onClick={() => setActiveTab("ingest")}
+          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium"
         >
-          <Sparkles className="size-4" />
-          <span>Gợi ý tra cứu nhanh ({initialQuickPrompts.length})</span>
+          <Sparkles className="size-4 text-primary" />
+          <span>Trò chuyện nạp tri thức</span>
+          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-primary/20 text-primary">Mới</Badge>
         </Button>
+
         <Button
           variant={activeTab === "knowledge" ? "default" : "ghost"}
           size="sm"
@@ -114,8 +126,19 @@ export function AICopilotManager({
           className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
         >
           <BookOpen className="size-4" />
-          <span>Cơ sở tri thức SOP ({initialKnowledgeDocs.length})</span>
+          <span>Cơ sở tri thức SOP ({knowledgeDocs.length})</span>
         </Button>
+
+        <Button
+          variant={activeTab === "prompts" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("prompts")}
+          className="gap-2 text-xs sm:text-sm shrink-0 whitespace-nowrap"
+        >
+          <FilePlus2 className="size-4" />
+          <span>Gợi ý tra cứu nhanh ({initialQuickPrompts.length})</span>
+        </Button>
+
         <Button
           variant={activeTab === "settings" ? "default" : "ghost"}
           size="sm"
@@ -131,19 +154,23 @@ export function AICopilotManager({
         <AICopilotSessionsTab initialConversations={initialConversations} />
       )}
 
-      {activeTab === "prompts" && (
-        <AICopilotPromptsTab initialQuickPrompts={initialQuickPrompts} />
+      {activeTab === "ingest" && (
+        <AICopilotIngestTab onDocIngested={handleDocIngested} />
       )}
 
       {activeTab === "knowledge" && (
-        <AICopilotKnowledgeTab initialKnowledgeDocs={initialKnowledgeDocs} />
+        <AICopilotKnowledgeTab initialKnowledgeDocs={knowledgeDocs} />
+      )}
+
+      {activeTab === "prompts" && (
+        <AICopilotPromptsTab initialQuickPrompts={initialQuickPrompts} />
       )}
 
       {activeTab === "settings" && (
         <AICopilotSettingsTab 
           initialSettings={initialSettings} 
           totalConversations={initialConversations.length}
-          totalKnowledgeDocs={initialKnowledgeDocs.length}
+          totalKnowledgeDocs={knowledgeDocs.length}
         />
       )}
     </div>

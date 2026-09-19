@@ -187,7 +187,7 @@ export async function lookupVariantByQrAction(variantId: string) {
 
   const pMeta = vRow.products as { name?: string; images?: string[] } | null;
   const unitObj = vRow.units as { name?: string; symbol?: string } | null;
-  const firstImage = (vRow.images && vRow.images.length > 0) ? vRow.images[0] : ((pMeta?.images && pMeta.images.length > 0) ? pMeta.images[0] : undefined);
+  const firstImage = (vRow.images && vRow.images.length > 0) ? vRow.images[0] : undefined;
 
   return {
     productName: pMeta?.name || "Vật tư",

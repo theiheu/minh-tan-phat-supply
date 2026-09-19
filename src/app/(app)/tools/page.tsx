@@ -157,7 +157,7 @@ export default async function ToolsPage({
         quantity,
         returned_quantity,
         notes,
-        skus(id, sku_code, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
+        skus(id, sku_code, images, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))
       )
     `,
       { count: "exact" },
@@ -380,6 +380,7 @@ export default async function ToolsPage({
               const variant = item.skus as {
                 id?: string;
                 sku_code?: string | null;
+                images?: string[] | null;
                 products?: { name?: string; images?: string[] | null } | null;
                 units?: { name?: string | null; symbol?: string | null } | null;
                 sku_attribute_values?: Array<{
@@ -394,7 +395,7 @@ export default async function ToolsPage({
               const attrVals = (variant?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
               const skuLbl = attrVals.length > 0 ? attrVals.join(" · ") : (variant?.units?.symbol || "");
               const unit = variant?.units?.symbol || variant?.units?.name || undefined;
-              const imageUrl = (variant?.products?.images && variant.products.images.length > 0) ? variant.products.images[0] : undefined;
+              const imageUrl = (variant?.images && variant.images.length > 0) ? variant.images[0] : undefined;
 
               return (
                 <ToolCard

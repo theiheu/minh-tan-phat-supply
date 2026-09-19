@@ -5,9 +5,9 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-const mockRequireManager = vi.fn();
+const mockRequireSuperuser = vi.fn();
 vi.mock("@/lib/auth", () => ({
-  requireManager: () => mockRequireManager(),
+  requireSuperuser: () => mockRequireSuperuser(),
 }));
 
 const mockCreateUser = vi.fn();
@@ -34,7 +34,7 @@ describe("createUser Server Action", () => {
   });
 
   it("chặn người dùng không phải superuser tạo tài khoản superuser", async () => {
-    mockRequireManager.mockResolvedValue({ id: "caller-1", role: "warehouse" });
+    mockRequireSuperuser.mockResolvedValue({ id: "caller-1", role: "warehouse" });
 
     await expect(
       createUser({
@@ -45,11 +45,11 @@ describe("createUser Server Action", () => {
         zoneId: null,
         password: "password12345",
       }),
-    ).rejects.toThrow("Chỉ tài khoản superuser được tạo tài khoản superuser");
+    ).rejects.toThrow("Chỉ tài khoản superuser");
   });
 
   it("báo lỗi thân thiện bằng tiếng Việt khi tên đăng nhập đã tồn tại trong profiles", async () => {
-    mockRequireManager.mockResolvedValue({ id: "caller-1", role: "superuser" });
+    mockRequireSuperuser.mockResolvedValue({ id: "caller-1", role: "superuser" });
 
     mockAdminFrom.mockReturnValue({
       select: () => ({
@@ -72,7 +72,7 @@ describe("createUser Server Action", () => {
   });
 
   it("tạo tài khoản thành công khi KHÔNG nhập email (email = null hoặc rỗng)", async () => {
-    mockRequireManager.mockResolvedValue({ id: "caller-1", role: "superuser" });
+    mockRequireSuperuser.mockResolvedValue({ id: "caller-1", role: "superuser" });
 
     const mockInsert = vi.fn().mockResolvedValue({ error: null });
     const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
@@ -127,7 +127,7 @@ describe("createUser Server Action", () => {
   });
 
   it("chuyển đổi thông báo lỗi tiếng Anh của GoTrue (A user with this email address has already been registered) sang tiếng Việt", async () => {
-    mockRequireManager.mockResolvedValue({ id: "caller-1", role: "superuser" });
+    mockRequireSuperuser.mockResolvedValue({ id: "caller-1", role: "superuser" });
 
     mockAdminFrom.mockReturnValue({
       select: () => ({
@@ -164,7 +164,7 @@ describe("createUser Server Action", () => {
   });
 
   it("tự động dọn dẹp tài khoản auth mồ côi (không có profile) và tạo lại tài khoản thành công", async () => {
-    mockRequireManager.mockResolvedValue({ id: "caller-1", role: "superuser" });
+    mockRequireSuperuser.mockResolvedValue({ id: "caller-1", role: "superuser" });
 
     const mockInsert = vi.fn().mockResolvedValue({ error: null });
 

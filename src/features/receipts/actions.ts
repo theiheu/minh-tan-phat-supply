@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import { receiptSchema, type ReceiptInput } from "./schema";
 
 async function receiptMeta(id: string) {
@@ -12,13 +12,46 @@ async function receiptMeta(id: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("receipts")
-      .select("code, created_by, notes, supplier:suppliers(name)")
+      .select(`
+        code,
+        created_by,
+        notes,
+        supplier:suppliers(name),
+        items:receipt_items(
+          quantity,
+          entered_quantity,
+          unit_cost,
+          batch_no,
+          expiry_date,
+          sku_name_snapshot,
+          uom_name_snapshot,
+          skus(
+            products(name),
+            units(name, symbol)
+          )
+        )
+      `)
       .eq("id", id)
       .single();
     return data;
   } catch {
     return null;
   }
+}
+
+function formatReceiptItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => {
+    const batchInfo = [i.batch_no ? `Lô: ${i.batch_no}` : null, i.expiry_date ? `HSD: ${i.expiry_date}` : null]
+      .filter(Boolean)
+      .join(" - ");
+    return {
+      name: i.sku_name_snapshot || i.skus?.products?.name || "Vật tư",
+      quantity: i.entered_quantity ?? i.quantity,
+      unit: i.uom_name_snapshot || i.skus?.units?.name || i.skus?.units?.symbol || "",
+      note: batchInfo || undefined,
+    };
+  });
 }
 
 export async function createReceipt(input: ReceiptInput) {
@@ -40,6 +73,7 @@ export async function createReceipt(input: ReceiptInput) {
     p_by: profile.id,
     ...(parsed.notes != null ? { p_notes: parsed.notes } : {}),
     p_invoice_images: parsed.invoiceImages ?? [],
+    p_linked_requisition_ids: parsed.linkedRequisitionIds ?? [],
   });
 
   if (error) throw new Error(error.message);
@@ -50,22 +84,44 @@ export async function createReceipt(input: ReceiptInput) {
     const code = meta?.code ?? "PNK";
     const supplierName = (meta?.supplier as { name?: string } | null)?.name;
 
-    await notifyUsers({
-      userIds: await getManagerIds(supabase),
-      type: "receipt",
-      title: `[Nhập kho] ${code} - Tạo mới phiếu nhập kho`,
-      body: `Người lập ${profile.name} đã tạo phiếu nhập kho từ nhà cung cấp ${supplierName || "N/A"}, chờ kiểm đếm và phê duyệt.`,
-      link: `/receipts/${receiptId}`,
-      document: {
-        code,
-        type: "Phiếu nhập kho",
-        status: "Chờ phê duyệt",
-        statusVariant: "warning",
-        creatorName: profile.name,
-        locationName: supplierName,
-        notes: parsed.notes,
-      },
-    });
+    try {
+      const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
+      if (whUsers && whUsers.length > 0) {
+        await supabase.from("notifications").insert(
+          whUsers.map((u) => ({
+            user_id: u.id,
+            type: "receipt",
+            title: `[Nhập kho] ${code} - Tạo mới phiếu nhập kho`,
+            body: `Người lập ${profile.name} đã tạo phiếu nhập kho từ nhà cung cấp ${supplierName || "N/A"}.`,
+            link: `/receipts/${receiptId}`,
+          }))
+        );
+      }
+
+      if (parsed.linkedRequisitionIds && parsed.linkedRequisitionIds.length > 0) {
+        const { data: linkedReqs } = await supabase
+          .from("requisitions")
+          .select("id, code, requester_id")
+          .in("id", parsed.linkedRequisitionIds);
+
+        if (linkedReqs && linkedReqs.length > 0) {
+          await supabase.from("notifications").insert(
+            linkedReqs.map((r) => ({
+              user_id: r.requester_id,
+              type: "requisition",
+              title: `[Yêu cầu cấp phát] ${r.code} - Đã đặt hàng vật tư`,
+              body: `Quản kho ${profile.name} đã tạo phiếu đặt hàng ${code}${supplierName ? ` từ nhà cung cấp ${supplierName}` : ""}. Bạn có thể theo dõi tiến độ hoặc nhận hàng trực tiếp tại nơi cung cấp.`,
+              link: `/requisitions/${r.id}`,
+            }))
+          );
+          for (const r of linkedReqs) {
+            revalidatePath(`/requisitions/${r.id}`);
+          }
+        }
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== "test") console.warn("[createReceipt] In-app notification error:", err);
+    }
   }
 
   revalidatePath("/receipts");
@@ -92,6 +148,7 @@ export async function updateReceipt(id: string, input: ReceiptInput) {
     p_by: profile.id,
     ...(parsed.notes != null ? { p_notes: parsed.notes } : {}),
     p_invoice_images: parsed.invoiceImages ?? [],
+    p_linked_requisition_ids: parsed.linkedRequisitionIds ?? null,
   });
 
   if (error) throw new Error(error.message);
@@ -120,25 +177,23 @@ export async function approveReceipt(id: string) {
 
   const meta = await receiptMeta(id);
   const code = meta?.code ?? "PNK";
-  const supplierName = (meta?.supplier as { name?: string } | null)?.name;
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "receipt",
-    title: `[Nhập kho] ${code} - Đã phê duyệt nhập kho`,
-    body: `Phiếu nhập kho đã được phê duyệt bởi ${profile.name}, sẵn sàng hoàn tất ghi nhận sổ kho.`,
-    link: `/receipts/${id}`,
-    document: {
-      code,
-      type: "Phiếu nhập kho",
-      status: "Đã phê duyệt",
-      statusVariant: "success",
-      handlerName: profile.name,
-      locationName: supplierName,
-    },
-  });
+  const _supplierName = (meta?.supplier as { name?: string } | null)?.name;
+  try {
+    const userIds = [...new Set([meta?.created_by].filter(Boolean))];
+    if (userIds.length > 0) {
+      await supabase.from("notifications").insert(
+        userIds.map((uid) => ({
+          user_id: uid!,
+          type: "receipt",
+          title: `[Nhập kho] ${code} - Đã phê duyệt nhập kho`,
+          body: `Phiếu nhập kho đã được phê duyệt bởi ${profile.name}.`,
+          link: `/receipts/${id}`,
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[approveReceipt] In-app notification error:", err);
+  }
 
   revalidatePath("/receipts");
   revalidatePath(`/receipts/${id}`);
@@ -153,22 +208,19 @@ export async function postReceipt(id: string) {
   const meta = await receiptMeta(id);
   const code = meta?.code ?? "PNK";
   const supplierName = (meta?.supplier as { name?: string } | null)?.name;
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "receipt",
-    title: `[Nhập kho] ${code} - Hoàn tất nhập kho (Ghi nhận sổ kho)`,
-    body: `Thủ kho ${profile.name} đã hoàn tất nhập kho. Tồn kho và giá vốn đã được cập nhật thành công vào hệ thống MTP-ERN.`,
-    link: `/receipts/${id}`,
-    document: {
-      code,
-      type: "Phiếu nhập kho",
-      status: "Đã nhập kho",
-      statusVariant: "success",
-      handlerName: profile.name,
-      locationName: supplierName,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "receipt.posted",
+      actorId: profile.id,
+      subject: { type: "receipt", id },
+      payload: {
+        code,
+        supplierName: supplierName ?? undefined,
+        receiverName: profile.name,
+        items: formatReceiptItems((meta as any)?.items),
+        notes: meta?.notes ?? undefined,
+      },
     },
   });
 
@@ -184,25 +236,23 @@ export async function cancelReceipt(id: string) {
 
   const meta = await receiptMeta(id);
   const code = meta?.code ?? "PNK";
+  const supplierName = (meta?.supplier as { name?: string } | null)?.name;
 
   const { error } = await supabase.rpc("cancel_receipt", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "receipt",
-    title: `[Nhập kho] ${code} - Đã hủy phiếu nhập kho`,
-    body: `Phiếu nhập kho đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/receipts",
-    document: {
-      code,
-      type: "Phiếu nhập kho",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "receipt.cancelled_or_reversed",
+      actorId: profile.id,
+      subject: { type: "receipt", id },
+      payload: {
+        code,
+        supplierName,
+        receiverName: profile.name,
+        items: formatReceiptItems((meta as any)?.items),
+      },
     },
   });
 

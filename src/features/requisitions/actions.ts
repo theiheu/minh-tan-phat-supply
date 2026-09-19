@@ -3,13 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers, type NotifyOptions } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import { requisitionSchema, type RequisitionInput } from "./schema";
-
-// Gửi thông báo in-app và email chuẩn ERP (bỏ qua lỗi — không làm hỏng thao tác chính).
-async function safeNotify(options: NotifyOptions) {
-  await notifyUsers(options);
-}
 
 async function requisitionMeta(id: string) {
   try {
@@ -17,13 +12,38 @@ async function requisitionMeta(id: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("requisitions")
-      .select("code, requester_id, purpose, zone:zones(name), sub_zone:sub_zones(name)")
+      .select(`
+        code,
+        requester_id,
+        purpose,
+        zone:zones(name),
+        sub_zone:sub_zones(name),
+        items:requisition_items(
+          quantity,
+          entered_quantity,
+          sku_name_snapshot,
+          uom_name_snapshot,
+          skus(
+            products(name),
+            units(name, symbol)
+          )
+        )
+      `)
       .eq("id", id)
       .single();
     return data;
   } catch {
     return null;
   }
+}
+
+function formatRequisitionItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => ({
+    name: i.sku_name_snapshot || i.skus?.products?.name || "Vật tư",
+    quantity: i.entered_quantity ?? i.quantity,
+    unit: i.uom_name_snapshot || i.skus?.units?.name || i.skus?.units?.symbol || "",
+  }));
 }
 
 export async function createRequisition(input: RequisitionInput) {
@@ -89,20 +109,21 @@ export async function submitRequisition(id: string) {
   const code = meta?.code ?? "YCCP";
   const zoneName = (meta?.zone as { name?: string } | null)?.name;
 
-  await safeNotify({
-    userIds: await getManagerIds(supabase),
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Chờ phê duyệt`,
-    body: `Người yêu cầu ${profile.name} đã gửi phiếu yêu cầu cấp phát vật tư${zoneName ? ` cho khu vực ${zoneName}` : ""}, cần được xem xét và phê duyệt.`,
-    link: `/requisitions/${id}`,
-    document: {
-      code,
-      type: "Phiếu yêu cầu cấp phát",
-      status: "Chờ phê duyệt",
-      statusVariant: "warning",
-      creatorName: profile.name,
-      locationName: zoneName,
-      notes: meta?.purpose,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.submitted",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        requesterName: profile.name,
+        zoneName,
+        purpose: meta?.purpose,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -120,19 +141,21 @@ export async function approveRequisition(id: string) {
   const code = meta?.code ?? "YCCP";
   const zoneName = (meta?.zone as { name?: string } | null)?.name;
 
-  await safeNotify({
-    userIds: [meta?.requester_id],
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Đã được phê duyệt`,
-    body: `Phiếu yêu cầu cấp phát vật tư đã được phê duyệt bởi ${profile.name}, đang chờ thủ kho chuẩn bị và xuất cấp.`,
-    link: `/requisitions/${id}`,
-    document: {
-      code,
-      type: "Phiếu yêu cầu cấp phát",
-      status: "Đã phê duyệt",
-      statusVariant: "success",
-      handlerName: profile.name,
-      locationName: zoneName,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.approved",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        requesterName: undefined,
+        zoneName,
+        purpose: meta?.purpose,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -187,21 +210,20 @@ export async function fulfillRequisition(id: string) {
 
   const meta = await requisitionMeta(id);
   const code = meta?.code ?? "YCCP";
-  const zoneName = (meta?.zone as { name?: string } | null)?.name;
+  const _zoneName = (meta?.zone as { name?: string } | null)?.name;
 
-  await safeNotify({
-    userIds: [meta?.requester_id],
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Đã xuất cấp phát kho`,
-    body: `Thủ kho ${profile.name} đã hoàn tất xuất cấp vật tư. Vui lòng kiểm tra và xác nhận nhận hàng trên hệ thống.`,
-    link: `/requisitions/${id}`,
-    document: {
-      code,
-      type: "Phiếu yêu cầu cấp phát",
-      status: "Đã xuất cấp phát",
-      statusVariant: "info",
-      handlerName: profile.name,
-      locationName: zoneName,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.fulfilled",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -219,19 +241,21 @@ export async function receiveRequisition(id: string) {
   const code = meta?.code ?? "YCCP";
   const zoneName = (meta?.zone as { name?: string } | null)?.name;
 
-  await safeNotify({
-    userIds: await getManagerIds(supabase),
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Đã hoàn tất nhận hàng`,
-    body: `Người nhận ${profile.name} đã xác nhận nhận đủ toàn bộ số lượng vật tư bàn giao.`,
-    link: `/requisitions/${id}`,
-    document: {
-      code,
-      type: "Phiếu yêu cầu cấp phát",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
-      locationName: zoneName,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.received",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        requesterName: profile.name,
+        zoneName,
+        purpose: meta?.purpose,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -248,19 +272,19 @@ export async function rejectRequisition(id: string, reason: string) {
   const meta = await requisitionMeta(id);
   const code = meta?.code ?? "YCCP";
 
-  await safeNotify({
-    userIds: [meta?.requester_id],
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Bị từ chối phê duyệt`,
-    body: `Phiếu yêu cầu cấp phát bị từ chối phê duyệt bởi ${profile.name}.${reason ? ` Lý do: ${reason}` : ""}`,
-    link: `/requisitions/${id}`,
-    document: {
-      code,
-      type: "Phiếu yêu cầu cấp phát",
-      status: "Bị từ chối",
-      statusVariant: "danger",
-      handlerName: profile.name,
-      notes: reason,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.rejected",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        reason,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -276,21 +300,18 @@ export async function cancelRequisition(id: string) {
 
   const meta = await requisitionMeta(id);
   const code = meta?.code ?? "YCCP";
-  const isOwner = meta?.requester_id === profile.id;
-  const managers = await getManagerIds(supabase);
-
-  await safeNotify({
-    userIds: isOwner ? managers : [meta?.requester_id],
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Đã hủy phiếu`,
-    body: `Phiếu yêu cầu cấp phát vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: `/requisitions/${id}`,
-    document: {
-      code,
-      type: "Phiếu yêu cầu cấp phát",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.cancelled",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -312,21 +333,116 @@ export async function returnRequisitionItems(requisitionId: string, items: { sku
   const meta = await requisitionMeta(requisitionId);
   const code = meta?.code ?? "YCCP";
 
-  await safeNotify({
-    userIds: await getManagerIds(supabase),
-    type: "requisition",
-    title: `[Yêu cầu cấp phát] ${code} - Hoàn trả vật tư về kho`,
-    body: `Nhân sự ${profile.name} đã hoàn trả lại ${items.length} mặt hàng vật tư về kho lưu trữ.`,
-    link: `/requisitions/${requisitionId}`,
-    document: {
-      code,
-      type: "Hoàn trả vật tư",
-      status: "Đã hoàn trả",
-      statusVariant: "info",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.returned",
+      actorId: profile.id,
+      subject: { type: "requisition", id: requisitionId },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        requesterName: profile.name,
+        itemSummary: `${items.length} mặt hàng`,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
   revalidatePath(`/requisitions/${requisitionId}`);
+  revalidatePath("/products");
+}
+
+export async function updateRequisitionInvoiceImages(id: string, invoiceImages: string[]) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_requisition_invoice_images", {
+    p_id: id,
+    p_invoice_images: invoiceImages,
+    p_by: profile.id,
+  });
+  if (error) throw new Error(error.message);
+
+  const meta = await requisitionMeta(id);
+  const code = meta?.code ?? "YCCP";
+
+  try {
+    // Nếu người tải là người yêu cầu hoặc nhân viên, thông báo cho quản kho kiểm tra
+    const { data: whUsers } = await supabase
+      .from("profiles")
+      .select("id")
+      .in("role", ["warehouse", "owner"])
+      .eq("is_active", true);
+
+    if (whUsers && whUsers.length > 0) {
+      const filteredRecipients = whUsers.filter((u) => u.id !== profile.id);
+      if (filteredRecipients.length > 0) {
+        await supabase.from("notifications").insert(
+          filteredRecipients.map((u) => ({
+            user_id: u.id,
+            type: "requisition",
+            title: `[Yêu cầu cấp phát] ${code} - Đã tải hóa đơn nhận hàng`,
+            body: `${profile.name} đã tải lên ${invoiceImages.length} ảnh hóa đơn / chứng từ nhận hàng từ NCC. Quản kho vui lòng kiểm tra và duyệt hoàn tất phiếu.`,
+            link: `/requisitions/${id}`,
+          }))
+        );
+      }
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[updateRequisitionInvoiceImages] In-app notification error:", err);
+  }
+
+  revalidatePath("/requisitions");
+  revalidatePath(`/requisitions/${id}`);
+}
+
+export async function completeRequisitionDirect(id: string, notes?: string) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("complete_requisition_direct", {
+    p_id: id,
+    p_by: profile.id,
+    p_notes: notes || "Duyệt nhận hàng trực tiếp qua hóa đơn NCC",
+  });
+  if (error) throw new Error(error.message);
+
+  const meta = await requisitionMeta(id);
+  const code = meta?.code ?? "YCCP";
+
+  try {
+    if (meta?.requester_id && meta.requester_id !== profile.id) {
+      await supabase.from("notifications").insert({
+        user_id: meta.requester_id,
+        type: "requisition",
+        title: `[Yêu cầu cấp phát] ${code} - Đã duyệt nhận hàng theo hóa đơn`,
+        body: `Quản kho ${profile.name} đã kiểm tra hóa đơn và duyệt hoàn tất phiếu yêu cầu cấp phát của bạn.`,
+        link: `/requisitions/${id}`,
+      });
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[completeRequisitionDirect] In-app notification error:", err);
+  }
+
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "requisition.received",
+      actorId: profile.id,
+      subject: { type: "requisition", id },
+      participants: { requesterId: meta?.requester_id },
+      payload: {
+        code,
+        items: formatRequisitionItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
+    },
+  });
+
+  revalidatePath("/requisitions");
+  revalidatePath(`/requisitions/${id}`);
+  revalidatePath("/receipts");
+  revalidatePath("/dashboard");
   revalidatePath("/products");
 }

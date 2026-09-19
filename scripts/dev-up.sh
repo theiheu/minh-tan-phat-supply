@@ -89,6 +89,9 @@ else
   echo "==> Supabase OK: ${API_URL}"
 fi
 
+echo "==> Áp dụng migration mới (nếu có)..."
+"$CLI" migration up --local || true
+
 # --- Next.js dev server ---
 if app_up; then
   echo "==> Next.js đã chạy: ${APP_URL}"

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireManager } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(
@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireManager();
+    await requireSuperuser();
     const { id } = await params;
     const supabase = createAdminClient();
     const db = supabase as unknown as {

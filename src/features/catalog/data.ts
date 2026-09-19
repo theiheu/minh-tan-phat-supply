@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { buildSkuLabel, buildSkuSummary, buildUomLabel } from "./domain/labels";
 import type { CatalogProduct, CatalogSku, CatalogUnit, SkuAvailability, SkuAttributeValue, SkuSelectOption, TransactionUom } from "./domain/types";
+import { DEFAULT_CANONICAL_UNITS } from "./domain/uom";
 
 // ── Unit lookup ─────────────────────────────────────────────────────────────
 export const getUnits = cache(async (): Promise<CatalogUnit[]> => {
@@ -12,7 +13,7 @@ export const getUnits = cache(async (): Promise<CatalogUnit[]> => {
     .select("id,code,name,symbol,dimension,factor_to_reference,decimal_scale")
     .eq("is_active", true)
     .order("name");
-  if (!data) return [];
+  if (!data || data.length === 0) return DEFAULT_CANONICAL_UNITS;
   return data.map((u) => ({
     id: u.id,
     code: u.code,

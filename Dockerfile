@@ -5,11 +5,11 @@
 # SUPABASE_SERVICE_ROLE_KEY chỉ đọc lúc chạy (runtime env), không bake vào image.
 
 # ---------- Build ----------
-FROM oven/bun:1 AS builder
+FROM oven/bun:1.1.27-alpine AS builder
 WORKDIR /app
 
-COPY package.json bun.lock* pnpm-lock.yaml* ./
-RUN bun install
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
@@ -24,7 +24,7 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
 RUN bun run build
 
 # ---------- Run ----------
-FROM oven/bun:1 AS runner
+FROM oven/bun:1.1.27-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \

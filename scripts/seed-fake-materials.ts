@@ -142,12 +142,12 @@ async function main() {
   const zone4 = allZones?.[3]?.id ?? null;
 
   // Users
-  const adminId = await ensureUser("admin", "password123", "Quản trị viên hệ thống", "superuser", null, true);
+  const _adminId = await ensureUser("admin", "password123", "Quản trị viên hệ thống", "superuser", null, true);
   const managerId = await ensureUser("manager", "password123", "Trần Quốc Hưng (Quản kho)", "warehouse", null);
   const requesterId = await ensureUser("requester", "password123", "Nguyễn Văn An (Trưởng Khu 1)", "technician", zone1);
   const staffId = await ensureUser("staff", "password123", "Lê Thị Mai (Kỹ thuật Khu 2)", "technician", zone2);
   const staff3Id = await ensureUser("staff3", "password123", "Phạm Hoàng Nam (Kỹ thuật Khu 3)", "technician", zone3);
-  const driverId = await ensureUser("driver1", "password123", "Vũ Đình Tài (Tài xế Vận tải)", "driver", null);
+  const _driverId = await ensureUser("driver1", "password123", "Vũ Đình Tài (Tài xế Vận tải)", "driver", null);
 
   // Stock locations
   const locationsData = [
@@ -160,8 +160,8 @@ async function main() {
   }
   const { data: locs } = await admin.from("stock_locations").select("id, code, name");
   const mainLoc = locs?.find((l) => l.code === "KHO_CHINH")?.id ?? "";
-  const defectLoc = locs?.find((l) => l.code === "KHO_HONG")?.id ?? "";
-  const repairLoc = locs?.find((l) => l.code === "KHO_DANG_SUA")?.id ?? "";
+  const _defectLoc = locs?.find((l) => l.code === "KHO_HONG")?.id ?? "";
+  const _repairLoc = locs?.find((l) => l.code === "KHO_DANG_SUA")?.id ?? "";
 
   // Suppliers
   const suppliersData = [
@@ -175,7 +175,7 @@ async function main() {
     await admin.from("suppliers").upsert(s, { onConflict: "name" });
   }
   const { data: allSuppliers } = await admin.from("suppliers").select("id, name");
-  const supplierMinhPhat = allSuppliers?.find((s) => s.name.includes("Minh Phát"))?.id;
+  const _supplierMinhPhat = allSuppliers?.find((s) => s.name.includes("Minh Phát"))?.id;
   const supplierNamPhat = allSuppliers?.find((s) => s.name.includes("Nam Phát"))?.id;
   const supplierAnBinh = allSuppliers?.find((s) => s.name.includes("An Bình"))?.id;
   const supplierTienDat = allSuppliers?.find((s) => s.name.includes("Tiến Đạt"))?.id;
@@ -1983,7 +1983,7 @@ async function main() {
 
   const { data: allFuelTypes } = await admin.from("fuel_types").select("id, code, name");
   const ftDO = allFuelTypes?.find((f) => f.code === "DO-005S")?.id;
-  const ftRON = allFuelTypes?.find((f) => f.code === "RON-95")?.id;
+  const _ftRON = allFuelTypes?.find((f) => f.code === "RON-95")?.id;
 
   if (ftDO) {
     // Vehicles

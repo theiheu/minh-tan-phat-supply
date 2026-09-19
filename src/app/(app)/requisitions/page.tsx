@@ -55,7 +55,7 @@ export default async function RequisitionsPage({
   let query = supabase
     .from("requisitions")
     .select(
-      "id, code, purpose, status, requisition_type, created_at, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
+      "id, code, purpose, status, requisition_type, created_at, fulfilled_at, requester:profiles!requisitions_requester_id_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -86,7 +86,7 @@ export default async function RequisitionsPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="requisitions" />
+      <SubnavTabs group="requisitions" userRole={profile?.role} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
@@ -142,17 +142,19 @@ export default async function RequisitionsPage({
             <TableRow>
               <TableHead>Mã</TableHead>
               <TableHead>Người yêu cầu</TableHead>
+              <TableHead>Ngày yêu cầu</TableHead>
               <TableHead>Khu vực</TableHead>
               <TableHead>Mục đích</TableHead>
               <TableHead className="hidden md:table-cell">Loại</TableHead>
-              <TableHead>Ngày</TableHead>
+              <TableHead>Người cấp</TableHead>
+              <TableHead>Ngày cấp</TableHead>
               <TableHead>Trạng thái</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {(data ?? []).length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   Không có phiếu yêu cầu nào.
                 </TableCell>
               </TableRow>
@@ -163,6 +165,7 @@ export default async function RequisitionsPage({
                   <SlipCodeButton type="requisition" id={r.id} code={r.code} />
                 </TableCell>
                 <TableCell>{r.requester?.name ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatZoneLabel(r.zone?.name, r.sub_zone?.name)}
                 </TableCell>
@@ -170,7 +173,8 @@ export default async function RequisitionsPage({
                 <TableCell className="hidden text-muted-foreground md:table-cell">
                   {REQUISITION_TYPE[r.requisition_type] ?? "—"}
                 </TableCell>
-                <TableCell className="text-muted-foreground">{formatDate(r.created_at)}</TableCell>
+                <TableCell className="text-muted-foreground">{r.fulfiller?.name ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDate(r.fulfilled_at)}</TableCell>
                 <TableCell>
                   <Badge variant={statusBadgeVariant(r.status)}>
                     {REQUISITION_STATUS[r.status] ?? r.status}

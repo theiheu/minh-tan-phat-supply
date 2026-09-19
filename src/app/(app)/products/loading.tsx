@@ -4,7 +4,7 @@ export default function ProductsLoading() {
   return (
     <div className="space-y-4">
       {/* Ô tìm kiếm skeleton */}
-      <div className="mx-auto flex w-full max-w-xl gap-2">
+      <div className="flex w-full max-w-xl gap-2">
         <Skeleton className="h-9 flex-1 rounded-md" />
         <Skeleton className="h-9 w-16 shrink-0 rounded-md" />
       </div>

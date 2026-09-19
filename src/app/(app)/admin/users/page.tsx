@@ -1,6 +1,6 @@
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { UsersManager } from "@/features/auth/components/users-manager";
-import { requireManager } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { getCachedZones } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
 
@@ -13,7 +13,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const current = await requireManager();
+  const current = await requireSuperuser();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
@@ -50,7 +50,7 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="admin" />
+      <SubnavTabs group="admin" userRole={current.role} />
       <UsersManager
         profiles={rows}
         zones={zones ?? []}

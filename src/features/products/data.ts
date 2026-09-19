@@ -99,6 +99,13 @@ export async function fetchProductVariantRows(
       bom_items?: Array<{
         component_sku_id: string;
         base_quantity: number | null;
+        skus?: {
+          id: string;
+          product_id: string;
+          sku_code?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          products?: { id: string; name?: string | null } | null;
+        } | null;
         variants?: {
           id: string;
           product_id: string;
@@ -112,6 +119,13 @@ export async function fetchProductVariantRows(
       bom_items?: Array<{
         component_sku_id: string;
         base_quantity: number | null;
+        skus?: {
+          id: string;
+          product_id: string;
+          sku_code?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          products?: { id: string; name?: string | null } | null;
+        } | null;
         variants?: {
           id: string;
           product_id: string;
@@ -126,7 +140,7 @@ export async function fetchProductVariantRows(
     const versions = Array.isArray(bh.bom_versions) ? bh.bom_versions : (bh.bom_versions ? [bh.bom_versions] : []);
     for (const bv of versions) {
       for (const bi of bv.bom_items ?? []) {
-        const v = bi.variants;
+        const v = bi.skus || bi.variants;
         const uSymbol = v?.units?.symbol || v?.units?.name || null;
         const pName = v?.products?.name || v?.sku_code || "Linh kiện";
         list.push({

@@ -28,6 +28,7 @@ import { formatVnd } from "@/lib/format";
 import { createFuelReceiptAction } from "../actions";
 import { uploadFuelImage } from "../upload";
 import type { FuelType } from "../types";
+import { FuelTypeDialog } from "./fuel-type-dialog";
 
 export function FuelReceiptDialog({
   fuelTypes,
@@ -136,12 +137,26 @@ export function FuelReceiptDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2 min-w-0">
-              <Label htmlFor="fuelTypeId" className="text-xs font-semibold">
-                Loại dầu / Nhiên liệu <span className="text-destructive">*</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="fuelTypeId" className="text-xs font-semibold">
+                  Loại dầu / Nhiên liệu <span className="text-destructive">*</span>
+                </Label>
+                <FuelTypeDialog
+                  mode="create"
+                  trigger={
+                    <button
+                      type="button"
+                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-medium"
+                    >
+                      <Plus className="size-3" /> Thêm loại mới
+                    </button>
+                  }
+                  onSaved={(newType) => setFuelTypeId(newType.id)}
+                />
+              </div>
               <Select value={fuelTypeId} onValueChange={setFuelTypeId} disabled={pending}>
                 <SelectTrigger id="fuelTypeId" className="w-full">
-                  <SelectValue placeholder="Chọn loại dầu" />
+                  <SelectValue placeholder={fuelTypes.length === 0 ? "Chưa có loại dầu nào — Bấm Thêm mới" : "Chọn loại dầu"} />
                 </SelectTrigger>
                 <SelectContent>
                   {fuelTypes.map((ft) => (
@@ -151,6 +166,11 @@ export function FuelReceiptDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {fuelTypes.length === 0 && (
+                <p className="text-[11px] text-destructive">
+                  Chưa có loại nhiên liệu nào. Vui lòng bấm &quot;+ Thêm loại mới&quot; ở trên để tạo.
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5 min-w-0">

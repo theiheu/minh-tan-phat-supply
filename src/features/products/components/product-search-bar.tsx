@@ -9,8 +9,8 @@ import { ProductQrScannerDialog } from "./product-qr-scanner-dialog";
 export function ProductSearchBar({
   defaultValue = "",
   categoryId = null,
-  _canCreate = false,
-  _categories = [],
+  canCreate: _canCreate = false,
+  categories: _categories = [],
 }: {
   defaultValue?: string;
   categoryId?: string | null;

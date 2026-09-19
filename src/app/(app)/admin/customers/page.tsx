@@ -16,7 +16,7 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-  await requireManager();
+  const profile = await requireManager();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
   const q = sp.q?.trim() ?? "";
@@ -44,7 +44,7 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="admin" />
+      <SubnavTabs group="admin" userRole={profile.role} />
       <EntityCrud
         title="Khách hàng"
         items={rows}

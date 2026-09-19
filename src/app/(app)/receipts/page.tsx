@@ -16,6 +16,7 @@ import { getCachedCompositeVariantIds, getCachedSuppliers, getCachedVariantOptio
 import { dayRange, formatDate } from "@/lib/format";
 import { RECEIPT_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth";
 import { ZoomableImage } from "@/components/image-lightbox";
 
 type ReceiptStatus = "draft" | "approved" | "posted" | "cancelled";
@@ -37,11 +38,12 @@ export default async function ReceiptsPage({
   const to = sp.to ?? null;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const [supabase, suppliers, variants, compositeIdsArr] = await Promise.all([
+  const [supabase, suppliers, variants, compositeIdsArr, profile] = await Promise.all([
     createClient(),
     getCachedSuppliers(),
     getCachedVariantOptions(),
     getCachedCompositeVariantIds(),
+    getCurrentProfile(),
   ]);
 
   const compositeIds = new Set(compositeIdsArr);
@@ -74,7 +76,7 @@ export default async function ReceiptsPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="warehouse" />
+      <SubnavTabs group="warehouse" userRole={profile?.role} />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">

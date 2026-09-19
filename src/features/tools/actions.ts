@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import {
   toolBorrowingSchema,
   toolReturnSchema,
@@ -17,13 +17,34 @@ async function toolMeta(id: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("tool_borrowings")
-      .select("code, borrower_id, purpose, expected_return_date, zone:zones(name)")
+      .select(`
+        code,
+        borrower_id,
+        purpose,
+        expected_return_date,
+        zone:zones(name),
+        items:tool_borrowing_items(
+          quantity,
+          entered_quantity,
+          sku_name_snapshot,
+          uom_name_snapshot
+        )
+      `)
       .eq("id", id)
       .single();
     return data;
   } catch {
     return null;
   }
+}
+
+function formatToolItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => ({
+    name: i.sku_name_snapshot || "Dụng cụ",
+    quantity: i.entered_quantity ?? i.quantity,
+    unit: i.uom_name_snapshot || "",
+  }));
 }
 
 export async function createToolBorrowing(input: ToolBorrowingInput) {
@@ -49,28 +70,26 @@ export async function createToolBorrowing(input: ToolBorrowingInput) {
 
   const borrowingId = data as string;
   let code = "PMDC";
+  let meta: Awaited<ReturnType<typeof toolMeta>> = null;
   if (borrowingId) {
-    const meta = await toolMeta(borrowingId);
+    meta = await toolMeta(borrowingId);
     if (meta?.code) code = meta.code;
   }
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([borrowerId, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "tool_borrowing",
-    title: `[Mượn CCDC] ${code} - Xác nhận bàn giao mượn dụng cụ`,
-    body: `Đã bàn giao công cụ dụng cụ cho nhân sự. Mục đích: ${parsed.purpose.trim()}${parsed.expectedReturnDate ? ` (Hạn trả: ${parsed.expectedReturnDate})` : ""}`,
-    link: "/tools",
-    document: {
-      code,
-      type: "Phiếu mượn CCDC",
-      status: "Đang mượn",
-      statusVariant: "info",
-      creatorName: profile.name,
-      notes: parsed.purpose.trim(),
-      expectedDate: parsed.expectedReturnDate,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "tool.borrowed",
+      actorId: profile.id,
+      subject: { type: "tool_borrowing", id: borrowingId },
+      participants: { borrowerId },
+      payload: {
+        code,
+        toolNames: `${parsed.items.length} công cụ dụng cụ`,
+        expectedReturnDate: parsed.expectedReturnDate ?? undefined,
+        items: formatToolItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -99,22 +118,19 @@ export async function returnToolBorrowing(input: ToolReturnInput) {
   const meta = await toolMeta(parsed.borrowingId);
   const code = meta?.code ?? "PMDC";
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.borrower_id, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "tool_borrowing",
-    title: `[Trả CCDC] ${code} - Đã hoàn tất thu hồi / trả dụng cụ`,
-    body: `Thủ kho ${profile.name} đã ghi nhận thu hồi và nhập lại công cụ dụng cụ vào kho.`,
-    link: "/tools",
-    document: {
-      code,
-      type: "Phiếu trả CCDC",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
-      notes: parsed.notes,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "tool.returned",
+      actorId: profile.id,
+      subject: { type: "tool_borrowing", id: parsed.borrowingId },
+      participants: { borrowerId: meta?.borrower_id },
+      payload: {
+        code,
+        toolNames: "Công cụ dụng cụ",
+        items: formatToolItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -136,23 +152,22 @@ export async function cancelToolBorrowing(borrowingId: string) {
   const meta = await toolMeta(borrowingId);
   const code = meta?.code ?? "PMDC";
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.borrower_id, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "tool_borrowing",
-    title: `[Mượn CCDC] ${code} - Đã hủy phiếu mượn dụng cụ`,
-    body: `Phiếu mượn công cụ dụng cụ đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/tools",
-    document: {
-      code,
-      type: "Phiếu mượn CCDC",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
-    },
-  });
+  try {
+    const userIds = [...new Set([meta?.borrower_id].filter(Boolean))];
+    if (userIds.length > 0) {
+      await supabase.from("notifications").insert(
+        userIds.map((uid) => ({
+          user_id: uid!,
+          type: "tool_borrowing",
+          title: `[Mượn CCDC] ${code} - Đã hủy phiếu mượn dụng cụ`,
+          body: `Phiếu mượn công cụ dụng cụ đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
+          link: "/tools",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[cancelToolBorrowing] In-app notification error:", err);
+  }
 
   revalidatePath("/tools");
   revalidatePath("/products");

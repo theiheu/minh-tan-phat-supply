@@ -14,6 +14,7 @@ import {
   PackageX,
   Printer,
   QrCode,
+  Truck,
   Undo2,
   User,
 } from "lucide-react";
@@ -33,13 +34,15 @@ import {
 } from "@/components/ui/table";
 import { MaterialItemsView, type MaterialItemView } from "@/features/requisitions/components/material-items-view";
 import { RequisitionActions } from "@/features/requisitions/components/requisition-actions";
+import { RequisitionInvoices } from "@/features/requisitions/components/requisition-invoices";
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/format";
-import { REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant } from "@/lib/labels";
+import { RECEIPT_STATUS, REQUISITION_STATUS, REQUISITION_TYPE, statusBadgeVariant, variantLabel } from "@/lib/labels";
 import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ZoomableImage } from "@/components/image-lightbox";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +67,12 @@ const EVENT_DOT_CLASS: Record<string, string> = {
   "requisition.submit": "bg-amber-400 dark:bg-amber-500",
   approve: "bg-sky-500",
   "requisition.approve": "bg-sky-500",
+  order: "bg-violet-500",
+  "requisition.order": "bg-violet-500",
+  upload_invoice: "bg-sky-500",
+  "requisition.upload_invoice": "bg-sky-500",
+  direct_complete: "bg-emerald-500",
+  "requisition.direct_complete": "bg-emerald-500",
   fulfill: "bg-orange-500",
   "requisition.fulfill": "bg-orange-500",
   receive: "bg-emerald-500",
@@ -85,6 +94,12 @@ const EVENT_LABEL_CLASS: Record<string, string> = {
   "requisition.submit": "text-amber-700 dark:text-amber-300",
   approve: "text-sky-700 dark:text-sky-300",
   "requisition.approve": "text-sky-700 dark:text-sky-300",
+  order: "text-violet-700 dark:text-violet-300",
+  "requisition.order": "text-violet-700 dark:text-violet-300",
+  upload_invoice: "text-sky-700 dark:text-sky-300",
+  "requisition.upload_invoice": "text-sky-700 dark:text-sky-300",
+  direct_complete: "text-emerald-700 dark:text-emerald-300",
+  "requisition.direct_complete": "text-emerald-700 dark:text-emerald-300",
   fulfill: "text-orange-700 dark:text-orange-300",
   "requisition.fulfill": "text-orange-700 dark:text-orange-300",
   receive: "text-emerald-700 dark:text-emerald-300",
@@ -103,6 +118,9 @@ const AUDIT_EVENT_KEY: Record<string, string> = {
   "requisition.create": "create",
   "requisition.submit": "submit",
   "requisition.approve": "approve",
+  "requisition.order": "order",
+  "requisition.upload_invoice": "upload_invoice",
+  "requisition.direct_complete": "direct_complete",
   "requisition.reject": "reject",
   "requisition.cancel": "cancel",
   "requisition.fulfill": "fulfill",
@@ -145,6 +163,7 @@ function SectionHeader({
 export default async function RequisitionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const profile = await getCurrentProfile();
+  const isManager = isPrivileged(profile?.role);
   const supabase = await createClient();
 
   const { data: req } = await supabase
@@ -155,6 +174,13 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
     .eq("id", id)
     .single();
   if (!req) notFound();
+
+  // Lấy thông tin phiếu đặt hàng nhập kho liên quan nếu có
+  const { data: linkedReceipts } = await supabase
+    .from("receipts")
+    .select("id, code, status, notes, created_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name)")
+    .contains("linked_requisition_ids", [id]);
+  const linkedReceipt = linkedReceipts?.[0] ?? null;
 
   const { data: items } = await supabase
     .from("requisition_items")
@@ -223,10 +249,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
       transactionUnitName: txUnitName,
       factorToBase: factorToBase ? Number(factorToBase) : null,
       returned: returnedByVariant.get(i.sku_id) ?? 0,
-      images: [
-        ...(v?.images ?? []),
-        ...(v?.products?.images ?? []),
-      ],
+      images: v?.images ?? [],
       stock: i.sku_id ? (stockByVariant.get(i.sku_id) ?? null) : null,
     };
   });
@@ -270,59 +293,107 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
   }
 
   // ---- Lịch sử đầy đủ ----
-  // Manager đọc được audit_logs (RLS) → timeline đầy đủ cả các bước bị từ chối/hủy/trả lại.
-  // Requester chỉ thấy các mốc cơ bản lấy từ chính phiếu.
   interface TimelineEvent {
-    /** Khóa màu trạng thái của mốc (create/submit/approve/…). */
     key: string;
     label: string;
     at: string | null;
     by?: string | null;
-    /** Ghi chú cảnh báo (đỏ) — hiện dùng cho lý do từ chối. */
     note?: string | null;
-    /** Chi tiết thường (xám) — ví dụ danh sách món đã trả lại. */
     detail?: string | null;
   }
 
   let events: TimelineEvent[] = [];
-  const isManager = isPrivileged(profile?.role);
-  if (isManager) {
-    const AUDIT_LABELS: Record<string, string> = {
-      "requisition.create": "Tạo phiếu",
-      "requisition.submit": "Gửi yêu cầu",
-      "requisition.approve": "Duyệt phiếu",
-      "requisition.reject": "Từ chối",
-      "requisition.cancel": "Hủy phiếu",
-      "requisition.fulfill": "Cấp phát",
-      "requisition.receive": "Xác nhận nhận",
-      "requisition.return": "Trả lại vật tư",
-    };
-    const { data: audit } = await supabase
-      .from("audit_logs")
-      .select("id, action, created_at, actor:profiles!audit_logs_actor_id_fkey(name)")
-      .eq("entity_type", "requisition")
-      .eq("entity_id", req.id)
-      .order("created_at", { ascending: true });
-    events = (audit ?? [])
-      .filter((a) => a.action !== "requisition.return") // tránh trùng — mốc trả lấy từ requisition_returns bên dưới
-      .map((a) => ({
-        key: AUDIT_EVENT_KEY[a.action] ?? "other",
-        label: AUDIT_LABELS[a.action] ?? a.action,
-        at: a.created_at,
-        by: a.actor?.name,
-        note: a.action === "requisition.reject" ? req.rejection_reason : null,
-      }));
+  const adminClient = createAdminClient();
+  const AUDIT_LABELS: Record<string, string> = {
+    "requisition.create": "Tạo phiếu",
+    "requisition.submit": "Gửi yêu cầu",
+    "requisition.approve": "Duyệt phiếu",
+    "requisition.order": "Đã đặt hàng",
+    "requisition.upload_invoice": "Gửi hóa đơn nhận hàng",
+    "requisition.direct_complete": "Duyệt hoàn tất (Qua hóa đơn)",
+    "requisition.reject": "Từ chối",
+    "requisition.cancel": "Hủy phiếu",
+    "requisition.fulfill": "Cấp phát",
+    "requisition.receive": "Xác nhận nhận",
+    "requisition.return": "Trả lại vật tư",
+  };
+  const { data: audit } = await adminClient
+    .from("audit_logs")
+    .select("id, action, created_at, after, actor:profiles!audit_logs_actor_id_fkey(name)")
+    .eq("entity_type", "requisition")
+    .eq("entity_id", req.id)
+    .order("created_at", { ascending: true });
+
+  if (audit && audit.length > 0) {
+    events = audit
+      .filter((a) => a.action !== "requisition.return")
+      .map((a) => {
+        const actorName =
+          a.action === "requisition.submit"
+            ? (req.requester?.name ?? a.actor?.name)
+            : a.actor?.name;
+
+        let eventDetail: string | null = null;
+        if (a.action === "requisition.order") {
+          const afterObj = a.after as { receipt_code?: string; supplier_name?: string; notes?: string } | null;
+          eventDetail = afterObj?.receipt_code
+            ? `Phiếu đặt hàng: ${afterObj.receipt_code}${afterObj.supplier_name ? ` · NCC: ${afterObj.supplier_name}` : ""}${afterObj.notes ? ` (${afterObj.notes})` : ""}`
+            : linkedReceipt
+            ? `Phiếu đặt hàng: ${linkedReceipt.code}`
+            : null;
+        } else if (a.action === "requisition.upload_invoice") {
+          const afterObj = a.after as { count?: number } | null;
+          eventDetail = afterObj?.count
+            ? `Đã tải lên ${afterObj.count} ảnh hóa đơn / chứng từ nhận hàng từ NCC`
+            : "Đã tải lên ảnh hóa đơn / chứng từ nhận hàng";
+        } else if (a.action === "requisition.direct_complete") {
+          eventDetail = "Quản kho đã kiểm tra hóa đơn và duyệt hoàn tất nhận hàng trực tiếp";
+        }
+
+        return {
+          key: AUDIT_EVENT_KEY[a.action] ?? "other",
+          label: AUDIT_LABELS[a.action] ?? a.action,
+          at: a.created_at,
+          by: actorName,
+          detail: eventDetail,
+          note: a.action === "requisition.reject" ? req.rejection_reason : null,
+        };
+      });
+
+    if (linkedReceipt && !events.some((e) => e.key === "order" || e.key === "requisition.order")) {
+      events.push({
+        key: "order",
+        label: "Đã đặt hàng",
+        at: linkedReceipt.created_at,
+        by: (linkedReceipt.creator as { name?: string } | null)?.name,
+        detail: `Phiếu đặt hàng: ${linkedReceipt.code}${(linkedReceipt.supplier as { name?: string } | null)?.name ? ` · NCC: ${(linkedReceipt.supplier as { name?: string } | null)?.name}` : ""}`,
+      });
+    }
   } else {
-    events = [
-      { key: "create", label: "Tạo phiếu", at: req.created_at, by: req.requester?.name },
+    const createLog = audit?.find((a) => a.action === "requisition.create");
+    const creatorName = createLog?.actor?.name ?? req.requester?.name;
+    const fallbackOrder = linkedReceipt
+      ? {
+          key: "order",
+          label: "Đã đặt hàng",
+          at: linkedReceipt.created_at,
+          by: (linkedReceipt.creator as { name?: string } | null)?.name,
+          detail: `Phiếu đặt hàng: ${linkedReceipt.code}${(linkedReceipt.supplier as { name?: string } | null)?.name ? ` · NCC: ${(linkedReceipt.supplier as { name?: string } | null)?.name}` : ""}`,
+        }
+      : null;
+
+    const fallbackList: (TimelineEvent | null)[] = [
+      { key: "create", label: "Tạo phiếu", at: req.created_at, by: creatorName },
+      req.status !== "draft" ? { key: "submit", label: "Gửi yêu cầu", at: req.created_at, by: req.requester?.name } : null,
       { key: "approve", label: "Duyệt", at: req.approved_at, by: req.approver?.name },
+      fallbackOrder,
       { key: "fulfill", label: "Cấp phát", at: req.fulfilled_at, by: req.fulfiller?.name },
       { key: "receive", label: "Nhận hàng", at: req.received_at, by: req.receiver?.name },
-    ].filter((t) => t.at);
+    ];
+    events = fallbackList.filter((t): t is TimelineEvent => t !== null && Boolean(t.at));
   }
 
-  // Mốc trả lại vật tư — gộp từ lịch sử trả (quản kho & người yêu cầu đều thấy,
-  // kèm ngày giờ + ai trả + chi tiết món). Bên trên đã lọc bỏ audit.return để khỏi trùng.
+  // Mốc trả lại vật tư
   const returnMilestones: TimelineEvent[] = (returnEvents ?? []).map((ev) => {
     const typed = ev as {
       created_at: string;
@@ -432,7 +503,67 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
         </Card>
       )}
 
-      {isManager && (req.status === "pending" || req.status === "approved") && materialItems.some((m) => (m.stock ?? 0) < m.quantity) && (
+      {/* Thông tin tiến độ đặt hàng từ NCC & Hướng dẫn lấy hàng trực tiếp */}
+      {linkedReceipt && (
+        <Card className="border-violet-300 dark:border-violet-900/80 bg-violet-50/70 dark:bg-violet-950/25 shadow-xs">
+          <CardContent className="space-y-3 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-200/80 dark:border-violet-900/60 pb-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-violet-200 text-violet-800 dark:bg-violet-800/40 dark:text-violet-200">
+                  <Truck className="size-4" aria-hidden />
+                </span>
+                <h3 className="text-sm font-semibold text-violet-950 dark:text-violet-100">
+                  Tiến độ đặt hàng vật tư
+                </h3>
+                <Badge variant={statusBadgeVariant(linkedReceipt.status)} className="text-xs">
+                  {RECEIPT_STATUS[linkedReceipt.status] ?? linkedReceipt.status}
+                </Badge>
+              </div>
+              <Button variant="outline" size="sm" asChild className="h-7 text-xs border-violet-300 dark:border-violet-800">
+                <Link href={`/receipts/${linkedReceipt.id}`} target="_blank">
+                  Xem phiếu đặt hàng ({linkedReceipt.code})
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-violet-900 dark:text-violet-200">
+              <div>
+                <span className="text-muted-foreground">Mã phiếu đặt hàng: </span>
+                <span className="font-mono font-semibold text-foreground">{linkedReceipt.code}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Nhà cung cấp: </span>
+                <span className="font-semibold text-foreground">{(linkedReceipt.supplier as { name?: string } | null)?.name ?? "—"}</span>
+              </div>
+              {(linkedReceipt.creator as { name?: string } | null)?.name && (
+                <div>
+                  <span className="text-muted-foreground">Người đặt: </span>
+                  <span className="text-foreground">{(linkedReceipt.creator as { name?: string } | null)?.name}</span>
+                </div>
+              )}
+              {linkedReceipt.created_at && (
+                <div>
+                  <span className="text-muted-foreground">Thời gian đặt: </span>
+                  <span className="text-foreground">{formatDateTime(linkedReceipt.created_at)}</span>
+                </div>
+              )}
+            </div>
+
+            {req.status !== "received" && (
+              <div className="rounded-lg bg-white/80 dark:bg-black/40 p-3 border border-violet-200 dark:border-violet-900/60 text-xs leading-relaxed text-violet-950 dark:text-violet-100 space-y-1">
+                <p className="font-semibold flex items-center gap-1.5 text-violet-900 dark:text-violet-200">
+                  <span>💡</span> Hướng dẫn lấy hàng trực tiếp tại nơi cung cấp:
+                </p>
+                <p className="text-muted-foreground">
+                  Người yêu cầu có thể theo thông tin phiếu đặt hàng trên tới trực tiếp nơi cung cấp để nhận vật tư. Sau khi lấy hàng, vui lòng <strong>chụp ảnh hóa đơn VAT / phiếu giao hàng</strong> và tải lên mục <strong>Hóa đơn & Chứng từ nhận hàng</strong> bên dưới để quản kho kiểm tra và duyệt hoàn tất phiếu ngay (rút ngắn quy trình nhập kho).
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {isManager && (req.status === "pending" || req.status === "approved") && materialItems.some((m) => (m.stock ?? 0) < m.quantity) && !linkedReceipt && (
         <Card className="border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/20">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3.5">
             <div className="flex items-start gap-2.5">
@@ -492,6 +623,17 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
           )}
         </CardContent>
       </Card>
+
+      {/* Mục tải lên hóa đơn & chứng từ nhận hàng */}
+      <RequisitionInvoices
+        requisitionId={req.id}
+        requisitionCode={req.code}
+        invoiceImages={(req as { invoice_images?: string[] }).invoice_images ?? []}
+        status={req.status}
+        isManager={isManager}
+        currentUser={profile}
+        requesterId={req.requester_id}
+      />
 
       <Card>
         <SectionHeader icon={NotebookPen} tone="orange" title="Mục đích" />
@@ -626,6 +768,7 @@ export default async function RequisitionDetailPage({ params }: { params: Promis
             requesterId={req.requester_id}
             currentUserId={profile.id}
             role={profile.role}
+            invoiceImages={(req as { invoice_images?: string[] }).invoice_images ?? []}
           />
         </div>
       )}

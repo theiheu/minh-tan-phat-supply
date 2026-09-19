@@ -1,6 +1,6 @@
 # 🛠️ DANH MỤC CLI SCRIPTS VẬN HÀNH & KIỂM THỬ (CLI SCRIPTS REFERENCE)
 
-> Tài liệu tham chiếu chi tiết toàn bộ 25 tập lệnh (Scripts) trong thư mục `scripts/` phục vụ khởi chạy, triển khai tự động, nạp dữ liệu mẫu (Seed), kiểm thử dòng nghiệp vụ và đo hiệu năng hệ thống **Minh Tân Phát Supply**.
+> Tài liệu tham chiếu chi tiết toàn bộ các tập lệnh (Scripts) trong thư mục `scripts/` phục vụ khởi chạy, triển khai tự động, nạp dữ liệu mẫu (Seed), đồng bộ AI, kiểm thử dòng nghiệp vụ và đo hiệu năng hệ thống **Minh Tân Phát Supply**.
 
 ---
 
@@ -31,10 +31,10 @@ bash scripts/deploy.sh
 
 ---
 
-## 2. SCRIPTS NẠP DỮ LIỆU & QUẢN TRỊ NGƯỜI DÙNG
+## 2. SCRIPTS NẠP DỮ LIỆU, EMAIL & TRI THỨC AI
 
 ### `scripts/seed-complete-data.ts` (hoặc `pnpm seed:complete`)
-* **Mục đích:** Nạp toàn bộ dữ liệu mẫu hoàn chỉnh: 7 vai trò người dùng chuẩn, 5 danh mục ngành hàng, 30+ sản phẩm & biến thể, trạm bồn dầu, dàn xe cơ giới và lịch sử phiếu mẫu.
+* **Mục đích:** Nạp toàn bộ dữ liệu mẫu hoàn chỉnh: 7 vai trò người dùng chuẩn, danh mục ngành hàng, SKU, đơn vị quy đổi, định mức BOM, trạm bồn dầu, dàn xe cơ giới và lịch sử phiếu mẫu.
 * **Cách chạy:**
 ```bash
 pnpm seed:complete
@@ -48,11 +48,28 @@ npx tsx scripts/ensure-superuser.ts
 ```
 
 ### `scripts/assign-user-emails.ts` (hoặc `pnpm assign:emails`)
-* **Mục đích:** Tự động gán và đồng bộ địa chỉ email doanh nghiệp SMTP (`@minhtanphat.io.vn`) cho toàn bộ tài khoản nhân sự trong trại.
+* **Mục đích:** Tự động gán và đồng bộ địa chỉ email doanh nghiệp SMTP cho toàn bộ tài khoản nhân sự trong trại.
+
+### `scripts/sync-knowledge.ts` (hoặc `pnpm sync:knowledge`)
+* **Mục đích:** Quét tài liệu tri thức trong `docs/`, thực hiện pipeline phân mảnh (chunking) và sinh vector embeddings nạp vào `ai_knowledge_chunks` cho AI Copilot.
+* **Cách chạy:**
+```bash
+pnpm sync:knowledge
+```
+
+### `scripts/test-email.ts` & `scripts/send-reminders-job.ts`
+* **Mục đích:** Kiểm tra kết nối SMTP gửi email thử nghiệm và chạy worker gửi email nhắc nhở mượn dụng cụ quá hạn định kỳ.
 
 ---
 
-## 3. SCRIPTS ĐO HIỆU NĂNG & IN ẤN
+## 3. SCRIPTS ĐO HIỆU NĂNG, VALIDATION & IN ẤN
+
+### `scripts/validate-manifest.js`
+* **Mục đích:** Kiểm tra tính hợp lệ của manifest trạng thái triển khai tại `docs/operations/current-deployment-status.yaml`.
+* **Cách chạy:**
+```bash
+node scripts/validate-manifest.js
+```
 
 ### `scripts/benchmark-pages.js`
 * **Mục đích:** Đo lường thời gian phản hồi (Latency) và tốc độ tải trang thực tế của toàn bộ 25+ màn hình trong hệ thống, đảm bảo đạt chuẩn tốc độ ~200ms.
@@ -62,7 +79,7 @@ node scripts/benchmark-pages.js
 ```
 
 ### `scripts/verify-pdf-font.tsx` & `scripts/test-vehicle-qr-pdf.tsx`
-* **Mục đích:** Kiểm tra tính toàn vẹn của font tiếng Việt UTF-8 `Be Vietnam Pro` và kiểm tra khả năng render vector PDF cho tem nhãn mã QR dán xe cơ giới.
+* **Mục đích:** Kiểm tra tính toàn vẹn của font tiếng Việt UTF-8 `Roboto` và kiểm tra khả năng render vector PDF cho tem nhãn mã QR dán xe cơ giới.
 
 ---
 

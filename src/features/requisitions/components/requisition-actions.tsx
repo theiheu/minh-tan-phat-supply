@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { CheckCircle2, FileCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   approveRequisition,
+  completeRequisitionDirect,
   fulfillRequisition,
   receiveRequisition,
   rejectRequisition,
@@ -19,12 +21,14 @@ export function RequisitionActions({
   requesterId,
   currentUserId,
   role,
+  invoiceImages = [],
 }: {
   requisitionId: string;
   status: string;
   requesterId: string;
   currentUserId: string;
   role: string;
+  invoiceImages?: string[];
 }) {
   const [pending, startTransition] = useTransition();
   const [rejecting, setRejecting] = useState(false);
@@ -32,6 +36,7 @@ export function RequisitionActions({
 
   const isOwner = requesterId === currentUserId;
   const isManager = isPrivileged(role);
+  const hasInvoices = invoiceImages && invoiceImages.length > 0;
 
   function run(action: () => Promise<void>, success: string) {
     startTransition(async () => {
@@ -61,6 +66,24 @@ export function RequisitionActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {/* Nút duyệt nhanh qua hóa đơn khi người yêu cầu lấy hàng trực tiếp tại NCC */}
+      {isManager && hasInvoices && (status === "pending" || status === "approved" || status === "issued") && (
+        <Button
+          size="sm"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs gap-1.5"
+          onClick={() =>
+            run(
+              () => completeRequisitionDirect(requisitionId, "Duyệt nhận hàng trực tiếp theo hóa đơn NCC"),
+              "Đã duyệt và hoàn tất nhận hàng trực tiếp theo hóa đơn",
+            )
+          }
+          disabled={pending}
+        >
+          <FileCheck className="size-4" aria-hidden />
+          Duyệt & Hoàn tất (Qua hóa đơn)
+        </Button>
+      )}
+
       {isOwner && status === "draft" && (
         <Button size="sm" onClick={() => run(() => submitRequisition(requisitionId), "Đã gửi")} disabled={pending}>
           Gửi
@@ -103,7 +126,13 @@ export function RequisitionActions({
           </Button>
         ))}
       {isOwner && status === "issued" && (
-        <Button size="sm" onClick={() => run(() => receiveRequisition(requisitionId), "Đã xác nhận nhận")} disabled={pending}>
+        <Button
+          size="sm"
+          className="gap-1.5"
+          onClick={() => run(() => receiveRequisition(requisitionId), "Đã xác nhận nhận")}
+          disabled={pending}
+        >
+          <CheckCircle2 className="size-4" aria-hidden />
           Xác nhận đã nhận
         </Button>
       )}

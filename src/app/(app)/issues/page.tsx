@@ -45,7 +45,7 @@ export default async function IssuesPage({
     page?: string;
   }>;
 }) {
-  await requireManager();
+  const profile = await requireManager();
   const sp = await searchParams;
   const status = sp.status ?? null;
   const type = sp.type ?? null;
@@ -110,7 +110,7 @@ export default async function IssuesPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="warehouse" />
+      <SubnavTabs group="warehouse" userRole={profile.role} />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">

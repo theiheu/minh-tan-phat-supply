@@ -1,21 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireManager } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSuperuser } from "@/lib/types";
 import { resetPasswordSchema } from "../schema";
 
-// Tài khoản hệ thống (is_protected) chỉ superuser được đặt lại mật khẩu.
-async function assertCanMutate(userId: string) {
-  const caller = await requireManager();
+// Chỉ tài khoản superuser mới có quyền đặt lại mật khẩu người dùng.
+async function assertCanMutate(_userId: string) {
+  const caller = await requireSuperuser();
   if (!isSuperuser(caller.role)) {
-    const supabase = await createClient();
-    const { data: target } = await supabase.from("profiles").select("is_protected").eq("id", userId).single();
-    if (target?.is_protected) {
-      throw new Error("Chỉ tài khoản superuser được thao tác trên tài khoản hệ thống");
-    }
+    throw new Error("Chỉ tài khoản superuser được đặt lại mật khẩu");
   }
   return caller;
 }

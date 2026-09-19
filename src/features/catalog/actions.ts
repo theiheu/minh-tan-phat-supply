@@ -1238,7 +1238,7 @@ export async function createCompleteProduct(input: CreateCompleteProductInput): 
         min_stock: sku.minStock ?? 0,
         price: sku.price ?? null,
         is_default: sku.isDefault ?? (idx === 0),
-        images: sku.images && sku.images.length > 0 ? sku.images : (input.images || []),
+        images: sku.images || [],
       })
       .select("id")
       .single();

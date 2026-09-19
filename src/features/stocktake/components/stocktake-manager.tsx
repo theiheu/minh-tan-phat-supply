@@ -51,10 +51,13 @@ export function StocktakeManager({
     if (!canCreate) return;
     startTransition(async () => {
       try {
-        await createStocktake(locationId, name);
+        const newId = await createStocktake(locationId, name);
         toast.success("Đã tạo phiếu kiểm kê");
         setName("");
         setLocationId("");
+        if (newId) {
+          setOpenId(newId);
+        }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Thao tác thất bại");
       }
@@ -138,8 +141,9 @@ export function StocktakeManager({
         {sessions.map((s) => {
           const isOpen = openId === s.id;
           const isDraft = s.status === "draft";
+          const isPosted = s.status === "posted";
           const checkedCount = s.items.filter((i) => i.checked).length;
-          const canOpen = (isDraft || s.status === "posted") && s.items.length > 0;
+          const canOpen = isDraft || isPosted;
           return (
             <Card
               key={s.id}
@@ -187,78 +191,102 @@ export function StocktakeManager({
                 <p className="truncate text-xs text-muted-foreground">
                   <span className="font-mono">{s.code}</span> · {s.locationName} ·{" "}
                   {formatDate(s.postedAt ?? s.createdAt)}
-                  {canOpen && (
+                  {s.items.length > 0 && (
                     <span className="ml-1.5">
                       {isDraft ? `· đã kiểm ${checkedCount}/${s.items.length} dòng` : `· ${checkedCount} dòng đã kiểm`}
                     </span>
                   )}
+                  {s.items.length === 0 && <span className="ml-1.5 text-muted-foreground">(0 dòng vật tư)</span>}
                 </p>
 
-                {(isDraft || s.items.length > 0 || isDev) && (
-                  <div className="flex flex-wrap items-center justify-end gap-1.5">
-                    {isDraft && canOpen && (
-                      <Button
-                        size="sm"
-                        variant={isOpen ? "outline" : "default"}
-                        onClick={() => setOpenId(isOpen ? null : s.id)}
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  {isDraft && (
+                    <Button
+                      size="sm"
+                      variant={isOpen ? "outline" : "default"}
+                      onClick={() => setOpenId(isOpen ? null : s.id)}
+                    >
+                      {isOpen ? "Đóng" : "Nhập số thực tế"}
+                    </Button>
+                  )}
+                  {isPosted && (
+                    <Button
+                      size="sm"
+                      variant={isOpen ? "outline" : "secondary"}
+                      onClick={() => setOpenId(isOpen ? null : s.id)}
+                    >
+                      {isOpen ? "Đóng" : "Xem chi tiết"}
+                    </Button>
+                  )}
+                  {s.items.length > 0 && (
+                    <>
+                      <Link
+                        href={`/qr/stocktake/${s.id}`}
+                        target="_blank"
+                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
                       >
-                        {isOpen ? "Đóng" : "Nhập số thực tế"}
-                      </Button>
-                    )}
-                    {s.items.length > 0 && (
-                      <>
-                        <Link
-                          href={`/qr/stocktake/${s.id}`}
-                          target="_blank"
-                          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
-                        >
-                          <QrCode className="size-3.5" aria-hidden />
-                          In mã QR
-                        </Link>
-                        <Link
-                          href={`/api/stocktake/${s.id}/pdf`}
-                          target="_blank"
-                          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
-                        >
-                          <Printer className="size-3.5" aria-hidden />
-                          In
-                        </Link>
-                      </>
-                    )}
+                        <QrCode className="size-3.5" aria-hidden />
+                        In mã QR
+                      </Link>
+                      <Link
+                        href={`/api/stocktake/${s.id}/pdf`}
+                        target="_blank"
+                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-sm font-medium hover:bg-accent"
+                      >
+                        <Printer className="size-3.5" aria-hidden />
+                        In
+                      </Link>
+                    </>
+                  )}
 
-                    {/* Công cụ dev — tách riêng khỏi nút nghiệp vụ để khỏi lẫn */}
-                    {isDev && (
-                      <span
-                        className="flex items-center gap-0.5 rounded-md border border-destructive/30 px-0.5 py-0.5"
-                        title="Công cụ dev (superuser)"
-                      >
-                        {s.status === "posted" && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            disabled={pending}
-                            onClick={() => reopen(s)}
-                            title="Dev: đảo bút toán và mở lại về nháp để sửa số liệu"
-                          >
-                            <Pencil className="size-3.5" aria-hidden />
-                          </Button>
-                        )}
+                  {/* Nút xoá cho phiếu nháp hoặc công cụ dev */}
+                  {isDraft && !isDev && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive gap-1"
+                      disabled={pending}
+                      onClick={() => remove(s)}
+                      title="Xoá phiếu nháp"
+                    >
+                      <Trash2 className="size-3.5" aria-hidden />
+                      Xoá
+                    </Button>
+                  )}
+
+                  {/* Công cụ dev (superuser / owner) */}
+                  {isDev && (
+                    <span
+                      className="flex items-center gap-0.5 rounded-md border border-destructive/30 px-0.5 py-0.5"
+                      title="Công cụ dev (superuser / owner)"
+                    >
+                      {s.status === "posted" && (
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon-sm"
-                          className="text-destructive hover:text-destructive"
                           disabled={pending}
-                          onClick={() => remove(s)}
-                          title="Dev: xoá phiếu (đã chốt sẽ đảo bút toán trước khi xoá)"
+                          onClick={() => reopen(s)}
+                          title="Dev: đảo bút toán và mở lại về nháp để sửa số liệu"
                         >
-                          <Trash2 className="size-3.5" aria-hidden />
+                          <Pencil className="size-3.5" aria-hidden />
                         </Button>
-                      </span>
-                    )}
-                  </div>
-                )}
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive hover:text-destructive"
+                        disabled={pending}
+                        onClick={() => remove(s)}
+                        title="Xoá phiếu (đã chốt sẽ đảo bút toán trước khi xoá)"
+                      >
+                        <Trash2 className="size-3.5" aria-hidden />
+                      </Button>
+                    </span>
+                  )}
+                </div>
               </CardHeader>
 
               {isOpen && canOpen && (

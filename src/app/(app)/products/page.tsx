@@ -12,6 +12,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { isPrivileged, type Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { computeSearchScore } from "@/lib/search";
+import { variantLabel } from "@/lib/labels";
 
 const PAGE_SIZE = 20;
 
@@ -235,7 +236,7 @@ export default async function ProductsPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="requisitions" />
+      <SubnavTabs group="requisitions" userRole={profile?.role} />
 
       {/* Ô tìm kiếm kèm nút quét QR/Barcode */}
       <ProductSearchBar defaultValue={q} categoryId={categoryId} />

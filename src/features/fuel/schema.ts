@@ -64,6 +64,12 @@ export const fuelDispenseSchema = z.object({
     (v) => (v === "" || v === null || v === undefined ? null : v),
     nonNegativeNumber2Decimals.nullable().optional()
   ),
+  driverId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .transform((v) => (v && v !== "" && v !== "none" ? v : null)),
   driverName: z
     .string()
     .trim()
@@ -82,16 +88,44 @@ export const fuelDispenseSchema = z.object({
 export type FuelDispenseInput = z.infer<typeof fuelDispenseSchema>;
 
 export const fuelTypeSchema = z.object({
-  code: z.string().trim().min(1, "Mã không được trống").max(50),
-  name: z.string().trim().min(1, "Tên không được trống").max(200),
-  unit: z.string().trim().min(1).default("lít"),
+  code: z
+    .string()
+    .trim()
+    .min(1, "Mã phân loại không được trống")
+    .max(50, "Mã phân loại tối đa 50 ký tự")
+    .regex(/^[A-Za-z0-9_-]+$/, "Mã chỉ được chứa chữ cái, số, dấu gạch ngang hoặc gạch dưới")
+    .transform((v) => v.toUpperCase()),
+  name: z.string().trim().min(1, "Tên loại nhiên liệu/dầu không được trống").max(200, "Tên tối đa 200 ký tự"),
+  unit: z.string().trim().min(1, "Đơn vị tính không được trống").default("lít"),
   minStock: nonNegativeNumber2Decimals.default(0),
+  initialStock: nonNegativeNumber2Decimals.optional().default(0),
   description: z
     .string()
     .trim()
-    .max(500)
+    .max(500, "Ghi chú tối đa 500 ký tự")
     .optional()
     .transform((v) => (v ? v : undefined)),
 });
 
-export type FuelTypeInput = z.infer<typeof fuelTypeSchema>;
+export type FuelTypeInput = z.input<typeof fuelTypeSchema>;
+
+export const fuelTypeUpdateSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, "Mã phân loại không được trống")
+    .max(50, "Mã phân loại tối đa 50 ký tự")
+    .regex(/^[A-Za-z0-9_-]+$/, "Mã chỉ được chứa chữ cái, số, dấu gạch ngang hoặc gạch dưới")
+    .transform((v) => v.toUpperCase()),
+  name: z.string().trim().min(1, "Tên loại nhiên liệu/dầu không được trống").max(200, "Tên tối đa 200 ký tự"),
+  unit: z.string().trim().min(1, "Đơn vị tính không được trống").default("lít"),
+  minStock: nonNegativeNumber2Decimals.default(0),
+  description: z
+    .string()
+    .trim()
+    .max(500, "Ghi chú tối đa 500 ký tự")
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+});
+
+export type FuelTypeUpdateInput = z.input<typeof fuelTypeUpdateSchema>;

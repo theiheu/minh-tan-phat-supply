@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Droplets, PackageMinus, PackagePlus } from "lucide-react";
+import { BarChart3, Droplets, Layers, PackageMinus, PackagePlus } from "lucide-react";
 import { requireManager } from "@/lib/auth";
 import {
   getCachedSubZones,
@@ -14,6 +14,7 @@ import {
   getFuelTypes,
 } from "@/features/fuel/actions";
 import { FuelOverview } from "@/features/fuel/components/fuel-overview";
+import { FuelTypeList } from "@/features/fuel/components/fuel-type-list";
 import { FuelDispenseList, type FuelDispenseRow } from "@/features/fuel/components/fuel-dispense-list";
 import { FuelReceiptList, type FuelReceiptRow } from "@/features/fuel/components/fuel-receipt-list";
 import { FuelReports } from "@/features/fuel/components/fuel-reports";
@@ -63,8 +64,9 @@ export default async function FuelPage({
   const q = sp.q ?? "";
 
   // Load basic options with cached metadata
-  const [fuelTypes, vehiclesRaw, zonesData, subZonesData, suppliersData] = await Promise.all([
+  const [activeFuelTypes, allFuelTypes, vehiclesRaw, zonesData, subZonesData, suppliersData] = await Promise.all([
     getFuelTypes({ activeOnly: true }),
+    getFuelTypes({ activeOnly: false }),
     getVehicles({ activeOnly: true }),
     getCachedZones(),
     getCachedSubZones(),
@@ -96,7 +98,7 @@ export default async function FuelPage({
             href="/fuel?tab=overview"
             className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "overview"
-                ? "border-primary text-primary"
+                ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
@@ -104,10 +106,21 @@ export default async function FuelPage({
             Tổng quan & Tồn kho
           </Link>
           <Link
+            href="/fuel?tab=types"
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
+              tab === "types"
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+            }`}
+          >
+            <Layers className="size-3.5 sm:size-4" />
+            Loại dầu & Nhớt
+          </Link>
+          <Link
             href={`/fuel?tab=dispenses&from=${from}&to=${to}`}
             className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "dispenses"
-                ? "border-primary text-primary"
+                ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
@@ -118,7 +131,7 @@ export default async function FuelPage({
             href={`/fuel?tab=receipts&from=${from}&to=${to}`}
             className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "receipts"
-                ? "border-primary text-primary"
+                ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
@@ -129,7 +142,7 @@ export default async function FuelPage({
             href={`/fuel?tab=reports&from=${from}&to=${to}`}
             className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
               tab === "reports"
-                ? "border-primary text-primary"
+                ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
@@ -142,12 +155,16 @@ export default async function FuelPage({
       {/* Tab Contents */}
       {tab === "overview" && (
         <OverviewTabContent
-          fuelTypes={fuelTypes}
+          fuelTypes={activeFuelTypes}
           vehicles={vehicles}
           zones={zones}
           subZones={subZones}
           suppliers={suppliers}
         />
+      )}
+
+      {tab === "types" && (
+        <TypesTabContent allFuelTypes={allFuelTypes} />
       )}
 
       {tab === "dispenses" && (
@@ -159,7 +176,7 @@ export default async function FuelPage({
           fuelTypeId={fuelTypeId}
           vehicleId={vehicleId}
           zoneId={zoneId}
-          fuelTypes={fuelTypes}
+          fuelTypes={activeFuelTypes}
           vehicles={vehicles}
           zones={zones}
           subZones={subZones}
@@ -173,7 +190,7 @@ export default async function FuelPage({
           q={q}
           page={page}
           fuelTypeId={fuelTypeId}
-          fuelTypes={fuelTypes}
+          fuelTypes={activeFuelTypes}
           suppliers={suppliers}
         />
       )}
@@ -185,7 +202,7 @@ export default async function FuelPage({
           fuelTypeId={fuelTypeId}
           vehicleId={vehicleId}
           zoneId={zoneId}
-          fuelTypes={fuelTypes}
+          fuelTypes={activeFuelTypes}
           vehicles={vehicles}
           zones={zones}
         />
@@ -218,6 +235,14 @@ async function OverviewTabContent({
       suppliers={suppliers}
     />
   );
+}
+
+async function TypesTabContent({
+  allFuelTypes,
+}: {
+  allFuelTypes: FuelType[];
+}) {
+  return <FuelTypeList fuelTypes={allFuelTypes} />;
 }
 
 async function DispensesTabContent({

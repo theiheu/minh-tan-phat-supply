@@ -86,6 +86,8 @@ const ADMIN_ROLES: Role[] = [
   "superuser",
 ];
 
+const SUPERUSER_ONLY_ROLES: Role[] = ["superuser"];
+
 export const REQUISITION_NAV_ITEMS: NavItem[] = [
   { href: "/products", label: "Chọn vật tư", icon: PackageOpen, roles: ALL_SUPPLY_ROLES },
   { href: "/requisitions", label: "Phiếu yêu cầu", icon: ClipboardList, roles: ALL_SUPPLY_ROLES },
@@ -114,8 +116,8 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ADMIN_ROLES },
   { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ADMIN_ROLES },
   { href: "/admin/vehicles", label: "Phương tiện", icon: Truck, roles: ADMIN_ROLES },
-  { href: "/admin/users", label: "Người dùng", icon: Users, roles: ADMIN_ROLES },
-  { href: "/admin/ai-copilot", label: "AI Copilot", icon: Bot, roles: ADMIN_ROLES },
+  { href: "/admin/users", label: "Người dùng", icon: Users, roles: SUPERUSER_ONLY_ROLES },
+  { href: "/admin/ai-copilot", label: "AI Copilot", icon: Bot, roles: SUPERUSER_ONLY_ROLES },
 ];
 
 export const NAV_GROUPS: NavGroup[] = [

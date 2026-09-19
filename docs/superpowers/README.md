@@ -37,7 +37,11 @@ docs/superpowers/
 
 ## In Progress ⚙️
 
-Hiện không có tính năng nào đang in-progress.
+| Feature | Spec | Plan |
+| --- | --- | --- |
+| Full Material Catalog Replacement (Remediation) | [spec](./specs/2026-09-16-unified-product-variant-workflow-design.md) | [remediation plan](./plans/2026-09-18-post-cutover-remediation-agent-plan.md) |
+
+> **Ghi chú:** Trạng thái cutover chính thức được duy trì trong `../operations/current-deployment-status.yaml`. Không tuyên bố hoàn thành tại đây khi chưa pass validator.
 
 
 

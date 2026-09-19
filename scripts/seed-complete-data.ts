@@ -72,7 +72,7 @@ async function run() {
   const managerId = await ensureUser("manager", "password123", "Trần Quốc Hưng (Quản kho)", "warehouse", null);
   const requesterId = await ensureUser("requester", "password123", "Nguyễn Văn An (Trưởng Khu 1)", "technician", zone1);
   const staffId = await ensureUser("staff", "password123", "Lê Thị Mai (Kỹ thuật Khu 2)", "technician", zone2);
-  const adminId = await ensureUser("admin", "password123", "Quản trị viên hệ thống", "superuser", null);
+  const _adminId = await ensureUser("admin", "password123", "Quản trị viên hệ thống", "superuser", null);
 
   console.log("🏢 3. Lấy thông tin kho và danh mục...");
   const { data: locs } = await admin.from("stock_locations").select("id, code, name");

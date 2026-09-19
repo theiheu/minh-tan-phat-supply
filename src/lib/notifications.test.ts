@@ -1,35 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { notifyUsers, getManagerIds } from "./notifications";
+import { notifyUsers } from "./notifications";
 import * as emailModule from "./email";
 import * as serverSupabase from "@/lib/supabase/server";
 
 describe("lib/notifications", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe("getManagerIds", () => {
-    it("trả về danh sách id của manager và superuser đang hoạt động", async () => {
-      const mockSupabase = {
-        from: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            in: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({
-                data: [{ id: "user-1" }, { id: "user-2" }],
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      };
-
-      vi.spyOn(serverSupabase, "createClient").mockResolvedValue(
-        mockSupabase as unknown as Awaited<ReturnType<typeof serverSupabase.createClient>>,
-      );
-
-      const ids = await getManagerIds();
-      expect(ids).toEqual(["user-1", "user-2"]);
-    });
   });
 
   describe("notifyUsers", () => {

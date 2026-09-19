@@ -3,11 +3,14 @@ import {
   calcUsageDiff,
   calcConsumptionRate,
   formatFuelLiters,
+  formatFuelQuantity,
   formatOdo,
   formatConsumptionRate,
   generateVehicleQrToken,
+  generateFuelTypeCode,
   getVehicleQrScanUrl,
   parseQrText,
+  FUEL_TYPE_PRESETS,
 } from "./fuel";
 
 describe("calcUsageDiff", () => {
@@ -48,7 +51,7 @@ describe("calcConsumptionRate", () => {
   });
 });
 
-describe("formatFuelLiters", () => {
+describe("formatFuelLiters and formatFuelQuantity", () => {
   it("formats integer liters", () => {
     expect(formatFuelLiters(1500)).toBe("1.500 lít");
   });
@@ -57,6 +60,34 @@ describe("formatFuelLiters", () => {
   });
   it("formats 0", () => {
     expect(formatFuelLiters(0)).toBe("0 lít");
+  });
+  it("formats quantity with custom unit (can, phuy, kg)", () => {
+    expect(formatFuelQuantity(25, "can")).toBe("25 can");
+    expect(formatFuelQuantity(5.5, "phuy")).toBe("5,50 phuy");
+    expect(formatFuelQuantity(100, "kg")).toBe("100 kg");
+  });
+});
+
+describe("generateFuelTypeCode", () => {
+  it("converts Vietnamese names to uppercase alphanumeric code", () => {
+    expect(generateFuelTypeCode("Dầu Diesel DO 0.05S-II")).toBe("DAU_DIESEL_DO_0_05S_II");
+    expect(generateFuelTypeCode("Nhớt động cơ 15W-40")).toBe("NHOT_DONG_CO_15W_40");
+    expect(generateFuelTypeCode("Nước làm mát động cơ")).toBe("NUOC_LAM_MAT_DONG_CO");
+    expect(generateFuelTypeCode("Dầu thủy lực ISO VG 68")).toBe("DAU_THUY_LUC_ISO_VG_68");
+  });
+  it("returns empty string when input is empty", () => {
+    expect(generateFuelTypeCode("")).toBe("");
+  });
+});
+
+describe("FUEL_TYPE_PRESETS", () => {
+  it("contains standard presets for diesel, engine oil, coolant, hydraulic oil, etc.", () => {
+    expect(FUEL_TYPE_PRESETS.length).toBeGreaterThanOrEqual(5);
+    const names = FUEL_TYPE_PRESETS.map(p => p.name);
+    expect(names.some(n => n.includes("Diesel"))).toBe(true);
+    expect(names.some(n => n.includes("Nhớt"))).toBe(true);
+    expect(names.some(n => n.includes("Nước làm mát"))).toBe(true);
+    expect(names.some(n => n.includes("thủy lực"))).toBe(true);
   });
 });
 

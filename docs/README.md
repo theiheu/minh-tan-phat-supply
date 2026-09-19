@@ -1,85 +1,78 @@
 # Bản Đồ Tài Liệu — Minh Tân Phát Supply
 
-> Hệ thống Quản lý Kho & Vật tư Trại Gà Đẻ Trứng Lê Văn Dương (Minh Tân, Dầu Tiếng, Bình Dương).  
+> Hệ thống Quản lý Kho & Vận Hành Trại Gà Đẻ Trứng Lê Văn Dương (Minh Tân, Dầu Tiếng, Bình Dương).  
 > Stack: **Next.js 15 App Router** · **TypeScript Strict** · **Tailwind CSS v4** · **Supabase (PostgreSQL 17 + RLS + RPC)** · **PWA Offline-First**
 
-Tài liệu theo tiêu chuẩn **[Diátaxis Framework](https://diataxis.fr/)** — 4 phần tư độc lập:
+Tài liệu được xây dựng theo tiêu chuẩn **[Diátaxis Framework](https://diataxis.fr/)** — phân định 4 góc nhìn độc lập: *Kiến trúc (Architecture)*, *Hướng dẫn sử dụng (How-to Guides)*, *Tra cứu kỹ thuật (Reference)*, và *Vận hành (Operations)*.
 
 ---
 
-## 🏗️ Kiến trúc & Giải thích
+## 🏗️ 1. Kiến trúc & Thiết kế Hệ thống (Architecture)
 
-Dành cho developer, DevOps, AI Agent hiểu sâu về hệ thống:
+Dành cho kỹ sư phần mềm, kiến trúc sư hệ thống và AI Agents tìm hiểu nguyên lý thiết kế:
 
-| Tài liệu | Nội dung |
+| Tài liệu | Nội dung Chính |
 |---|---|
-| [**Kiến trúc Tổng quan**](./architecture/system-overview.md) | Tech stack, Server Actions, Caching, PWA, PDF, luồng dữ liệu |
-| [**Phân quyền 7 Vai trò (RBAC)**](./architecture/rbac-and-roles.md) | 7 roles, Immutable Identity, Hybrid Archive, RLS policies |
-| [**Database Schema & ERD**](./architecture/database-schema.md) | Sơ đồ quan hệ thực thể, bảng chính, triggers, indexes |
-| [**Vòng đời Chứng từ & State Machines**](./architecture/state-machines.md) | State machine của Requisitions, Receipts, Issues, Defects, Repairs, Tools, Stocktake |
+| [**Kiến trúc Tổng quan**](./architecture/system-overview.md) | High-level topology, Server Actions, Serwist PWA, Vector PDF engine, Omniroute AI Copilot, Sổ cái Append-Only. |
+| [**Phân quyền 7 Vai trò (RBAC)**](./architecture/rbac-and-roles.md) | 7 chuẩn vai trò (`superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester`, `driver`), Bất biến định danh (Immutable Identity), Cơ chế Hybrid Archive & Force Purge. |
+| [**Database Schema & Data Model**](./architecture/database-schema.md) | Sơ đồ quan hệ thực thể (ERD), cấu trúc bảng PostgreSQL 17, Append-only Ledger, Lot balances, BOM Virtual Kit, Sub-zones, AI Knowledge vectors, Indexes & Triggers. |
+| [**Vòng đời Chứng từ & State Machines**](./architecture/state-machines.md) | Máy trạng thái chi tiết của Requisitions, Receipts, Issues, Defects, Exchanges, Repairs, Tools, Stocktake, Auto-fulfill FIFO. |
 
 ---
 
-## 📖 Sổ tay Hướng dẫn Nghiệp vụ
+## 📖 2. Sổ tay Hướng dẫn Nghiệp vụ Thực tế (User Guides)
 
-14 bài hướng dẫn chi tiết từng bước giải quyết bài toán thực tế tại trại:
+16 bài hướng dẫn giải quyết từng nghiệp vụ cụ thể hàng ngày tại trang trại:
 
-| STT | Tài liệu | Đối tượng | Tóm tắt |
+| STT | Tài liệu Hướng Dẫn | Đối Tượng Sử Dụng | Tóm Tắt Nghiệp Vụ |
 |:---:|---|---|---|
-| 01 | [**Đăng nhập & Phân quyền**](./user-guide/01-tong-quan-dang-nhap.md) | Mọi nhân viên | Đăng nhập username, đổi mật khẩu, xem vai trò |
-| 02 | [**Danh mục Vật tư & QR**](./user-guide/02-quan-ly-vat-tu-qr.md) / [**Tạo Vật tư Chi tiết**](./user-guide/02-huong-dan-tao-vat-tu-chi-tiet.md) | Quản kho, Kỹ thuật | Khai báo 5 bước, Multi-SKU 3 trục, BOM, Quy đổi, in QR |
-| 03 | [**Nhập kho từ NCC & Hóa đơn**](./user-guide/03-nhap-kho-vat-tu.md) | Quản kho, Kế toán | Nhập kho, upload VAT, auto-fulfill phiếu duyệt |
-| 04 | [**Xuất kho & Cấp phát**](./user-guide/04-xuat-kho-cap-phat.md) | Quản kho, Kế toán | Xuất gắn Sub-zone chuồng, xuất bán thương mại |
-| 05 | [**Yêu cầu Vật tư (Duyệt 2 cấp)**](./user-guide/05-yeu-cau-vat-tu.md) | Công nhân, Kỹ thuật, Kho | Giỏ hàng, Kỹ thuật duyệt cấp 1, Kho xuất, trả thừa |
-| 06 | [**Đổi 1-1 & Báo hỏng**](./user-guide/06-doi-1-1-va-bao-hong.md) | Kỹ thuật, Quản kho | Đổi motor/bơm trong 30 giây, gom đồ hỏng |
-| 07 | [**Sửa chữa & Thanh lý**](./user-guide/07-sua-chua-thanh-ly.md) | Kỹ thuật, Quản kho, Chủ trại | Gửi xưởng sửa, nghiệm thu, thanh lý ve chai |
-| 08 | [**Mượn-Trả Dụng cụ**](./user-guide/08-muon-tra-dung-cu.md) | Quản kho, Thợ | Tủ đồ nghề dùng chung, cảnh báo quá hạn |
-| 09 | [**Trạm Bồn Dầu & Xe cộ**](./user-guide/09-kho-xang-dau-xe.md) | Quản kho dầu, Tài xế | QR xe, cấp phát dầu, L/100km hoặc L/h |
-| 10 | [**Chuyển kho & Kiểm kê**](./user-guide/10-chuyen-kho-kiem-ke.md) | Quản kho, Kế toán | Điều chuyển đa kho, kiểm kê QR, cân bằng thừa/thiếu |
-| 11 | [**Báo cáo & Xuất Excel**](./user-guide/11-bao-cao-phan-tich.md) | Chủ trại, Kế toán | Dashboard, Thẻ kho, XNT, Zone Costing, Excel |
-| 12 | [**In ấn & Tem QR**](./user-guide/12-in-an-va-tem-nhan.md) | Quản kho, Kế toán | In phiếu A4/A5, tem QR dán kệ hàng và xe |
-| 13 | [**Đơn vị Tính Đa cấp**](./user-guide/13-quy-doi-don-vi-dong-goi.md) | Quản trị, Quản kho | Thùng/Hộp/ml, xin cấp linh hoạt, tự quy đổi tồn |
-| 14 | [**Quản trị Người dùng & Zones**](./user-guide/14-quan-tri-nguoi-dung-va-khu-vuc.md) | Quản trị, Chủ trại | 7 roles, Immutable Identity, Hybrid Archive, Zones |
+| 01 | [**Đăng nhập & Quản lý Tài khoản**](./user-guide/01-tong-quan-dang-nhap.md) | Mọi nhân viên | Đăng nhập Username/Mật khẩu (không email), đổi mật khẩu, xem phân quyền. |
+| 02 | [**Danh mục Vật tư & Khai báo SKU**](./user-guide/02-quan-ly-vat-tu-qr.md) / [**Chi tiết Khai báo 5 Bước**](./user-guide/02-huong-dan-tao-vat-tu-chi-tiet.md) | Quản kho, Kỹ thuật | Khai báo 4 mô hình: Đơn quy cách, Quy đổi UOM, Biến thể 3 trục, BOM Bộ lắp ráp. |
+| 03 | [**Nhập kho NCC & Hóa đơn VAT**](./user-guide/03-nhap-kho-vat-tu.md) | Quản kho, Kế toán | Nhập kho, upload ảnh hóa đơn VAT có lightbox, cập nhật giá vốn, auto-fulfill phiếu đã duyệt. |
+| 04 | [**Xuất kho & Hạch toán Dãy chuồng**](./user-guide/04-xuat-kho-cap-phat.md) | Quản kho, Kế toán | Xuất cấp nội bộ gắn Sub-zone chuồng, xuất bán thương mại cho khách hàng. |
+| 05 | [**Yêu cầu Vật tư (Duyệt 2 cấp)**](./user-guide/05-yeu-cau-vat-tu.md) | Công nhân, Kỹ thuật, Kho | Giỏ hàng trên mobile, Kỹ thuật duyệt cấp 1, Kho xuất cấp 2, hoàn trả vật tư thừa. |
+| 06 | [**Đổi 1-1 Cấp Tốc & Báo Hỏng**](./user-guide/06-doi-1-1-va-bao-hong.md) | Kỹ thuật, Quản kho | Đổi motor/bơm cháy trong 30 giây cứu chuồng, bắt buộc ảnh hiện trường. |
+| 07 | [**Sửa chữa Cơ điện & Thanh lý**](./user-guide/07-sua-chua-thanh-ly.md) | Kỹ thuật, Quản kho, Chủ trại | Gửi xưởng quấn motor, nghiệm thu về Kho Tổng, thanh lý phế liệu ve chai. |
+| 08 | [**Mượn - Trả Dụng cụ Đồ nghề**](./user-guide/08-muon-tra-dung-cu.md) | Quản kho, Thợ cơ điện | Tủ đồ nghề dùng chung (máy hàn, thang nhôm), cảnh báo quá hạn mượn qua email. |
+| 09 | [**Trạm Bồn Dầu & Quét QR Xe**](./user-guide/09-kho-xang-dau-xe.md) | Quản kho dầu, Tài xế | Quét tem QR dán cabin xe trong 5 giây, nhập ODO/giờ máy, tính L/100km hoặc L/h, quản lý giấy tờ xe. |
+| 10 | [**Điều chuyển Kho & Kiểm kê**](./user-guide/10-chuyen-kho-kiem-ke.md) | Quản kho, Kế toán | Chuyển kho nội bộ, kiểm kê quét QR thực tế, chụp ảnh đối soát, duyệt cân bằng tồn kho. |
+| 11 | [**Báo cáo Tổng hợp & Xuất Excel**](./user-guide/11-bao-cao-phan-tich.md) | Chủ trại, Kế toán | Báo cáo XNT, Thẻ kho (Stock Card), Chi phí dãy chuồng, Tiêu hao xe, xuất Excel kế toán. |
+| 12 | [**In ấn Chứng từ & Tem Decal QR**](./user-guide/12-in-an-va-tem-nhan.md) | Quản kho, Kế toán | In phiếu A4/A5 có mã QR tra cứu, in tem QR dán kệ hàng và cabin xe. |
+| 13 | [**Đơn vị Tính Đa cấp & Đóng gói**](./user-guide/13-quy-doi-don-vi-dong-goi.md) | Quản trị, Quản kho | Quản lý Thùng/Hộp/ml, cho phép xin cấp linh hoạt, tự động quy đổi Base UOM. |
+| 14 | [**Quản trị Người dùng & Phân cấp Khu**](./user-guide/14-quan-tri-nguoi-dung-va-khu-vuc.md) | Quản trị, Chủ trại | Quản lý 7 roles, khóa định danh, lưu trữ/kích hoạt lại nhân viên, cấu hình Zones & Sub-zones. |
+| 15 | [**Trợ lý AI Copilot & Tra cứu Tri thức**](./user-guide/15-ai-copilot-tro-ly-thong-minh.md) | Mọi nhân viên | Trò chuyện với AI Copilot RAG, hỏi đáp quy trình vận hành trại, quản trị knowledge documents. |
+| 16 | [**Giao diện Dashboard theo Vai trò**](./user-guide/16-dashboard-theo-vai-tro.md) | 7 vai trò | Tổng quan các chỉ số KPI, tác vụ nhanh và lịch sử chứng từ may đo riêng cho từng vai trò. |
 
 ---
 
-## ⚙️ Vận hành
+## 📚 3. Tra cứu Kỹ thuật Nhanh (Technical Reference)
 
-Dành cho DevOps / Quản trị viên triển khai và duy trì hệ thống:
-
-| Tài liệu | Nội dung |
+| Tài liệu | Phạm vi Tra cứu |
 |---|---|
-| [**Deployment Runbook**](./operations/deployment-runbook.md) | Cài đặt, cấu hình, Systemd, Caddy/Nginx, zero-downtime deploy |
-| [**Backup & Recovery**](./operations/backup-and-recovery.md) | Backup PostgreSQL, restore, disaster recovery |
-| [**Troubleshooting**](./operations/troubleshooting.md) | Xử lý sự cố thường gặp |
-| [**Domain & Email Setup**](./DOMAIN_AND_EMAIL_SETUP.md) | Cấu hình tên miền, SSL HTTPS, SMTP |
+| [**Từ điển Database Tables**](./reference/database-tables.md) | Danh mục toàn bộ bảng PostgreSQL 17: cột, kiểu dữ liệu, khóa ngoại, ý nghĩa nghiệp vụ. |
+| [**Danh mục RPCs & Functions**](./reference/rpc-and-functions.md) | Toàn bộ 73+ Security Definer RPCs, Triggers, helper functions, tham số và kiểu trả về. |
+| [**App Routes & Navigation**](./reference/app-routes-and-navigation.md) | 30+ URLs App Router, nhóm trang phân quyền và API routes chuyên dụng. |
+| [**Danh mục CLI Scripts**](./reference/cli-scripts.md) | 25+ tập lệnh CLI trong `scripts/`: deploy, dev-up, seed, benchmark, verify flows. |
 
 ---
 
-## 📚 Tham chiếu Kỹ thuật
+## ⚙️ 4. Vận hành & Bảo trì (Operations Runbooks)
 
-Tra cứu nhanh thông số kỹ thuật:
+Dành cho Quản trị viên DevOps triển khai và bảo trì hệ thống ổn định 24/7:
 
-| Tài liệu | Phạm vi |
+| Tài liệu | Hướng dẫn Cụ thể |
 |---|---|
-| [**Từ điển Database Tables**](./reference/database-tables.md) | 39+ bảng: cột, kiểu, ràng buộc, ý nghĩa nghiệp vụ |
-| [**Danh mục RPCs & Functions**](./reference/rpc-and-functions.md) | 73+ hàm PostgreSQL, tham số, kiểu trả về |
-| [**App Routes & Navigation**](./reference/app-routes-and-navigation.md) | 30+ URLs, Route Groups, quyền hạn truy cập |
-| [**CLI Scripts**](./reference/cli-scripts.md) | Scripts trong `scripts/`: seed, deploy, benchmark, verify |
+| [**Deployment Runbook**](./operations/deployment-runbook.md) | Mô hình 2 phiên bản độc lập (Dev port 3001, Prod port 3000), Systemd `mtp-web.service`, Zero-downtime deploy. |
+| [**Email Scheduler & SMTP Setup**](./operations/email-notification-scheduler.md) | Cấu hình cronjob / worker gửi email thông báo định kỳ, phân phối thông báo theo vai trò. |
+| [**Troubleshooting & Sửa lỗi Thường gặp**](./operations/troubleshooting.md) | Chẩn đoán lỗi Node v22 path, xung đột cổng, lỗi quyền Supabase storage, phục hồi dev server. |
+| [**Backup & Disaster Recovery**](./operations/backup-and-recovery.md) | Sao lưu định kỳ PostgreSQL, sao lưu Storage files, kịch bản phục hồi khi xảy ra thảm họa. |
+| [**Domain, SSL & Email Setup**](./DOMAIN_AND_EMAIL_SETUP.md) | Hướng dẫn trỏ tên miền Cloudflare, cấu hình SSL HTTPS Caddy/Nginx và cài đặt máy chủ mail SMTP. |
 
 ---
 
-## 🏭 Sổ tay Thực chiến Trại
+## 🏭 5. Sổ tay Thực chiến & Kế hoạch Phát triển
 
 | Tài liệu | Mô tả |
 |---|---|
-| [**Sổ Tay Vận Hành Trại**](../SO_TAY_VAN_HANH_TRAI.md) | 10 tình huống thực tế hàng ngày tại trại gà (cháy motor, xe đổ dầu, kiểm kê…) |
-
----
-
-## 🔬 Superpowers (Kế hoạch kỹ thuật chuyên sâu)
-
-| Tài liệu | Trạng thái |
-|---|---|
-| [**Thiết kế SKU Catalog Replacement**](./superpowers/specs/2026-09-16-unified-product-variant-workflow-design.md) | ✅ Approved — đang implement |
-| [**Plan: Full Material Catalog Replacement**](./superpowers/plans/2026-09-16-full-material-catalog-replacement.md) | 🔄 In progress |
+| [**Sổ Tay Vận Hành Trại**](../SO_TAY_VAN_HANH_TRAI.md) | 10 tình huống thực tế thường gặp tại trại gà (cháy motor nửa đêm, xe đổ dầu, kiểm kê đột xuất...). |
+| [**Superpowers & Aegis Roadmaps**](./superpowers/README.md) | Lưu trữ các bản thiết kế kỹ thuật (Specs), kế hoạch (Plans) và bằng chứng kiểm thử (Evidence). |

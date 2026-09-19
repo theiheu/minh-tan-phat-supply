@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { StocktakeItemView } from "../types";
-import { postStocktake, toggleStocktakeItemChecked } from "../actions";
+import { postStocktake, toggleStocktakeItemChecked, toggleAllStocktakeItems } from "../actions";
 import { groupByProduct, paginateGroups, type CheckFilter } from "../lib/grouping";
 import { StocktakeFilterBar } from "./stocktake-filter-bar";
 import { StocktakeImageViewer } from "./stocktake-image-viewer";
@@ -127,7 +127,7 @@ export function StocktakeItemsView({
         if (diff === 0) return false;
       }
       if (!kw) return true;
-      const hay = [it.productNameText(it), it.unit, it.categoryName ?? ""]
+      const hay = [it.productName, variantLabelText(it), it.unit, it.categoryName ?? ""]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -175,6 +175,24 @@ export function StocktakeItemsView({
         setCheckedMap((prev) => ({ ...prev, [item.id]: !next }));
       }
     });
+  }
+
+  function checkAll(val: boolean) {
+    const nextMap: Record<string, boolean> = { ...checkedMap };
+    for (const it of items) {
+      nextMap[it.id] = val;
+    }
+    setCheckedMap(nextMap);
+    if (sessionId) {
+      startTransition(async () => {
+        try {
+          await toggleAllStocktakeItems(sessionId, val);
+          toast.success(val ? "Đã đánh dấu tất cả đã kiểm" : "Đã bỏ chọn tất cả");
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Cập nhật thất bại");
+        }
+      });
+    }
   }
 
   function chot() {
@@ -243,15 +261,30 @@ export function StocktakeItemsView({
             </>
           )}
         </span>
-        {groups.length > 1 && !narrowing && (
-          <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-1.5 text-xs" onClick={toggleAll}>
-            <UnfoldVertical className="size-3.5" aria-hidden />
-            {allExpanded ? "Thu gọn tất cả" : "Mở rộng tất cả"}
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {isEntry && items.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              onClick={() => checkAll(counts.checked < counts.all)}
+            >
+              {counts.checked < counts.all ? "Đánh dấu tất cả" : "Bỏ chọn tất cả"}
+            </Button>
+          )}
+          {groups.length > 1 && !narrowing && (
+            <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-1.5 text-xs" onClick={toggleAll}>
+              <UnfoldVertical className="size-3.5" aria-hidden />
+              {allExpanded ? "Thu gọn tất cả" : "Mở rộng tất cả"}
+            </Button>
+          )}
+        </div>
       </div>
 
-      {pageGroups.length === 0 ? (
+      {items.length === 0 ? (
+        <p className="py-10 text-center text-sm text-muted-foreground">Kho này chưa có vật tư nào để kiểm kê.</p>
+      ) : pageGroups.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted-foreground">Không có vật tư khớp.</p>
       ) : (
         <div className="space-y-3">
@@ -356,9 +389,13 @@ export function StocktakeItemsView({
                                   min="0"
                                   className="h-8 w-full"
                                   value={val}
-                                  onChange={(e) =>
-                                    setQuantities((prev) => ({ ...prev, [item.id]: e.target.value }))
-                                  }
+                                  onChange={(e) => {
+                                    const nextVal = e.target.value;
+                                    setQuantities((prev) => ({ ...prev, [item.id]: nextVal }));
+                                    if (!item.checked && !checkedMap[item.id]) {
+                                      setChecked(item, true);
+                                    }
+                                  }}
                                 />
                               ) : (
                                 <span className="text-sm font-medium tabular-nums">{item.actualQty}</span>

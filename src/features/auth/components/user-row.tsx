@@ -81,7 +81,8 @@ export function UserRow({
 
   const roleOptions = roleOptionsFor(currentRole, profile.role);
   const isSystemAccount = profile.is_protected;
-  const canEdit = !isSystemAccount && profile.is_active;
+  const isCallerSuper = isSuperuser(currentRole);
+  const canEdit = isCallerSuper && !isSystemAccount && profile.is_active;
   const canDeleteOrArchive = canDeleteUsers(currentRole) && !isSystemAccount && profile.id !== currentUserId;
 
   const isModified =

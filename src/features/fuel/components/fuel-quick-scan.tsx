@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { ArrowLeft, CheckCircle2, ChevronRight, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { calcConsumptionRate, calcUsageDiff, formatConsumptionRate, formatFuelLiters, formatOdo, parseQrText } from "@/lib/fuel";
-import { createFuelDispenseAction, getVehicleByQrAction } from "../actions";
+import { createFuelDispenseAction, getActiveDriverAccounts, getVehicleByQrAction } from "../actions";
 import { uploadFuelImage } from "../upload";
 import { QrCameraScanner } from "./qr-camera-scanner";
 import type { FuelType } from "../types";
+import { DriverAccountSelect, type DriverAccountOption } from "./driver-account-select";
 
 export interface VehicleScanResult {
   id: string;
@@ -68,13 +69,51 @@ export function FuelQuickScan({
   // Form values
   const [quantity, setQuantity] = useState("");
   const [currentOdo, setCurrentOdo] = useState(initialVehicle ? String(initialVehicle.current_odo ?? 0) : "");
+  const [driverId, setDriverId] = useState("");
   const [driverName, setDriverName] = useState(initialVehicle?.default_driver ?? "");
+  const [drivers, setDrivers] = useState<DriverAccountOption[]>([]);
   const [meterImages, setMeterImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    getActiveDriverAccounts()
+      .then(setDrivers)
+      .catch((err) => console.warn("[FuelQuickScan] Không thể nạp danh sách tài xế:", err));
+  }, []);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [notes, setNotes] = useState("");
 
   // Completed result
   const [createdSlip, setCreatedSlip] = useState<{ id: string; code: string; liters: number } | null>(null);
+
+  const handleScan = useCallback(async (qrText: string) => {
+    if (searching) return;
+    setSearching(true);
+
+    try {
+      const parsed = parseQrText(qrText);
+      const res = await getVehicleByQrAction(parsed.value);
+
+      if (!res) {
+        toast.error(`Không tìm thấy phương tiện với mã "${qrText}"`);
+        setSearching(false);
+        return;
+      }
+
+      const veh = res as unknown as VehicleScanResult;
+      setVehicle(veh);
+      setCurrentOdo(String(veh.current_odo ?? 0));
+      setDriverName(veh.default_driver ?? "");
+      setQuantity("");
+      setMeterImages([]);
+      setNotes("");
+      setStep("dispensing");
+      toast.success(`Đã nhận diện: ${veh.code} - ${veh.name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Lỗi khi tra cứu mã QR");
+    } finally {
+      setSearching(false);
+    }
+  }, [searching]);
 
   // If initialQueryParam was provided but vehicle was not found on server
   useEffect(() => {
@@ -106,36 +145,6 @@ export function FuelQuickScan({
       return () => clearTimeout(timer);
     }
   }, [step]);
-
-  const handleScan = useCallback(async (qrText: string) => {
-    if (searching) return;
-    setSearching(true);
-
-    try {
-      const parsed = parseQrText(qrText);
-      const res = await getVehicleByQrAction(parsed.value);
-
-      if (!res) {
-        toast.error(`Không tìm thấy phương tiện với mã "${qrText}"`);
-        setSearching(false);
-        return;
-      }
-
-      const veh = res as unknown as VehicleScanResult;
-      setVehicle(veh);
-      setCurrentOdo(String(veh.current_odo ?? 0));
-      setDriverName(veh.default_driver ?? "");
-      setQuantity("");
-      setMeterImages([]);
-      setNotes("");
-      setStep("dispensing");
-      toast.success(`Đã nhận diện: ${veh.code} - ${veh.name}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi khi tra cứu mã QR");
-    } finally {
-      setSearching(false);
-    }
-  }, [searching]);
 
   const numQty = Math.max(0, Number(quantity) || 0);
   const numOdo = Number(currentOdo) || 0;
@@ -187,6 +196,7 @@ export function FuelQuickScan({
           fuelTypeId: vehicle.fuel_type_id,
           quantity: numQty,
           currentOdo: numOdo,
+          driverId: driverId === "custom" || !driverId ? null : driverId,
           driverName: driverName.trim() ? driverName.trim() : undefined,
           meterImages,
           notes: notes.trim() ? notes.trim() : undefined,
@@ -397,18 +407,17 @@ export function FuelQuickScan({
                 )}
               </div>
 
-              {/* Driver Name */}
-              <div className="space-y-1.5">
-                <Label htmlFor="driver" className="text-xs font-semibold">Tài xế / Người lái</Label>
-                <Input
-                  id="driver"
-                  value={driverName}
-                  onChange={(e) => setDriverName(e.target.value)}
-                  placeholder="Tên người nhận dầu"
-                  className="h-10"
-                  disabled={pending}
-                />
-              </div>
+              {/* Driver Account / Name */}
+              <DriverAccountSelect
+                drivers={drivers}
+                driverId={driverId}
+                driverName={driverName}
+                onDriverChange={(id, name) => {
+                  setDriverId(id);
+                  setDriverName(name);
+                }}
+                disabled={pending}
+              />
 
               {/* Photo Upload */}
               <div className="space-y-1.5">

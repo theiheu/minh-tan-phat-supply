@@ -267,7 +267,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toDataStreamResponse();
+    return result.toDataStreamResponse({
+      getErrorMessage: (err) => err instanceof Error ? err.message : String(err),
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Đã xảy ra lỗi khi xử lý câu hỏi với AI Copilot.";
     console.error("[AI Chat API Error]:", err);

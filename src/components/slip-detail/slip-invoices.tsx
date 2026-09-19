@@ -26,19 +26,30 @@ export function SlipInvoices({
   onUpload,
   onRemove,
 }: SlipInvoicesProps) {
+  const isOwner = Boolean(currentUser?.id && (currentUser.id === detail.requesterId || currentUser.id === detail.creatorId));
+  const canUpload = isManager || isOwner;
+
   if (
     detail.type !== "receipt" &&
     detail.type !== "issue" &&
+    detail.type !== "requisition" &&
     !(detail.invoiceImages && detail.invoiceImages.length > 0)
   ) {
     return null;
   }
 
+  const titleLabel =
+    detail.type === "issue"
+      ? "Hóa đơn & Chứng từ xuất kho"
+      : detail.type === "requisition"
+      ? "Hóa đơn & Chứng từ nhận hàng"
+      : "Hóa đơn & Chứng từ mua hàng";
+
   return (
     <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
       <div className="flex items-center justify-between pb-2 border-b border-border/60">
         <span className="text-xs font-semibold text-foreground">
-          {detail.type === "issue" ? "Hóa đơn & Chứng từ xuất kho" : "Hóa đơn & Chứng từ mua hàng"}
+          {titleLabel}
           {detail.invoiceImages && detail.invoiceImages.length > 0
             ? ` (${detail.invoiceImages.length} ảnh)`
             : ""}:
@@ -57,12 +68,12 @@ export function SlipInvoices({
                 title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
                 className="size-20 sm:size-24 rounded-lg border-2 object-cover"
               />
-              {isManager && currentUser &&
+              {currentUser &&
                 canDeleteInvoiceImage({
                   imageUrl: url,
                   currentUserId: currentUser.id,
                   userRole: currentUser.role,
-                  creatorId: detail.creatorId,
+                  creatorId: detail.type === "requisition" ? detail.requesterId : detail.creatorId,
                 }) && (
                   <button
                     type="button"
@@ -81,7 +92,7 @@ export function SlipInvoices({
             </div>
           ))}
 
-        {isManager && (
+        {canUpload && (
           <Label className="cursor-pointer">
             <Button
               type="button"

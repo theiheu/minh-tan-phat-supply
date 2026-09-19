@@ -24,16 +24,4 @@ Hệ thống đã thu gọn toàn bộ chuỗi migration lịch sử (0001 - 008
 
 ## 3. Web Performance & Hygiene (WP-13 -> WP-15)
 
-- **WP-13 & WP-14 (Hygiene & Build):** `pnpm lint` trả về 0 errors và 0 warnings. Quá trình sinh container build dựa trên `frozen-lockfile`.
-- **WP-15 (UI Decomposition):** Tất cả các component god-class (ví dụ `ai-copilot-manager.tsx`, `defects-list.tsx`) đã được phân tách thành những logic chunk nhỏ gọn. Route bundles đều duy trì dưới mức yêu cầu 250kb initial JS map.
-
-## 4. Documentation & Closeout (WP-16)
-
-- Trạng thái hiện tại được bảo chứng tại biểu đồ YAML gốc (`current-deployment-status.yaml`).
-- Toàn bộ tham chiếu đến `Variant`, `pre-cutover`, hay kiến trúc legacy đều đã bị xóa từ các tài liệu tham chiếu:
-  - `README.md`
-  - `CONTEXT.md`
-  - `docs/architecture/system-overview.md`
-  - `docs/architecture/database-schema.md`
-
-**Kết luận:** The pre-cutover boundary is officially closed. Systems operate strictly under active SKU specifications, append-only policies, and decomposed modern React payloads.
+- **WP-13 & WP-14 (Hygiene & Build):** `pnpm lint` trả về 0 errors và 0 warnings. Quá trình sinh container build dựa trên `frozen-lo... (line truncated to 2000 chars)

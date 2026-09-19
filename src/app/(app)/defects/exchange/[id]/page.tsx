@@ -20,6 +20,7 @@ import { ZoomableImage } from "@/components/image-lightbox";
 import { EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -57,13 +58,39 @@ export default async function ExchangeDetailPage({ params }: { params: Promise<{
         .eq("defect_note_id", note.defect.id)
     : { data: [] };
 
-  const timeline: TimelineItem[] = [
-    { label: "Tạo phiếu", at: note.created_at, by: (note.creator as { name?: string | null } | null)?.name ?? null },
-    { label: "Duyệt", at: note.approved_at, by: (note.approver as { name?: string | null } | null)?.name ?? null },
-    { label: "Cấp phát", at: note.issued_at, by: (note.issuer as { name?: string | null } | null)?.name ?? null },
-    { label: "Xác nhận nhận", at: note.received_at, by: (note.receiver as { name?: string | null } | null)?.name ?? null },
-    { label: "Từ chối", at: note.rejected_at, by: (note.rejecter as { name?: string | null } | null)?.name ?? null },
-  ].filter((t) => t.at);
+  const adminClient = createAdminClient();
+  const { data: audit } = await adminClient
+    .from("audit_logs")
+    .select("id, action, created_at, actor:profiles!audit_logs_actor_id_fkey(name)")
+    .eq("entity_type", "exchange")
+    .eq("entity_id", id)
+    .order("created_at", { ascending: true });
+
+  const AUDIT_EXCHANGE_LABELS: Record<string, string> = {
+    "exchange.create": "Tạo phiếu",
+    "exchange.approve": "Duyệt",
+    "exchange.issue": "Cấp phát",
+    "exchange.receive": "Xác nhận nhận",
+    "exchange.reject": "Từ chối",
+    "exchange.cancel": "Hủy phiếu",
+  };
+
+  let timeline: TimelineItem[] = [];
+  if (audit && audit.length > 0) {
+    timeline = audit.map((a) => ({
+      label: AUDIT_EXCHANGE_LABELS[a.action] ?? a.action,
+      at: a.created_at,
+      by: a.actor?.name ?? null,
+    }));
+  } else {
+    timeline = [
+      { label: "Tạo phiếu", at: note.created_at, by: (note.creator as { name?: string | null } | null)?.name ?? null },
+      { label: "Duyệt", at: note.approved_at, by: (note.approver as { name?: string | null } | null)?.name ?? null },
+      { label: "Cấp phát", at: note.issued_at, by: (note.issuer as { name?: string | null } | null)?.name ?? null },
+      { label: "Xác nhận nhận", at: note.received_at, by: (note.receiver as { name?: string | null } | null)?.name ?? null },
+      { label: "Từ chối", at: note.rejected_at, by: (note.rejecter as { name?: string | null } | null)?.name ?? null },
+    ].filter((t) => t.at);
+  }
 
   return (
     <div className="space-y-4">

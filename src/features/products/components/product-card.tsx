@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CategoryIcon } from "@/components/category-icon";
 import { useCartStore } from "@/stores/cart-store";
+import { variantLabel } from "@/lib/labels";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import { ProductHistoryDialog } from "./product-history-dialog";
@@ -139,9 +140,9 @@ export function ProductCard({
                     skuId: single.id,
                     enteredQuantity: 1,
                     name: product.name,
-                    label: single.label || typeof materialLabel === "function" ? materialLabel(single.attributes, single.unit) : "",
+                    label: variantLabel(single.attributes, single.unit),
                     unit: single.unit ?? null,
-                    image: single.images?.[0] ?? product.images?.[0] ?? null,
+                    image: single.images?.[0] ?? null,
                     stock: single.stock,
                   });
                   if (single.stock === 0) {

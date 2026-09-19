@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireManager } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isEmailConfigured, renderNotificationEmailHtml, sendEmail } from "@/lib/email";
@@ -33,7 +33,7 @@ const batchAssignSchema = z.object({
  * Gửi email kiểm tra cấu hình SMTP & Tên miền doanh nghiệp MTP-ERP
  */
 export async function sendTestEmailAction(toEmail: string) {
-  await requireManager();
+  await requireSuperuser();
   const parsed = testEmailSchema.parse({ toEmail });
 
   if (!isEmailConfigured()) {
@@ -84,7 +84,7 @@ export async function broadcastNotificationAction(input: {
   link?: string;
   sendEmail?: boolean;
 }) {
-  const profile = await requireManager();
+  const profile = await requireSuperuser();
   const parsed = broadcastSchema.parse(input);
 
   const supabase = await createClient();
@@ -143,7 +143,7 @@ export async function broadcastNotificationAction(input: {
  * Gán email doanh nghiệp hàng loạt cho người dùng theo cú pháp username@domain
  */
 export async function batchAssignEmailsAction(input: { domain: string; overwrite?: boolean }) {
-  await requireManager();
+  await requireSuperuser();
   const parsed = batchAssignSchema.parse(input);
   const admin = createAdminClient();
 

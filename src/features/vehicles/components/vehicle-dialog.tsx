@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MultiImagePicker } from "@/features/products/components/multi-image-picker";
+import { uploadVehicleDocumentImage } from "../upload";
 import { createVehicleAction, updateVehicleAction } from "../actions";
 import { VEHICLE_TYPE_LABELS, type VehicleInput } from "../schema";
 
@@ -44,6 +46,7 @@ export interface EditableVehicle {
   odoUnit: VehicleInput["odoUnit"];
   fuelNorm: number | null;
   notes: string | null;
+  documentImages?: string[];
 }
 
 export function VehicleDialog({
@@ -76,6 +79,7 @@ export function VehicleDialog({
   const [odoUnit, setOdoUnit] = useState<VehicleInput["odoUnit"]>("km");
   const [fuelNorm, setFuelNorm] = useState<string>("");
   const [notes, setNotes] = useState("");
+  const [documentImages, setDocumentImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -91,6 +95,7 @@ export function VehicleDialog({
       setOdoUnit(vehicle.odoUnit);
       setFuelNorm(vehicle.fuelNorm != null ? String(vehicle.fuelNorm) : "");
       setNotes(vehicle.notes || "");
+      setDocumentImages(vehicle.documentImages ?? []);
     } else {
       setCode("");
       setName("");
@@ -103,6 +108,7 @@ export function VehicleDialog({
       setOdoUnit("km");
       setFuelNorm("");
       setNotes("");
+      setDocumentImages([]);
     }
   }, [open, vehicle, fuelTypes]);
 
@@ -132,6 +138,7 @@ export function VehicleDialog({
           odoUnit,
           fuelNorm: fuelNorm.trim() ? Number(fuelNorm) : null,
           notes: notes.trim() ? notes.trim() : undefined,
+          documentImages,
         };
 
         if (vehicle?.id) {
@@ -305,6 +312,17 @@ export function VehicleDialog({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 disabled={pending}
+              />
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2 min-w-0 pt-2 border-t">
+              <MultiImagePicker
+                label="Ảnh giấy tờ & Hồ sơ xe"
+                images={documentImages}
+                onChange={setDocumentImages}
+                disabled={pending}
+                helperText="Lưu trữ hình ảnh đăng ký xe (cà vẹt), sổ đăng kiểm, bảo hiểm xe, hoặc ảnh thực tế của xe."
+                onUpload={uploadVehicleDocumentImage}
               />
             </div>
           </div>

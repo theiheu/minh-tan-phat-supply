@@ -11,12 +11,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 22
 
-      - run: bun install --frozen-lockfile
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 12.3.4
+          
+      - run: pnpm install --frozen-lockfile
 
-      - run: bun run lint
-      - run: bun run typecheck
-      - run: bun run test
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+      - run: pnpm run test
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 12.3.4
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase DB and run RLS/SQL tests
+        run: |
+          supabase db start
+          SUPABASE_DISABLE_TELEMETRY=true supabase test db

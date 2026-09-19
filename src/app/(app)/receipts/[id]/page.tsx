@@ -19,6 +19,7 @@ import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ReceiptInvoices } from "@/features/receipts/components/receipt-invoices";
 
 export const dynamic = "force-dynamic";
@@ -104,19 +105,35 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
     linkedReqs = (data ?? []) as typeof linkedReqs;
   }
 
-  // ---- Tiến trình (audit: manager-only, khớp RLS phiếu nhập) ----
-  const { data: audit } = await supabase
+  // ---- Tiến trình ----
+  const adminClient = createAdminClient();
+  const { data: audit } = await adminClient
     .from("audit_logs")
     .select("id, action, created_at, actor:profiles!audit_logs_actor_id_fkey(name)")
     .eq("entity_type", "receipt")
     .eq("entity_id", id)
     .order("created_at", { ascending: true });
-  const events = (audit ?? []).map((a) => ({
+  interface ReceiptTimelineEvent {
+    key: string;
+    label: string;
+    at: string | null;
+    by?: string | null;
+  }
+
+  let events: ReceiptTimelineEvent[] = (audit ?? []).map((a) => ({
     key: AUDIT_EVENT_KEY[a.action] ?? "other",
     label: AUDIT_LABELS[a.action] ?? a.action,
     at: a.created_at,
     by: a.actor?.name,
   }));
+  if (events.length === 0) {
+    const fallbackList: (ReceiptTimelineEvent | null)[] = [
+      { key: "create", label: "Tạo phiếu đặt hàng", at: receipt.created_at, by: receipt.creator?.name },
+      { key: "approve", label: "Duyệt đặt hàng", at: receipt.approved_at, by: receipt.approver?.name },
+      receipt.status === "posted" ? { key: "post", label: "Nhập kho", at: receipt.updated_at, by: receipt.approver?.name ?? receipt.creator?.name } : null,
+    ];
+    events = fallbackList.filter((e): e is ReceiptTimelineEvent => e !== null && Boolean(e.at));
+  }
 
   return (
     <div className="space-y-4">
@@ -164,6 +181,43 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
           </Link>
         </div>
       </div>
+
+      {/* Thông tin phiếu */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thông tin phiếu</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex items-baseline justify-between gap-2 sm:block">
+            <span className="text-muted-foreground">Nhà cung cấp</span>
+            <span className="sm:ml-2 font-medium text-foreground">
+              {receipt.supplier?.name ?? "Không có nhà cung cấp"}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2 sm:block">
+            <span className="text-muted-foreground">Người lập</span>
+            <span className="sm:ml-2 font-medium">{receipt.creator?.name ?? "—"}</span>
+          </div>
+          {receipt.approver?.name && (
+            <div className="flex items-baseline justify-between gap-2 sm:block">
+              <span className="text-muted-foreground">Người duyệt</span>
+              <span className="sm:ml-2 font-medium">{receipt.approver.name}</span>
+            </div>
+          )}
+          <div className="flex items-baseline justify-between gap-2 sm:block">
+            <span className="text-muted-foreground">Ngày lập</span>
+            <span className="sm:ml-2 font-medium">{formatDate(receipt.created_at)}</span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2 sm:block">
+            <span className="text-muted-foreground">Tổng số lượng</span>
+            <span className="sm:ml-2 font-mono font-medium">{totalQuantity}</span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2 sm:block">
+            <span className="text-muted-foreground">Tổng tiền</span>
+            <span className="sm:ml-2 font-mono font-medium text-primary">{formatVnd(total)}</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {receipt.notes && (
         <Card>
@@ -223,15 +277,16 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                     }> | null;
                   } | null;
                   const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
-                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : null;
+                  const displayName = it.sku_name_snapshot || v?.products?.name || "Vật tư";
                   const enteredQty = it.entered_quantity ?? it.quantity;
                   return (
                     <TableRow key={it.id}>
                       <TableCell>
-                        <span className="font-medium">{it.sku_name_snapshot || v?.products?.name || "Vật tư"}</span>
-                        <span className="ml-1 text-muted-foreground">
-                          {detail}
-                        </span>
+                        <span className="font-medium">{displayName}</span>
+                        {detail && detail !== "—" && !displayName.includes(detail) && (
+                          <span className="ml-1 text-muted-foreground font-normal"> - {detail}</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{it.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—"}</TableCell>
                       <TableCell className="text-right tabular-nums">{enteredQty}</TableCell>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+
 import type { Json } from "@/types/database.types";
 
 export async function transferStock(input: {
@@ -34,19 +34,22 @@ export async function transferStock(input: {
   });
   if (error) throw new Error(error.message);
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "transfer",
-    title: "[Điều chuyển kho] - Đã hoàn tất điều chuyển kho nội bộ",
-    body: `Thủ kho ${profile.name} đã hoàn tất điều chuyển ${input.items.length} mặt hàng vật tư giữa các vị trí kho.`,
-    link: "/transfers",
-    document: {
-      type: "Phiếu điều chuyển kho",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
-    },
-  });
+  try {
+    const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
+    if (whUsers && whUsers.length > 0) {
+      await supabase.from("notifications").insert(
+        whUsers.map((u) => ({
+          user_id: u.id,
+          type: "transfer",
+          title: "[Điều chuyển kho] - Đã hoàn tất điều chuyển kho nội bộ",
+          body: `Thủ kho ${profile.name} đã hoàn tất điều chuyển ${input.items.length} mặt hàng vật tư giữa các vị trí kho.`,
+          link: "/transfers",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[transferStock] In-app notification error:", err);
+  }
 
   revalidatePath("/transfers");
   revalidatePath("/products");
@@ -72,20 +75,22 @@ export async function adjustStock(input: {
   });
   if (error) throw new Error(error.message);
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "transfer",
-    title: "[Điều chỉnh kho] - Đã ghi nhận điều chỉnh tồn kho",
-    body: `Thủ kho ${profile.name} đã điều chỉnh tồn kho (Chênh lệch: ${input.delta > 0 ? `+${input.delta}` : input.delta}). Lý do: ${input.reason}`,
-    link: "/transfers",
-    document: {
-      type: "Phiếu điều chỉnh tồn kho",
-      status: "Đã điều chỉnh",
-      statusVariant: "info",
-      handlerName: profile.name,
-      notes: input.reason,
-    },
-  });
+  try {
+    const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
+    if (whUsers && whUsers.length > 0) {
+      await supabase.from("notifications").insert(
+        whUsers.map((u) => ({
+          user_id: u.id,
+          type: "transfer",
+          title: "[Điều chỉnh kho] - Đã ghi nhận điều chỉnh tồn kho",
+          body: `Thủ kho ${profile.name} đã điều chỉnh tồn kho (Chênh lệch: ${input.delta > 0 ? `+${input.delta}` : input.delta}). Lý do: ${input.reason}`,
+          link: "/transfers",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[adjustStock] In-app notification error:", err);
+  }
 
   revalidatePath("/transfers");
   revalidatePath("/products");

@@ -1,6 +1,6 @@
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { AICopilotManager } from "@/features/ai-admin/components/ai-copilot-manager";
-import { requireManager } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ interface ChunkRow {
 }
 
 export default async function AdminAICopilotPage() {
-  await requireManager();
+  const current = await requireSuperuser();
   const supabase = createAdminClient();
   const db = supabase as unknown as {
     from: (table: string) => {
@@ -127,7 +127,7 @@ export default async function AdminAICopilotPage() {
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="admin" />
+      <SubnavTabs group="admin" userRole={current.role} />
       <AICopilotManager
         initialSettings={initialSettings}
         initialQuickPrompts={(prompts as QuickPromptRow[]) || []}

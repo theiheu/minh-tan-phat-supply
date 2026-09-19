@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Printer, QrCode } from "lucide-react";
+import { AlertTriangle, FileCheck, Printer, QrCode, Truck } from "lucide-react";
 import { BrandLoading } from "@/components/brand-loading";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +32,14 @@ import {
 } from "@/features/dashboard/actions/get-slip-detail";
 import {
   approveRequisition,
+  completeRequisitionDirect,
   fulfillRequisition,
   receiveRequisition,
   rejectRequisition,
   submitRequisition,
+  updateRequisitionInvoiceImages,
 } from "@/features/requisitions/actions";
+import { uploadRequisitionInvoiceImage } from "@/features/requisitions/upload";
 import { ReturnItems } from "@/features/requisitions/components/return-items";
 import {
   approveReceipt,
@@ -141,7 +144,7 @@ export function SlipDetailModal({
     onActionComplete?.();
   }
 
-  const isInvoiceCapable = detail?.type === "receipt" || detail?.type === "issue";
+  const isInvoiceCapable = detail?.type === "receipt" || detail?.type === "issue" || detail?.type === "requisition";
 
   async function handleInvoiceUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!detail || !isInvoiceCapable) return;
@@ -151,9 +154,11 @@ export function SlipDetailModal({
     setUploadingInvoices(true);
     try {
       const uploadedUrls = await Promise.all(
-        files.map((f) =>
-          detail.type === "issue" ? uploadIssueInvoiceImage(f) : uploadReceiptInvoiceImage(f),
-        ),
+        files.map((f) => {
+          if (detail.type === "issue") return uploadIssueInvoiceImage(f);
+          if (detail.type === "requisition") return uploadRequisitionInvoiceImage(f);
+          return uploadReceiptInvoiceImage(f);
+        }),
       );
       const currentImages = detail.invoiceImages ?? [];
       const nextImages = [...currentImages, ...uploadedUrls];
@@ -163,6 +168,8 @@ export function SlipDetailModal({
         try {
           if (detail.type === "issue") {
             await updateIssueInvoiceImages(detail.id, nextImages);
+          } else if (detail.type === "requisition") {
+            await updateRequisitionInvoiceImages(detail.id, nextImages);
           } else {
             await updateReceiptInvoiceImages(detail.id, nextImages);
           }
@@ -191,6 +198,8 @@ export function SlipDetailModal({
       try {
         if (detail.type === "issue") {
           await updateIssueInvoiceImages(detail.id, nextImages);
+        } else if (detail.type === "requisition") {
+          await updateRequisitionInvoiceImages(detail.id, nextImages);
         } else {
           await updateReceiptInvoiceImages(detail.id, nextImages);
         }
@@ -306,10 +315,10 @@ export function SlipDetailModal({
                     <span className="font-medium text-foreground">{detail.zoneName}</span>
                   </div>
                 )}
-                {detail.supplierName && (
+                {(detail.type === "receipt" || detail.supplierName) && (
                   <div>
                     <span className="text-muted-foreground">Nhà cung cấp: </span>
-                    <span className="font-medium text-foreground">{detail.supplierName}</span>
+                    <span className="font-medium text-foreground">{detail.supplierName || "Không có nhà cung cấp"}</span>
                   </div>
                 )}
                 {detail.customerName && (
@@ -401,11 +410,47 @@ export function SlipDetailModal({
                 </div>
               )}
 
+              {/* Thông tin tiến độ đặt hàng từ nhà cung cấp */}
+              {detail.type === "requisition" && detail.linkedReceipt && (
+                <div className="space-y-2.5 p-3.5 border-2 border-violet-300 dark:border-violet-900/80 bg-violet-50/70 dark:bg-violet-950/25 rounded-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-200/80 dark:border-violet-900/60 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-violet-200 text-violet-800 dark:bg-violet-800/40 dark:text-violet-200">
+                        <Truck className="size-3.5" aria-hidden />
+                      </span>
+                      <span className="text-xs font-semibold text-violet-950 dark:text-violet-100">
+                        Tiến độ đặt hàng vật tư:
+                      </span>
+                      <Badge variant={statusBadgeVariant(detail.linkedReceipt.status)} className="text-[10px]">
+                        {slipStatusLabel("receipt", detail.linkedReceipt.status)}
+                      </Badge>
+                    </div>
+                    <Button variant="outline" size="sm" asChild className="h-6 text-[11px] px-2 border-violet-300 dark:border-violet-800">
+                      <Link href={`/receipts/${detail.linkedReceipt.id}`} target="_blank" onClick={onClose}>
+                        Xem phiếu {detail.linkedReceipt.code}
+                      </Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-violet-900 dark:text-violet-200">
+                    <div>Mã phiếu đặt hàng: <span className="font-mono font-semibold text-foreground">{detail.linkedReceipt.code}</span></div>
+                    <div>Nhà cung cấp: <span className="font-semibold text-foreground">{detail.linkedReceipt.supplierName ?? "—"}</span></div>
+                    {detail.linkedReceipt.creatorName && <div>Người đặt: <span className="text-foreground">{detail.linkedReceipt.creatorName}</span></div>}
+                    {detail.linkedReceipt.createdAt && <div>Thời gian đặt: <span className="text-foreground">{formatDateTime(detail.linkedReceipt.createdAt)}</span></div>}
+                  </div>
+                  {detail.status !== "received" && (
+                    <div className="rounded-md bg-white/80 dark:bg-black/40 p-2.5 border border-violet-200 dark:border-violet-900/60 text-xs text-muted-foreground leading-relaxed">
+                      💡 Người yêu cầu có thể theo phiếu tới trực tiếp nơi cung cấp lấy hàng. Sau khi nhận hàng, vui lòng chụp và tải hóa đơn lên để quản kho duyệt hoàn tất ngay.
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Cảnh báo tồn kho không đủ cấp phát (cho phiếu yêu cầu) */}
               {isManager &&
                 detail.type === "requisition" &&
                 (detail.status === "pending" || detail.status === "approved") &&
-                detail.items.some((m) => (m.stock ?? 0) < m.quantity) && (
+                detail.items.some((m) => (m.stock ?? 0) < m.quantity) &&
+                !detail.linkedReceipt && (
                 <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 border-2 border-amber-300 dark:border-amber-900 bg-amber-50/70 dark:bg-amber-950/30 rounded-xl text-xs">
                   <div className="flex items-start gap-2.5">
                     <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
@@ -577,6 +622,22 @@ export function SlipDetailModal({
                           Từ chối
                         </Button>
                       </>
+                    )}
+                    {isManager && (detail.invoiceImages && detail.invoiceImages.length > 0) && (detail.status === "pending" || detail.status === "approved" || detail.status === "issued") && (
+                      <Button
+                        size="sm"
+                        className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium gap-1.5 shadow-xs"
+                        onClick={() =>
+                          handleAction(
+                            () => completeRequisitionDirect(detail.id, "Duyệt nhận hàng trực tiếp qua hóa đơn NCC"),
+                            "Đã duyệt và hoàn tất nhận hàng trực tiếp theo hóa đơn",
+                          )
+                        }
+                        disabled={pending}
+                      >
+                        <FileCheck className="size-3.5" aria-hidden />
+                        Duyệt & Hoàn tất (Qua hóa đơn)
+                      </Button>
                     )}
                     {isManager && detail.status === "approved" && (
                       <Button

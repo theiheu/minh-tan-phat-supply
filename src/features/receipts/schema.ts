@@ -20,6 +20,7 @@ export const receiptSchema = z.object({
     .optional()
     .transform((v) => (v ? v : undefined)),
   invoiceImages: z.array(z.string()).optional(),
+  linkedRequisitionIds: z.array(z.string().uuid()).optional(),
   items: z.array(receiptItemSchema).min(1, "Phải có ít nhất 1 vật tư"),
 });
 

@@ -95,7 +95,7 @@ begin
   update public.receipts set status = 'posted', linked_requisition_ids = v_linked where id = p_id;
 
   v_outcome := jsonb_build_object(
-    'linked', coalesce(api.array_to_json(v_linked), '[]'::jsonb),
+    'linked', coalesce(to_jsonb(v_linked), '[]'::jsonb),
     'skipped', v_skipped,
     'failed', '[]'::jsonb
   );

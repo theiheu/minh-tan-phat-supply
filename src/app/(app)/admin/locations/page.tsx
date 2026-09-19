@@ -20,7 +20,7 @@ export default async function AdminLocationsPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  await requireManager();
+  const profile = await requireManager();
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
@@ -43,7 +43,7 @@ export default async function AdminLocationsPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="admin" />
+      <SubnavTabs group="admin" userRole={profile.role} />
       <EntityCrud
         title="Kho/vị trí"
         items={rows}

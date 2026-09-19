@@ -11,13 +11,16 @@ erDiagram
     ZONES ||--o{ SUB_ZONES : contains
     ZONES ||--o{ PROFILES : assigned_to
     ZONES ||--o{ ISSUES : destined_for
-    SUB_ZONES ||--o{ ISSUES : specific_dest
+    SUB_ZONES ||--o{ ISSUES : specific_sub_dest
     ZONES ||--o{ REQUISITIONS : requested_for
     SUB_ZONES ||--o{ REQUISITIONS : specific_sub_dest
 
     CATEGORIES ||--o{ PRODUCTS : categorizes
-    PRODUCTS ||--o{ SKUS : has_variants
-    SKUS ||--o{ SKU_BOM_LINES : kit_parts
+    PRODUCTS ||--o{ SKUS : has_skus
+    SKUS ||--o{ SKU_TRANSACTION_UNITS : has_conversions
+    SKUS ||--o{ BOM_HEADERS : bom_parent
+    BOM_HEADERS ||--o{ BOM_VERSIONS : versions
+    BOM_VERSIONS ||--o{ BOM_ITEMS : components
     SKUS ||--o{ STOCK_BALANCES : balances
     STOCK_LOCATIONS ||--o{ STOCK_BALANCES : holds
     SKUS ||--o{ STOCK_MOVEMENTS : movements
@@ -61,6 +64,8 @@ erDiagram
 
     PROFILES ||--o{ NOTIFICATIONS : notifies
     PROFILES ||--o{ AUDIT_LOGS : acts
+    AI_KNOWLEDGE_DOCUMENTS ||--o{ AI_KNOWLEDGE_CHUNKS : chunks
+    AI_CONVERSATIONS ||--o{ AI_MESSAGES : contains
 ```
 
 ---
@@ -69,66 +74,81 @@ erDiagram
 
 ### A. Tổ Chức Không Gian & Nhân Sự (Organization & Auth)
 1. **`zones`**: Khu vực địa lý lớn của trang trại (Khu A, Khu B, Cơ sở 1, Xưởng Cơ Điện, Trạm Bồn Dầu...).
-2. **`sub_zones`**: Dãy chuồng nuôi hoặc phân xưởng chi tiết (Chuồng A1, Chuồng A2, Dãy B1, Kho cám...).
+2. **`sub_zones`**: Dãy chuồng nuôi hoặc phân xưởng chi tiết thuộc Khu (Chuồng A1, Chuồng A2, Dãy B1, Kho cám...).
 3. **`profiles`**: Hồ sơ người dùng mở rộng từ Supabase Auth (`id`, `name`, `username`, `email`, `role`, `zone_id`, `is_active`, `is_protected`).
 4. **`audit_logs`**: Sổ kiểm toán lưu vết 100% mọi hành động tạo, sửa, xóa, khóa tài khoản (`actor_id`, `action`, `entity_type`, `entity_id`, `before`, `after`).
 5. **`notifications`**: Hàng đợi thông báo chuông tức thì theo người dùng (`user_id`, `title`, `message`, `type`, `link`, `is_read`).
+6. **`email_delivery_attempts`**: Lịch sử gửi mail thông báo nền qua SMTP (`recipient`, `subject`, `status`, `error_message`, `attempt_count`).
 
 ### B. Danh Mục Hàng Hóa & Đa Quy Cách (Catalog & Packaging)
-6. **`categories`**: Danh mục phân loại vật tư (Cơ điện, Nước & Chuồng trại, Thuốc thú y, Bao bì...).
-7. **`products`**: Sản phẩm gốc (`code`, `name`, `category_id`, `base_unit`, `manage_type`, `min_stock_alert`).
-8. **`skus`**: Dòng hàng SKU chi tiết. Thay thế bảng variants cũ, là đối tượng chính để quản lý tồn kho và biến động (Stock Ledger).
-9. **`sku_bom_lines`**: Định mức linh kiện cho vật tư dạng Bộ (Composite Kits).
-10. **`suppliers`**: Danh bạ Nhà Cung Cấp thiết bị, điện, thuốc, dầu (`code`, `name`, `phone`, `address`).
-11. **`customers`**: Danh bạ Khách hàng / Thương lái thu mua phân, vỉ trứng, phế liệu.
+7. **`categories`**: Danh mục phân loại vật tư (Cơ điện, Nước & Chuồng trại, Thuốc thú y, Bao bì...).
+8. **`products`**: Sản phẩm gốc làm danh tính chung (`code`, `name`, `category_id`, `base_unit`, `manage_type`, `is_active`).
+9. **`skus`**: Dòng hàng SKU chi tiết duy nhất giữ tồn kho (`sku_code`, `product_id`, `name`, `base_unit_id`, `kit_type`, `cost_price`, `selling_price`).
+10. **`units`**: Danh mục đơn vị tính chuẩn (`code`, `name`, `symbol`).
+11. **`sku_transaction_units`**: Đơn vị giao dịch quy đổi (Thùng, Can, Bao) với hệ số quy đổi `conversion_rate` về Base UOM.
+12. **`attribute_definitions`**: Định nghĩa thuộc tính kỹ thuật có kiểu dữ liệu (Hãng, Điện áp, Công suất, Kích cỡ).
+13. **`sku_attribute_values`**: Giá trị thuộc tính gán cho từng SKU.
+14. **`bom_headers`**, **`bom_versions`**, **`bom_items`**: Quản lý cấu trúc định mức linh kiện (Bill of Materials) cho Virtual Kit và Assembled Kit.
+15. **`suppliers`**: Danh bạ Nhà Cung Cấp thiết bị, điện, thuốc, dầu (`code`, `name`, `phone`, `address`, `tax_code`).
+16. **`customers`**: Danh bạ Khách hàng / Thương lái thu mua phân, vỉ trứng, phế liệu.
 
 ### C. Kho Hàng, Tồn Kho & Sổ Cái Biến Động (Inventory & Ledgers)
-12. **`stock_locations`**: Vị trí kho vật lý (`code`, `name`, `type`: `main` - Kho chính, `defect` - Kho hỏng, `repair` - Kho đang sửa, `other`).
-13. **`stock_balances`**: Tồn kho khả dụng thời gian thực (`location_id`, `sku_id`, `quantity`).
-14. **`stock_movements`**: Sổ cái ghi nhận 100% biến động tăng giảm kho (`location_id`, `sku_id`, `quantity_change`, `movement_type`, `reference_type`, `reference_id`, `balance_after`, `created_by`).
+17. **`stock_locations`**: Vị trí kho vật lý (`code`, `name`, `type`: `main` - Kho chính, `defect` - Kho hỏng, `repair` - Kho sửa, `fuel` - Trạm dầu).
+18. **`stock_balances`**: Tồn kho khả dụng thời gian thực (`location_id`, `sku_id`, `quantity`).
+19. **`stock_movements`**: Sổ cái ghi nhận 100% biến động tăng giảm kho (Append-Only) (`location_id`, `sku_id`, `quantity_change`, `movement_type`, `reference_type`, `reference_id`, `balance_after`, `created_by`).
+20. **`inventory_lots`** & **`lot_stock_balances`**: Quản lý số lô và hạn sử dụng (hóa chất, thuốc sát trùng, vắc-xin).
 
 ### D. Chứng Từ Nhập Kho & Xuất Cấp Phát (Receipts & Issues)
-15. **`receipts`**: Phiếu nhập kho từ Nhà cung cấp (`code`, `supplier_id`, `location_id`, `status`: `draft`/`posted`/`cancelled`, `total_amount`, `invoice_images`, `invoice_no`).
-16. **`receipt_items`**: Chi tiết hàng nhập (`receipt_id`, `sku_id`, `quantity`, `unit_cost`, `lot_number`, `expiry_date`).
-17. **`issues`**: Phiếu xuất kho (`code`, `destination_type`: `zone`/`customer`, `zone_id`, `sub_zone_id`, `customer_id`, `location_id`, `status`, `notes`, `invoice_images`).
-18. **`issue_items`**: Chi tiết hàng xuất (`issue_id`, `sku_id`, `quantity`, `unit_price`).
+21. **`receipts`**: Phiếu nhập kho từ Nhà cung cấp (`code`, `supplier_id`, `location_id`, `status`: `draft`/`posted`/`cancelled`, `total_amount`, `invoice_images`, `invoice_no`).
+22. **`receipt_items`**: Chi tiết hàng nhập (`receipt_id`, `sku_id`, `quantity`, `unit_cost`, `lot_number`, `expiry_date`).
+23. **`issues`**: Phiếu xuất kho (`code`, `destination_type`: `zone`/`customer`, `zone_id`, `sub_zone_id`, `customer_id`, `location_id`, `status`, `notes`, `invoice_images`).
+24. **`issue_items`**: Chi tiết hàng xuất (`issue_id`, `sku_id`, `quantity`, `unit_price`).
 
 ### E. Yêu Cầu Vật Tư & Trả Lại Hàng Thừa (Requisitions & Returns)
-19. **`requisitions`**: Phiếu xin cấp vật tư từ chuồng trại (`code`, `requester_id`, `zone_id`, `sub_zone_id`, `priority`, `status`: `draft`/`pending`/`approved`/`issued`/`received`/`rejected`/`cancelled`, `approved_by`, `issued_by`, `received_by`).
-20. **`requisition_items`**: Chi tiết vật tư yêu cầu (`requisition_id`, `sku_id`, `quantity_requested`, `quantity_issued`).
-21. **`requisition_returns`**: Phiếu công nhân trả lại vật tư dùng thừa về kho (`code`, `requisition_id`, `returned_by`, `location_id`, `status`).
-22. **`requisition_return_items`**: Chi tiết vật tư trả lại (`return_id`, `sku_id`, `quantity`).
+25. **`requisitions`**: Phiếu xin cấp vật tư từ chuồng trại (`code`, `requester_id`, `zone_id`, `sub_zone_id`, `priority`, `status`: `draft`/`pending`/`approved`/`issued`/`received`/`rejected`/`cancelled`, `approved_by`, `issued_by`, `received_by`, `invoice_images`).
+26. **`requisition_items`**: Chi tiết vật tư yêu cầu (`requisition_id`, `sku_id`, `quantity_requested`, `quantity_issued`).
+27. **`requisition_returns`**: Phiếu công nhân trả lại vật tư dùng thừa về kho (`code`, `requisition_id`, `returned_by`, `location_id`, `status`).
+28. **`requisition_return_items`**: Chi tiết vật tư trả lại (`return_id`, `sku_id`, `quantity`).
 
 ### F. Báo Hỏng, Đổi 1-1, Sửa Chữa & Thanh Lý (Defects, Repairs & Liquidations)
-23. **`defect_notes`**: Phiếu báo hỏng thiết bị (`code`, `zone_id`, `sub_zone_id`, `reporter_id`, `status`: `staging`/`collected`/`cancelled`).
-24. **`defect_note_items`**: Chi tiết thiết bị hỏng (`defect_note_id`, `sku_id`, `quantity`, `damage_type`, `severity`, `images`, `resolution`: `repaired`/`liquidated`).
-25. **`exchange_notes`**: Phiếu đổi 1-1 cấp tốc (`code`, `defect_note_id`, `source_location_id`, `defect_location_id`, `status`: `pending`/`approved`/`rejected`/`cancelled`).
-26. **`exchange_note_items`**: Chi tiết thiết bị đổi 1-1.
-27. **`repair_orders`**: Đơn gửi thiết bị đi xưởng quấn motor/sửa chữa (`code`, `vendor_name`, `status`: `in_repair`/`returned`/`cancelled`, `cost`, `notes`).
-28. **`repair_order_items`**: Chi tiết món gửi sửa (`repair_order_id`, `defect_note_item_id`, `outcome`: `returned_to_stock`/`liquidation`).
-29. **`liquidation_notes`**: Phiếu thanh lý bán phế liệu ve chai (`code`, `buyer_name`, `total_revenue`, `status`: `pending`/`approved`/`rejected`/`cancelled`).
-30. **`liquidation_items`**: Chi tiết món thanh lý (`liquidation_id`, `defect_note_item_id`, `quantity`, `revenue`).
+29. **`defect_notes`**: Phiếu báo hỏng thiết bị (`code`, `zone_id`, `sub_zone_id`, `reporter_id`, `status`: `staging`/`collected`/`cancelled`).
+30. **`defect_note_items`**: Chi tiết thiết bị hỏng (`defect_note_id`, `sku_id`, `quantity`, `damage_type`, `severity`, `images`, `resolution`: `repaired`/`liquidated`).
+31. **`exchange_notes`**: Phiếu đổi 1-1 cấp tốc (`code`, `defect_note_id`, `source_location_id`, `defect_location_id`, `status`: `pending`/`approved`/`rejected`/`cancelled`).
+32. **`exchange_note_items`**: Chi tiết thiết bị đổi 1-1.
+33. **`repair_orders`**: Đơn gửi thiết bị đi xưởng quấn motor/sửa chữa (`code`, `vendor_name`, `status`: `in_repair`/`returned`/`cancelled`, `cost`, `notes`).
+34. **`repair_order_items`**: Chi tiết món gửi sửa (`repair_order_id`, `defect_note_item_id`, `outcome`: `returned_to_stock`/`liquidation`).
+35. **`liquidation_notes`**: Phiếu thanh lý bán phế liệu ve chai (`code`, `buyer_name`, `total_revenue`, `status`: `pending`/`approved`/`rejected`/`cancelled`).
+36. **`liquidation_items`**: Chi tiết món thanh lý (`liquidation_id`, `defect_note_item_id`, `quantity`, `revenue`).
 
 ### G. Dụng Cụ Đồ Nghề & Trạm Bồn Dầu Xe Cơ Giới (Tools & Fuel)
-31. **`tool_borrowings`**: Lượt mượn dụng cụ đồ nghề (`code`, `borrower_id`, `zone_id`, `due_date`, `status`: `borrowed`/`returned`/`cancelled`, `returned_at`).
-32. **`tool_borrowing_items`**: Chi tiết dụng cụ mượn (`borrowing_id`, `sku_id`, `quantity`, `returned_quantity`).
-33. **`vehicles`**: Danh mục xe ben, xe xúc, máy phát điện (`code`, `name`, `type`, `license_plate`, `calc_unit`: `km`/`hours`, `standard_rate`, `last_meter`, `qr_text`).
-34. **`fuel_types`**: Loại nhiên liệu (`code`, `name`, `unit`: Lít).
-35. **`fuel_receipts`**: Phiếu xe bồn Petrolimex vào nhập bồn dầu tổng (`code`, `fuel_type_id`, `quantity`, `unit_cost`, `supplier_name`, `invoice_no`).
-36. **`fuel_dispenses`**: Lịch sử bơm dầu cho xe cơ giới (`code`, `vehicle_id`, `fuel_type_id`, `dispensed_liters`, `current_meter`, `prev_meter`, `distance_or_hours`, `consumption_rate`, `dispensed_by`, `status`).
-37. **`fuel_movements`**: Sổ cái biến động bồn dầu.
+37. **`tool_borrowings`**: Lượt mượn dụng cụ đồ nghề (`code`, `borrower_id`, `zone_id`, `due_date`, `status`: `borrowed`/`returned`/`cancelled`, `returned_at`).
+38. **`tool_borrowing_items`**: Chi tiết dụng cụ mượn (`borrowing_id`, `sku_id`, `quantity`, `returned_quantity`).
+39. **`tool_reminder_claims`**: Khóa chống gửi lặp email nhắc nợ dụng cụ đồ nghề.
+40. **`vehicles`**: Danh mục xe cơ giới (`code`, `name`, `type`, `license_plate`, `calc_unit`: `km`/`hours`, `standard_rate`, `last_meter`, `qr_text`, `document_images`).
+41. **`fuel_types`**: Loại nhiên liệu (`code`, `name`, `unit`: Lít, `is_active`).
+42. **`fuel_receipts`**: Phiếu xe bồn nhập bồn dầu tổng (`code`, `fuel_type_id`, `quantity`, `unit_cost`, `supplier_name`, `invoice_no`).
+43. **`fuel_dispenses`**: Lịch sử bơm dầu cho xe (`code`, `vehicle_id`, `fuel_type_id`, `dispensed_liters`, `current_meter`, `prev_meter`, `distance_or_hours`, `consumption_rate`, `dispensed_by`, `status`).
+44. **`fuel_movements`**: Sổ cái biến động bồn dầu.
 
 ### H. Kiểm Kê Kho (Stocktake)
-38. **`stocktake_sessions`**: Phiên kiểm kê kho (`code`, `location_id`, `status`: `draft`/`posted`/`cancelled`, `conducted_by`, `approved_by`, `notes`).
-39. **`stocktake_items`**: Chi tiết đếm kiểm kê (`session_id`, `sku_id`, `system_qty`, `actual_qty`, `difference`, `reason`).
+45. **`stocktake_sessions`**: Phiên kiểm kê kho (`code`, `location_id`, `status`: `draft`/`posted`/`cancelled`, `conducted_by`, `approved_by`, `notes`).
+46. **`stocktake_items`**: Chi tiết đếm kiểm kê (`session_id`, `sku_id`, `system_qty`, `actual_qty`, `difference`, `reason`, `image_url`).
+
+### I. AI Copilot & Vector Store (AI Knowledge)
+47. **`ai_knowledge_documents`**: Tài liệu tri thức trang trại đã tải lên (`title`, `category`, `source_key`, `content_hash`).
+48. **`ai_knowledge_chunks`**: Các đoạn văn bản đã phân mảnh kèm vector embedding (`document_id`, `chunk_index`, `content`, `embedding` vector(1536), `tsv` search vector).
+49. **`ai_conversations`** & **`ai_messages`**: Lịch sử các phiên trò chuyện của nhân viên với AI Copilot.
+50. **`ai_quick_prompts`**: Các câu hỏi mẫu thông dụng cài sẵn trên giao diện chat.
+51. **`ai_rate_limits`**: Theo dõi tần suất gọi API AI chống tràn quota.
 
 ---
 
 ## 3. CHIẾN LƯỢC CHỈ MỤC HIỆU NĂNG (PERFORMANCE INDEXING)
 
-Hệ thống trang bị 38 Composite & B-Tree Indexes phục vụ các truy vấn tức thời (~200ms):
+Hệ thống trang bị các Composite & B-Tree Indexes phục vụ các truy vấn tức thời (~200ms):
 * **Tra cứu tồn kho:** `idx_stock_balances_loc_sku` (`location_id, sku_id`).
 * **Sổ cái thời gian thực:** `idx_stock_movements_sku_time` (`sku_id, created_at DESC`).
 * **Truy vết chứng từ:** `idx_receipt_items_receipt`, `idx_issue_items_issue`, `idx_requisition_items_req`.
 * **Định mức xe:** `idx_fuel_dispenses_vehicle_time` (`vehicle_id, created_at DESC`).
 * **Phân quyền & Định danh:** `idx_profiles_username_active` (`username, is_active`).
+* **Tìm kiếm AI Vector:** Index IVFFLAT / HNSW trên `ai_knowledge_chunks(embedding)`.

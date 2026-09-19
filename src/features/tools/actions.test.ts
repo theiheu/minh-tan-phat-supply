@@ -17,9 +17,23 @@ vi.mock("@/lib/auth", () => ({
   requireManager: () => mockRequireManager(),
 }));
 
+vi.mock("@/features/notifications/server/dispatch-business-event", () => ({
+  dispatchBusinessEvent: vi.fn().mockResolvedValue({ inAppDeliveredCount: 1, emailAttemptedCount: 1, errors: [] }),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockImplementation(() =>
     Promise.resolve({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { code: "PMDC-001", borrower_id: "user-123" },
+              error: null,
+            }),
+          }),
+        }),
+      }),
       rpc: (...args: unknown[]) => mockRpc(...args),
     }),
   ),

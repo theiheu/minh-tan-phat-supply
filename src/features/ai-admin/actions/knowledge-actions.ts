@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireManager } from "@/lib/auth";
+import { requireSuperuser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extractTextFromFile, chunkText, generateContentHash } from "@/lib/ai/knowledge/chunker";
 
@@ -27,7 +27,7 @@ type DbAny = {
  */
 export async function uploadDocumentAction(formData: FormData) {
   try {
-    await requireManager();
+    await requireSuperuser();
     const file = formData.get("file") as File | null;
     const title = (formData.get("title") as string | null)?.trim();
     const category = (formData.get("category") as string | null)?.trim() || "sop";
@@ -120,7 +120,7 @@ export async function createManualDocumentAction(data: {
   content: string;
 }) {
   try {
-    await requireManager();
+    await requireSuperuser();
     const title = data.title.trim();
     const category = data.category.trim() || "sop";
     const content = data.content.trim();
@@ -187,11 +187,146 @@ export async function createManualDocumentAction(data: {
 }
 
 /**
- * 3. Xóa tài liệu khỏi Knowledge Base
+ * 3. Trích xuất văn bản từ file upload (dùng cho AI Ingestion Chat)
+ */
+export async function extractTextFromUploadAction(formData: FormData): Promise<{
+  success: boolean;
+  text?: string;
+  fileName?: string;
+  fileSize?: number;
+  error?: string;
+}> {
+  try {
+    await requireSuperuser();
+    const file = formData.get("file") as File | null;
+    if (!file || file.size === 0) {
+      return { success: false, error: "Vui lòng chọn file hợp lệ (.txt, .md, .docx, .pdf)." };
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const extracted = await extractTextFromFile(buffer, file.name, file.type);
+
+    if (!extracted || extracted.trim().length < 10) {
+      return { success: false, error: "Không thể trích xuất văn bản từ file này hoặc nội dung quá ngắn." };
+    }
+
+    return {
+      success: true,
+      text: extracted.trim(),
+      fileName: file.name,
+      fileSize: file.size,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Lỗi khi đọc file tài liệu.",
+    };
+  }
+}
+
+/**
+ * 4. Nạp tài liệu đã được AI chuẩn hóa trực tiếp vào CSDL Tri thức
+ */
+export async function ingestStandardizedDocAction(data: {
+  title: string;
+  category: string;
+  content: string;
+  summary?: string;
+  keywords?: string[];
+}): Promise<{
+  success: boolean;
+  docId?: string;
+  chunkCount?: number;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    await requireSuperuser();
+    const title = data.title.trim();
+    const category = data.category.trim() || "sop";
+    const content = data.content.trim();
+    const summary = data.summary?.trim() || "";
+    const keywords = Array.isArray(data.keywords) ? data.keywords : [];
+
+    if (!title || !content) {
+      return { success: false, error: "Vui lòng nhập đầy đủ tiêu đề và nội dung tài liệu." };
+    }
+
+    if (content.length < 30) {
+      return { success: false, error: "Nội dung tài liệu quá ngắn (tối thiểu 30 ký tự)." };
+    }
+
+    const contentHash = generateContentHash(content);
+    const chunks = chunkText(content, 700, 100);
+
+    if (chunks.length === 0) {
+      return { success: false, error: "Không thể phân đoạn văn bản." };
+    }
+
+    const supabase = createAdminClient();
+    const db = supabase as unknown as DbAny;
+
+    const slug = title.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 30);
+    const sourceKey = `ai_standardized:${Date.now()}:${slug}`;
+
+    const { data: doc, error: docError } = await db.from("ai_knowledge_documents").insert({
+      source_key: sourceKey,
+      content_hash: contentHash,
+      title: title,
+      category: category,
+      metadata: {
+        standardized_by_ai: true,
+        summary,
+        keywords,
+        created_at: new Date().toISOString(),
+      },
+    }).select("id").single();
+
+    if (docError || !doc) {
+      return { success: false, error: docError?.message || "Lỗi lưu tài liệu vào CSDL." };
+    }
+
+    const chunkRows = chunks.map((chunk, index) => ({
+      document_id: doc.id,
+      chunk_index: index,
+      content: chunk,
+      metadata: {
+        title,
+        category,
+        index,
+        summary,
+        keywords,
+      },
+    }));
+
+    const { error: chunkError } = await db.from("ai_knowledge_chunks").insert(chunkRows);
+
+    if (chunkError) {
+      return { success: false, error: chunkError.message };
+    }
+
+    revalidatePath("/admin/ai-copilot");
+    return {
+      success: true,
+      docId: doc.id,
+      chunkCount: chunks.length,
+      message: `Đã nạp thành công tài liệu "${title}" vào CSDL Tri thức AI (${chunks.length} phân đoạn).`,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Đã xảy ra lỗi khi nạp tài liệu.",
+    };
+  }
+}
+
+/**
+ * 5. Xóa tài liệu khỏi Knowledge Base
  */
 export async function deleteDocumentAction(documentId: string) {
   try {
-    await requireManager();
+    await requireSuperuser();
     const supabase = createAdminClient();
     const db = supabase as unknown as DbAny;
 

@@ -10,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
+import { variantLabel } from "@/lib/labels";
 import { ZoomableImage } from "@/components/image-lightbox";
 
 /** Một dòng vật tư trong phiếu — đủ thông tin để quản kho đối chiếu & lấy đúng đồ. */

@@ -9,6 +9,8 @@ export interface FuelOverviewStat {
   unit: string;
   current_stock: number;
   min_stock: number;
+  description: string | null;
+  is_active: boolean;
   dispensedThisMonth: number;
   dispensedToday: number;
   receivedThisMonth: number;

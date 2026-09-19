@@ -122,7 +122,8 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
     isLoading,
     stop,
     setMessages,
-    setInput,
+    setInput: _setInput,
+    append,
   } = useChat({
     api: "/api/ai/chat",
     onError: (err) => {
@@ -160,11 +161,10 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
   }, [open, onOpenChange, mounted]);
 
   const handleQuickPrompt = (promptText: string) => {
-    setInput(promptText);
-    setTimeout(() => {
-      const fakeEvent = new Event("submit") as unknown as React.FormEvent<HTMLFormElement>;
-      handleSubmit(fakeEvent);
-    }, 50);
+    append({
+      role: "user",
+      content: promptText,
+    });
   };
 
   const handleClearHistory = () => {
@@ -274,25 +274,26 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
           ) : (
             messages.map((m) => {
               const isUser = m.role === "user";
-              return (
-                <div
-                  key={m.id}
-                  className={"flex gap-2.5 sm:gap-3 " + (isUser ? "justify-end" : "justify-start")}
-                >
-                  {!isUser && (
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary mt-0.5 border border-primary/20">
-                      <Bot className="size-4" />
+              return isUser ? (
+                <div key={m.id} className="flex flex-col items-end w-full space-y-1">
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium pr-1">
+                    <span>Bạn</span>
+                    <User className="size-3 text-muted-foreground" />
+                  </div>
+                  <div className="rounded-2xl rounded-tr-xs px-3.5 py-2.5 sm:px-4 sm:py-2.5 max-w-[88%] sm:max-w-[82%] bg-primary text-primary-foreground text-sm font-medium shadow-xs leading-relaxed break-words">
+                    <div className="whitespace-pre-wrap">{m.content}</div>
+                  </div>
+                </div>
+              ) : (
+                <div key={m.id} className="flex flex-col items-start w-full space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground px-0.5">
+                    <div className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary border border-primary/20">
+                      <Bot className="size-3.5" />
                     </div>
-                  )}
+                    <span>AI Copilot</span>
+                  </div>
 
-                  <div
-                    className={
-                      "rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 max-w-[88%] sm:max-w-[85%] leading-relaxed min-w-0 overflow-hidden break-words " +
-                      (isUser
-                        ? "bg-primary text-primary-foreground text-sm font-medium shadow-xs"
-                        : "bg-card border border-border text-foreground text-sm shadow-xs")
-                    }
-                  >
+                  <div className="w-full rounded-2xl rounded-tl-xs px-3.5 py-2.5 sm:px-4 sm:py-3 bg-card border border-border text-foreground text-sm shadow-xs leading-relaxed min-w-0 overflow-hidden break-words">
                     {/* Hiển thị Tool Invocation nếu có */}
                     {((m.toolInvocations as unknown as ToolInvocationUI[]) || []).map((tool, idx: number) => {
                       const toolName = tool.toolName;
@@ -329,42 +330,40 @@ export function AICopilotDrawer({ open, onOpenChange }: AICopilotDrawerProps) {
                     })}
 
                     {m.content ? (
-                      isUser ? (
-                        <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                      ) : (
-                        <AIMarkdown content={m.content} />
-                      )
+                      <AIMarkdown content={m.content} />
                     ) : (
-                      !isUser && !isLoading && (
+                      !isLoading && (
                         <div className="text-xs text-muted-foreground italic py-1">
                           Đã hoàn thành tra cứu dữ liệu.
                         </div>
                       )
                     )}
                   </div>
-
-                  {isUser && (
-                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground mt-0.5 border">
-                      <User className="size-4" />
-                    </div>
-                  )}
                 </div>
               );
             })
           )}
 
           {isLoading && (
-            <div className="flex items-center gap-2.5 text-xs text-muted-foreground py-2 px-1">
-              <Loader2 className="size-4 animate-spin text-primary shrink-0" />
-              <span className="truncate">AI Copilot đang xử lý và tổng hợp dữ liệu...</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => stop()}
-                className="h-6 text-[11px] px-2 ml-auto text-destructive hover:bg-destructive/10 shrink-0"
-              >
-                Dừng lại
-              </Button>
+            <div className="w-full space-y-1.5 pt-1">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground px-0.5">
+                <div className="flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary border border-primary/20">
+                  <Bot className="size-3.5" />
+                </div>
+                <span>AI Copilot</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs text-muted-foreground py-2.5 px-3 bg-muted/50 rounded-2xl rounded-tl-xs border border-border/70">
+                <Loader2 className="size-4 animate-spin text-primary shrink-0" />
+                <span className="truncate">AI Copilot đang xử lý và tổng hợp dữ liệu...</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => stop()}
+                  className="h-6 text-[11px] px-2 ml-auto text-destructive hover:bg-destructive/10 shrink-0"
+                >
+                  Dừng lại
+                </Button>
+              </div>
             </div>
           )}
 

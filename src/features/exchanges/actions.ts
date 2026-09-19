@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
-import { isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers, type NotifyOptions } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -29,7 +28,16 @@ async function exchangeMeta(supabase: Supabase, exchangeId: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("exchange_notes")
-      .select("code")
+      .select(`
+        code,
+        items:exchange_note_items(
+          quantity,
+          skus(
+            products(name),
+            units(name, symbol)
+          )
+        )
+      `)
       .eq("id", exchangeId)
       .single();
     return data;
@@ -38,9 +46,13 @@ async function exchangeMeta(supabase: Supabase, exchangeId: string) {
   }
 }
 
-// Gửi thông báo in-app và email chuẩn ERP (bỏ qua lỗi — không làm hỏng thao tác chính).
-async function safeNotify(options: NotifyOptions) {
-  await notifyUsers(options);
+function formatExchangeItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => ({
+    name: i.skus?.products?.name || "Vật tư đổi mới",
+    quantity: i.quantity,
+    unit: i.skus?.units?.name || i.skus?.units?.symbol || "",
+  }));
 }
 
 export async function createExchange(noteId: string): Promise<{ id: string; code: string }> {
@@ -56,41 +68,22 @@ export async function createExchange(noteId: string): Promise<{ id: string; code
 
   const meta = await exchangeMeta(supabase, id as string);
   const code = meta?.code ?? "PDM";
-
-  // Người tạo là requester → báo manager duyệt; là manager tạo dùm → báo người lập HONG.
   const reporterId = await linkedReporterId(supabase, id as string);
-  const managers = await getManagerIds(supabase);
-  if (isPrivileged(profile.role)) {
-    await safeNotify({
-      userIds: [reporterId],
-      type: "exchange",
-      title: `[Đổi mới vật tư] ${code} - Đã tạo phiếu đổi mới`,
-      body: `Quản lý ${profile.name} đã lập phiếu đổi mới vật tư thay thế cho biên bản báo hỏng của bạn.`,
-      link: `/defects/exchange/${id}`,
-      document: {
+
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.created",
+      actorId: profile.id,
+      subject: { type: "exchange", id: id as string },
+      participants: { requesterId: reporterId },
+      payload: {
         code,
-        type: "Phiếu đổi mới vật tư",
-        status: "Chờ cấp phát",
-        statusVariant: "warning",
-        creatorName: profile.name,
+        items: formatExchangeItems((meta as any)?.items),
+        handlerName: profile.name,
       },
-    });
-  } else {
-    await safeNotify({
-      userIds: managers,
-      type: "exchange",
-      title: `[Đổi mới vật tư] ${code} - Chờ phê duyệt đổi mới`,
-      body: `Có phiếu đổi mới vật tư mới từ biên bản báo hỏng cần xem xét và phê duyệt.`,
-      link: `/defects/exchange/${id}`,
-      document: {
-        code,
-        type: "Phiếu đổi mới vật tư",
-        status: "Chờ phê duyệt",
-        statusVariant: "warning",
-        creatorName: profile.name,
-      },
-    });
-  }
+    },
+  });
 
   revalidatePath("/defects");
   revalidatePath("/defects/exchange");
@@ -107,18 +100,18 @@ export async function approveExchange(id: string) {
   const code = meta?.code ?? "PDM";
   const reporterId = await linkedReporterId(supabase, id);
 
-  await safeNotify({
-    userIds: [reporterId],
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Đã được phê duyệt`,
-    body: `Phiếu đổi mới vật tư đã được phê duyệt bởi ${profile.name}, đang chờ thủ kho chuẩn bị và xuất cấp.`,
-    link: `/defects/exchange/${id}`,
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Đã phê duyệt",
-      statusVariant: "success",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.approved",
+      actorId: profile.id,
+      subject: { type: "exchange", id },
+      participants: { requesterId: reporterId },
+      payload: {
+        code,
+        items: formatExchangeItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -140,19 +133,19 @@ export async function rejectExchange(id: string, reason: string) {
   const code = meta?.code ?? "PDM";
   const reporterId = await linkedReporterId(supabase, id);
 
-  await safeNotify({
-    userIds: [reporterId],
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Bị từ chối phê duyệt`,
-    body: `Phiếu đổi mới bị từ chối phê duyệt bởi ${profile.name}.${reason ? ` Lý do: ${reason}` : ""}`,
-    link: `/defects/exchange/${id}`,
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Bị từ chối",
-      statusVariant: "danger",
-      handlerName: profile.name,
-      notes: reason,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.rejected",
+      actorId: profile.id,
+      subject: { type: "exchange", id },
+      participants: { requesterId: reporterId },
+      payload: {
+        code,
+        reason,
+        items: formatExchangeItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -170,18 +163,17 @@ export async function issueExchange(id: string) {
   const code = meta?.code ?? "PDM";
   const reporterId = await linkedReporterId(supabase, id);
 
-  await safeNotify({
-    userIds: [reporterId],
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Đã xuất cấp đổi mới`,
-    body: `Thủ kho ${profile.name} đã xuất cấp vật tư mới thay thế và thu hồi vật tư hỏng. Vui lòng kiểm tra và xác nhận nhận hàng.`,
-    link: `/defects/exchange/${id}`,
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Đã cấp phát",
-      statusVariant: "info",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.issued",
+      actorId: profile.id,
+      subject: { type: "exchange", id },
+      participants: { requesterId: reporterId },
+      payload: {
+        code,
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -199,21 +191,19 @@ export async function receiveExchange(id: string) {
   const meta = await exchangeMeta(supabase, id);
   const code = meta?.code ?? "PDM";
   const reporterId = await linkedReporterId(supabase, id);
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([reporterId, ...managers])];
 
-  await safeNotify({
-    userIds,
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Đã hoàn tất đổi mới`,
-    body: `Người yêu cầu ${profile.name} đã xác nhận nhận đủ vật tư mới thay thế bàn giao.`,
-    link: `/defects/exchange/${id}`,
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.received",
+      actorId: profile.id,
+      subject: { type: "exchange", id },
+      participants: { requesterId: reporterId },
+      payload: {
+        code,
+        items: formatExchangeItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -228,26 +218,25 @@ export async function cancelExchange(id: string) {
   const meta = await exchangeMeta(supabase, id);
   const code = meta?.code ?? "PDM";
   const reporterId = await linkedReporterId(supabase, id);
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([reporterId, ...managers])];
-
   const { error } = await supabase.rpc("cancel_exchange", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
 
-  await safeNotify({
-    userIds,
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Đã hủy phiếu đổi mới`,
-    body: `Phiếu đổi mới vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/defects",
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
-    },
-  });
+  try {
+    const userIds = [...new Set([reporterId].filter(Boolean))];
+    if (userIds.length > 0) {
+      await supabase.from("notifications").insert(
+        userIds.map((uid) => ({
+          user_id: uid!,
+          type: "exchange",
+          title: `[Đổi mới vật tư] ${code} - Đã hủy phiếu đổi mới`,
+          body: `Phiếu đổi mới vật tư đã được hủy bỏ bởi ${profile.name}.`,
+          link: "/defects",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[cancelExchange] In-app notification error:", err);
+  }
 
   revalidatePath("/defects");
   revalidatePath(`/defects/exchange/${id}`);
@@ -294,20 +283,19 @@ export async function quickExchange(defectId: string): Promise<{ id: string; cod
 
   const meta = await exchangeMeta(supabase, exchangeId);
   const code = meta?.code ?? "PDM";
-
   const reporterId = await linkedReporterId(supabase, exchangeId);
-  await safeNotify({
-    userIds: [reporterId],
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Đã hoàn tất xuất cấp đổi mới`,
-    body: `Quản lý kho ${profile.name} đã hoàn tất thủ tục xuất cấp đổi mới vật tư thay thế cho bạn.`,
-    link: `/defects/exchange/${exchangeId}`,
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
+
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.received",
+      actorId: profile.id,
+      subject: { type: "exchange", id: exchangeId },
+      participants: { requesterId: reporterId },
+      payload: {
+        code,
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -358,18 +346,17 @@ export async function quickFulfillExistingExchange(exchangeId: string): Promise<
   const code = meta?.code ?? "PDM";
   const reporterId = await linkedReporterId(supabase, exchangeId);
 
-  await safeNotify({
-    userIds: [reporterId],
-    type: "exchange",
-    title: `[Đổi mới vật tư] ${code} - Đã hoàn tất xuất cấp đổi mới`,
-    body: `Quản lý kho ${profile.name} đã hoàn tất thủ tục xuất cấp đổi mới vật tư thay thế cho bạn.`,
-    link: `/defects/exchange/${exchangeId}`,
-    document: {
-      code,
-      type: "Phiếu đổi mới vật tư",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "exchange.received",
+      actorId: profile.id,
+      subject: { type: "exchange", id: exchangeId },
+      participants: { requesterId: reporterId },
+      payload: {
+        code,
+        handlerName: profile.name,
+      },
     },
   });
 

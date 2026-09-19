@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 import { Providers } from "@/components/providers";
 import { MobileInstallPrompt } from "@/components/layout/mobile-install-prompt";
 
@@ -97,6 +98,18 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
+        <NextTopLoader
+          color="#ea580c"
+          initialPosition={0.12}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #ea580c,0 0 5px #ea580c"
+          zIndex={99999}
+        />
         <Providers>
           {children}
           <MobileInstallPrompt />

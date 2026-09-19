@@ -68,10 +68,10 @@ export default async function NewReceiptPage({
   return (
     <ReceiptForm
       suppliers={suppliers}
-
       categories={categories ?? []}
       initialItems={initialItems}
       initialNotes={initialNotes}
+      initialLinkedRequisitionIds={requisitionId ? [requisitionId] : undefined}
       currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
     />
   );

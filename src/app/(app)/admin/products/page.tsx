@@ -13,7 +13,7 @@ export default async function AdminProductsPage({
 }: {
   searchParams: Promise<{ q?: string; category?: string; page?: string }>;
 }) {
-  await requireManager();
+  const profile = await requireManager();
   const sp = await searchParams;
   const q = sp.q?.trim() ?? "";
   const category = sp.category ?? null;
@@ -28,7 +28,7 @@ export default async function AdminProductsPage({
 
   return (
     <div className="space-y-4">
-      <SubnavTabs group="admin" />
+      <SubnavTabs group="admin" userRole={profile.role} />
       <CatalogManager
         products={products}
         categories={categories}

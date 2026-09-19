@@ -25,8 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { MultiImagePicker } from "@/features/products/components/multi-image-picker";
 import { SkuSelector } from "@/features/catalog/components/sku-selector";
+import { UnitCombobox } from "@/features/catalog/components/unit-combobox";
 import { createCompleteProduct } from "../../actions";
 import type { BomComponentInput } from "../../actions";
 import type { CatalogUnit, SkuSelectOption } from "../../domain/types";
@@ -325,13 +327,14 @@ export function CatalogDraftWorkflow({
     for (const axis of optionAxes) {
       defaultVals[axis] = "";
     }
+    const defaultUnit = baseUnitId || multiSkus[0]?.baseUnitId || units.find((u) => u.code === "cai")?.id || units[0]?.id || "";
     setMultiSkus((prev) => [
       ...prev,
       {
         id: "sku-" + Date.now(),
         axisValues: defaultVals,
         skuCode: "",
-        baseUnitId: baseUnitId || initialBaseUnitId(),
+        baseUnitId: defaultUnit,
         minStock: 0,
         price: 0,
         trackingPolicy: "none",
@@ -340,6 +343,23 @@ export function CatalogDraftWorkflow({
         bomComponents: [],
       },
     ]);
+  }
+
+  function applyBaseUnitToAllSkus(unitId: string) {
+    if (!unitId) return;
+    setMultiSkus((prev) => prev.map((item) => ({ ...item, baseUnitId: unitId })));
+    const uName = units.find((u) => u.id === unitId)?.name || "đã chọn";
+    toast.success("Đã áp dụng đơn vị '" + uName + "' cho tất cả " + multiSkus.length + " quy cách");
+  }
+
+  function handleSwitchToMultiSku() {
+    setIsMultiSku(true);
+    const defaultUnit = baseUnitId || units.find((u) => u.code === "cai")?.id || units[0]?.id || "";
+    if (defaultUnit) {
+      setMultiSkus((prev) =>
+        prev.map((s) => (s.baseUnitId ? s : { ...s, baseUnitId: defaultUnit }))
+      );
+    }
   }
 
   function removeSkuRow(id: string) {
@@ -351,17 +371,20 @@ export function CatalogDraftWorkflow({
   }
 
   // Add Packaging UOM row
-  function addUomRow() {
+  function addUomRow(preferredUnitId?: string) {
     if (!canConfigureSharedConversions) {
       toast.error("Hãy chọn cùng một đơn vị cơ sở cho các SKU trước khi thêm quy đổi");
       return;
     }
     const selectedUnitIds = transactionUoms.map((uom) => uom.unitId).filter(Boolean);
-    const nextUnit = availableTransactionUnits(units, effectiveBaseUnitId, selectedUnitIds)[0];
-    if (!nextUnit) {
+    const available = availableTransactionUnits(units, effectiveBaseUnitId, selectedUnitIds);
+    if (available.length === 0) {
       toast.error("Không còn đơn vị giao dịch nào để thêm");
       return;
     }
+    const nextUnit = preferredUnitId
+      ? (available.find((u) => u.id === preferredUnitId) || available[0])
+      : available[0];
     setTransactionUoms((prev) => [
       ...prev,
       {
@@ -369,7 +392,7 @@ export function CatalogDraftWorkflow({
         unitId: nextUnit.id,
         code: transactionUomCode(nextUnit),
         displayName: nextUnit.name,
-        factorToBase: 1,
+        factorToBase: nextUnit.code === "thung" ? 24 : nextUnit.code === "hop" ? 10 : nextUnit.code === "bao" ? 25 : nextUnit.code === "can" ? 5 : 1,
         barcode: "",
       },
     ]);
@@ -415,7 +438,7 @@ export function CatalogDraftWorkflow({
                 trackingPolicy: s.trackingPolicy,
                 inventoryPolicy: s.inventoryPolicy,
                 isDefault: idx === 0,
-                images: s.images && s.images.length > 0 ? s.images : (images.length > 0 ? images : []),
+                images: s.images && s.images.length > 0 ? s.images : [],
                 attributes: s.axisValues,
                 attributeValues: optionAxes.map((a) => ({ name: a, value: s.axisValues[a] || "" })),
                 transactionUoms,
@@ -657,7 +680,7 @@ export function CatalogDraftWorkflow({
 
                 <button
                   type="button"
-                  onClick={() => setIsMultiSku(true)}
+                  onClick={handleSwitchToMultiSku}
                   className={"flex items-start gap-3 p-4 rounded-lg border text-left cursor-pointer transition-all " + (isMultiSku ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-muted/50")}
                 >
                   <div
@@ -680,21 +703,41 @@ export function CatalogDraftWorkflow({
               <div className="p-4 rounded-lg border bg-muted/20 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="base-unit" className="after:content-['*'] after:ml-0.5 after:text-destructive">
+                    <Label htmlFor="base-unit" className="after:content-['*'] after:ml-0.5 after:text-destructive font-medium">
                       Đơn vị tính cơ bản
                     </Label>
-                    <Select value={baseUnitId} onValueChange={setBaseUnitId}>
-                      <SelectTrigger id="base-unit">
-                        <SelectValue placeholder="Chọn đơn vị dùng để ghi tồn kho" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {units.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
-                            {unit.name} ({unit.symbol})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <UnitCombobox
+                      id="base-unit"
+                      value={baseUnitId}
+                      onChange={setBaseUnitId}
+                      units={units}
+                      placeholder="Chọn hoặc nhập ĐVT (VD: Cái, Hộp, Bộ...)"
+                    />
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[11px] text-muted-foreground font-medium mr-0.5">Gợi ý nhanh:</span>
+                      {["Cái", "Bộ", "Mét", "Kg", "Lít", "Hộp", "Thùng", "Cuộn", "Bao", "Can", "Chiếc"].map((name) => {
+                        const matched = units.find(
+                          (u) => u.name.toLowerCase() === name.toLowerCase() || u.code.toLowerCase() === name.toLowerCase()
+                        );
+                        if (!matched) return null;
+                        const isSelected = baseUnitId === matched.id;
+                        return (
+                          <button
+                            type="button"
+                            key={matched.id}
+                            onClick={() => setBaseUnitId(matched.id)}
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-all cursor-pointer select-none",
+                              isSelected
+                                ? "bg-primary text-primary-foreground border-primary font-bold shadow-xs"
+                                : "bg-background hover:bg-muted text-foreground border-border"
+                            )}
+                          >
+                            {matched.name}
+                          </button>
+                        );
+                      })}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Mọi số lượng tồn kho được lưu theo đơn vị này. Ví dụ: chọn “Cái” nếu kho đếm từng cái.
                     </p>
@@ -833,13 +876,22 @@ export function CatalogDraftWorkflow({
 
                 {/* 2. Bảng nhập từng dòng quy cách */}
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <Label className="font-semibold text-sm">
                       Danh sách biến thể ({multiSkus.length} quy cách):
                     </Label>
-                    <Button type="button" variant="outline" size="sm" onClick={addSkuRow} className="h-8">
-                      <Plus className="size-4 mr-1.5" /> Thêm dòng quy cách
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">ĐVT chung:</span>
+                      <div className="w-[140px]">
+                        <UnitCombobox
+                          size="sm"
+                          value=""
+                          onChange={(val) => applyBaseUnitToAllSkus(val)}
+                          units={units}
+                          placeholder="Áp dụng tất cả"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -923,25 +975,17 @@ export function CatalogDraftWorkflow({
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-border/40">
                             <div className="space-y-1">
                               <Label className="text-[10px] text-muted-foreground">Đơn vị tính:</Label>
-                              <Select
+                              <UnitCombobox
+                                size="sm"
                                 value={s.baseUnitId}
-                                onValueChange={(baseUnitId) => {
+                                onChange={(baseUnitId) => {
                                   setMultiSkus((prev) =>
                                     prev.map((item) => (item.id === s.id ? { ...item, baseUnitId } : item))
                                   );
                                 }}
-                              >
-                                <SelectTrigger className="h-7 text-xs">
-                                  <SelectValue placeholder="Chọn đơn vị" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {units.map((unit) => (
-                                    <SelectItem key={unit.id} value={unit.id}>
-                                      {unit.name} ({unit.symbol})
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                units={units}
+                                placeholder="Chọn / nhập ĐVT"
+                              />
                             </div>
 
                             <div className="space-y-1">
@@ -1004,6 +1048,12 @@ export function CatalogDraftWorkflow({
                         </div>
                       );
                     })}
+                  </div>
+
+                  <div className="pt-1 flex justify-start">
+                    <Button type="button" variant="outline" size="sm" onClick={addSkuRow} className="h-8">
+                      <Plus className="size-4 mr-1.5" /> Thêm dòng quy cách
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1214,7 +1264,6 @@ export function CatalogDraftWorkflow({
               {canConfigureSharedConversions && selectedBaseUnit ? (
                 <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <span className="text-lg font-semibold">{selectedBaseUnit.name}</span>
-                  <span className="text-sm text-muted-foreground">({selectedBaseUnit.symbol})</span>
                   <span className="text-xs text-muted-foreground">— 1 {selectedBaseUnit.name.toLowerCase()} = 1 đơn vị tồn kho</span>
                 </div>
               ) : (
@@ -1234,19 +1283,67 @@ export function CatalogDraftWorkflow({
                     Không bắt buộc thêm quy đổi. Vật tư có thể nhập, xuất trực tiếp bằng {selectedBaseUnit?.name || "đơn vị cơ sở"}.
                   </p>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={addUomRow} disabled={!canConfigureSharedConversions}>
-                  <Plus className="size-4 mr-1.5" /> Thêm đơn vị giao dịch
-                </Button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => addUomRow()} disabled={!canConfigureSharedConversions}>
+                    <Plus className="size-4 mr-1.5" /> Thêm đơn vị giao dịch
+                  </Button>
+                </div>
+                {canConfigureSharedConversions && (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+                    <span className="text-[11px] text-muted-foreground font-medium mr-0.5">Thêm nhanh:</span>
+                    {["Thùng", "Hộp", "Bao", "Can", "Chai", "Cuộn", "Bịch", "Gói", "Kiện", "Pallet"].map((name) => {
+                      const matched = units.find(
+                        (u) => (u.name.toLowerCase() === name.toLowerCase() || u.code.toLowerCase() === name.toLowerCase()) && u.id !== effectiveBaseUnitId
+                      );
+                      if (!matched) return null;
+                      return (
+                        <button
+                          type="button"
+                          key={matched.id}
+                          onClick={() => addUomRow(matched.id)}
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-medium border bg-background hover:bg-muted text-foreground border-border transition-all cursor-pointer select-none"
+                        >
+                          + {matched.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">Ví dụ: 1 thùng = 24 cái; 1 bao = 25 kg.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <Label className="text-sm font-semibold">Đơn vị giao dịch bổ sung:</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addUomRow} disabled={!canConfigureSharedConversions}>
-                    <Plus className="size-4 mr-1.5" /> Thêm đơn vị
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => addUomRow()} disabled={!canConfigureSharedConversions}>
+                      <Plus className="size-4 mr-1.5" /> Thêm đơn vị
+                    </Button>
+                  </div>
                 </div>
+                {canConfigureSharedConversions && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] text-muted-foreground font-medium mr-0.5">Thêm nhanh:</span>
+                    {["Thùng", "Hộp", "Bao", "Can", "Chai", "Cuộn", "Bịch", "Gói", "Kiện", "Pallet"].map((name) => {
+                      const matched = units.find(
+                        (u) => (u.name.toLowerCase() === name.toLowerCase() || u.code.toLowerCase() === name.toLowerCase()) && u.id !== effectiveBaseUnitId
+                      );
+                      if (!matched) return null;
+                      const alreadyAdded = transactionUoms.some((u) => u.unitId === matched.id);
+                      if (alreadyAdded) return null;
+                      return (
+                        <button
+                          type="button"
+                          key={matched.id}
+                          onClick={() => addUomRow(matched.id)}
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-medium border bg-background hover:bg-muted text-foreground border-border transition-all cursor-pointer select-none"
+                        >
+                          + {matched.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   {transactionUoms.map((u, idx) => (
@@ -1288,7 +1385,7 @@ export function CatalogDraftWorkflow({
                               transactionUoms.filter((item) => item.id !== u.id).map((item) => item.unitId).filter(Boolean),
                             ).map((unit) => (
                               <SelectItem key={unit.id} value={unit.id}>
-                                {unit.name} ({unit.symbol})
+                                {unit.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1411,7 +1508,7 @@ export function CatalogDraftWorkflow({
                         <td className="p-2.5 font-medium">{name} (Mặc định)</td>
                         <td className="p-2.5">
                           <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded border border-border/40 font-semibold text-muted-foreground">
-                            Hệ thống tự sinh (SKU-xxxx)
+                            (SKU-xxxx)
                           </span>
                         </td>
                         <td className="p-2.5">{selectedBaseUnit?.name || "—"}</td>
@@ -1425,7 +1522,7 @@ export function CatalogDraftWorkflow({
                             <td className="p-2.5 font-medium">{fullLabel}</td>
                             <td className="p-2.5">
                               <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded border border-border/40 font-semibold text-muted-foreground">
-                                Hệ thống tự sinh (SKU-xxxx)
+                                (SKU-xxxx)
                               </span>
                             </td>
                             <td className="p-2.5">{units.find((u) => u.id === s.baseUnitId)?.name || s.baseUnitId || "—"}</td>
@@ -1445,7 +1542,7 @@ export function CatalogDraftWorkflow({
                 <div className="flex flex-wrap gap-2">
                   {transactionUoms.map((u) => (
                     <Badge key={u.id} variant="secondary" className="p-2 text-xs">
-                      1 {u.displayName} = {u.factorToBase} {selectedBaseUnit?.symbol || "ĐVT"}
+                      1 {u.displayName} = {u.factorToBase} {selectedBaseUnit?.name || "đơn vị cơ sở"}
                     </Badge>
                   ))}
                 </div>

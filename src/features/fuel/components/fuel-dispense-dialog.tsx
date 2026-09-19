@@ -25,10 +25,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ZoneSubZoneSelect } from "@/components/zone-sub-zone-select";
 import { ZoomableImage } from "@/components/image-lightbox";
-import { calcConsumptionRate, calcUsageDiff, formatConsumptionRate, formatFuelLiters, formatOdo } from "@/lib/fuel";
-import { createFuelDispenseAction } from "../actions";
+import { calcConsumptionRate, calcUsageDiff, formatConsumptionRate, formatFuelQuantity, formatOdo } from "@/lib/fuel";
+import { createFuelDispenseAction, getActiveDriverAccounts } from "../actions";
 import { uploadFuelImage } from "../upload";
 import type { FuelType } from "../types";
+import { DriverAccountSelect, type DriverAccountOption } from "./driver-account-select";
+import { FuelTypeDialog } from "./fuel-type-dialog";
 
 export interface VehicleSelection {
   id: string;
@@ -64,12 +66,22 @@ export function FuelDispenseDialog({
   const [fuelTypeId, setFuelTypeId] = useState(fuelTypes[0]?.id || "");
   const [quantity, setQuantity] = useState("");
   const [currentOdo, setCurrentOdo] = useState("");
+  const [driverId, setDriverId] = useState("");
   const [driverName, setDriverName] = useState("");
+  const [drivers, setDrivers] = useState<DriverAccountOption[]>([]);
   const [meterImages, setMeterImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [notes, setNotes] = useState("");
 
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId);
+
+  useEffect(() => {
+    if (open) {
+      getActiveDriverAccounts()
+        .then(setDrivers)
+        .catch((err) => console.warn("[FuelDispenseDialog] Không thể nạp danh sách tài xế:", err));
+    }
+  }, [open]);
 
   // Auto-fill when vehicle changes
   useEffect(() => {
@@ -85,10 +97,12 @@ export function FuelDispenseDialog({
       }
       if (selectedVehicle.default_driver) {
         setDriverName(selectedVehicle.default_driver);
+        const matched = drivers.find((d) => d.name === selectedVehicle.default_driver);
+        if (matched) setDriverId(matched.id);
       }
       setCurrentOdo(String(selectedVehicle.current_odo ?? 0));
     }
-  }, [selectedVehicle]);
+  }, [selectedVehicle, drivers]);
 
   const numQty = Math.max(0, Number(quantity) || 0);
   const numOdo = Number(currentOdo) || 0;
@@ -142,6 +156,7 @@ export function FuelDispenseDialog({
           fuelTypeId,
           quantity: numQty,
           currentOdo: selectedVehicle ? numOdo : null,
+          driverId: driverId === "custom" || !driverId ? null : driverId,
           driverName: driverName.trim() ? driverName.trim() : undefined,
           meterImages,
           notes: notes.trim() ? notes.trim() : undefined,
@@ -155,6 +170,7 @@ export function FuelDispenseDialog({
         setSubZoneId("");
         setQuantity("");
         setCurrentOdo("");
+        setDriverId("");
         setDriverName("");
         setMeterImages([]);
         setNotes("");
@@ -203,21 +219,40 @@ export function FuelDispenseDialog({
             </div>
 
             <div className="space-y-1.5 min-w-0">
-              <Label htmlFor="fuelTypeId" className="text-xs font-semibold">
-                Loại dầu cấp <span className="text-destructive">*</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="fuelTypeId" className="text-xs font-semibold">
+                  Loại nhiên liệu / Dầu cấp <span className="text-destructive">*</span>
+                </Label>
+                <FuelTypeDialog
+                  mode="create"
+                  trigger={
+                    <button
+                      type="button"
+                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-medium"
+                    >
+                      <Plus className="size-3" /> Thêm loại mới
+                    </button>
+                  }
+                  onSaved={(newType) => setFuelTypeId(newType.id)}
+                />
+              </div>
               <Select value={fuelTypeId} onValueChange={setFuelTypeId} disabled={pending}>
                 <SelectTrigger id="fuelTypeId" className="w-full">
-                  <SelectValue placeholder="Chọn loại dầu" />
+                  <SelectValue placeholder={fuelTypes.length === 0 ? "Chưa có loại dầu nào — Bấm Thêm mới" : "Chọn loại dầu"} />
                 </SelectTrigger>
                 <SelectContent>
                   {fuelTypes.map((ft) => (
                     <SelectItem key={ft.id} value={ft.id}>
-                      {ft.name} (Tồn: {formatFuelLiters(ft.current_stock)})
+                      {ft.name} (Tồn: {formatFuelQuantity(Number(ft.current_stock), ft.unit)})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {fuelTypes.length === 0 && (
+                <p className="text-[11px] text-destructive">
+                  Chưa có loại nhiên liệu nào. Vui lòng bấm &quot;+ Thêm loại mới&quot; ở trên để tạo.
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5 min-w-0">
@@ -237,13 +272,15 @@ export function FuelDispenseDialog({
               />
             </div>
 
-            <div className="space-y-1.5 min-w-0">
-              <Label htmlFor="driverName" className="text-xs font-semibold">Tài xế / Người nhận</Label>
-              <Input
-                id="driverName"
-                placeholder="VD: Nguyễn Văn A"
-                value={driverName}
-                onChange={(e) => setDriverName(e.target.value)}
+            <div className="sm:col-span-2 min-w-0">
+              <DriverAccountSelect
+                drivers={drivers}
+                driverId={driverId}
+                driverName={driverName}
+                onDriverChange={(id, name) => {
+                  setDriverId(id);
+                  setDriverName(name);
+                }}
                 disabled={pending}
               />
             </div>

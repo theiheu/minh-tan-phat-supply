@@ -1,5 +1,6 @@
 // Helpers thuần của bảng kiểm kê: gom nhóm theo vật tư chính, lọc, chia trang.
 import type { StocktakeItemView } from "../types";
+import { variantLabel } from "@/lib/labels";
 
 export type CheckFilter = "all" | "checked" | "unchecked" | "diff";
 

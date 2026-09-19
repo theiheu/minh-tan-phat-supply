@@ -213,7 +213,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                     }> | null;
                   } | null;
                   const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
-                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : (v?.units?.symbol || "—");
+                  const detail = attrVals.length > 0 ? attrVals.join(" · ") : null;
                   const displayName = it.sku_name_snapshot || v?.products?.name || "Vật tư";
                   const displayUnit = it.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—";
                   const displayQty = it.entered_quantity ?? it.quantity;
@@ -223,8 +223,8 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                       <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
                       <TableCell>
                         <span className="font-medium">{displayName}</span>
-                        {!it.sku_name_snapshot && (
-                          <span className="ml-1 text-muted-foreground">{detail}</span>
+                        {detail && detail !== "—" && !displayName.includes(detail) && (
+                          <span className="ml-1 text-muted-foreground font-normal"> - {detail}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{displayUnit}</TableCell>

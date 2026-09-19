@@ -4,9 +4,30 @@ import { revalidatePath } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { dayRange } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
-import { fuelReceiptSchema, fuelDispenseSchema, type FuelReceiptInput, type FuelDispenseInput } from "./schema";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
+import {
+  fuelReceiptSchema,
+  fuelDispenseSchema,
+  fuelTypeSchema,
+  fuelTypeUpdateSchema,
+  type FuelReceiptInput,
+  type FuelDispenseInput,
+  type FuelTypeInput,
+  type FuelTypeUpdateInput,
+} from "./schema";
 import type { FuelOverviewData, FuelReportRow } from "./types";
+
+export async function getActiveDriverAccounts() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, username, email")
+    .eq("role", "driver")
+    .eq("is_active", true)
+    .order("name");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
 
 async function fuelReceiptMeta(id: string) {
   try {
@@ -29,7 +50,7 @@ async function fuelDispenseMeta(id: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("fuel_dispenses")
-      .select("code, driver_name, vehicle:vehicles(name, code), zone:zones(name), fuel_type:fuel_types(name)")
+      .select("code, driver_name, driver_id, vehicle:vehicles(name, code), zone:zones(name), fuel_type:fuel_types(name)")
       .eq("id", id)
       .single();
     return data;
@@ -40,16 +61,180 @@ async function fuelDispenseMeta(id: string) {
 
 // ─── Fuel Types ───
 
-export async function getFuelTypes(opts?: { activeOnly?: boolean }) {
+export async function getFuelTypes(opts?: { activeOnly?: boolean; q?: string }) {
   const supabase = await createClient();
   let query = supabase
     .from("fuel_types")
     .select("*")
     .order("name");
   if (opts?.activeOnly) query = query.eq("is_active", true);
+  if (opts?.q && opts.q.trim()) {
+    const term = opts.q.trim();
+    query = query.or(`name.ilike.%${term}%,code.ilike.%${term}%,description.ilike.%${term}%`);
+  }
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+export async function getFuelTypeById(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("fuel_types")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createFuelTypeAction(input: FuelTypeInput) {
+  const profile = await requireManager();
+  const parsed = fuelTypeSchema.parse(input);
+
+  const supabase = await createClient();
+
+  // Kiểm tra trùng mã (case-insensitive)
+  const { data: existing } = await supabase
+    .from("fuel_types")
+    .select("id, code")
+    .ilike("code", parsed.code)
+    .maybeSingle();
+
+  if (existing) {
+    throw new Error(`Mã loại nhiên liệu "${parsed.code}" đã tồn tại. Vui lòng chọn mã khác.`);
+  }
+
+  const initialStock = Number(parsed.initialStock ?? 0);
+
+  const { data, error } = await supabase
+    .from("fuel_types")
+    .insert({
+      code: parsed.code,
+      name: parsed.name,
+      unit: parsed.unit,
+      min_stock: parsed.minStock,
+      current_stock: initialStock,
+      description: parsed.description ?? null,
+      is_active: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  // Nếu có khai báo tồn ban đầu > 0, tạo bút toán sổ cái biến động
+  if (initialStock > 0 && data?.id) {
+    try {
+      await supabase.from("fuel_movements").insert({
+        fuel_type_id: data.id,
+        movement_type: "adjustment_in",
+        quantity: initialStock,
+        balance_after: initialStock,
+        ref_type: "fuel_types",
+        ref_id: data.id,
+        notes: "Khai báo tồn kho đầu kỳ khi tạo loại",
+        created_by: profile.id,
+      });
+    } catch (movementErr) {
+      console.warn("Lỗi ghi sổ cái tồn đầu kỳ nhiên liệu:", movementErr);
+    }
+  }
+
+  revalidatePath("/fuel");
+  revalidatePath("/admin/vehicles");
+  return data;
+}
+
+export async function updateFuelTypeAction(id: string, input: FuelTypeUpdateInput) {
+  await requireManager();
+  const parsed = fuelTypeUpdateSchema.parse(input);
+
+  const supabase = await createClient();
+
+  // Kiểm tra trùng mã với bản ghi khác
+  const { data: existing } = await supabase
+    .from("fuel_types")
+    .select("id, code")
+    .ilike("code", parsed.code)
+    .neq("id", id)
+    .maybeSingle();
+
+  if (existing) {
+    throw new Error(`Mã loại nhiên liệu "${parsed.code}" đã được sử dụng bởi loại khác.`);
+  }
+
+  const { data, error } = await supabase
+    .from("fuel_types")
+    .update({
+      code: parsed.code,
+      name: parsed.name,
+      unit: parsed.unit,
+      min_stock: parsed.minStock,
+      description: parsed.description ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/fuel");
+  revalidatePath("/admin/vehicles");
+  return data;
+}
+
+export async function toggleFuelTypeActiveAction(id: string, isActive: boolean) {
+  await requireManager();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("fuel_types")
+    .update({
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/fuel");
+  revalidatePath("/admin/vehicles");
+}
+
+export async function deleteFuelTypeAction(id: string) {
+  await requireManager();
+  const supabase = await createClient();
+
+  // Kiểm tra ràng buộc dữ liệu
+  const [dispensesCount, receiptsCount, vehiclesCount] = await Promise.all([
+    supabase.from("fuel_dispenses").select("id", { count: "exact", head: true }).eq("fuel_type_id", id),
+    supabase.from("fuel_receipts").select("id", { count: "exact", head: true }).eq("fuel_type_id", id),
+    supabase.from("vehicles").select("id", { count: "exact", head: true }).eq("fuel_type_id", id),
+  ]);
+
+  const hasDispenses = (dispensesCount.count ?? 0) > 0;
+  const hasReceipts = (receiptsCount.count ?? 0) > 0;
+  const hasVehicles = (vehiclesCount.count ?? 0) > 0;
+
+  if (hasDispenses || hasReceipts || hasVehicles) {
+    const reasons: string[] = [];
+    if (hasReceipts) reasons.push("phiếu nhập kho");
+    if (hasDispenses) reasons.push("phiếu cấp phát");
+    if (hasVehicles) reasons.push("phương tiện đang liên kết");
+    throw new Error(
+      `Không thể xóa loại nhiên liệu này vì đã phát sinh ${reasons.join(", ")}. Bạn có thể chọn ngưng sử dụng (tắt hoạt động) để ẩn khỏi danh sách lựa chọn.`
+    );
+  }
+
+  // Xóa các bút toán khởi tạo tồn (nếu có)
+  await supabase.from("fuel_movements").delete().eq("fuel_type_id", id);
+
+  const { error } = await supabase.from("fuel_types").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/fuel");
+  revalidatePath("/admin/vehicles");
 }
 
 // ─── Fuel Receipts ───
@@ -113,26 +298,28 @@ export async function createFuelReceiptAction(input: FuelReceiptInput) {
   const receiptId = data as string;
   let code = "PNNL";
   let supplierName: string | undefined;
+  let meta: any = null;
   if (receiptId) {
-    const meta = await fuelReceiptMeta(receiptId);
+    meta = await fuelReceiptMeta(receiptId);
     if (meta?.code) code = meta.code;
     supplierName = (meta?.supplier as { name?: string } | null)?.name;
   }
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "fuel",
-    title: `[Nhiên liệu] ${code} - Ghi nhận nhập nhiên liệu vào kho`,
-    body: `Thủ kho ${profile.name} đã ghi nhận nhập ${parsed.quantity} lít/đơn vị nhiên liệu${supplierName ? ` từ NCC ${supplierName}` : ""}.`,
-    link: "/fuel",
-    document: {
-      code,
-      type: "Phiếu nhập nhiên liệu",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      creatorName: profile.name,
-      locationName: supplierName,
-      notes: parsed.notes ?? undefined,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "fuel.receipt_completed",
+      actorId: profile.id,
+      subject: { type: "fuel_receipt", id: receiptId },
+      payload: {
+        code,
+        fuelTypeName: (meta?.fuel_type as { name?: string } | null)?.name ?? "Nhiên liệu",
+        quantity: parsed.quantity,
+        unit: "Lít",
+        supplierName,
+        totalAmount: parsed.quantity * parsed.unitPrice,
+        notes: parsed.notes,
+      },
     },
   });
 
@@ -153,18 +340,18 @@ export async function cancelFuelReceiptAction(id: string) {
   });
   if (error) throw new Error(error.message);
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "fuel",
-    title: `[Nhiên liệu] ${code} - Đã hủy phiếu nhập nhiên liệu`,
-    body: `Phiếu nhập nhiên liệu đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/fuel",
-    document: {
-      code,
-      type: "Phiếu nhập nhiên liệu",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "fuel.receipt_cancelled",
+      actorId: profile.id,
+      subject: { type: "fuel_receipt", id },
+      payload: {
+        code,
+        fuelTypeName: (meta?.fuel_type as { name?: string } | null)?.name ?? "Nhiên liệu",
+        quantity: 0,
+        unit: "Lít",
+      },
     },
   });
 
@@ -229,6 +416,7 @@ export async function createFuelDispenseAction(input: FuelDispenseInput) {
     p_notes: (parsed.notes ?? null) as unknown as string,
     p_by: profile.id,
     p_sub_zone_id: (parsed.subZoneId ?? null) as unknown as string,
+    p_driver_id: (parsed.driverId ?? null) as unknown as string,
   });
 
   if (error) throw new Error(error.message);
@@ -237,27 +425,36 @@ export async function createFuelDispenseAction(input: FuelDispenseInput) {
   let code = "PCNL";
   let zoneName: string | undefined;
   let vehicleName: string | undefined;
+  let vehicleCode: string | undefined;
+  let fuelTypeName = "Nhiên liệu";
   if (dispenseId) {
     const meta = await fuelDispenseMeta(dispenseId);
     if (meta?.code) code = meta.code;
     zoneName = (meta?.zone as { name?: string } | null)?.name;
-    vehicleName = (meta?.vehicle as { name?: string } | null)?.name;
+    vehicleName = (meta?.vehicle as { name?: string; code?: string } | null)?.name;
+    vehicleCode = (meta?.vehicle as { name?: string; code?: string } | null)?.code;
+    fuelTypeName = (meta?.fuel_type as { name?: string } | null)?.name ?? "Nhiên liệu";
   }
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "fuel",
-    title: `[Nhiên liệu] ${code} - Ghi nhận cấp phát nhiên liệu`,
-    body: `Người cấp ${profile.name} đã cấp phát ${parsed.quantity} lít/đơn vị nhiên liệu${parsed.driverName ? ` cho tài xế ${parsed.driverName}` : ""}${vehicleName ? ` (Xe ${vehicleName})` : ""}.`,
-    link: "/fuel",
-    document: {
-      code,
-      type: "Phiếu cấp phát nhiên liệu",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      creatorName: profile.name,
-      locationName: zoneName,
-      notes: parsed.notes ?? undefined,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "fuel.dispensed",
+      actorId: profile.id,
+      subject: { type: "fuel_dispense", id: dispenseId },
+      participants: { driverId: parsed.driverId },
+      payload: {
+        code,
+        fuelTypeName,
+        quantity: parsed.quantity,
+        unit: "Lít",
+        vehicleCode,
+        vehicleName,
+        currentOdo: parsed.currentOdo ?? undefined,
+        zoneName,
+        dispenserName: profile.name,
+        notes: parsed.notes,
+      },
     },
   });
 
@@ -278,18 +475,22 @@ export async function cancelFuelDispenseAction(id: string) {
   });
   if (error) throw new Error(error.message);
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "fuel",
-    title: `[Nhiên liệu] ${code} - Đã hủy phiếu cấp phát nhiên liệu`,
-    body: `Phiếu cấp phát nhiên liệu đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/fuel",
-    document: {
-      code,
-      type: "Phiếu cấp phát nhiên liệu",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "fuel.dispense_cancelled_or_adjusted",
+      actorId: profile.id,
+      subject: { type: "fuel_dispense", id },
+      participants: { driverId: (meta as any)?.driver_id },
+      payload: {
+        code,
+        fuelTypeName: (meta?.fuel_type as { name?: string } | null)?.name ?? "Nhiên liệu",
+        quantity: 0,
+        unit: "Lít",
+        vehicleCode: (meta?.vehicle as { code?: string } | null)?.code,
+        vehicleName: (meta?.vehicle as { name?: string } | null)?.name,
+        dispenserName: profile.name,
+      },
     },
   });
 
@@ -324,8 +525,7 @@ export async function getFuelOverview(): Promise<FuelOverviewData> {
   const [fuelTypesRes, monthDispensesRes, monthReceiptsRes, todayDispensesRes] = await Promise.all([
     supabase
       .from("fuel_types")
-      .select("id, code, name, unit, current_stock, min_stock")
-      .eq("is_active", true)
+      .select("id, code, name, unit, current_stock, min_stock, description, is_active")
       .order("name"),
     supabase
       .from("fuel_dispenses")
@@ -378,6 +578,8 @@ export async function getFuelOverview(): Promise<FuelOverviewData> {
       unit: ft.unit,
       current_stock: Number(ft.current_stock),
       min_stock: Number(ft.min_stock),
+      description: ft.description ?? null,
+      is_active: ft.is_active ?? true,
       dispensedThisMonth: dispensedThisMonth[ft.id] ?? 0,
       dispensedToday: dispensedToday[ft.id] ?? 0,
       receivedThisMonth: receivedThisMonth[ft.id] ?? 0,

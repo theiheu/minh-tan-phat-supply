@@ -5,7 +5,7 @@ import { requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import { defectSchema, type DefectInput } from "./schema";
 
 async function defectMeta(id: string) {
@@ -14,13 +14,37 @@ async function defectMeta(id: string) {
     if (!supabase || typeof supabase.from !== "function") return null;
     const { data } = await supabase
       .from("defect_notes")
-      .select("code, reported_by, notes, source_location:stock_locations(name)")
+      .select(`
+        code,
+        reported_by,
+        notes,
+        source_location:stock_locations(name),
+        items:defect_note_items(
+          quantity,
+          damage_detail,
+          note,
+          skus(
+            products(name),
+            units(name, symbol)
+          )
+        )
+      `)
       .eq("id", id)
       .single();
     return data;
   } catch {
     return null;
   }
+}
+
+function formatDefectItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => ({
+    name: i.skus?.products?.name || "Thiết bị / Vật tư",
+    quantity: i.quantity,
+    unit: i.skus?.units?.name || i.skus?.units?.symbol || "",
+    note: i.damage_detail || i.note || undefined,
+  }));
 }
 
 export async function recordDefect(input: DefectInput) {
@@ -50,26 +74,25 @@ export async function recordDefect(input: DefectInput) {
   const defectId = data as string;
   let code = "PBH";
   let locName: string | undefined;
+  let meta: Awaited<ReturnType<typeof defectMeta>> = null;
   if (defectId) {
-    const meta = await defectMeta(defectId);
+    meta = await defectMeta(defectId);
     if (meta?.code) code = meta.code;
     locName = (meta?.source_location as { name?: string } | null)?.name;
   }
 
-  const managerIds = await getManagerIds(supabase);
-  await notifyUsers({
-    userIds: managerIds,
-    type: "defect",
-    title: `[Báo hỏng vật tư] ${code} - Tiếp nhận báo hỏng mới`,
-    body: `Nhân viên ${profile.name} vừa lập biên bản báo hỏng ${items.length} mặt hàng vật tư${locName ? ` tại vị trí ${locName}` : ""}, cần kiểm tra và xử lý.`,
-    link: "/defects",
-    document: {
-      code,
-      type: "Biên bản báo hỏng vật tư",
-      status: "Tập kết chờ xử lý",
-      statusVariant: "warning",
-      creatorName: profile.name,
-      locationName: locName,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "defect.created",
+      actorId: profile.id,
+      subject: { type: "defect", id: defectId },
+      payload: {
+        code,
+        reporterName: profile.name,
+        locationName: locName,
+        items: formatDefectItems((meta as any)?.items),
+      },
     },
   });
 
@@ -100,23 +123,22 @@ export async function cancelDefect(id: string) {
   const { error } = await supabase.rpc("cancel_defect", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.reported_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "defect",
-    title: `[Báo hỏng vật tư] ${code} - Đã hủy phiếu báo hỏng`,
-    body: `Biên bản báo hỏng vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/defects",
-    document: {
-      code,
-      type: "Biên bản báo hỏng vật tư",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
-    },
-  });
+  try {
+    const userIds = [...new Set([meta?.reported_by].filter(Boolean))];
+    if (userIds.length > 0) {
+      await supabase.from("notifications").insert(
+        userIds.map((uid) => ({
+          user_id: uid!,
+          type: "defect",
+          title: `[Báo hỏng vật tư] ${code} - Đã hủy phiếu báo hỏng`,
+          body: `Biên bản báo hỏng vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
+          link: "/defects",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[cancelDefect] In-app notification error:", err);
+  }
 
   revalidatePath("/defects");
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   Handshake,
   Home,
+  Loader2,
   Printer,
   Truck,
 } from "lucide-react";
@@ -98,6 +99,14 @@ export function ReportsHub({
 
   const [activeTab, setActiveTab] = useState<ReportTab>("general");
   const [selectedVariantId, setSelectedVariantId] = useState<string>("");
+  const [, startTabTransition] = useTransition();
+
+  const handleSelectTab = (tab: ReportTab) => {
+    if (tab === activeTab) return;
+    startTabTransition(() => {
+      setActiveTab(tab);
+    });
+  };
 
   // Data cache for tabs
   const [generalData, setGeneralData] = useState<GeneralReportData | null>(initialGeneralData);
@@ -217,84 +226,108 @@ export function ReportsHub({
             type="button"
             role="tab"
             aria-selected={activeTab === "general"}
-            onClick={() => setActiveTab("general")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            onClick={() => handleSelectTab("general")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
               activeTab === "general"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <BarChart3 className="size-3.5 sm:size-4 text-blue-500" aria-hidden="true" />
+            {activeTab === "general" && isLoading ? (
+              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
+            ) : (
+              <BarChart3 className="size-3.5 sm:size-4 text-blue-500" aria-hidden="true" />
+            )}
             <span>Tổng quan</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "xnt"}
-            onClick={() => setActiveTab("xnt")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            onClick={() => handleSelectTab("xnt")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
               activeTab === "xnt"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <Boxes className="size-3.5 sm:size-4 text-indigo-500" aria-hidden="true" />
+            {activeTab === "xnt" && isLoading ? (
+              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
+            ) : (
+              <Boxes className="size-3.5 sm:size-4 text-indigo-500" aria-hidden="true" />
+            )}
             <span>Xuất - Nhập - Tồn</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "zones"}
-            onClick={() => setActiveTab("zones")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            onClick={() => handleSelectTab("zones")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
               activeTab === "zones"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <Home className="size-3.5 sm:size-4 text-amber-500" aria-hidden="true" />
+            {activeTab === "zones" && isLoading ? (
+              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
+            ) : (
+              <Home className="size-3.5 sm:size-4 text-amber-500" aria-hidden="true" />
+            )}
             <span>Theo Chuồng</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "vehicles"}
-            onClick={() => setActiveTab("vehicles")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            onClick={() => handleSelectTab("vehicles")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
               activeTab === "vehicles"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <Truck className="size-3.5 sm:size-4 text-emerald-500" aria-hidden="true" />
+            {activeTab === "vehicles" && isLoading ? (
+              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
+            ) : (
+              <Truck className="size-3.5 sm:size-4 text-emerald-500" aria-hidden="true" />
+            )}
             <span>Phương tiện</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "partners"}
-            onClick={() => setActiveTab("partners")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            onClick={() => handleSelectTab("partners")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
               activeTab === "partners"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <Handshake className="size-3.5 sm:size-4 text-violet-500" aria-hidden="true" />
+            {activeTab === "partners" && isLoading ? (
+              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
+            ) : (
+              <Handshake className="size-3.5 sm:size-4 text-violet-500" aria-hidden="true" />
+            )}
             <span>Đối tác</span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "stock_card"}
-            onClick={() => setActiveTab("stock_card")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
+            onClick={() => handleSelectTab("stock_card")}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
               activeTab === "stock_card"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
             }`}
           >
-            <BookOpen className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
+            {activeTab === "stock_card" && isLoading ? (
+              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
+            ) : (
+              <BookOpen className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
+            )}
             <span>Sổ Thẻ kho</span>
           </button>
         </nav>

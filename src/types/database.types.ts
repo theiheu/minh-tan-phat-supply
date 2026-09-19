@@ -806,6 +806,88 @@ export type Database = {
           },
         ]
       }
+      email_delivery_attempts: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_key: string
+          id: string
+          idempotency_key: string
+          recipient_email: string
+          recipient_id: string | null
+          status: "pending" | "sent" | "failed" | "skipped"
+          subject_id: string
+          subject_type: string
+          template_kind: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_key: string
+          id?: string
+          idempotency_key: string
+          recipient_email: string
+          recipient_id?: string | null
+          status: "pending" | "sent" | "failed" | "skipped"
+          subject_id: string
+          subject_type: string
+          template_kind: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_key?: string
+          id?: string
+          idempotency_key?: string
+          recipient_email?: string
+          recipient_id?: string | null
+          status?: "pending" | "sent" | "failed" | "skipped"
+          subject_id?: string
+          subject_type?: string
+          template_kind?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_delivery_attempts_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_reminder_claims: {
+        Row: {
+          borrowing_id: string
+          claimed_at: string
+          id: string
+          reminder_type: "due_soon" | "overdue"
+        }
+        Insert: {
+          borrowing_id: string
+          claimed_at?: string
+          id?: string
+          reminder_type: "due_soon" | "overdue"
+        }
+        Update: {
+          borrowing_id?: string
+          claimed_at?: string
+          id?: string
+          reminder_type?: "due_soon" | "overdue"
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_reminder_claims_borrowing_id_fkey"
+            columns: ["borrowing_id"]
+            isOneToOne: false
+            referencedRelation: "tool_borrowings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       defect_notes: {
         Row: {
           code: string
@@ -1056,6 +1138,7 @@ export type Database = {
           created_at: string
           current_odo: number | null
           dispenser_id: string
+          driver_id: string | null
           driver_name: string | null
           fuel_type_id: string
           id: string
@@ -1076,6 +1159,7 @@ export type Database = {
           created_at?: string
           current_odo?: number | null
           dispenser_id: string
+          driver_id?: string | null
           driver_name?: string | null
           fuel_type_id: string
           id?: string
@@ -1096,6 +1180,7 @@ export type Database = {
           created_at?: string
           current_odo?: number | null
           dispenser_id?: string
+          driver_id?: string | null
           driver_name?: string | null
           fuel_type_id?: string
           id?: string
@@ -2485,6 +2570,7 @@ export type Database = {
           purpose: string
           received_at: string | null
           received_by: string | null
+          invoice_images: string[]
           rejection_reason: string | null
           requester_id: string
           requisition_type: Database["public"]["Enums"]["requisition_type"]
@@ -2502,6 +2588,7 @@ export type Database = {
           fulfilled_by?: string | null
           fulfillment_notes?: string | null
           id?: string
+          invoice_images?: string[]
           linked_defect_id?: string | null
           purpose: string
           received_at?: string | null
@@ -2523,6 +2610,7 @@ export type Database = {
           fulfilled_by?: string | null
           fulfillment_notes?: string | null
           id?: string
+          invoice_images?: string[]
           linked_defect_id?: string | null
           purpose?: string
           received_at?: string | null
@@ -3854,6 +3942,7 @@ export type Database = {
           created_at: string
           current_odo: number
           default_driver: string | null
+          document_images: string[]
           fuel_norm: number | null
           fuel_type_id: string | null
           id: string
@@ -3872,6 +3961,7 @@ export type Database = {
           created_at?: string
           current_odo?: number
           default_driver?: string | null
+          document_images?: string[]
           fuel_norm?: number | null
           fuel_type_id?: string | null
           id?: string
@@ -3890,6 +3980,7 @@ export type Database = {
           created_at?: string
           current_odo?: number
           default_driver?: string | null
+          document_images?: string[]
           fuel_norm?: number | null
           fuel_type_id?: string | null
           id?: string
@@ -4211,6 +4302,18 @@ export type Database = {
       cancel_tool_borrowing: {
         Args: { p_borrowing_id: string; p_by: string }
         Returns: undefined
+      }
+      claim_tool_reminders: {
+        Args: { p_now?: string }
+        Returns: {
+          borrower_id: string
+          borrowing_id: string
+          code: string
+          expected_return_date: string
+          overdue_days: number
+          reminder_type: "due_soon" | "overdue"
+          tool_names: string
+        }[]
       }
       complete_liquidation: {
         Args: { p_by: string; p_id: string; p_items_outcome: Json }
@@ -4627,6 +4730,14 @@ export type Database = {
         Returns: undefined
       }
       update_receipt_invoice_images: {
+        Args: { p_by: string; p_id: string; p_invoice_images: string[] }
+        Returns: undefined
+      }
+      complete_requisition_direct: {
+        Args: { p_by: string; p_id: string; p_notes?: string }
+        Returns: undefined
+      }
+      update_requisition_invoice_images: {
         Args: { p_by: string; p_id: string; p_invoice_images: string[] }
         Returns: undefined
       }

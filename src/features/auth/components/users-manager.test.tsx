@@ -70,7 +70,7 @@ describe("UsersManager", () => {
       <UsersManager
         profiles={mockProfiles}
         zones={[{ id: "z1", name: "Khu A" }]}
-        currentRole="warehouse"
+        currentRole="superuser"
       />,
     );
 
@@ -106,7 +106,7 @@ describe("UsersManager", () => {
       <UsersManager
         profiles={mockProfiles}
         zones={[{ id: "z1", name: "Khu A" }]}
-        currentRole="owner"
+        currentRole="superuser"
         currentUserId="user-super"
       />,
     );
@@ -126,7 +126,7 @@ describe("UsersManager", () => {
     expect(screen.queryByText("Nguyễn Văn A")).not.toBeInTheDocument();
   });
 
-  it("chỉ hiển thị nút khóa/xóa cho kế toán, chủ trại hoặc superuser (ẩn đối với quản kho)", () => {
+  it("chỉ hiển thị nút khóa/xóa cho superuser (ẩn đối với quản kho, kế toán, chủ trại)", () => {
     // 1. Quản kho (warehouse): không thấy nút xóa/khóa
     const { rerender } = render(
       <UsersManager
@@ -139,7 +139,7 @@ describe("UsersManager", () => {
     expect(screen.queryByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).not.toBeInTheDocument();
     expect(screen.queryByTitle("Xóa vĩnh viễn (nếu chưa có phiếu)")).not.toBeInTheDocument();
 
-    // 2. Kế toán (accountant): thấy nút khóa và xóa trên user active
+    // 2. Kế toán (accountant): không thấy nút xóa/khóa
     rerender(
       <UsersManager
         profiles={mockProfiles}
@@ -148,10 +148,10 @@ describe("UsersManager", () => {
         currentUserId="user-acc"
       />,
     );
-    expect(screen.getAllByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).toHaveLength(2);
-    expect(screen.getAllByTitle("Xóa vĩnh viễn (nếu chưa có phiếu)")).toHaveLength(2);
+    expect(screen.queryByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Xóa vĩnh viễn (nếu chưa có phiếu)")).not.toBeInTheDocument();
 
-    // 3. Chủ trại (owner): thấy nút khóa và xóa trên user active
+    // 3. Chủ trại (owner): không thấy nút xóa/khóa
     rerender(
       <UsersManager
         profiles={mockProfiles}
@@ -160,7 +160,8 @@ describe("UsersManager", () => {
         currentUserId="user-owner"
       />,
     );
-    expect(screen.getAllByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).toHaveLength(2);
+    expect(screen.queryByTitle("Khóa tài khoản / Đánh dấu nghỉ việc")).not.toBeInTheDocument();
+    expect(screen.queryByTitle("Xóa vĩnh viễn (nếu chưa có phiếu)")).not.toBeInTheDocument();
 
     // 4. Quản trị hệ thống (superuser): thấy nút khóa và xóa trên user active
     rerender(

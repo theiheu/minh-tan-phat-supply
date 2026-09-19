@@ -3,6 +3,7 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { formatZoneLabel } from "@/lib/format-zone";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { auditActionLabel, auditActionTone, type StatusBadgeVariant } from "@/lib/labels";
 
 export interface SlipTimelineEvent {
@@ -60,6 +61,15 @@ export interface SlipDetailPayload {
     purpose?: string | null;
     status: string;
   }[];
+  linkedReceipt?: {
+    id: string;
+    code: string;
+    status: string;
+    supplierName?: string | null;
+    creatorName?: string | null;
+    createdAt: string;
+    notes?: string | null;
+  } | null;
   defectEvidence?: {
     code: string;
     items: {
@@ -108,7 +118,7 @@ function variantLabelFor(variants: {
     );
     if (values.length > 0) return values.join(" · ");
   }
-  return variants?.units?.symbol || variants?.units?.name || variants?.unit || "—";
+  return "—";
 }
 
 function cleanTimeline(events: (SlipTimelineEvent | null)[]): SlipTimelineEvent[] {
@@ -140,9 +150,10 @@ export async function getSlipDetail(
       : t.startsWith("stocktake") ? "stocktake"
       : t;
 
-    const { data: auditLogs } = await supabase
+    const adminClient = createAdminClient();
+    const { data: auditLogs } = await adminClient
       .from("audit_logs")
-      .select("id, action, created_at, actor:profiles!audit_logs_actor_id_fkey(name)")
+      .select("id, action, created_at, after, actor:profiles!audit_logs_actor_id_fkey(name)")
       .eq("entity_type", auditEntityType)
       .eq("entity_id", id)
       .order("created_at", { ascending: true });
@@ -151,7 +162,7 @@ export async function getSlipDetail(
       const { data: req, error } = await supabase
         .from("requisitions")
         .select(
-          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, sku_id, quantity, skus(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, purpose, status, requisition_type, linked_defect_id, requester_id, invoice_images, created_at, approved_at, fulfilled_at, received_at, rejection_reason, fulfillment_notes, requester:profiles!requisitions_requester_id_fkey(name), zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name), approver:profiles!requisitions_approved_by_fkey(name), fulfiller:profiles!requisitions_fulfilled_by_fkey(name), receiver:profiles!requisitions_received_by_fkey(name), items:requisition_items(id, sku_id, quantity, skus(id, sku_code, price, images, products(name, images, description), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -189,19 +200,24 @@ export async function getSlipDetail(
         const v = it.skus as {
           attributes?: unknown;
           unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
           images?: string[] | null;
           products?: { name?: string | null; images?: string[] | null; description?: string | null } | null;
         } | null;
-        const images = [
-          ...(v?.images ?? []),
-          ...(v?.products?.images ?? []),
-        ];
+        const images = v?.images ?? [];
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           images,
           stock: it.sku_id ? (stockByVariant.get(it.sku_id) ?? null) : null,
@@ -262,28 +278,94 @@ export async function getSlipDetail(
         };
       });
 
+      // Lấy thông tin phiếu đặt hàng nhập kho liên quan (nếu có)
+      const { data: linkedReceipts } = await supabase
+        .from("receipts")
+        .select("id, code, status, notes, created_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name)")
+        .contains("linked_requisition_ids", [req.id]);
+
+      const linkedReceipt = linkedReceipts?.[0] ?? null;
+
       let timeline: SlipTimelineEvent[] = [];
       if (auditLogs && auditLogs.length > 0) {
         timeline = auditLogs
           .filter((a) => a.action !== "requisition.return")
-          .map((a) => ({
-            key: a.action,
-            label: auditActionLabel(a.action),
-            tone: auditActionTone(a.action),
-            at: a.created_at,
-            by: a.actor?.name ?? null,
-            note: a.action === "requisition.reject" ? req.rejection_reason : null,
-          }));
+          .map((a) => {
+            // Trường hợp tạo hộ phiếu yêu cầu cho người khác:
+            // - Tiến trình tạo phiếu: tên tài khoản tạo phiếu (a.actor?.name)
+            // - Tiến trình gửi phiếu yêu cầu: tên tài khoản được tạo hộ phiếu (req.requester?.name)
+            const actorName =
+              a.action === "requisition.submit"
+                ? (req.requester?.name ?? a.actor?.name ?? null)
+                : (a.actor?.name ?? null);
+
+            let eventDetail: string | undefined = undefined;
+            if (a.action === "requisition.order") {
+              const afterObj = a.after as { receipt_code?: string; supplier_name?: string; notes?: string } | null;
+              eventDetail = afterObj?.receipt_code
+                ? `Phiếu đặt hàng: ${afterObj.receipt_code}${afterObj.supplier_name ? ` · NCC: ${afterObj.supplier_name}` : ""}${afterObj.notes ? ` (${afterObj.notes})` : ""}`
+                : linkedReceipt
+                ? `Phiếu đặt hàng: ${linkedReceipt.code}`
+                : undefined;
+            } else if (a.action === "requisition.upload_invoice") {
+              const afterObj = a.after as { count?: number } | null;
+              eventDetail = afterObj?.count
+                ? `Đã tải lên ${afterObj.count} ảnh hóa đơn / chứng từ nhận hàng từ NCC`
+                : "Đã tải lên ảnh hóa đơn / chứng từ nhận hàng";
+            } else if (a.action === "requisition.direct_complete") {
+              eventDetail = "Quản kho đã kiểm tra hóa đơn và duyệt hoàn tất nhận hàng trực tiếp";
+            }
+
+            return {
+              key: a.action,
+              label: auditActionLabel(a.action),
+              tone: auditActionTone(a.action),
+              at: a.created_at,
+              by: actorName,
+              note: a.action === "requisition.reject" ? req.rejection_reason : null,
+              detail: eventDetail,
+            };
+          });
+
+        if (linkedReceipt && !timeline.some((t) => t.key === "requisition.order")) {
+          timeline.push({
+            key: "requisition.order",
+            label: "Đã đặt hàng NCC",
+            tone: "violet",
+            at: linkedReceipt.created_at,
+            by: (linkedReceipt.creator as { name?: string } | null)?.name ?? null,
+            detail: `Phiếu đặt hàng: ${linkedReceipt.code}${(linkedReceipt.supplier as { name?: string } | null)?.name ? ` · NCC: ${(linkedReceipt.supplier as { name?: string } | null)?.name}` : ""}`,
+          });
+        }
+
         timeline = [...timeline, ...returnMilestones].sort((a, b) => (a.at ?? "").localeCompare(b.at ?? ""));
       } else {
+        const createLog = auditLogs?.find((a) => a.action === "requisition.create");
+        const creatorName = createLog?.actor?.name ?? req.requester?.name;
+        const fallbackOrder = linkedReceipt
+          ? {
+              key: "requisition.order",
+              label: "Đã đặt hàng NCC",
+              tone: "violet" as const,
+              at: linkedReceipt.created_at,
+              by: (linkedReceipt.creator as { name?: string } | null)?.name ?? null,
+              detail: `Phiếu đặt hàng: ${linkedReceipt.code}${(linkedReceipt.supplier as { name?: string } | null)?.name ? ` · NCC: ${(linkedReceipt.supplier as { name?: string } | null)?.name}` : ""}`,
+            }
+          : null;
+
         timeline = cleanTimeline([
-          { key: "requisition.create", label: "Tạo phiếu", tone: "info", at: req.created_at, by: req.requester?.name },
+          { key: "requisition.create", label: "Tạo phiếu", tone: "info", at: req.created_at, by: creatorName },
+          req.status !== "draft" ? { key: "requisition.submit", label: "Gửi phiếu yêu cầu", tone: "warning", at: req.created_at, by: req.requester?.name } : null,
           { key: "requisition.approve", label: "Duyệt phiếu", tone: "info", at: req.approved_at, by: req.approver?.name },
+          fallbackOrder,
           { key: "requisition.fulfill", label: "Cấp phát", tone: "success", at: req.fulfilled_at, by: req.fulfiller?.name },
           { key: "requisition.receive", label: "Xác nhận nhận", tone: "success", at: req.received_at, by: req.receiver?.name },
           ...returnMilestones,
         ]).sort((a, b) => (a.at ?? "").localeCompare(b.at ?? ""));
       }
+
+      const createLog = auditLogs?.find((a) => a.action === "requisition.create");
+      const creatorName = createLog?.actor?.name ?? req.requester?.name;
 
       return {
         currentUser,
@@ -293,13 +375,25 @@ export async function getSlipDetail(
           code: req.code,
           status: req.status,
           createdAt: req.created_at,
-          creatorName: req.requester?.name,
+          creatorName,
           requesterId: req.requester_id,
           zoneName: formatZoneLabel(req.zone?.name, req.sub_zone?.name),
           purposeOrNotes: req.purpose,
           rejectionReason: req.rejection_reason,
           defectEvidence,
           items,
+          invoiceImages: (req as { invoice_images?: string[] }).invoice_images ?? [],
+          linkedReceipt: linkedReceipt
+            ? {
+                id: linkedReceipt.id,
+                code: linkedReceipt.code,
+                status: linkedReceipt.status,
+                supplierName: (linkedReceipt.supplier as { name?: string } | null)?.name,
+                creatorName: (linkedReceipt.creator as { name?: string } | null)?.name,
+                createdAt: linkedReceipt.created_at,
+                notes: linkedReceipt.notes,
+              }
+            : null,
           timeline,
           pdfUrl: `/api/requisitions/${req.id}/pdf`,
         },
@@ -318,13 +412,25 @@ export async function getSlipDetail(
       if (error || !rec) return { detail: null, currentUser, error: "Không tìm thấy phiếu nhập kho" };
 
       const items = (rec.items ?? []).map((it) => {
-        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as {
+          attributes?: unknown;
+          unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           unitPrice: it.unit_cost ? Number(it.unit_cost) : null,
           batchNo: it.batch_no,
@@ -400,13 +506,25 @@ export async function getSlipDetail(
       if (error || !iss) return { detail: null, currentUser, error: "Không tìm thấy phiếu xuất kho" };
 
       const items = (iss.items ?? []).map((it) => {
-        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as {
+          attributes?: unknown;
+          unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           unitPrice: it.unit_price ? Number(it.unit_price) : null,
         };
@@ -467,13 +585,25 @@ export async function getSlipDetail(
 
       const d = ex.defect;
       const items = (d?.defect_note_items ?? []).map((it) => {
-        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as {
+          attributes?: unknown;
+          unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           damageDetail: it.damage_detail,
           images: it.images ?? [],
@@ -529,13 +659,25 @@ export async function getSlipDetail(
       if (error || !def) return { detail: null, currentUser, error: "Không tìm thấy phiếu báo hỏng" };
 
       const items = (def.items ?? []).map((it) => {
-        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as {
+          attributes?: unknown;
+          unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           variantId: it.sku_id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           damageDetail: it.damage_detail,
           images: it.images ?? [],
@@ -589,12 +731,24 @@ export async function getSlipDetail(
       if (error || !liq) return { detail: null, currentUser, error: "Không tìm thấy phiếu thanh lý" };
 
       const items = (liq.items ?? []).map((it) => {
-        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as {
+          attributes?: unknown;
+          unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           unitPrice: it.unit_value ? Number(it.unit_value) : it.proceeds ? Number(it.proceeds) : null,
           damageDetail: it.notes ?? it.method,
@@ -645,12 +799,24 @@ export async function getSlipDetail(
       if (error || !rep) return { detail: null, currentUser, error: "Không tìm thấy phiếu sửa chữa" };
 
       const items = (rep.items ?? []).map((it) => {
-        const v = it.skus as { attributes?: unknown; unit?: string | null; products?: { name?: string | null } | null } | null;
+        const v = it.skus as {
+          attributes?: unknown;
+          unit?: string | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+          products?: { name?: string | null } | null;
+        } | null;
+        const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
         return {
           id: it.id,
           productName: v?.products?.name ?? "Vật tư",
           variantLabel: variantLabelFor(v),
-          unit: v?.unit,
+          unit,
           quantity: it.quantity,
           unitPrice: it.cost ? Number(it.cost) : null,
           damageDetail: it.repair_detail,

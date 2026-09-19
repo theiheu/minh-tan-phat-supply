@@ -30,24 +30,34 @@ echo "   Sử dụng bản backup: $BACKUP_FILE"
 echo "================================================================="
 
 # 1. Dừng service web tạm thời
-echo "==> [1/4] Dừng service $SERVICE..."
+echo "==> [1/5] Dừng service $SERVICE..."
 systemctl stop "$SERVICE" 2>/dev/null || sudo systemctl stop "$SERVICE" 2>/dev/null || true
 
 # 2. Phục hồi cơ sở dữ liệu
-echo "==> [2/4] Phục hồi cơ sở dữ liệu từ $BACKUP_FILE..."
+echo "==> [2/5] Phục hồi cơ sở dữ liệu từ $BACKUP_FILE..."
 docker cp "$BACKUP_FILE" "$CONTAINER:/tmp/restore.dump"
-docker exec "$CONTAINER" pg_restore -U postgres -d postgres -c --if-exists -v "/tmp/restore.dump" || true
+if ! docker exec "$CONTAINER" pg_restore -U postgres -d postgres -c --if-exists -v "/tmp/restore.dump"; then
+  echo "❌ Lỗi: pg_restore trả về non-zero exit code. Rollback bị dừng!" >&2
+  exit 1
+fi
 docker exec "$CONTAINER" rm -f "/tmp/restore.dump"
 
+# 3. Xác minh database sau khi restore
+echo "==> [3/5] Xác minh invariants của catalog sau khi restore..."
+if ! npx tsx scripts/verify-restored-catalog-state.ts; then
+  echo "❌ Lỗi: Cơ sở dữ liệu sau phục hồi không vẹn toàn hoặc không đúng pre-cutover state!" >&2
+  exit 1
+fi
+
 # 3. Khôi phục build .next.old nếu có
-echo "==> [3/4] Khôi phục phiên bản web build trước đó..."
+echo "==> [4/5] Khôi phục phiên bản web build trước đó..."
 if [ -d "$PROD_DIR/.next.old" ]; then
   rm -rf "$PROD_DIR/.next"
   mv "$PROD_DIR/.next.old" "$PROD_DIR/.next"
 fi
 
 # 4. Khởi động lại service và kiểm tra
-echo "==> [4/4] Khởi động lại $SERVICE & Health check..."
+echo "==> [5/5] Khởi động lại $SERVICE & Health check..."
 systemctl start "$SERVICE" 2>/dev/null || sudo systemctl start "$SERVICE" 2>/dev/null
 
 for i in $(seq 1 30); do

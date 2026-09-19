@@ -172,8 +172,8 @@ export function useProductDetail({
   };
 
   const displayedImages = useMemo(() => {
-    if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
-      return selectedVariant.images;
+    if (selectedVariant) {
+      return selectedVariant.images && selectedVariant.images.length > 0 ? selectedVariant.images : [];
     }
     if (product.images && product.images.length > 0) {
       return product.images;

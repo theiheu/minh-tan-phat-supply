@@ -913,6 +913,18 @@ export async function fetchRequisitionsReportData(params: {
     sub_zone?: { name?: string } | null;
     items?: Array<{
       quantity: number;
+      skus?: {
+        id?: string;
+        sku_code?: string | null;
+        units?: { name?: string | null; symbol?: string | null } | null;
+        products?: { name: string } | null;
+        sku_attribute_values?: Array<{
+          text_value?: string | null;
+          legacy_text_value?: string | null;
+          numeric_value?: number | null;
+          units?: { symbol?: string | null } | null;
+        }> | null;
+      } | null;
       variants?: {
         id?: string;
         sku_code?: string | null;
@@ -932,7 +944,7 @@ export async function fetchRequisitionsReportData(params: {
     const rawItems = r.items ?? [];
 
     const items: RequisitionReportItem[] = rawItems.map((it) => {
-      const v = it.variants;
+      const v = it.skus || it.variants;
       const unitObj = v?.units;
       const unit = unitObj?.symbol || unitObj?.name || "—";
       const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);

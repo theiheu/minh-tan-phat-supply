@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getManagerIds, notifyUsers } from "@/lib/notifications";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 
 const liquidationSchema = z.object({
   reason: z.string().optional().default(""),
@@ -26,13 +26,36 @@ async function liquidationMeta(id: string) {
     if (!supabase.from) return null;
     const { data } = await supabase
       .from("liquidation_notes")
-      .select("code, created_by, reason")
+      .select(`
+        code,
+        created_by,
+        reason,
+        items:liquidation_items(
+          quantity,
+          entered_quantity,
+          method,
+          proceeds,
+          unit_value,
+          sku_name_snapshot,
+          uom_name_snapshot
+        )
+      `)
       .eq("id", id)
       .single();
     return data;
   } catch {
     return null;
   }
+}
+
+function formatLiquidationItems(items?: any[] | null) {
+  if (!items || items.length === 0) return undefined;
+  return items.map((i) => ({
+    name: i.sku_name_snapshot || "Vật tư thanh lý",
+    quantity: i.entered_quantity ?? i.quantity,
+    unit: i.uom_name_snapshot || "",
+    note: i.method === "sale" ? "Thanh lý bán" : "Hủy bỏ",
+  }));
 }
 
 export async function createLiquidation(input: z.infer<typeof liquidationSchema>) {
@@ -59,21 +82,22 @@ export async function createLiquidation(input: z.infer<typeof liquidationSchema>
     if (meta?.code) code = meta.code;
   }
 
-  await notifyUsers({
-    userIds: await getManagerIds(supabase),
-    type: "liquidation",
-    title: `[Thanh lý vật tư] ${code} - Chờ phê duyệt thanh lý`,
-    body: `Người lập ${profile.name} đã tạo phiếu đề xuất thanh lý ${items.length} mặt hàng vật tư.${parsed.reason ? ` Lý do: ${parsed.reason}` : ""}`,
-    link: "/liquidations",
-    document: {
-      code,
-      type: "Phiếu thanh lý vật tư",
-      status: "Chờ phê duyệt",
-      statusVariant: "warning",
-      creatorName: profile.name,
-      notes: parsed.reason,
-    },
-  });
+  try {
+    const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
+    if (whUsers && whUsers.length > 0) {
+      await supabase.from("notifications").insert(
+        whUsers.map((u) => ({
+          user_id: u.id,
+          type: "liquidation",
+          title: `[Thanh lý vật tư] ${code} - Chờ phê duyệt thanh lý`,
+          body: `Người lập ${profile.name} đã tạo phiếu đề xuất thanh lý ${items.length} mặt hàng vật tư.`,
+          link: "/liquidations",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[createLiquidation] In-app notification error:", err);
+  }
 
   revalidatePath("/liquidations");
   return data as string;
@@ -87,21 +111,18 @@ export async function approveLiquidation(id: string) {
 
   const meta = await liquidationMeta(id);
   const code = meta?.code ?? "PTL";
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "liquidation",
-    title: `[Thanh lý vật tư] ${code} - Đã phê duyệt thanh lý`,
-    body: `Phiếu thanh lý vật tư đã được phê duyệt bởi ${profile.name}, sẵn sàng tiến hành thanh lý/xử lý.`,
-    link: "/liquidations",
-    document: {
-      code,
-      type: "Phiếu thanh lý vật tư",
-      status: "Đã phê duyệt",
-      statusVariant: "success",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "liquidation.approved",
+      actorId: profile.id,
+      subject: { type: "liquidation", id },
+      payload: {
+        code,
+        itemCount: (meta as any)?.items?.length ?? 1,
+        items: formatLiquidationItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 
@@ -118,23 +139,22 @@ export async function cancelLiquidation(id: string) {
   const { error } = await supabase.rpc("cancel_liquidation", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "liquidation",
-    title: `[Thanh lý vật tư] ${code} - Đã hủy phiếu thanh lý`,
-    body: `Phiếu thanh lý vật tư đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-    link: "/liquidations",
-    document: {
-      code,
-      type: "Phiếu thanh lý vật tư",
-      status: "Đã hủy",
-      statusVariant: "neutral",
-      handlerName: profile.name,
-    },
-  });
+  try {
+    const userIds = [...new Set([meta?.created_by].filter(Boolean))];
+    if (userIds.length > 0) {
+      await supabase.from("notifications").insert(
+        userIds.map((uid) => ({
+          user_id: uid!,
+          type: "liquidation",
+          title: `[Thanh lý vật tư] ${code} - Đã hủy phiếu thanh lý`,
+          body: `Phiếu thanh lý vật tư đã được hủy bỏ bởi ${profile.name}.`,
+          link: "/liquidations",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[cancelLiquidation] In-app notification error:", err);
+  }
 
   revalidatePath("/liquidations");
 }
@@ -149,24 +169,22 @@ export async function rejectLiquidation(id: string, reason: string) {
   const { error } = await supabase.rpc("reject_liquidation", { p_id: id, p_by: profile.id, p_reason: reason });
   if (error) throw new Error(error.message);
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "liquidation",
-    title: `[Thanh lý vật tư] ${code} - Bị từ chối thanh lý`,
-    body: `Phiếu thanh lý vật tư bị từ chối phê duyệt bởi ${profile.name}.${reason ? ` Lý do: ${reason}` : ""}`,
-    link: "/liquidations",
-    document: {
-      code,
-      type: "Phiếu thanh lý vật tư",
-      status: "Bị từ chối",
-      statusVariant: "danger",
-      handlerName: profile.name,
-      notes: reason,
-    },
-  });
+  try {
+    const userIds = [...new Set([meta?.created_by].filter(Boolean))];
+    if (userIds.length > 0) {
+      await supabase.from("notifications").insert(
+        userIds.map((uid) => ({
+          user_id: uid!,
+          type: "liquidation",
+          title: `[Thanh lý vật tư] ${code} - Bị từ chối thanh lý`,
+          body: `Phiếu thanh lý vật tư bị từ chối bởi ${profile.name}.${reason ? ` Lý do: ${reason}` : ""}`,
+          link: "/liquidations",
+        }))
+      );
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[rejectLiquidation] In-app notification error:", err);
+  }
 
   revalidatePath("/liquidations");
 }
@@ -185,21 +203,18 @@ export async function completeLiquidation(id: string, outcomes: { itemId: string
   });
   if (error) throw new Error(error.message);
 
-  const managers = await getManagerIds(supabase);
-  const userIds = [...new Set([meta?.created_by, ...managers])];
-
-  await notifyUsers({
-    userIds,
-    type: "liquidation",
-    title: `[Thanh lý vật tư] ${code} - Đã hoàn tất thanh lý vật tư`,
-    body: `Thủ kho ${profile.name} đã hoàn tất thủ tục thanh lý và ghi nhận kết quả vào hệ thống MTP-ERN.`,
-    link: "/liquidations",
-    document: {
-      code,
-      type: "Phiếu thanh lý vật tư",
-      status: "Đã hoàn tất",
-      statusVariant: "success",
-      handlerName: profile.name,
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "liquidation.completed",
+      actorId: profile.id,
+      subject: { type: "liquidation", id },
+      payload: {
+        code,
+        itemCount: outcomes.length,
+        items: formatLiquidationItems((meta as any)?.items),
+        handlerName: profile.name,
+      },
     },
   });
 

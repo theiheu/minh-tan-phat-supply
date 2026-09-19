@@ -1,69 +1,76 @@
 # CONTEXT — Domain Glossary & Architectural Constraints
 
-Tài liệu này định nghĩa các thuật ngữ domain chính thức của hệ thống **Minh Tân Phát Supply**.  
-Mọi agent, developer và tài liệu trong repo phải dùng đúng thuật ngữ này.
+Tài liệu này định nghĩa các thuật ngữ domain chính thức của hệ thống **Minh Tân Phát Supply**.
+Mọi agent, developer và tài liệu trong repo phải tuân thủ nghiêm ngặt các định nghĩa này.
 
 ---
 
-## 1. Thuật ngữ Catalog & Tồn kho
+## 1. Thuật ngữ Catalog & Tồn Kho (SKU & Inventory Master)
 
-| Thuật ngữ | Định nghĩa | Ghi chú thêm |
+| Thuật ngữ | Định nghĩa Chuẩn | Ghi chú Triển khai |
 |---|---|---|
-| **Product / Vật tư** | Danh tính chung của một nhóm hàng. Không trực tiếp giữ tồn, không có giá, không giao dịch. | Ví dụ: "Motor quạt IP55", "Thuốc sát trùng Vikon" |
-| **SKU** | Dòng hàng nhỏ nhất có thể nhập, xuất, chuyển, kiểm kê và giữ tồn. Mỗi SKU có Đơn vị cơ sở duy nhất. | Code DB: bảng `skus`. |
-| **Thuộc tính (Attribute)** | Đặc trưng kỹ thuật của SKU có kiểu dữ liệu rõ ràng. Có thể là trục phân biệt SKU hoặc thông số mô tả. | Ví dụ: công suất (kW), điện áp (V), kích thước (mm). Bảng: `attribute_definitions`. |
-| **Đơn vị cơ sở (Base UOM)** | Đơn vị duy nhất dùng để ghi tồn của một SKU trong Stock Ledger. | Ví dụ: Cái, Kg, Lít |
-| **Đơn vị giao dịch (Transaction UOM)** | Đơn vị nhập/xuất riêng của SKU có hệ số quy đổi (snapshot) về Đơn vị cơ sở. | Ví dụ: Thùng (24 cái), Bao (25kg). Bảng: `sku_transaction_units`. |
-| **Bộ ảo (Virtual Kit)** | SKU có BOM nhưng không giữ tồn riêng. Khi xuất → tự động trừ tồn các SKU thành phần. | `kit_type = 'virtual'` |
-| **Bộ ráp sẵn (Assembled Kit)** | SKU có BOM và giữ tồn riêng. Tồn tăng qua nghiệp vụ lắp ráp (Assembly operation). | `kit_type = 'assembled'` |
-| **BOM (Bill of Materials)** | Cấu tạo có phiên bản của một SKU từ các SKU thành phần. Có version để bảo toàn lịch sử. | Bảng: `sku_bom_versions`, `sku_bom_lines` |
-| **Stock Ledger / Sổ cái kho** | Nguồn sự thật append-only ghi nhận mọi biến động tồn theo SKU + vị trí + đơn vị cơ sở. | Hủy giao dịch tạo movement đảo, không xóa movement gốc. Bảng: `stock_movements`. |
-| **Stock Balance** | Tồn hiện tại của SKU tại một vị trí kho, tính từ Stock Ledger. | Bảng: `stock_balances`. |
-| **Document Snapshot** | Bản chụp tại thời điểm chứng từ: hệ số quy đổi UOM, giá, BOM version. Bảo toàn ý nghĩa lịch sử khi dữ liệu master thay đổi. | Bảng: `inventory_document_snapshots`. |
+| **Product / Vật tư** | Danh tính chung của một nhóm hàng hóa. Không trực tiếp giữ tồn, không có giá, không giao dịch trực tiếp. | Bảng `products`. Ví dụ: "Motor quạt hút", "Thuốc sát trùng Benkocid". |
+| **SKU** | Đơn vị lưu kho nhỏ nhất có thể nhập, xuất, chuyển, kiểm kê và giữ tồn. Mỗi SKU có Đơn vị cơ sở duy nhất. | Bảng `skus`. Ví dụ: `SKU-MOTOR-1.5KW-380V-SKF`. |
+| **Thuộc tính (Attribute)** | Đặc trưng kỹ thuật của SKU có kiểu dữ liệu rõ ràng (Number, Text, Option). Dùng làm trục phân cấp hoặc thông số kỹ thuật. | Bảng: `attribute_definitions`, `sku_attribute_values`. |
+| **Đơn vị cơ sở (Base UOM)** | Đơn vị đo lường nhỏ nhất dùng để ghi nhận tồn kho của SKU trong Stock Ledger. | Ví dụ: `Cái`, `Kg`, `Lít`, `Mét`. |
+| **Đơn vị giao dịch (Transaction UOM)** | Đơn vị đóng gói/nhập/xuất của SKU có hệ số quy đổi (snapshot) về Đơn vị cơ sở. | Bảng: `sku_transaction_units`. Ví dụ: Thùng (6 hộp), Can (5 lít). |
+| **Bộ ảo (Virtual Kit)** | SKU có định mức BOM nhưng không giữ tồn độc lập. Khi xuất kho, hệ thống tự động trừ tồn các SKU thành phần. | `kit_type = 'virtual'`. |
+| **Bộ ráp sẵn (Assembled Kit)** | SKU có định mức BOM và giữ tồn độc lập. Tồn kho tăng qua nghiệp vụ lắp ráp (Assembly) và trừ linh kiện con. | `kit_type = 'assembled'`. |
+| **BOM (Bill of Materials)** | Định mức cấu tạo linh kiện có phiên bản của một SKU cha từ các SKU con. | Bảng: `bom_versions`, `bom_items`. |
+| **Stock Ledger / Sổ cái kho** | Nguồn sự thật append-only ghi nhận mọi biến động tồn theo SKU + Vị trí kho + Đơn vị cơ sở. Không bao giờ xóa bản ghi cũ, đảo bút toán bằng reversal movement. | Bảng: `stock_movements`. |
+| **Stock Balance** | Số dư tồn kho tức thời của SKU tại từng vị trí kho, tính từ Stock Ledger. | Bảng: `stock_balances`, view `location_stock`. |
 
 ---
 
-## 2. Thuật ngữ Nghiệp vụ
+## 2. Thuật ngữ Nghiệp vụ Vận hành Trại Gà (Operational Domain)
 
-| Thuật ngữ | Định nghĩa |
+| Thuật ngữ | Định nghĩa & Ý nghĩa Vận hành |
 |---|---|
-| **Phiếu yêu cầu (Requisition)** | Công nhân/Kỹ thuật xin cấp vật tư. Qua duyệt 2 cấp: Kỹ thuật → Kho. |
-| **Phiếu nhập kho (Receipt)** | Nhập vật tư từ nhà cung cấp. Có thể gắn hóa đơn VAT và ảnh chứng từ. |
-| **Phiếu xuất kho / Cấp phát (Issue)** | Xuất vật tư nội bộ gắn theo Zone/Sub-zone chuồng, hoặc xuất bán thương mại. |
-| **Báo hỏng (Defect Note)** | Ghi nhận thiết bị hỏng. Khởi đầu cho luồng Đổi 1-1 hoặc Sửa chữa. |
-| **Đổi 1-1 cấp tốc (Quick Exchange)** | Xuất ngay hàng mới + nhận hàng hỏng vào kho hỏng trong 1 transaction (≤30 giây). |
-| **Phiếu sửa chữa (Repair Order)** | Gửi thiết bị hỏng đi sửa bên ngoài, theo dõi tiến độ, nghiệm thu và đưa về kho. |
-| **Thanh lý (Liquidation)** | Bán phế liệu hoặc tiêu hủy thiết bị không thể sửa chữa. |
-| **Kiểm kê (Stocktake)** | Đếm tồn thực tế định kỳ, đối chiếu với tồn hệ thống, cân bằng chênh lệch. |
-| **Chuyển kho (Transfer)** | Điều chuyển vật tư từ kho này sang kho khác nội bộ. |
-| **Mượn-Trả (Tool Borrowing)** | Theo dõi mượn/trả dụng cụ dùng chung (máy hàn, thang nhôm). Có cảnh báo quá hạn. |
-| **Zone / Sub-zone** | Khu vực / Dãy chuồng. Sub-zone gắn với từng phiếu xuất để phân tích chi phí. |
-| **Kho dầu (Fuel)** | Trạm bồn xăng dầu: mỗi xe có QR riêng, ghi lại lượng dầu + ODO/giờ máy. |
+| **Phiếu yêu cầu (Requisition)** | Công nhân/Trưởng chuồng lập phiếu xin cấp vật tư trên điện thoại. Quy trình duyệt 2 cấp: Kỹ thuật duyệt cấp 1 ➔ Quản kho xuất cấp cấp 2. |
+| **Phiếu nhập kho (Receipt / GRN)** | Nhập vật tư từ Nhà cung cấp, gắn số hóa đơn VAT, upload ảnh chứng từ và tự động cấp phát (Auto-fulfill) cho phiếu đã duyệt. |
+| **Phiếu xuất kho (Issue / PXK)** | Xuất vật tư trực tiếp gắn theo Dãy chuồng (`sub_zones`) để hạch toán chi phí, hoặc xuất bán thương mại cho khách hàng. |
+| **Phiếu báo hỏng (Defect Note)** | Ghi nhận sự cố hư hỏng tại chuồng, bắt buộc chụp >= 1 ảnh hiện trường và mô tả lỗi để phục vụ đối soát. |
+| **Đổi 1-1 cấp tốc (Quick Exchange)** | Nghiệp vụ khẩn cấp cứu chuồng: Xuất ngay thiết bị mới và thu thiết bị cháy về Kho Hỏng trong 30 giây (1 transaction). |
+| **Phiếu sửa chữa (Repair Order)** | Gom thiết bị hỏng gửi xưởng cơ điện ngoài quấn lại motor/bơm; nghiệm thu đạt chuẩn chuyển về Kho Tổng tái sử dụng. |
+| **Phiếu thanh lý (Liquidation)** | Bán phế liệu ve chai hoặc tiêu hủy thiết bị không thể phục hồi, Chủ trại duyệt thu tiền về quỹ. |
+| **Mượn - Trả dụng cụ (Tool Borrowing)** | Quản lý tủ đồ nghề dùng chung (máy hàn, máy khoan, thang nhôm). Có hẹn ngày trả và gửi email cảnh báo quá hạn. |
+| **Khu vực & Dãy chuồng (Zones & Sub-zones)** | Cây không gian 2 cấp: Khu lớn (`zones`, VD: Khu A, Khu B) và Dãy chuồng con (`sub_zones`, VD: Chuồng A1, A2). |
+| **Kho dầu & Xe cơ giới (Fuel & Fleet)** | Trạm bồn dầu Diesel nội bộ: Quét tem QR xe, ghi nhận ODO/giờ máy, tự động tính L/100km hoặc L/h, cảnh báo bất thường. |
+| **Kiểm kê kho (Stocktake)** | Đếm tồn kho thực tế định kỳ bằng điện thoại, chụp ảnh bằng chứng, đối soát thừa/thiếu và duyệt cân bằng tồn kho. |
+| **Chuyển kho (Transfer)** | Điều chuyển vật tư giữa Kho Tổng, Kho Cơ Điện, Kho Hỏng, Trạm Bồn Dầu với lịch sử minh bạch. |
 
 ---
 
-## 3. Thuật ngữ Kỹ thuật
+## 3. Thuật ngữ Kỹ thuật & Ràng buộc Kiến trúc (Architecture Constraints)
 
-| Thuật ngữ | Định nghĩa |
+| Thuật ngữ | Định nghĩa Kỹ thuật & Ràng buộc |
 |---|---|
-| **Server Action** | Hàm `async` đánh dấu `'use server'` trong Next.js, chạy trên server, gọi trực tiếp từ Client Component. Thay thế API endpoints thủ công. |
-| **RPC (Remote Procedure Call)** | Hàm PostgreSQL `SECURITY DEFINER` được gọi qua Supabase API. Xử lý logic nghiệp vụ phức tạp, đảm bảo ACID transaction. |
-| **RLS (Row Level Security)** | Chính sách bảo mật cấp hàng trong PostgreSQL. Mỗi user chỉ đọc/ghi được các rows phù hợp với vai trò. |
-| **Posting Kernel** | Lớp trung tâm append-only xử lý mọi biến động kho. Mỗi movement có: nguồn chứng từ, snapshot, idempotency key và khả năng reversal. |
-| **Immutable Identity** | Sau khi tạo tài khoản, `full_name` và `username` bị khóa vĩnh viễn bởi DB Trigger `trg_profiles_prevent_identity_change`. |
-| **Hybrid Archive** | Tài khoản có lịch sử chứng từ → set `is_active=false` (lưu trữ). Tài khoản trống → xóa vĩnh viễn (Hard Delete). |
-| **Auto-fulfill** | Sau khi nhập kho, hệ thống tự động cấp phát cho các phiếu yêu cầu **đã được duyệt** (status: `approved`). FIFO. |
+| **Server Actions** | Hàm `async` đánh dấu `'use server'` trong Next.js App Router, chạy hoàn toàn trên server, gọi trực tiếp từ Client Component với Zod validation. |
+| **Security Definer RPC** | Hàm PostgreSQL chạy với đặc quyền quản trị viên DB để thực hiện các transaction phức tạp, kiểm tra số dư và ghi sổ cái kho an toàn. |
+| **Row Level Security (RLS)** | Chính sách bảo mật cấp hàng trong PostgreSQL 17 đảm bảo từng vai trò chỉ đọc/ghi đúng dữ liệu được phép. |
+| **Immutable Identity** | Nguyên tắc bất biến định danh: Sau khi tạo tài khoản, `name` và `username` bị khóa vĩnh viễn bởi DB Trigger `trg_profiles_prevent_identity_change`. |
+| **Hybrid Archive & Force Purge** | Nhân sự có lịch sử chứng từ ➔ chuyển sang trạng thái Lưu trữ (`is_active = false`); Tài khoản trống ➔ Xóa vĩnh viễn (Hard Delete); Superuser có quyền Purge toàn diện (`admin_purge_user_data`). |
+| **Append-Only Ledger** | Bảng `stock_movements` không được phép `UPDATE` hay `DELETE` (DB Trigger chặn). Mọi thao tác hoàn tác phải tạo movement đối ứng (reversal). |
+| **Auto-Fulfill Outcome** | Sau khi nhập kho, hệ thống tự động quét và hoàn tất các phiếu yêu cầu đã duyệt (`approved`) theo thứ tự FIFO và lưu vết bền vững. |
+| **Vector PDF Engine** | Render PDF trực tiếp phía client/server bằng `@react-pdf/renderer` với font tiếng Việt nhúng sẵn (`Roboto-Regular`, `Roboto-Bold`), chuẩn hóa nhận diện thương hiệu và mã QR tra cứu. |
+| **AI Copilot RAG** | Hệ thống trợ lý AI tích hợp qua Vercel AI SDK, trích xuất dữ liệu kho và tài liệu SOP vận hành trại với cơ chế rate limit và chunking chuẩn hóa. |
 
 ---
 
-## 4. Thuật ngữ cần tránh
+## 4. Bảng Thuật ngữ Đối chiếu (Terminology Mapping)
 
-| ❌ Sai | ✅ Đúng | Lý do |
+| ❌ Thuật ngữ Sai / Cũ | ✅ Thuật ngữ Chuẩn Hiện Tại | Lý do & Ý nghĩa |
 |---|---|---|
-| `variant` (cho code mới) | `sku` | Kiến trúc đích dùng SKU |
-| "biến thể" (trong context tồn kho) | "SKU" | Tránh nhầm lẫn với variants cũ |
-| "đơn vị đóng gói là biến thể" | "Transaction UOM" | Đơn vị đóng gói không phải SKU |
-| "bộ vật tư là một loại Product" | "SKU có BOM" | Product không giao dịch, SKU mới có BOM |
-| JSON attributes tự do | Typed Attribute Definitions | JSON không chuẩn hóa, không filter được |
-| Xóa stock movement | Tạo movement đảo (reversal) | Stock Ledger phải append-only |
+| `variant` (trong code mới) | `sku` | Kiến trúc mới sử dụng bảng `skus` làm hạt nhân tồn kho. |
+| "Đơn vị đóng gói là biến thể riêng" | "Transaction UOM của SKU" | Đơn vị đóng gói chỉ là hệ số quy đổi về Base UOM của cùng 1 SKU. |
+| "Bộ vật tư là một loại Product" | "SKU có định mức BOM (Kit)" | Product chỉ là định danh chung, SKU mới có cấu trúc BOM linh kiện. |
+| JSON attributes tự do | Typed Attribute Definitions | Dùng bảng `attribute_definitions` để chuẩn hóa lọc và tìm kiếm. |
+| Xóa dòng stock movement | Tạo Reversal Movement đối ứng | Sổ cái kho phải đảm bảo nguyên tắc kế toán bất biến (Append-Only). |
+| Chọn kho tự do khi báo hỏng | Kho nguồn mặc định là Kho Tổng | Đồ hỏng chỉ chuyển vào Kho Hỏng khi được phê duyệt đổi hoặc sửa. |
 
+---
+
+## 5. Deployment Manifest Reference
+
+Trạng thái cutover, artifact hash và cấu hình môi trường được kiểm soát tập trung qua file manifest tại `docs/operations/current-deployment-status.yaml`.
+Mọi tài liệu và báo cáo triển khai phải đồng bộ dữ liệu với manifest này và được thẩm định bằng `scripts/validate-manifest.js`.

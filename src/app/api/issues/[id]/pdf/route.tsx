@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: items } = await supabase
     .from("issue_items")
-    .select("quantity, entered_quantity, unit_price, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol))")
+    .select("quantity, entered_quantity, unit_price, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("issue_id", id);
 
   const isSale = doc.destination_type === "customer";
@@ -80,12 +80,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
             ]
       }
       rows={(items ?? []).map((i) => {
-        const v = i.skus as { products?: { name?: string | null } | null; units?: { name?: string | null; symbol?: string | null } | null } | null;
-        const name = i.sku_name_snapshot || v?.products?.name || "—";
+        const v = i.skus as {
+          products?: { name?: string | null } | null;
+          units?: { name?: string | null; symbol?: string | null } | null;
+          sku_attribute_values?: Array<{
+            text_value?: string | null;
+            legacy_text_value?: string | null;
+            numeric_value?: number | null;
+            units?: { symbol?: string | null } | null;
+          }> | null;
+        } | null;
+        const baseName = i.sku_name_snapshot || v?.products?.name || "—";
+        const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
+        const detail = attrVals.length > 0 ? attrVals.join(" · ") : null;
+        const fullName = detail && detail !== "—" && !baseName.includes(detail) ? `${baseName} - ${detail}` : baseName;
         const unit = i.uom_name_snapshot || v?.units?.symbol || v?.units?.name || "—";
         const qty = i.entered_quantity ?? i.quantity;
         return [
-          name,
+          fullName,
           unit,
           qty,
           ...(isSale ? [formatVnd(i.unit_price ?? 0), formatVnd(qty * (i.unit_price ?? 0))] : []),

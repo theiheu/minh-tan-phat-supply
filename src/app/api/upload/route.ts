@@ -9,6 +9,9 @@ const ALLOWED_BUCKETS = new Set([
   "defect-images",
   "receipt-images",
   "issue-images",
+  "requisition-images",
+  "vehicle-documents",
+  "vehicle-images",
 ]);
 const MAX_SIZE = 20 * 1024 * 1024; // 20MB (hỗ trợ ảnh độ phân giải cao từ điện thoại)
 
