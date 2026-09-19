@@ -18,14 +18,13 @@ export function ProductSingleMode({
   filteredFlatVariants,
   selectedVariantId,
   handleSelectVariantDirect,
-}: any) {
+}: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
   return (
     <>
-              {mode === "single" && (
                 <div className="space-y-4">
                   {hasMultiAxis ? (
                     <div className="space-y-4 rounded-lg border bg-muted/20 p-2.5 sm:p-3.5">
-                      {optionAxes.map((axis, axisIndex) => {
+                      {optionAxes.map((axis: string, axisIndex: number) => {
                         const items = getAvailableValuesForAxis(axisIndex);
                         if (items.length === 0) return null;
                         const currentVal = selectedAxisValues[axis];
@@ -44,7 +43,7 @@ export function ProductSingleMode({
                               )}
                             </div>
                             <div className="flex flex-wrap gap-1.5">
-                              {items.map(({ value: val, stock, thumbnailSrc }) => {
+                              {items.map(({ value: val, stock, thumbnailSrc }: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
                                 const isSelected = currentVal === val;
                                 const isSoldOut = stock <= 0;
 
@@ -116,7 +115,7 @@ export function ProductSingleMode({
                             Không tìm thấy quy cách khớp với &quot;{searchFilter}&quot;
                           </div>
                         ) : (
-                          filteredFlatVariants.map((v) => {
+                          filteredFlatVariants.map((v: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
                             const label = v.parsedHierarchy.fullLabel;
                             const isSelected = v.id === selectedVariantId;
                             const isSoldOut = v.stock <= 0;
@@ -189,7 +188,6 @@ export function ProductSingleMode({
                     </div>
                   )}
                 </div>
-              )}
     </>
   );
 }

@@ -3,7 +3,7 @@ import { parseVariantHierarchy } from "../utils/variant-hierarchy";
 import type { Product } from "@/lib/types";
 import type { VariantWithStock } from "../types";
 import type { TransactionUom } from "@/features/catalog/domain/types";
-import { matchesSearchTokens, computeSearchScore } from "@/lib/search";
+import { computeSearchScore } from "@/lib/search";
 
 export function useProductDetail({
   product,
@@ -114,7 +114,7 @@ export function useProductDetail({
         (postAxis) => pv.parsedHierarchy.levels[postAxis] === selectedAxisValues[postAxis]
       );
       
-      const thumb = (pv.image_urls && pv.image_urls.length > 0) ? pv.image_urls[0] : undefined;
+      const thumb = (pv.images && pv.images.length > 0) ? pv.images[0] : undefined;
 
       if (!valMap.has(val)) {
         valMap.set(val, { isAvailable, stock: isAvailable ? pv.stock : 0, thumbnailSrc: thumb });
@@ -172,14 +172,14 @@ export function useProductDetail({
   };
 
   const displayedImages = useMemo(() => {
-    if (selectedVariant && selectedVariant.image_urls && selectedVariant.image_urls.length > 0) {
-      return selectedVariant.image_urls;
+    if (selectedVariant && selectedVariant.images && selectedVariant.images.length > 0) {
+      return selectedVariant.images;
     }
-    if (product.image_urls && product.image_urls.length > 0) {
-      return product.image_urls;
+    if (product.images && product.images.length > 0) {
+      return product.images;
     }
     return [];
-  }, [selectedVariant, product.image_urls]);
+  }, [selectedVariant, product.images]);
 
   const filteredFlatVariants = useMemo(() => {
     if (!searchFilter.trim()) return parsedVariants;
