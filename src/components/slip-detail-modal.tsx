@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ImagePlus, Milestone, Printer, QrCode, X } from "lucide-react";
+import { AlertTriangle, Printer, QrCode } from "lucide-react";
 import { BrandLoading } from "@/components/brand-loading";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -17,18 +17,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { ZoomableImage } from "@/components/image-lightbox";
-import { canDeleteInvoiceImage } from "@/lib/images";
 import {
   getSlipDetail,
   type SlipDetailPayload,
@@ -60,39 +57,18 @@ import {
   rejectExchange,
 } from "@/features/exchanges/actions";
 import { requestRepair } from "@/features/defects/actions";
-import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import {
   auditEntityLabel,
   slipStatusLabel,
   statusBadgeVariant,
 } from "@/lib/labels";
 import { isPrivileged } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
-const EVENT_DOT_CLASS: Record<string, string> = {
-  info: "bg-sky-500",
-  success: "bg-emerald-500",
-  warning: "bg-amber-400 dark:bg-amber-500",
-  danger: "bg-red-500",
-  neutral: "bg-gray-400 dark:bg-gray-500",
-};
-
-const EVENT_LABEL_CLASS: Record<string, string> = {
-  info: "text-sky-700 dark:text-sky-300",
-  success: "text-emerald-700 dark:text-emerald-300",
-  warning: "text-amber-700 dark:text-amber-300",
-  danger: "text-red-700 dark:text-red-300",
-  neutral: "text-gray-700 dark:text-gray-300",
-};
-
-/** Mốc đặc biệt: Cấp phát vật tư (phiếu yêu cầu) tô cam. */
-const EVENT_KEY_DOT_CLASS: Record<string, string> = {
-  "requisition.fulfill": "bg-orange-500",
-};
-
-const EVENT_KEY_LABEL_CLASS: Record<string, string> = {
-  "requisition.fulfill": "text-orange-700 dark:text-orange-300",
-};
+// Extracted Subcomponents
+import { SlipInvoices } from "@/components/slip-detail/slip-invoices";
+import { SlipItemsTable } from "@/components/slip-detail/slip-items-table";
+import { SlipTimeline } from "@/components/slip-detail/slip-timeline";
 
 interface SlipDetailModalProps {
   entityType: string | null;
@@ -380,80 +356,15 @@ export function SlipDetailModal({
                 )}
               </div>
 
-              {/* Invoice / Evidence Images */}
-              {(detail.type === "receipt" || detail.type === "issue" || (detail.invoiceImages && detail.invoiceImages.length > 0)) && (
-                <div className="space-y-2.5 p-3.5 border-2 border-border/80 rounded-xl bg-card">
-                  <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                    <span className="text-xs font-semibold text-foreground">
-                      {detail.type === "issue" ? "Hóa đơn & Chứng từ xuất kho" : "Hóa đơn & Chứng từ mua hàng"}
-                      {detail.invoiceImages && detail.invoiceImages.length > 0 ? ` (${detail.invoiceImages.length} ảnh)` : ""}:
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-start gap-2.5 pt-0.5">
-                    {detail.invoiceImages &&
-                      detail.invoiceImages.length > 0 &&
-                      detail.invoiceImages.map((url, idx) => (
-                        <div key={url} className="relative group">
-                          <ZoomableImage
-                            src={url}
-                            images={detail.invoiceImages}
-                            alt={`Ảnh #${idx + 1}`}
-                            title={`Hóa đơn ${detail.code} (${idx + 1}/${detail.invoiceImages?.length})`}
-                            className="size-20 sm:size-24 rounded-lg border-2 object-cover"
-                          />
-                          {isManager &&
-                            canDeleteInvoiceImage({
-                              imageUrl: url,
-                              currentUserId: currentUser?.id,
-                              userRole: currentUser?.role,
-                              creatorId: detail.creatorId,
-                            }) && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleInvoiceRemove(url);
-                                }}
-                                disabled={pending}
-                                className="absolute -right-2 -top-2 z-10 flex size-6 items-center justify-center rounded-full bg-red-600 text-white shadow-md hover:bg-red-700 transition-opacity"
-                                aria-label="Xóa ảnh này"
-                                title="Xóa ảnh hóa đơn này"
-                              >
-                                <X className="size-3.5" />
-                              </button>
-                            )}
-                        </div>
-                      ))}
-
-                    {isManager && (
-                      <Label className="cursor-pointer">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          asChild
-                          disabled={uploadingInvoices || pending}
-                          className="flex size-20 flex-col items-center justify-center gap-1 border-dashed p-0 text-[10px] sm:size-24"
-                        >
-                          <span>
-                            <ImagePlus className="size-5" aria-hidden />
-                            {uploadingInvoices ? "Đang tải…" : "+ Thêm ảnh"}
-                          </span>
-                        </Button>
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif"
-                          multiple
-                          className="sr-only"
-                          disabled={uploadingInvoices || pending}
-                          onChange={handleInvoiceUpload}
-                        />
-                      </Label>
-                    )}
-                  </div>
-                </div>
-              )}
+              <SlipInvoices
+                detail={detail}
+                isManager={isManager}
+                currentUser={currentUser}
+                pending={pending}
+                uploadingInvoices={uploadingInvoices}
+                onUpload={handleInvoiceUpload}
+                onRemove={handleInvoiceRemove}
+              />
 
               {/* Defect Evidence if replacement requisition */}
               {detail.defectEvidence && (
@@ -476,9 +387,9 @@ export function SlipDetailModal({
                               <ZoomableImage
                                 key={img}
                                 src={img}
-                                images={it.images}
+                                images={it.images ?? []}
                                 alt={`Ảnh hỏng #${imgIdx + 1}`}
-                                title={`Ảnh hỏng ${detail.defectEvidence?.code} (${imgIdx + 1}/${it.images.length})`}
+                                title={`Ảnh hỏng ${detail.defectEvidence?.code} (${imgIdx + 1}/${it.images?.length})`}
                                 className="size-16 rounded-md border object-cover"
                               />
                             ))}
@@ -510,129 +421,7 @@ export function SlipDetailModal({
                 </div>
               )}
 
-              {/* Items Table */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
-                  <span className="text-xs font-semibold text-foreground">
-                    Danh sách vật tư ({detail.items.length} món):
-                  </span>
-                </div>
-                <div className="rounded-xl border-2 border-border/80 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-muted/40">
-                      <TableRow>
-                        <TableHead className="w-12 text-center text-xs">STT</TableHead>
-                        <TableHead className="w-16 text-center text-xs">Ảnh</TableHead>
-                        <TableHead className="min-w-[180px] text-xs">Tên vật tư</TableHead>
-                        <TableHead className="w-20 text-center text-xs">ĐVT</TableHead>
-                        <TableHead className="w-16 text-center text-xs">SL</TableHead>
-                        {detail.items.some((i) => i.unitPrice != null) && (
-                          <TableHead className="w-28 text-right text-xs">Đơn giá</TableHead>
-                        )}
-                        {detail.items.some((i) => i.batchNo || i.expiryDate) && (
-                          <TableHead className="w-32 text-xs">Lô / HSD</TableHead>
-                        )}
-                        {detail.type === "defect" && detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && (
-                          <TableHead className="text-xs">Mô tả hỏng & Ảnh</TableHead>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {detail.items.map((it, idx) => (
-                        <TableRow key={it.id || idx} className="hover:bg-muted/30">
-                          <TableCell className="text-center font-mono text-xs text-muted-foreground">
-                            {idx + 1}
-                          </TableCell>
-                          <TableCell className="w-16 text-center">
-                            {it.images && it.images.length > 0 ? (
-                              <div className="relative inline-flex shrink-0">
-                                <ZoomableImage
-                                  src={it.images[0]}
-                                  images={it.images}
-                                  alt={it.productName}
-                                  title={it.productName}
-                                  className="size-10 shrink-0 rounded-md border object-cover"
-                                />
-                                {it.images.length > 1 && (
-                                  <span className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-black/80 text-[8px] font-bold text-white shadow pointer-events-none">
-                                    +{it.images.length - 1}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="mx-auto size-10 rounded-md border bg-muted/40 flex items-center justify-center text-muted-foreground/40 text-[10px]">
-                                —
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium text-xs text-foreground min-w-[180px]">
-                            <div className="font-medium text-foreground">{it.productName}</div>
-                            {it.stock !== undefined && it.stock !== null && (
-                              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                                <span>Tồn kho:</span>
-                                <Badge
-                                  variant={it.stock === 0 ? "danger" : it.stock < it.quantity ? "warning" : "success"}
-                                  className="text-[10px] px-1.5 py-0"
-                                >
-                                  {it.stock}
-                                </Badge>
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center text-xs text-muted-foreground w-20">
-                            {it.unit ?? "—"}
-                          </TableCell>
-                          <TableCell className="text-center font-mono text-xs font-semibold w-16">
-                            {it.quantity}
-                          </TableCell>
-                          {detail.items.some((i) => i.unitPrice != null) && (
-                            <TableCell className="text-right font-mono text-xs">
-                              {it.unitPrice != null ? formatVnd(it.unitPrice) : "—"}
-                            </TableCell>
-                          )}
-                          {detail.items.some((i) => i.batchNo || i.expiryDate) && (
-                            <TableCell className="font-mono text-xs text-muted-foreground">
-                              {it.batchNo && <div>Lô: {it.batchNo}</div>}
-                              {it.expiryDate && <div>HSD: {formatDate(it.expiryDate)}</div>}
-                            </TableCell>
-                          )}
-                          {detail.type === "defect" && detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && (
-                            <TableCell className="text-xs">
-                              {it.damageDetail && <div>{it.damageDetail}</div>}
-                              {it.images && it.images.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                  {it.images.map((img) => (
-                                    <ZoomableImage
-                                      key={img}
-                                      src={img}
-                                      images={it.images}
-                                      alt="Ảnh hỏng"
-                                      className="size-10 rounded border object-cover"
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter className="bg-muted/30 font-semibold text-xs">
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-right">Tổng cộng:</TableCell>
-                        <TableCell className="text-center font-mono">{detail.items.reduce((s, i) => s + i.quantity, 0)}</TableCell>
-                        {detail.items.some((i) => i.unitPrice != null) && (
-                          <TableCell className="text-right font-mono">
-                            {formatVnd(detail.items.reduce((s, i) => s + i.quantity * (i.unitPrice ?? 0), 0))}
-                          </TableCell>
-                        )}
-                        {detail.items.some((i) => i.batchNo || i.expiryDate) && <TableCell />}
-                        {detail.type === "defect" && detail.items.some((i) => i.damageDetail || (i.images && i.images.length > 0)) && <TableCell />}
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
-                </div>
-              </div>
+              <SlipItemsTable detail={detail} />
 
               {/* Trả lại vật tư cho phiếu yêu cầu đã cấp/nhận */}
               {detail.type === "requisition" &&
@@ -698,75 +487,7 @@ export function SlipDetailModal({
                 </div>
               )}
 
-              {/* Timeline / Tiến trình hoạt động */}
-              {detail.timeline && detail.timeline.length > 0 && (
-                <div className="space-y-3 p-3.5 border-2 border-border/80 rounded-xl bg-card">
-                  <div className="flex items-center gap-2 pb-2 border-b border-border/60">
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
-                      <Milestone className="size-3.5" aria-hidden />
-                    </span>
-                    <span className="text-xs font-semibold text-foreground">Tiến trình</span>
-                  </div>
-                  <ol className="pl-1 pt-1">
-                    {detail.timeline.map((t, i) => {
-                      const isLast = i === detail.timeline!.length - 1;
-                      const tone = t.tone ?? "neutral";
-                      const isFulfill =
-                        t.key === "requisition.fulfill" ||
-                        t.key === "fulfill" ||
-                        t.key === "exchange.issue" ||
-                        t.label?.toLowerCase().includes("cấp phát");
-                      const dotClass = isFulfill
-                        ? "bg-orange-500"
-                        : (EVENT_KEY_DOT_CLASS[t.key] ?? EVENT_DOT_CLASS[tone] ?? "bg-gray-400 dark:bg-gray-500");
-                      const labelClass = isFulfill
-                        ? "text-orange-700 dark:text-orange-300"
-                        : (EVENT_KEY_LABEL_CLASS[t.key] ?? EVENT_LABEL_CLASS[tone] ?? "text-foreground");
-                      return (
-                        <li key={i} className="flex gap-3">
-                          {/* Cột mốc: chấm màu + đường nối dọc */}
-                          <div aria-hidden className="flex flex-col items-center self-stretch">
-                            <span
-                              className={cn(
-                                "mt-[5px] size-2.5 shrink-0 rounded-full",
-                                dotClass,
-                              )}
-                              style={isFulfill ? { backgroundColor: "#f97316" } : undefined}
-                            />
-                            {!isLast ? <span className="w-px flex-1 rounded-full bg-border" /> : null}
-                          </div>
-                          <div className={cn("min-w-0 flex-1", isLast ? "pb-0.5" : "pb-4")}>
-                            <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-xs">
-                              <span
-                                className={cn(
-                                  "font-semibold",
-                                  labelClass,
-                                )}
-                              >
-                                {t.label}
-                              </span>
-                              <span className="tabular-nums text-muted-foreground">
-                                {t.at ? formatDateTime(t.at) : "—"}
-                              </span>
-                              {t.by ? <span className="text-muted-foreground">· {t.by}</span> : null}
-                            </div>
-                            {t.note && (
-                              <p className="mt-1 text-xs text-red-600 dark:text-red-400 font-medium">
-                                Lý do: {t.note}
-                              </p>
-                            )}
-                            {t.detail && (
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {t.detail}
-                              </p>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </div>
-              )}
+              <SlipTimeline timeline={detail.timeline} />
 
               {/* Rejection input prompt if opened */}
               {rejecting && (
