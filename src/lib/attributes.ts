@@ -1,6 +1,6 @@
 // Xử lý attributes của biến thể (jsonb trong DB) giữa chuỗi JSON và danh sách key–value
 // dùng trong form. Mọi hàm thuần — dễ test.
-import { variantLabel } from "@/lib/labels";
+import { variantLabel } from "./labels";
 
 /** Parse JSON string/object/jsonb/null → object string→string (bỏ giá trị không phải string). */
 export function parseAttributesObject(attrs: unknown): Record<string, string> | null {

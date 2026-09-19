@@ -16,7 +16,7 @@ import { ReceiptActions } from "@/features/receipts/components/receipt-actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
-import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { RECEIPT_STATUS, REQUISITION_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { ReceiptInvoices } from "@/features/receipts/components/receipt-invoices";

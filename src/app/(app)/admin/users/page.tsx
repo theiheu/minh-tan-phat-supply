@@ -3,7 +3,6 @@ import { UsersManager } from "@/features/auth/components/users-manager";
 import { requireManager } from "@/lib/auth";
 import { getCachedZones } from "@/lib/cached-metadata";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 

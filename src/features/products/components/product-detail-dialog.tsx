@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -11,21 +9,14 @@ import {
   Package,
   Pencil,
   Plus,
-  Search,
   ShoppingCart,
   SlidersHorizontal,
-  Tag,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { variantLabel } from "@/lib/labels";
-import { matchesSearchTokens } from "@/lib/search";
-import { appAssetUrl } from "@/lib/images";
 import { useCartStore } from "@/stores/cart-store";
 import { useUIStore } from "@/stores/ui-store";
 import type { Product } from "@/lib/types";
@@ -36,7 +27,6 @@ import { TransactionUomSelect } from "@/features/catalog/components/transaction-
 import { useProductDetail } from "../hooks/use-product-detail";
 import { ProductSingleMode } from "./product-single-mode";
 import { ProductBatchMode } from "./product-batch-mode";
-import type { TransactionUom } from "@/features/catalog/domain/types";
 
 export function ProductDetailDialog({
   open,
@@ -44,7 +34,7 @@ export function ProductDetailDialog({
   product,
   variants: variants,
   categoryName,
-  searchQuery,
+  _searchQuery,
   canManage = false,
 }: {
   open: boolean;
@@ -84,7 +74,6 @@ export function ProductDetailDialog({
       factorToBase: selectedUom?.factorToBase ?? 1,
       enteredQuantity: quantity,
       name: product.name,
-      label: variantLabel(selectedVariant.attributes, selectedVariant.unit),
       unit: selectedUom?.displayName || selectedVariant.unit || null,
       baseUnitSymbol: selectedVariant.unit || null,
       image: selectedVariant.images?.[0] ?? product.images?.[0] ?? null,
@@ -116,7 +105,6 @@ export function ProductDetailDialog({
         skuId: v.id,
         enteredQuantity: qty,
         name: product.name,
-        label: variantLabel(v.attributes, v.unit),
         unit: v.unit ?? null,
         image: v.images?.[0] ?? product.images?.[0] ?? null,
         stock: v.stock,
@@ -183,7 +171,7 @@ export function ProductDetailDialog({
             {displayedImages.length > 0 ? (
               <ProductImageGallery
                 images={displayedImages}
-                alt={`${product.name}${selectedVariant ? ` - ${variantLabel(selectedVariant.attributes, selectedVariant.unit)}` : ""}`}
+                alt={product.name}
               />
             ) : (
               <div className="flex flex-col items-center justify-center text-muted-foreground p-8">
@@ -196,7 +184,6 @@ export function ProductDetailDialog({
               <div className="absolute top-2 left-2 z-10 pointer-events-none">
                 <Badge variant="secondary" className="bg-background/90 text-foreground shadow-xs backdrop-blur-xs text-[10px] font-medium border border-border/60">
                   <ImageIcon className="size-3 mr-1 text-primary" />
-                  {variantLabel(selectedVariant.attributes, selectedVariant.unit)} ({selectedVariant.images.length} ảnh)
                 </Badge>
               </div>
             )}
@@ -270,7 +257,6 @@ export function ProductDetailDialog({
                 <span className="text-xs text-muted-foreground block">Đang chọn & Tồn khả dụng:</span>
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <span className="text-sm font-bold text-foreground">
-                    {variantLabel(selectedVariant.attributes, selectedVariant.unit)}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     (Tồn: <strong className="text-foreground">{selectedVariant.stock}</strong> {selectedVariant.unit || "đơn vị"})

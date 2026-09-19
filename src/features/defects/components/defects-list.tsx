@@ -1,14 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ComboboxInput, type ComboboxInputOption } from "@/components/combobox-input";
 import {
   Dialog,
   DialogContent,
@@ -16,30 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle2, Eye, ImagePlus, Pencil, Printer, QrCode, Trash2, Undo2, Wrench, X, Zap } from "lucide-react";
+import { CheckCircle2, Eye, Pencil, Trash2, Zap } from "lucide-react";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import {
   deleteDefect,
-  requestRepair,
   toggleDefectCollected,
-  updateDefectItemImages,
 } from "@/features/defects/actions";
-import { uploadDefectImage } from "@/features/defects/upload";
-import { sendToRepair } from "@/features/repairs/actions";
 import {
-  approveExchange,
-  createExchange,
-  issueExchange,
   quickExchange,
   quickFulfillExistingExchange,
-  receiveExchange,
-  rejectExchange,
 } from "@/features/exchanges/actions";
-import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { DefectDetailDialog } from "./defect-detail-dialog";
-import { cn } from "@/lib/utils";
 import { DefectEditDialog } from "./defect-edit-dialog";
 
 export interface DefectItemRow {

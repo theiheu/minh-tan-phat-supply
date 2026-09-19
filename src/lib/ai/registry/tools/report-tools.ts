@@ -1,7 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AIUserContext } from "../index";
 
 const VALID_STATUSES = ["draft", "pending", "approved", "rejected", "received", "issued", "cancelled"] as const;
 type RequisitionStatus = (typeof VALID_STATUSES)[number];

@@ -22,7 +22,7 @@ export function ProductBatchMode({
   batchCount,
   batchTotalQty,
   selectedVariant,
-}: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
+}: any  ) {
   return (
     <div className="space-y-3">
       {uniqueBrands.length > 1 && (
@@ -88,7 +88,7 @@ export function ProductBatchMode({
             Không tìm thấy quy cách khớp với &quot;{batchSearch}&quot;
           </div>
         ) : (
-          Array.from(batchGroupedMap.entries()).map(([groupName, groupVariants]: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => (
+          Array.from(batchGroupedMap.entries()).map(([groupName, groupVariants]: any  ) => (
             <div key={groupName} className="divide-y">
               {uniqueBrands.length > 1 && (
                 <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-foreground flex items-center justify-between">
@@ -102,7 +102,7 @@ export function ProductBatchMode({
                 </div>
               )}
 
-              {groupVariants.map((v: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => {
+              {groupVariants.map((v: any  ) => {
                 const specTitle = v.parsedHierarchy.specLabel || v.parsedHierarchy.fullLabel;
                 const currentQty = batchQuantities[v.id] || 0;
                 const isSoldOut = v.stock <= 0;

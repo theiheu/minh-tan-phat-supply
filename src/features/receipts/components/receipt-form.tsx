@@ -16,11 +16,8 @@ import { uploadReceiptInvoiceImage } from "../upload";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { canDeleteInvoiceImage } from "@/lib/images";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import { variantLabel } from "@/lib/labels";
 import { SkuSelector } from "@/features/catalog/components/sku-selector";
 import { TransactionUomSelect } from "@/features/catalog/components/transaction-uom-select";
-import type { SkuSelectOption } from "@/features/catalog/domain/types";
 
 export interface ItemDraft {
   skuId: string;
@@ -37,8 +34,8 @@ const EMPTY: ItemDraft = { skuId: "", transactionUnitId: "", enteredQuantity: "1
 
 export function ReceiptForm({
   suppliers,
-  variants,
-  categories = [],
+  _variants,
+  _categories = [],
   receiptId,
   receiptCode,
   receiptStatus,

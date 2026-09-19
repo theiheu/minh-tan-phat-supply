@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export function ReturnItems({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [qty, setQty] = useState<Record<string, string>>({});
+  const opKeyRef = useRef<string | null>(null);
 
   function submit() {
     // Clamp theo phần còn lại: ô <Input max> chỉ advisory, không có <form> nên browser
@@ -49,10 +50,13 @@ export function ReturnItems({
       }))
       .filter((r) => r.enteredQuantity > 0);
     if (returns.length === 0) return toast.error("Nhập số lượng cần trả");
+    if (!opKeyRef.current) opKeyRef.current = crypto.randomUUID();
+    const currentOpKey = opKeyRef.current;
     startTransition(async () => {
       try {
-        await returnRequisitionItems(requisitionId, returns);
+        await returnRequisitionItems(requisitionId, returns, currentOpKey);
         toast.success("Đã nhập trả lại kho");
+        opKeyRef.current = null;
         setQty({});
         router.refresh();
         onSuccess?.();

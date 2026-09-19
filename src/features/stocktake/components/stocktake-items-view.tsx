@@ -127,7 +127,7 @@ export function StocktakeItemsView({
         if (diff === 0) return false;
       }
       if (!kw) return true;
-      const hay = [it.productName, variantLabelText(it), it.unit, it.categoryName ?? ""]
+      const hay = [it.productNameText(it), it.unit, it.categoryName ?? ""]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();

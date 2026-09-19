@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AlertCircle, ArrowRight, CheckCircle2, Layers, Loader2, PackagePlus } from "lucide-react";
+import { AlertCircle, CheckCircle2, Layers, Loader2, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

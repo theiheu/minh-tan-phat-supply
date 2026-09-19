@@ -189,7 +189,11 @@ describe("CatalogDetailView", () => {
     expect(confirmSpy).toHaveBeenCalledWith(
       expect.stringContaining('Bạn có chắc chắn muốn xóa vật tư "Bạc đạn SKF 6203"?')
     );
-    expect(deleteProduct).toHaveBeenCalledWith("prod-1");
+    
+    await waitFor(() => {
+      expect(deleteProduct).toHaveBeenCalledWith("prod-1");
+      expect(mockPush).toHaveBeenCalledWith("/admin/products");
+    });
 
     confirmSpy.mockRestore();
   });

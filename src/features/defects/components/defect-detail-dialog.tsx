@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -16,12 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle2, Eye, ImagePlus, Pencil, Printer, QrCode, Trash2, Undo2, Wrench, X, Zap } from "lucide-react";
+import { ImagePlus, Pencil, Printer, QrCode, Trash2, Undo2, Wrench, X, Zap } from "lucide-react";
 import { ZoomableImage } from "@/components/image-lightbox";
 import { formatDate } from "@/lib/format";
 import { DEFECT_STATUS, EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import {
-  deleteDefect,
   requestRepair,
   toggleDefectCollected,
   updateDefectItemImages,
@@ -41,7 +39,7 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { cn } from "@/lib/utils";
 
 // types
-import type { DefectListRow, DefectItemRow, DefectLiveExchange } from "./defects-list";
+import type { DefectListRow } from "./defects-list";
 
 export function DefectDetailDialog({
   row,

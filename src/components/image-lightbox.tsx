@@ -148,7 +148,7 @@ export function ImageLightbox({
               {title && <p className="text-xs text-muted-foreground line-clamp-1">{title}</p>}
             </div>
           ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
+             
             <img
               src={lightboxImgSrc || currentSrc}
               alt={title || `Ảnh ${currentIndex + 1}`}
@@ -206,7 +206,7 @@ export function ImageLightbox({
                       : "border-border/60 opacity-60 hover:opacity-100 hover:border-border"
                   )}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  { }
                   <img
                     src={appAssetUrl(imgUrl) || imgUrl}
                     alt={`Thu nhỏ ${idx + 1}`}
@@ -313,7 +313,7 @@ export function ZoomableImage({
           setOpen(true);
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        { }
         <img
           src={imgSrc || src}
           alt={alt}

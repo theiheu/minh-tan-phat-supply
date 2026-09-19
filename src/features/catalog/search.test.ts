@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { matchesSearchTokens, computeSearchScore, removeVietnameseTones } from "@/lib/search";
+import { matchesSearchTokens, computeSearchScore } from "@/lib/search";
 
 describe("Material & Variant Search Integration Tests", () => {
   describe("Vietnamese unaccented & case-insensitive matching", () => {

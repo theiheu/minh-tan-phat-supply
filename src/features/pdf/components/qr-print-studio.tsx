@@ -374,7 +374,7 @@ export function QrPrintStudio({
               {size === "50x30" ? (
                 /* Layout tem decal ngang */
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  { }
                   <img
                     src={qrDataUri}
                     alt={`Mã QR ${code}`}
@@ -414,7 +414,7 @@ export function QrPrintStudio({
                     {code}
                   </div>
 
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  { }
                   <img
                     src={qrDataUri}
                     alt={`Mã QR ${code}`}

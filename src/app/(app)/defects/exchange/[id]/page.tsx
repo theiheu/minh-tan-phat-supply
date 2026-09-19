@@ -17,7 +17,7 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { ZoomableImage } from "@/components/image-lightbox";
-import { EXCHANGE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { EXCHANGE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";

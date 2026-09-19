@@ -12,7 +12,6 @@ import {
   getCachedVariantOptions,
   getCachedZones,
 } from "@/lib/cached-metadata";
-import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { isPrivileged } from "@/lib/types";
 import { cn } from "@/lib/utils";

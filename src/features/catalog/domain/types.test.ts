@@ -1,6 +1,6 @@
 import { expect, it, describe } from "vitest";
 import { parseDecimalQuantity, formatQuantity, computeAvailable } from "./quantity";
-import { buildSkuSummary, buildSkuLabel, buildUomLabel, skuDropdownLabel } from "./labels";
+import { buildSkuSummary, buildSkuLabel, buildUomLabel } from "./labels";
 import type { SkuAttributeValue, TransactionUom } from "./types";
 
 describe("Decimal string manipulation", () => {

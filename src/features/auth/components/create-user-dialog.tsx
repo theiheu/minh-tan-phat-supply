@@ -133,7 +133,7 @@ export function CreateUserDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="create-user-email">Email (nhận thông báo)</Label>
+              <Label htmlFor="create-user-email">Email (tùy chọn)</Label>
               <Input
                 id="create-user-email"
                 type="email"

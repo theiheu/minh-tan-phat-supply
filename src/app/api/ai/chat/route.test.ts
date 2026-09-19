@@ -18,9 +18,7 @@ vi.mock("@/lib/ai/registry", () => ({
 let POST: any;
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/ai/rate-limit";
-import { getRegisteredTools } from "@/lib/ai/registry";
 
 describe("AI Chat API - Security (WP-11)", () => {
   beforeEach(async () => {

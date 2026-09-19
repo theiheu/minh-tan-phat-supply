@@ -108,7 +108,7 @@ export function VehicleQrModal({
                 {generating || !qrDataUrl ? (
                   <Loader2 className="size-8 animate-spin text-emerald-600" />
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
+                   
                   <img
                     src={qrDataUrl}
                     alt={`Mã QR ${vehicle.code}`}

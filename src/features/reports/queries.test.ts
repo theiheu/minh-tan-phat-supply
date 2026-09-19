@@ -23,7 +23,7 @@ describe("Report Queries", () => {
   describe("fetchGeneralReportData", () => {
     it("fetches and aggregates general report data accurately", async () => {
       mockFrom.mockImplementation((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: vi.fn().mockResolvedValue({
               data: [
@@ -50,6 +50,7 @@ describe("Report Queries", () => {
               }),
               then: (fn: (res: { data: { sku_id: string; quantity: number }[]; error: null }) => unknown) =>
                 fn({ data: [{ sku_id: "var-1", quantity: 50 }], error: null }),
+              catch: vi.fn(),
             }),
           };
         }
@@ -61,6 +62,7 @@ describe("Report Queries", () => {
                 error: null,
               }),
               then: (fn: (res: { data: unknown[]; error: null }) => unknown) => fn({ data: [], error: null }),
+              catch: vi.fn(),
             }),
           };
         }
@@ -503,13 +505,16 @@ describe("Report Queries", () => {
   describe("fetchStockCardData", () => {
     it("fetches single variant stock card with running balance and ref codes", async () => {
       mockFrom.mockImplementation((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 maybeSingle: vi.fn().mockResolvedValue({
                   data: {
                     id: "var-1",
+                    sku_code: "var-1",
+                    base_unit_id: "unit-1",
+                    product_id: "prod-1",
                     attributes: { color: "Trắng" },
                     unit: "cuộn",
                     products: { name: "Băng keo cách điện" },

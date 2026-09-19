@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { variantLabel } from "@/lib/labels";
 import { cn } from "cn";
 import { ZoomableImage } from "@/components/image-lightbox";
 

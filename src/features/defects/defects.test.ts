@@ -31,7 +31,7 @@ const mockAdminSingle = vi.fn().mockResolvedValue({
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn().mockImplementation(() => ({
-    from: vi.fn().mockImplementation((table: string) => ({
+    from: vi.fn().mockImplementation((_table: string) => ({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: mockAdminSingle,

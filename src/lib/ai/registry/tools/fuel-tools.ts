@@ -1,7 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AIUserContext } from "../index";
 
 interface FuelSummaryRow {
   dispense_id: string;

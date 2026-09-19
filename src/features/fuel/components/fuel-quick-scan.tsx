@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, Fuel, Gauge, ImagePlus, Loader2, MapPin, Printer, QrCode, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,7 +95,7 @@ export function FuelQuickScan({
     if (clientParam) {
       handleScan(clientParam);
     }
-  }, [searchParams, initialVehicle, vehicle]);
+  }, [searchParams, initialVehicle, vehicle, handleScan]);
 
   // Auto-focus the liters input when in dispensing step
   useEffect(() => {
@@ -107,7 +107,7 @@ export function FuelQuickScan({
     }
   }, [step]);
 
-  async function handleScan(qrText: string) {
+  const handleScan = useCallback(async (qrText: string) => {
     if (searching) return;
     setSearching(true);
 
@@ -135,7 +135,7 @@ export function FuelQuickScan({
     } finally {
       setSearching(false);
     }
-  }
+  }, [searching]);
 
   const numQty = Math.max(0, Number(quantity) || 0);
   const numOdo = Number(currentOdo) || 0;

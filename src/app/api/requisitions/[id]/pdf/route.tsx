@@ -6,7 +6,7 @@ import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireProfile } from "@/lib/auth";
 import { isPrivileged } from "@/lib/types";
-import { REQUISITION_STATUS, REQUISITION_TYPE, variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS, REQUISITION_TYPE } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

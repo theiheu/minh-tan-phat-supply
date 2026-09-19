@@ -45,7 +45,7 @@ export default async function ReceiptsPage({
   ]);
 
   const compositeIds = new Set(compositeIdsArr);
-  const variantOptions = variants
+  const _variantOptions = variants
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,

@@ -37,7 +37,7 @@ export function CategoryIcon({
 
   if (isImageIcon(value) && !imgError) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
+       
       <img
         src={appAssetUrl(value)}
         alt=""

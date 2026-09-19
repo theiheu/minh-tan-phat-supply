@@ -1128,7 +1128,7 @@ export function CatalogDraftWorkflow({
                   )}
 
                   {/* Multi-SKU BOM — each assembly SKU has its own BOM */}
-                  {assemblyMultiSkus.map((s, idx) => {
+                  {assemblyMultiSkus.map((s, _idx) => {
                     const labelPreview = optionAxes.map((a) => s.axisValues[a] || "").filter(Boolean).join(" · ") || "Quy cách #" + (multiSkus.indexOf(s) + 1);
                     return (
                       <div key={s.id} className="border rounded-lg p-4 space-y-3">

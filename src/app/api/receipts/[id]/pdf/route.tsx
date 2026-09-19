@@ -6,7 +6,6 @@ import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatDate, formatVnd } from "@/lib/format";
 import { formatAmountInWords } from "@/lib/money-words";
-import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

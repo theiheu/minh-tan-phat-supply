@@ -2,13 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   canDeleteDoc,
   canDeleteUsers,
-  isAccountant,
-  isDriver,
   isOwner,
   isPrivileged,
   isSuperuser,
-  isTechnician,
-  isWarehouse,
 } from "./types";
 
 describe("Role and Permission Helpers", () => {

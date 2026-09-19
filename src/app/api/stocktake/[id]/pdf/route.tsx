@@ -5,7 +5,6 @@ import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireManager } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { CategoryIcon, isImageIcon } from "./category-icon";
 

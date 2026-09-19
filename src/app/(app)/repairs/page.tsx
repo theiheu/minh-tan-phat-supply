@@ -16,7 +16,7 @@ import { RepairActions } from "@/features/repairs/components/repair-actions";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { getCurrentProfile } from "@/lib/auth";
 import { dayRange, formatDate, formatVnd } from "@/lib/format";
-import { REPAIR_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { REPAIR_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 

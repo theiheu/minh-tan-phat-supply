@@ -159,7 +159,7 @@ describe("Assembly & Disassembly Server Actions", () => {
     it("successfully calls post_assembly RPC and revalidates paths", async () => {
       // Mock db queries
       mockAdminSupabase.from.mockImplementation((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: () => ({
               eq: () => ({
@@ -242,7 +242,7 @@ describe("Assembly & Disassembly Server Actions", () => {
 
     it("rejects when SKU is not stocked_assembly", async () => {
       mockAdminSupabase.from.mockImplementation((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: () => ({
               eq: () => ({
@@ -272,7 +272,7 @@ describe("Assembly & Disassembly Server Actions", () => {
   describe("executeDisassembly", () => {
     it("successfully calls post_disassembly RPC when quantities match BOM", async () => {
       mockAdminSupabase.from.mockImplementation((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: () => ({
               eq: () => ({
@@ -368,7 +368,7 @@ describe("Assembly & Disassembly Server Actions", () => {
 
     it("rejects when component recovery + damaged + lost does not equal BOM expected quantity", async () => {
       mockAdminSupabase.from.mockImplementation((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: () => ({
               eq: () => ({

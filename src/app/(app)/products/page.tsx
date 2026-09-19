@@ -12,7 +12,6 @@ import { getCurrentProfile } from "@/lib/auth";
 import { isPrivileged, type Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { computeSearchScore } from "@/lib/search";
-import { variantLabel } from "@/lib/labels";
 
 const PAGE_SIZE = 20;
 

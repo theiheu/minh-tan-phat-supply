@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CatalogManager } from "./catalog-manager";
 import type { CatalogProduct } from "../domain/types";
@@ -332,7 +332,7 @@ describe("CatalogManager", () => {
 
   it("handles deleting a product with confirmation", async () => {
     const { deleteProduct } = await import("../actions");
-    const { toast } = await import("sonner");
+    const { toast: _toast } = await import("sonner");
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(
@@ -353,7 +353,10 @@ describe("CatalogManager", () => {
     expect(confirmSpy).toHaveBeenCalledWith(
       expect.stringContaining('Bạn có chắc chắn muốn xóa vật tư "Bóng đèn sợi đốt 100W" không?')
     );
-    expect(deleteProduct).toHaveBeenCalledWith("prod-1");
+    
+    await waitFor(() => {
+      expect(deleteProduct).toHaveBeenCalledWith("prod-1");
+    });
 
     confirmSpy.mockRestore();
   });

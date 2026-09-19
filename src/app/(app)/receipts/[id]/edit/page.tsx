@@ -34,7 +34,7 @@ export default async function EditReceiptPage({ params }: { params: Promise<{ id
   }
 
   const compositeIds = new Set(compositeIdsArr);
-  const variantOptions = variants
+  const _variantOptions = variants
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,

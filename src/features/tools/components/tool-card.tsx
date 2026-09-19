@@ -16,7 +16,7 @@ export interface ToolCardProps {
   variantId?: string;
   productName: string;
   skuLabel?: string | null;
-  variantLabel?: string | null;
+  
   unit?: string | null;
   imageUrl?: string | null;
   quantity: number;
@@ -56,7 +56,7 @@ export function ToolCard({
   variantId,
   productName,
   skuLabel,
-  variantLabel,
+  
   unit,
   imageUrl,
   quantity,
@@ -76,7 +76,7 @@ export function ToolCard({
   const remaining = Math.max(0, quantity - (returnedQuantity ?? 0));
   const isFullyReturned = remaining === 0 || status === "returned";
   const overdueDays = !isFullyReturned ? getOverdueDays(expectedReturnDate) : 0;
-  const displayLabel = skuLabel ?? variantLabel;
+  const displayLabel = skuLabel;
   const effectiveSkuId = skuId ?? variantId;
 
   return (

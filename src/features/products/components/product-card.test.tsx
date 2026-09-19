@@ -105,7 +105,7 @@ describe("ProductCard", () => {
     fireEvent.click(historyBtn);
     expect(screen.queryByRole("button", { name: "Thêm vào giỏ" })).not.toBeInTheDocument();
 
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await screen.findByRole("dialog");
   });
 
   it("quickly adds 1 unit to cart when clicking quick add button on single-variant card", () => {

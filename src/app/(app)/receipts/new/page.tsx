@@ -26,7 +26,7 @@ export default async function NewReceiptPage({
 
   // Loại dòng "bộ" khỏi phiếu nhập: bộ không nhập thẳng (tồn bộ tự theo linh kiện) —
   // nhập kho theo từng linh kiện.
-  const variantOptions = variants
+  const _variantOptions = variants
     .filter((v) => !compositeIds.has(v.id))
     .map((v) => ({
       id: v.id,

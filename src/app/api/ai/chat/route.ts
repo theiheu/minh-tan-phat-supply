@@ -202,7 +202,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const safeStringifyLimit = (obj: any, limit: number = 5000) => {
+    const _safeStringifyLimit = (obj: any, limit: number = 5000) => {
       if (!obj) return null;
       try {
         const str = JSON.stringify(obj);

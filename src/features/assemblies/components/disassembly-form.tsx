@@ -33,7 +33,7 @@ interface DisassemblyFormProps {
 
 export function DisassemblyForm({ locations }: DisassemblyFormProps) {
   const [isPending, startTransition] = useTransition();
-  const [isLoadingBom, setIsLoadingBom] = useState(false);
+  const [_isLoadingBom, setIsLoadingBom] = useState(false);
 
   // Form State
   const [kitSkuId, setKitSkuId] = useState("");

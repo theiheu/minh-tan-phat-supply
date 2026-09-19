@@ -17,7 +17,7 @@ import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
 import { formatZoneLabel } from "@/lib/format-zone";
 import { formatDate, formatVnd } from "@/lib/format";
-import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant, variantLabel } from "@/lib/labels";
+import { ISSUE_DESTINATION, ISSUE_STATUS, statusBadgeVariant } from "@/lib/labels";
 import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 

@@ -37,7 +37,7 @@ export interface ToolReturnDialogProps {
   variantId?: string;
   productName?: string;
   skuLabel?: string | null;
-  variantLabel?: string | null;
+  
   quantity?: number;
   returnedQuantity?: number;
   unit?: string | null;
@@ -62,7 +62,7 @@ export function ToolReturnDialog({
   variantId,
   productName,
   skuLabel,
-  variantLabel,
+  
   quantity = 1,
   returnedQuantity = 0,
   unit,
@@ -83,7 +83,7 @@ export function ToolReturnDialog({
 
   // Build item list
   const effectiveSkuId = skuId ?? variantId ?? "";
-  const effectiveLabel = skuLabel ?? variantLabel;
+  const effectiveLabel = skuLabel;
   const defaultItems: ToolReturnItemInfo[] = passedItems ?? [
     {
       skuId: effectiveSkuId,

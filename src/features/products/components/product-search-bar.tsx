@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Camera, Plus } from "lucide-react";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductQrScannerDialog } from "./product-qr-scanner-dialog";
@@ -9,8 +9,8 @@ import { ProductQrScannerDialog } from "./product-qr-scanner-dialog";
 export function ProductSearchBar({
   defaultValue = "",
   categoryId = null,
-  canCreate = false,
-  categories = [],
+  _canCreate = false,
+  _categories = [],
 }: {
   defaultValue?: string;
   categoryId?: string | null;

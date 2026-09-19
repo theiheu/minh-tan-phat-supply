@@ -1,7 +1,6 @@
 import { LiquidationManager } from "@/features/liquidations/components/liquidation-manager";
 import { SubnavTabs } from "@/components/layout/subnav-tabs";
 import { getCurrentProfile } from "@/lib/auth";
-import { variantLabel } from "@/lib/labels";
 import { canDeleteDoc } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 

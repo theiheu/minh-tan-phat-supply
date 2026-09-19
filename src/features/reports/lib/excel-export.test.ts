@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
 import {
-  BRAND_EXCEL_TITLE,
   buildPartnersExcel,
   buildRequisitionsExcel,
   buildStockCardExcel,

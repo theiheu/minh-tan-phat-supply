@@ -98,7 +98,7 @@ describe("UsersManager", () => {
     expect(screen.getByLabelText(/Họ và tên/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Tên đăng nhập/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Mật khẩu khởi tạo/i)).toBeInTheDocument();
-    expect(screen.getByLabelText("Email (nhận thông báo)")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
   });
 
   it("hỗ trợ chuyển đổi giữa tab Đang làm việc và Đã nghỉ việc / Lưu trữ", () => {

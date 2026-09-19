@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireManager } from "@/lib/auth";
-import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";

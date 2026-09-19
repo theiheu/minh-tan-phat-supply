@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+ 
 import { describe, it, expect, vi } from "vitest";
-import { ensureUnit, deleteProduct, saveBomComponents, createCompleteProduct } from "./actions";
+import { ensureUnit, deleteProduct, saveBomComponents } from "./actions";
 
 vi.mock("@/lib/auth", () => ({
   requireManager: vi.fn().mockResolvedValue({ id: "manager-user-id" }),
@@ -162,7 +162,7 @@ describe("saveBomComponents", () => {
 
     const mockSupabase = {
       from: vi.fn((table: string) => {
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             update: vi.fn(() => ({
               eq: vi.fn(() => ({
@@ -208,7 +208,7 @@ describe("saveBomComponents", () => {
             update: vi.fn((payload: any) => {
               updatedVersions.push(payload);
               return {
-                eq: vi.fn((col: string, val: string) => ({
+                eq: vi.fn((_col: string, _val: string) => ({
                   eq: vi.fn().mockResolvedValue({ error: null }),
                   then: (resolve: any) => resolve({ error: null }),
                 })),
@@ -266,7 +266,7 @@ describe("saveBomComponents", () => {
 });
 
 
-import { updateProductAxes, addSku, updateSku } from "./actions";
+import { updateProductAxes, addSku } from "./actions";
 
 describe("updateProductAxes", () => {
   it("creates attribute definitions and updates product_attribute_definitions", async () => {
@@ -274,7 +274,7 @@ describe("updateProductAxes", () => {
 
     const insertedDefinitions: any[] = [];
     const insertedProdDefs: any[] = [];
-    const deletedProdDefs: any[] = [];
+    const _deletedProdDefs: any[] = [];
 
     const mockSupabase = {
       from: vi.fn((table: string) => {
@@ -322,7 +322,7 @@ describe("updateProductAxes", () => {
             }),
           };
         }
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: vi.fn(() => ({
               eq: vi.fn().mockResolvedValue({ data: [{ id: "sku-1" }] }),
@@ -394,7 +394,7 @@ describe("addSku and updateSku attribute synchronization", () => {
             })),
           };
         }
-        if (table === "variants") {
+        if (table === "variants" || table === "skus") {
           return {
             select: vi.fn(() => ({
               eq: vi.fn().mockResolvedValue({ data: [] }),

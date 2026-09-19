@@ -6,7 +6,7 @@ import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { generateQrDataUri, getSlipUrl } from "@/features/pdf/qr";
 import { requireProfile } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { TOOL_BORROWING_STATUS, variantLabel } from "@/lib/labels";
+import { TOOL_BORROWING_STATUS } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 import { isPrivileged } from "@/lib/types";
 

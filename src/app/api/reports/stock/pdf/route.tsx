@@ -4,7 +4,6 @@ import { SlipDocument } from "@/features/pdf/slip";
 import { ensurePdfFonts } from "@/features/pdf/fonts";
 import { requireManager } from "@/lib/auth";
 import { formatNumber } from "@/lib/format";
-import { variantLabel } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
