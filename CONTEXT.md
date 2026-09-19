@@ -10,8 +10,7 @@ Mọi agent, developer và tài liệu trong repo phải dùng đúng thuật ng
 | Thuật ngữ | Định nghĩa | Ghi chú thêm |
 |---|---|---|
 | **Product / Vật tư** | Danh tính chung của một nhóm hàng. Không trực tiếp giữ tồn, không có giá, không giao dịch. | Ví dụ: "Motor quạt IP55", "Thuốc sát trùng Vikon" |
-| **SKU** | Dòng hàng nhỏ nhất có thể nhập, xuất, chuyển, kiểm kê và giữ tồn. Mỗi SKU có Đơn vị cơ sở duy nhất. | Thay thế "biến thể" trong kiến trúc mới. Code DB: bảng `skus` (được rename từ `variants` khi cutover). |
-| **Variant** | Tên cũ của SKU trong schema/code cũ (trước migration 0084). | Chỉ còn dùng trong code chưa được migrate. Không dùng cho code mới. |
+| **SKU** | Dòng hàng nhỏ nhất có thể nhập, xuất, chuyển, kiểm kê và giữ tồn. Mỗi SKU có Đơn vị cơ sở duy nhất. | Code DB: bảng `skus`. |
 | **Thuộc tính (Attribute)** | Đặc trưng kỹ thuật của SKU có kiểu dữ liệu rõ ràng. Có thể là trục phân biệt SKU hoặc thông số mô tả. | Ví dụ: công suất (kW), điện áp (V), kích thước (mm). Bảng: `attribute_definitions`. |
 | **Đơn vị cơ sở (Base UOM)** | Đơn vị duy nhất dùng để ghi tồn của một SKU trong Stock Ledger. | Ví dụ: Cái, Kg, Lít |
 | **Đơn vị giao dịch (Transaction UOM)** | Đơn vị nhập/xuất riêng của SKU có hệ số quy đổi (snapshot) về Đơn vị cơ sở. | Ví dụ: Thùng (24 cái), Bao (25kg). Bảng: `sku_transaction_units`. |
@@ -54,7 +53,6 @@ Mọi agent, developer và tài liệu trong repo phải dùng đúng thuật ng
 | **Immutable Identity** | Sau khi tạo tài khoản, `full_name` và `username` bị khóa vĩnh viễn bởi DB Trigger `trg_profiles_prevent_identity_change`. |
 | **Hybrid Archive** | Tài khoản có lịch sử chứng từ → set `is_active=false` (lưu trữ). Tài khoản trống → xóa vĩnh viễn (Hard Delete). |
 | **Auto-fulfill** | Sau khi nhập kho, hệ thống tự động cấp phát cho các phiếu yêu cầu **đã được duyệt** (status: `approved`). FIFO. |
-| **Cutover** | Thời điểm chuyển runtime từ schema Variant cũ → schema SKU mới. Được thực hiện một lần có kiểm soát. |
 
 ---
 
@@ -69,13 +67,3 @@ Mọi agent, developer và tài liệu trong repo phải dùng đúng thuật ng
 | JSON attributes tự do | Typed Attribute Definitions | JSON không chuẩn hóa, không filter được |
 | Xóa stock movement | Tạo movement đảo (reversal) | Stock Ledger phải append-only |
 
----
-
-## 5. Trạng thái Migration
-
-Hệ thống đang ở trạng thái **tiền cutover** (pre-cutover): schema mới được additive vào cạnh schema cũ. Runtime chính vẫn dùng Variant schema cũ cho đến khi cutover được thực hiện và xác nhận.
-
-- Migrations 0001–0071: Schema gốc (Variant-based)
-- Migrations 0072–0086: Additive SKU/UOM/Posting schema (chưa là runtime chính)
-- `supabase/migrations/0084_task17_schema_retirement.sql`: Thu hồi RPC cũ
-- Kế hoạch cutover: `docs/superpowers/plans/2026-09-16-full-material-catalog-replacement.md`

@@ -31,14 +31,15 @@ docs/superpowers/
 | Reports & Analytics             | [spec](./specs/2026-09-08-reports-and-analytics-design.md)             | [plan](./plans/2026-09-08-reports-and-analytics.md)             |
 | Unit Conversion                 | [spec](./specs/2026-09-09-unit-conversion-design.md)                   | [plan](./plans/2026-09-09-unit-conversion.md)                   |
 | Sub-zones Management            | [spec](./specs/2026-09-10-sub-zones-management-design.md)              | [plan](./plans/2026-09-10-sub-zones-management.md)              |
+| Full Material Catalog Replacement | [spec](./specs/2026-09-16-unified-product-variant-workflow-design.md) | [plan](./plans/2026-09-16-full-material-catalog-replacement.md) / [remediation plan](./plans/2026-09-18-post-cutover-remediation-agent-plan.md) |
 
 ---
 
 ## In Progress ⚙️
 
-| Feature                                               | Trạng thái                                                                     | Spec                                                                  | Plan                                                                                                                                                  |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Full Material Catalog Replacement (Product → SKU)** | ⚠️ Hậu kiểm cutover — cần xác minh live state và đóng safety/correctness gates | [spec](./specs/2026-09-16-unified-product-variant-workflow-design.md) | [plan](./plans/2026-09-16-full-material-catalog-replacement.md) · [remediation agent plan](./plans/2026-09-18-post-cutover-remediation-agent-plan.md) |
+Hiện không có tính năng nào đang in-progress.
+
+
 
 ---
 

@@ -177,4 +177,4 @@ Toàn bộ tài liệu kỹ thuật và vận hành trong thư mục **[`docs/`]
 
 ## Trạng thái hiện tại
 
-Hệ thống đang vận hành production. Đang tiến hành **nâng cấp kiến trúc catalog** từ mô hình Product/Variant cũ sang mô hình **Product → SKU → UOM → Stock Ledger** chuẩn hóa (migrations 0072–0086). Xem chi tiết tại [`docs/superpowers/`](./docs/superpowers/).
+Hệ thống đang vận hành production với kiến trúc catalog chuẩn hóa **Product → SKU → UOM → Stock Ledger**, sử dụng database schema baseline gọn gàng. Xem chi tiết báo cáo và tài liệu kế hoạch hậu kiểm tại [`docs/superpowers/`](./docs/superpowers/).

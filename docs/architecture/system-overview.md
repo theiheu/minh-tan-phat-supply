@@ -2,7 +2,7 @@
 
 > Tài liệu kỹ thuật giải thích toàn diện về kiến trúc phần mềm, cấu trúc luồng dữ liệu, các lớp bảo mật, AI Copilot, cơ chế ngoại tuyến PWA và công nghệ in ấn của hệ thống **Minh Tân Phát Supply**.
 >
-> **Trạng thái schema:** Đang trong giai đoạn tiền cutover — schema SKU mới (migrations 0072–0086) đã được additive vào database, nhưng runtime chính vẫn dùng Variant schema cũ cho đến khi cutover được thực hiện. Xem [CONTEXT.md](../../CONTEXT.md) để hiểu rõ các thuật ngữ.
+> **Trạng thái schema:** Đã hoàn thành cutover và vận hành với schema SKU gọn nhẹ (0001_baseline.sql). Các thành phần cũ Variant đã được migrate và xóa bỏ.
 
 ---
 
@@ -108,8 +108,8 @@ src/
 │   ├── stocktake/                    # Actions mở phiên kiểm đếm, Cân bằng tồn
 │   ├── reports/                      # Truy vấn tài chính, XNT, Chi phí chuồng, Thẻ kho
 │   ├── assemblies/                   # Lắp ráp / tháo ráp bộ vật tư
-│   ├── catalog/                      # SKU Catalog domain layer (kiến trúc SKU mới)
-│   ├── inventory-posting/            # Posting Kernel append-only (kiến trúc mới)
+│   ├── catalog/                      # SKU Catalog domain layer (kiến trúc Product -> SKU)
+│   ├── inventory-posting/            # Posting Kernel append-only
 │   ├── ai-admin/                     # AI Copilot management & RAG
 │   ├── notifications/                # Email notification helpers
 │   └── pdf/                          # Vector PDF Layouts, Brand Header, QR Print Studio

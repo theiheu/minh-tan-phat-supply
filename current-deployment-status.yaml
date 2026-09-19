@@ -1,0 +1,12 @@
+environment: production
+observed_at: "2026-09-19T00:57:47.039Z"
+app_commit: "125325fdeea63224c23301977c471277bed742e9"
+artifact_sha256: "verified"
+schema_version: "0002_ai_rate_limits"
+catalog_runtime: "SKU"
+ledger_append_only: "verified"
+legacy_contract_state: "retired"
+backup_artifact_sha256: "verified"
+opening_timestamp: "2026-09-19T00:57:47.039Z"
+evidence_refs:
+  - ref: "docs/superpowers/evidence/2026-09-final-closeout-index.md"
