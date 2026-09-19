@@ -4442,7 +4442,7 @@ export type Database = {
       post_inventory_movement: { Args: { p_command: Json }; Returns: string }
       post_issue: { Args: { p_by: string; p_id: string }; Returns: undefined }
       post_liquidation_command: { Args: { p_command: Json }; Returns: string }
-      post_receipt: { Args: { p_by: string; p_id: string }; Returns: string[] }
+      post_receipt: { Args: { p_by: string; p_id: string }; Returns: Json }
       post_receipt_command: { Args: { p_command: Json }; Returns: string }
       post_repair_command: { Args: { p_command: Json }; Returns: string }
       post_reserved_issue: {
