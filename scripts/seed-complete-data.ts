@@ -156,7 +156,7 @@ async function run() {
       defect_note_id: h2.id,
       sku_id: v2,
       quantity: 1,
-      damageDetail: "Cháy tụ khởi động quạt chuồng A2",
+      damageDetail: "Cháy tụ khởi động quạt trại A2",
       note: "Đã tháo quạt chờ đổi cái mới",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400"],
     });
@@ -342,7 +342,7 @@ async function run() {
     zone_id: zone1,
     requester_id: requesterId,
     status: "pending",
-    purpose: "Cấp cám ăn cho đàn gà con chuồng 1",
+    purpose: "Cấp cám ăn cho đàn gà con trại 1",
     created_at: new Date(Date.now() - 3600 * 1000 * 3).toISOString(),
   }).select("id").single();
   if (req1) {

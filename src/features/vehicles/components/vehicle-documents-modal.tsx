@@ -99,7 +99,7 @@ export function VehicleDocumentsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle className="flex items-center gap-2 text-lg">
@@ -117,7 +117,7 @@ export function VehicleDocumentsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-3 overscroll-contain">
           {images.length === 0 ? (
             <div className="flex min-h-36 flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 p-6 text-center">
               <FileText className="size-8 text-muted-foreground/50 mb-2" />

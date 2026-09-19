@@ -22,7 +22,9 @@ export interface BusinessSubject {
     | "tool_borrowing"
     | "fuel_receipt"
     | "fuel_dispense"
-    | "exchange";
+    | "exchange"
+    | "transfer"
+    | "assembly";
   id: string;
 }
 
@@ -152,6 +154,29 @@ export interface ExchangeEventPayload {
   items?: DocumentItemSummary[];
 }
 
+export interface TransferEventPayload {
+  code?: string;
+  fromLocationName?: string;
+  toLocationName?: string;
+  itemCount?: number;
+  items?: DocumentItemSummary[];
+  handlerName?: string;
+  delta?: number;
+  reason?: string;
+  skuName?: string;
+}
+
+export interface AssemblyEventPayload {
+  code?: string;
+  kitSkuName?: string;
+  quantity?: number;
+  unit?: string;
+  componentLocationName?: string;
+  finishedLocationName?: string;
+  handlerName?: string;
+  items?: DocumentItemSummary[];
+}
+
 export interface BusinessEventPayloadMap {
   "requisition.submitted": RequisitionEventPayload;
   "requisition.approved": RequisitionEventPayload;
@@ -161,17 +186,32 @@ export interface BusinessEventPayloadMap {
   "requisition.received": RequisitionEventPayload;
   "requisition.returned": RequisitionEventPayload;
 
+  "receipt.created": ReceiptEventPayload;
+  "receipt.approved": ReceiptEventPayload;
   "receipt.posted": ReceiptEventPayload;
   "receipt.cancelled_or_reversed": ReceiptEventPayload;
 
+  "issue.created": IssueEventPayload;
   "issue.sale_posted": IssueEventPayload;
   "issue.internal_action_required": IssueEventPayload;
+  "issue.cancelled": IssueEventPayload;
 
+  "liquidation.created": LiquidationEventPayload;
   "liquidation.approved": LiquidationEventPayload;
   "liquidation.completed": LiquidationEventPayload;
+  "liquidation.rejected": LiquidationEventPayload;
 
+  "stocktake.created": StocktakeEventPayload;
   "stocktake.posted_with_variance": StocktakeEventPayload;
   "stocktake.posted_without_variance": StocktakeEventPayload;
+  "stocktake.completed_discrepancy": StocktakeEventPayload;
+  "stocktake.cancelled": StocktakeEventPayload;
+
+  "transfer.completed": TransferEventPayload;
+  "stock.adjusted": TransferEventPayload;
+
+  "assembly.completed": AssemblyEventPayload;
+  "disassembly.completed": AssemblyEventPayload;
 
   "defect.created": DefectEventPayload;
   "defect.resolution_selected": DefectEventPayload;
@@ -180,6 +220,7 @@ export interface BusinessEventPayloadMap {
   "repair.sent": RepairEventPayload;
   "repair.ready_for_acceptance": RepairEventPayload;
   "repair.accepted_and_returned": RepairEventPayload;
+  "repair.completed": RepairEventPayload;
 
   "tool.borrowed": ToolEventPayload;
   "tool.due_soon": ToolEventPayload;
@@ -192,9 +233,6 @@ export interface BusinessEventPayloadMap {
   "fuel.dispensed": FuelEventPayload;
   "fuel.dispense_cancelled_or_adjusted": FuelEventPayload;
 
-  "liquidation.rejected": LiquidationEventPayload;
-  "stocktake.completed_discrepancy": StocktakeEventPayload;
-  "repair.completed": RepairEventPayload;
   "exchange.created": ExchangeEventPayload;
   "exchange.approved": ExchangeEventPayload;
   "exchange.rejected": ExchangeEventPayload;

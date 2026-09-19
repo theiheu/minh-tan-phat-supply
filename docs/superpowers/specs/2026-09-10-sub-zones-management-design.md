@@ -8,7 +8,7 @@ Ngày: 2026-09-10 · Trạng thái: Chờ duyệt · Phạm vi: repo `minh-tan-p
 
 Tại Trại gà Minh Tân Phát, hệ thống phân cấp địa bàn hoạt động gồm 2 cấp độ:
 1. **Cấp 1 - Khu vực (Zone):** Đại diện cho các đại khu quy hoạch lớn (Ví dụ: `Khu 1`, `Khu 2`, `Khu 3`, `Khu 4`).
-2. **Cấp 2 - Trại / Phân xưởng trực thuộc (Sub-zone):** Đại diện cho các đơn vị chuồng trại hoặc cơ sở chức năng nằm bên trong từng Khu:
+2. **Cấp 2 - Trại / Phân xưởng trực thuộc (Sub-zone):** Đại diện cho các đơn vị trang trại hoặc cơ sở chức năng nằm bên trong từng Khu:
    - *Khu 1 (Trại gà thịt A):* Trại 1, Trại 2, Trại 3...
    - *Khu 2 (Trại gà hậu bị B):* Trại 4, Trại 5, Trại 6...
    - *Khu 3 (Khu ấp trứng & xưởng cơ điện):* Nhà ấp trứng, Xưởng cơ điện...
@@ -108,7 +108,7 @@ Tạo component chọn khu vực tái sử dụng: `ZoneSubZoneSelect` hoặc t�
 4. **Cấp phát dầu (`FuelDispenseDialog`) & Phương tiện (`VehicleDialog`):**
    - Chọn Khu vực $\rightarrow$ Chọn Trại / Xưởng.
 5. **Người dùng (`UsersManager`):**
-   - Gán Khu vực mặc định và Trại / Xưởng mặc định cho nhân viên chuồng trại.
+   - Gán Khu vực mặc định và Trại / Xưởng mặc định cho nhân viên trang trại.
 
 ### 3.3. Định dạng & Hiển thị Thống nhất (Format Helper)
 Tạo hàm tiện ích `formatZoneName(zone?: { name: string } | string | null, subZone?: { name: string } | string | null)`:

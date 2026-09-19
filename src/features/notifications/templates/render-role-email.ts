@@ -29,8 +29,8 @@ function build4LinesSummary<K extends BusinessEventKey>(
     p.itemSummary || p.toolNames || p.equipmentName || (p.fuelTypeName ? `${p.quantity} ${p.unit} ${p.fuelTypeName}` : undefined)
   );
 
-  let actionLine = `🔔 Thông báo cập nhật phiếu ${p.code}`;
-  const locationOrPartner = p.zoneName || p.locationName || p.supplierName || p.customerName || p.vendorName || "";
+  let actionLine = `🔔 Thông báo cập nhật phiếu ${p.code || ""}`;
+  const locationOrPartner = p.zoneName || p.locationName || p.supplierName || p.customerName || p.vendorName || p.fromLocationName || p.toLocationName || "";
 
   if (event === "requisition.submitted") {
     actionLine = `🔔 [CẦN PHÊ DUYỆT] ${p.requesterName || "Người yêu cầu"} đã gửi phiếu yêu cầu cấp phát mới`;
@@ -46,14 +46,46 @@ function build4LinesSummary<K extends BusinessEventKey>(
     actionLine = `🤝 [ĐÃ NHẬN VẬT TƯ] Người yêu cầu ${p.handlerName ? `(${p.handlerName}) ` : ""}đã nhận đủ vật tư`;
   } else if (event === "requisition.returned") {
     actionLine = `↩️ [HOÀN TRẢ VẬT TƯ] Đã hoàn trả vật tư về kho lưu trữ`;
+  } else if (event === "receipt.created") {
+    actionLine = `📝 [TẠO PHIẾU ĐẶT HÀNG] Đã tạo phiếu đặt hàng / nhập kho mới`;
+  } else if (event === "receipt.approved") {
+    actionLine = `✅ [DUYỆT ĐƠN ĐẶT HÀNG] Đã duyệt đơn đặt hàng / Chờ nhập kho`;
   } else if (event === "receipt.posted") {
     actionLine = `📥 [ĐÃ NHẬP KHO] Thủ kho ${p.receiverName || p.handlerName || ""} đã hoàn tất nhập kho hàng hóa`;
   } else if (event === "receipt.cancelled_or_reversed") {
     actionLine = `⛔ [HỦY NHẬP KHO] Phiếu nhập kho đã được hủy / đảo bút toán`;
+  } else if (event === "issue.created") {
+    actionLine = `📝 [TẠO PHIẾU XUẤT KHO] Đã tạo phiếu xuất kho mới`;
   } else if (event === "issue.sale_posted") {
     actionLine = `💰 [XUẤT BÁN HÀNG] Thủ kho ${p.issuerName || p.handlerName || ""} đã hoàn tất xuất bán hàng`;
   } else if (event === "issue.internal_action_required") {
     actionLine = `📤 [CẦN XUẤT KHO] Phiếu xuất kho nội bộ cần thủ kho chuẩn bị và xuất hàng`;
+  } else if (event === "issue.cancelled") {
+    actionLine = `⛔ [HỦY PHIẾU XUẤT] Phiếu xuất kho đã được hủy bỏ`;
+  } else if (event === "liquidation.created") {
+    actionLine = `📝 [ĐỀ XUẤT THANH LÝ] Tạo mới đề xuất thanh lý vật tư/tài sản`;
+  } else if (event === "liquidation.approved") {
+    actionLine = `📝 [ĐÃ DUYỆT THANH LÝ] Phiếu đề xuất thanh lý đã được duyệt`;
+  } else if (event === "liquidation.completed") {
+    actionLine = `💸 [HOÀN TẤT THANH LÝ] Đã hoàn tất thủ tục thanh lý vật tư/tài sản`;
+  } else if (event === "liquidation.rejected") {
+    actionLine = `❌ [TỪ CHỐI THANH LÝ] Đề xuất thanh lý tài sản bị từ chối`;
+  } else if (event === "stocktake.created") {
+    actionLine = `📋 [KHỞI TẠO KIỂM KÊ] Khởi tạo kỳ kiểm kê kho: ${p.sessionName || p.code}`;
+  } else if (event === "stocktake.posted_with_variance" || event === "stocktake.completed_discrepancy") {
+    actionLine = `📊 [CHỐT KIỂM KÊ - CÓ CHÊNH LỆCH] Đã chốt kỳ kiểm kê kho ${p.sessionName || p.code}`;
+  } else if (event === "stocktake.posted_without_variance") {
+    actionLine = `✅ [CHỐT KIỂM KÊ - KHỚP 100%] Đã chốt kỳ kiểm kê kho ${p.sessionName || p.code}`;
+  } else if (event === "stocktake.cancelled") {
+    actionLine = `⛔ [HỦY KỲ KIỂM KÊ] Đã hủy kỳ kiểm kê kho ${p.sessionName || p.code}`;
+  } else if (event === "transfer.completed") {
+    actionLine = `🔄 [ĐIỀU CHUYỂN KHO] Đã hoàn tất điều chuyển kho nội bộ`;
+  } else if (event === "stock.adjusted") {
+    actionLine = `⚙️ [ĐIỀU CHỈNH TỒN KHO] Ghi nhận điều chỉnh tồn kho`;
+  } else if (event === "assembly.completed") {
+    actionLine = `📦 [LẮP RÁP THÀNH PHẨM] Hoàn tất lệnh lắp ráp bộ thành phẩm theo BOM`;
+  } else if (event === "disassembly.completed") {
+    actionLine = `🔧 [THÁO DỠ THÀNH PHẨM] Hoàn tất lệnh tháo dỡ bộ thành phẩm theo BOM`;
   } else if (event === "tool.borrowed") {
     actionLine = `🔧 [ĐÃ BÀN GIAO DỤNG CỤ] Bàn giao dụng cụ cho ${p.borrowerName || "nhân sự"}`;
   } else if (event.startsWith("tool.due_soon")) {
@@ -78,10 +110,6 @@ function build4LinesSummary<K extends BusinessEventKey>(
     actionLine = `🔍 [CHỜ NGHIỆM THU SỬA CHỮA] Thiết bị đã sửa xong, chờ kỹ thuật kiểm tra`;
   } else if (event === "repair.accepted_and_returned") {
     actionLine = `✅ [NGHIỆM THU HOÀN TẤT] Thiết bị sửa chữa đã nghiệm thu nhập lại kho`;
-  } else if (event === "liquidation.approved") {
-    actionLine = `📝 [ĐÃ DUYỆT THANH LÝ] Phiếu đề xuất thanh lý đã được duyệt`;
-  } else if (event === "liquidation.completed") {
-    actionLine = `💸 [HOÀN TẤT THANH LÝ] Đã hoàn tất thủ tục thanh lý vật tư/tài sản`;
   } else if (event === "exchange.created") {
     actionLine = `🔄 [ĐỀ XUẤT ĐỔI MỚI] Phiếu đổi mới vật tư hỏng chờ phê duyệt`;
   } else if (event === "exchange.approved") {
@@ -95,8 +123,8 @@ function build4LinesSummary<K extends BusinessEventKey>(
   }
 
   const codeAndLocationLine = locationOrPartner
-    ? `Mã: ${p.code} | Nơi nhận / Đối tác: ${locationOrPartner}`
-    : `Mã phiếu: ${p.code}`;
+    ? `Mã: ${p.code || "---"} | Nơi nhận / Đối tác: ${locationOrPartner}`
+    : `Mã phiếu: ${p.code || "---"}`;
 
   const purposeOrNote = p.reason || p.purpose || p.notes || (p.cost ? `Chi phí sửa: ${formatVND(p.cost)}` : undefined);
 
@@ -147,7 +175,7 @@ export function renderRoleEmail<K extends BusinessEventKey>({
       summary4Lines,
       docCode: p.code,
       title,
-      summary: `Hệ thống đã ghi nhận giao dịch tài chính cho mã chứng từ ${p.code}.`,
+      summary: `Hệ thống đã ghi nhận giao dịch tài chính cho mã chứng từ ${p.code || ""}.`,
       details: {
         "Đối tác / Nhà cung cấp:": p.supplierName,
         "Khách hàng:": p.customerName,
@@ -166,11 +194,23 @@ export function renderRoleEmail<K extends BusinessEventKey>({
   if (policy.templateKind === "action") {
     let instruction = "Phiếu yêu cầu thao tác kiểm tra, xử lý hoặc chuẩn bị xuất nhập kho từ bạn.";
     if (input.event === "requisition.submitted") {
-      instruction = `Người yêu cầu ${p.requesterName ? `(${p.requesterName}) ` : ""}đã gửi phiếu yêu cầu cấp phát mới. Quản lý vui lòng xem xét và phê duyệt.`;
+      instruction = `Người yêu cầu ${p.requesterName ? `(${p.requesterName}) ` : ""}đã gửi phiếu yêu cầu cấp phát mới. Kế toán / Quản lý vui lòng xem xét và phê duyệt.`;
     } else if (input.event === "requisition.approved") {
       instruction = "Phiếu yêu cầu cấp phát đã được phê duyệt. Bộ phận liên quan vui lòng chuẩn bị và thực hiện cấp phát.";
+    } else if (input.event === "receipt.created") {
+      instruction = `Phiếu đặt hàng / nhập kho mới ${p.code ? `(${p.code}) ` : ""}đã được tạo. Kế toán / Ban quản lý vui lòng xem xét và duyệt đơn đặt hàng.`;
+    } else if (input.event === "receipt.approved") {
+      instruction = `Đơn đặt hàng ${p.code ? `(${p.code}) ` : ""}đã được phê duyệt. Quản kho vui lòng kiểm đếm khi hàng về và duyệt nhập kho.`;
+    } else if (input.event === "issue.created") {
+      instruction = `Phiếu xuất kho mới ${p.code ? `(${p.code}) ` : ""}đã được tạo. Quản kho vui lòng kiểm tra và thực hiện xuất hàng.`;
     } else if (input.event === "issue.internal_action_required") {
       instruction = "Phiếu xuất kho nội bộ cần kiểm tra và chuẩn bị xuất hàng.";
+    } else if (input.event === "liquidation.created") {
+      instruction = `Đề xuất thanh lý tài sản ${p.code ? `(${p.code}) ` : ""}cần Kế toán / Ban quản lý kiểm tra và phê duyệt.`;
+    } else if (input.event === "liquidation.approved") {
+      instruction = "Đề xuất thanh lý đã được duyệt. Thủ kho vui lòng tiến hành thủ tục thanh lý theo quy định.";
+    } else if (input.event === "stocktake.created") {
+      instruction = `Kỳ kiểm kê kho "${p.sessionName || p.code}" đã được khởi tạo. Bộ phận liên quan vui lòng kiểm đếm số lượng thực tế.`;
     } else if (input.event.startsWith("tool.due_soon")) {
       instruction = "Dụng cụ bạn đang mượn sắp đến hạn trả trong vòng 24 giờ. Vui lòng sắp xếp hoàn trả đúng hạn.";
     } else if (input.event.startsWith("tool.overdue")) {
@@ -181,8 +221,6 @@ export function renderRoleEmail<K extends BusinessEventKey>({
       instruction = "Đã có phương án xử lý vật tư báo hỏng. Bộ phận liên quan vui lòng kiểm tra và tiếp tục thực hiện.";
     } else if (input.event.startsWith("defect.sent_to_liquidation")) {
       instruction = "Vật tư hỏng đã được chuyển sang danh sách đề xuất thanh lý.";
-    } else if (input.event.startsWith("liquidation.approved")) {
-      instruction = "Đề xuất thanh lý đã được duyệt. Thủ kho vui lòng tiến hành thủ tục thanh lý theo quy định.";
     } else if (input.event === "exchange.created") {
       instruction = "Phiếu đề xuất đổi mới vật tư cần quản lý xem xét và phê duyệt.";
     } else if (input.event === "exchange.approved") {
@@ -210,7 +248,7 @@ export function renderRoleEmail<K extends BusinessEventKey>({
     });
   }
 
-  // 4. Default: Result Email (thông báo kết quả cho Requester, Quản kho,...)
+  // 4. Default: Result Email (thông báo kết quả cho Requester, Quản kho, Kế toán,...)
   let badgeText = "ĐÃ HOÀN TẤT";
   let badgeBg = "#059669";
 
@@ -235,6 +273,12 @@ export function renderRoleEmail<K extends BusinessEventKey>({
   } else if (input.event.startsWith("issue.")) {
     badgeText = "XUẤT KHO";
     badgeBg = "#059669";
+  } else if (input.event.startsWith("transfer.") || input.event.startsWith("stock.")) {
+    badgeText = "CHUYỂN KHO";
+    badgeBg = "#0284c7";
+  } else if (input.event.startsWith("assembly.") || input.event.startsWith("disassembly.")) {
+    badgeText = "LẮP RÁP";
+    badgeBg = "#059669";
   } else if (input.event.startsWith("fuel.")) {
     badgeText = "NHIÊN LIỆU";
     badgeBg = "#ea580c";
@@ -249,7 +293,7 @@ export function renderRoleEmail<K extends BusinessEventKey>({
     badgeBg = "#059669";
   }
 
-  let summary = `Trạng thái của phiếu ${p.code} đã được cập nhật thành công.`;
+  let summary = `Trạng thái của phiếu ${p.code || ""} đã được cập nhật thành công.`;
   if (input.event === "requisition.approved") {
     summary = `Phiếu yêu cầu cấp phát ${p.code} đã được phê duyệt thành công.`;
   } else if (input.event === "requisition.rejected") {
@@ -260,12 +304,22 @@ export function renderRoleEmail<K extends BusinessEventKey>({
     summary = `Phiếu nhập ${p.code} đã được hủy / đảo bút toán trên hệ thống.`;
   } else if (input.event === "issue.sale_posted") {
     summary = `Đã hoàn tất xuất bán hàng cho mã ${p.code}${p.customerName ? ` cho khách ${p.customerName}` : ""}.`;
+  } else if (input.event === "issue.cancelled") {
+    summary = `Phiếu xuất kho ${p.code} đã được hủy bỏ trên hệ thống.`;
   } else if (input.event === "requisition.fulfilled") {
     summary = `Đã hoàn tất xuất cấp phát vật tư cho phiếu ${p.code}. Bạn có thể tiến hành nhận hàng.`;
   } else if (input.event === "requisition.received") {
     summary = `Người yêu cầu ${p.handlerName ? `(${p.handlerName}) ` : ""}đã xác nhận nhận đủ vật tư cho phiếu ${p.code}.`;
   } else if (input.event === "requisition.returned") {
     summary = `Nhân sự ${p.handlerName ? `(${p.handlerName}) ` : ""}đã hoàn trả vật tư về kho lưu trữ cho phiếu ${p.code}.`;
+  } else if (input.event === "transfer.completed") {
+    summary = `Đã hoàn tất điều chuyển ${p.itemCount ? `${p.itemCount} mặt hàng` : "vật tư"} giữa các vị trí kho.`;
+  } else if (input.event === "stock.adjusted") {
+    summary = `Đã ghi nhận điều chỉnh tồn kho (Chênh lệch: ${p.delta && p.delta > 0 ? `+${p.delta}` : p.delta || 0}). Lý do: ${p.reason || "N/A"}.`;
+  } else if (input.event === "assembly.completed") {
+    summary = `Đã hoàn tất lệnh lắp ráp bộ thành phẩm ${p.kitSkuName || ""} (Số lượng: ${p.quantity || 1}) theo BOM.`;
+  } else if (input.event === "disassembly.completed") {
+    summary = `Đã hoàn tất lệnh tháo dỡ bộ thành phẩm (Số lượng: ${p.quantity || 1}) theo BOM.`;
   } else if (input.event === "exchange.issued") {
     summary = `Đã xuất hàng mới thay thế cho phiếu đổi mới ${p.code}.`;
   } else if (input.event === "exchange.received") {
@@ -293,7 +347,7 @@ export function renderRoleEmail<K extends BusinessEventKey>({
       "Nhà cung cấp:": p.supplierName,
       "Khách hàng:": p.customerName,
       "Khu vực / Trại:": p.zoneName ?? p.locationName,
-      "Thiết bị / Vật tư:": p.equipmentName ?? p.toolNames,
+      "Thiết bị / Vật tư:": p.equipmentName ?? p.toolNames ?? p.kitSkuName,
       "Nhiên liệu:": p.fuelTypeName ? `${p.fuelTypeName} (${p.quantity} ${p.unit})` : undefined,
       "Số dòng hàng:": p.items?.length ? `${p.items.length} mặt hàng` : p.itemCount,
       "Lý do:": p.reason,

@@ -38,25 +38,27 @@ export function IssueDialog({
           {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tạo phiếu xuất kho mới</DialogTitle>
-          <DialogDescription>
-            Lập phiếu xuất cho khu vực chuồng trại hoặc bán cho khách hàng bên ngoài.
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-2rem)] sm:max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
+        <DialogHeader className="shrink-0 pb-2 border-b pr-10 sm:pr-8 min-w-0">
+          <DialogTitle className="text-base font-semibold">Tạo phiếu xuất kho mới</DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Lập phiếu xuất cho khu vực trang trại hoặc bán cho khách hàng bên ngoài.
           </DialogDescription>
         </DialogHeader>
-        <IssueForm
-          zones={zones}
-          subZones={subZones}
-          customers={customers}
-          skus={variants}
-          onSuccess={(id) => {
-            setOpen(false);
-            router.push(`/issues/${id}`);
-            router.refresh();
-          }}
-          onCancel={() => setOpen(false)}
-        />
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pt-2 pr-1">
+          <IssueForm
+            zones={zones}
+            subZones={subZones}
+            customers={customers}
+            skus={variants}
+            onSuccess={(id) => {
+              setOpen(false);
+              router.push(`/issues/${id}`);
+              router.refresh();
+            }}
+            onCancel={() => setOpen(false)}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

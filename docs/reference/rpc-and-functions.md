@@ -51,7 +51,7 @@
 
 | Function | Quyền hạn | Trạng thái chuyển đổi | Hành động hệ thống |
 |---|---|---|---|
-| `create_requisition` | `requester`, `technician` | `[*] ➜ draft / pending` | Tạo giỏ hàng xin cấp vật tư, gắn đích đến là Dãy chuồng (`sub_zone`). |
+| `create_requisition` | `requester`, `technician` | `[*] ➜ draft / pending` | Tạo giỏ hàng xin cấp vật tư, gắn đích đến là Dãy trại (`sub_zone`). |
 | `submit_requisition` | `requester` | `draft ➜ pending` | Chốt giỏ hàng và gửi lên cấp quản lý phê duyệt. |
 | `approve_requisition` | `technician`, `warehouse`, `owner` | `pending ➜ approved` | Chấp thuận cấp phát vật tư theo phiếu. |
 | `reject_requisition` | `technician`, `warehouse`, `owner` | `pending ➜ rejected` | Từ chối yêu cầu và lưu lý do từ chối. |
@@ -66,10 +66,10 @@
 ## 4. XUẤT KHO TRỰC TIẾP (ISSUES RPCS)
 
 ### `create_issue` / `post_direct_issue_command`
-* **Mục đích:** Tạo phiếu xuất kho nội bộ theo dãy chuồng (`sub_zone_id`) hoặc xuất bán cho khách hàng.
+* **Mục đích:** Tạo phiếu xuất kho nội bộ theo dãy trại (`sub_zone_id`) hoặc xuất bán cho khách hàng.
 
 ### `post_issue`
-* **Mục đích:** Xác nhận xuất kho ngay lập tức (`draft` ➜ `posted`), trừ tồn kho và ghi nhận chi phí vào Dãy chuồng đích.
+* **Mục đích:** Xác nhận xuất kho ngay lập tức (`draft` ➜ `posted`), trừ tồn kho và ghi nhận chi phí vào Dãy trại đích.
 
 ### `revert_issue` / `cancel_issue`
 * **Mục đích:** Hoàn tác phiếu xuất kho, sinh movement hoàn tồn lại kho xuất.
@@ -79,10 +79,10 @@
 ## 5. BÁO HỎNG & ĐỔI 1-1 CẤP TỐC (DEFECTS & EXCHANGES RPCS)
 
 ### `record_defect` / `post_defect_command`
-* **Mục đích:** Ghi nhận thiết bị hỏng tại chuồng (`staging`), bắt buộc lưu ảnh hiện trường và mô tả hư hỏng.
+* **Mục đích:** Ghi nhận thiết bị hỏng tại trại (`staging`), bắt buộc lưu ảnh hiện trường và mô tả hư hỏng.
 
 ### `create_exchange`, `approve_exchange`, `issue_exchange`, `receive_exchange`
-* **Mục đích:** Chu trình đổi 1-1 cấp tốc 30 giây: Trừ 1 thiết bị mới tại Kho Tổng đưa cho thợ mang đi cứu chuồng, đồng thời nạp 1 thiết bị hỏng vào Kho Hỏng trong 1 transaction duy nhất.
+* **Mục đích:** Chu trình đổi 1-1 cấp tốc 30 giây: Trừ 1 thiết bị mới tại Kho Tổng đưa cho thợ mang đi cứu trại, đồng thời nạp 1 thiết bị hỏng vào Kho Hỏng trong 1 transaction duy nhất.
 
 ---
 

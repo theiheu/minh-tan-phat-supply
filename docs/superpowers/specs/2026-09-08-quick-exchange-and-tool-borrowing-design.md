@@ -1,4 +1,4 @@
-# Đặc tả: Phân hệ Đổi mới 1-1 Cấp tốc & Mượn/Trả Dụng cụ Chuồng Trại
+# Đặc tả: Phân hệ Đổi mới 1-1 Cấp tốc & Mượn/Trả Dụng cụ Trang Trại
 
 Ngày: 2026-09-08 · Trạng thái: Chờ duyệt · Phạm vi: repo `minh-tan-phat-supply`
 
@@ -6,15 +6,15 @@ Ngày: 2026-09-08 · Trạng thái: Chờ duyệt · Phạm vi: repo `minh-tan-p
 
 ## 1. Bối cảnh & Mục tiêu
 
-Tại Trại gà Minh Tân Phát, bên cạnh các vật tư tiêu hao thông thường (cám, thuốc, vôi...), vận hành chuồng trại có 2 nhu cầu đặc thù cấp bách:
+Tại Trại gà Minh Tân Phát, bên cạnh các vật tư tiêu hao thông thường (cám, thuốc, vôi...), vận hành trang trại có 2 nhu cầu đặc thù cấp bách:
 
-1. **Đổi mới 1-1 cấp tốc khi thiết bị chuồng gặp sự cố:**
-   - Các thiết bị điện nước chuồng kín (quạt hút thông gió, bóng sưởi úm gà con, rơ le nhiệt, van nước tự động) khi hỏng hóc có thể gây ngạt hoặc chết gà chỉ trong 30-60 phút.
-   - Nhân viên tại chuồng cần một luồng 1 chạm: Chụp ảnh hiện trường $\rightarrow$ Nhập lý do hỏng $\rightarrow$ Tự động sinh phiếu đổi mới và duyệt thẳng để thủ kho xuất đồ mới cứu chuồng ngay lập tức mà không phải chờ duyệt qua nhiều cấp.
+1. **Đổi mới 1-1 cấp tốc khi thiết bị trại gặp sự cố:**
+   - Các thiết bị điện nước trại kín (quạt hút thông gió, bóng sưởi úm gà con, rơ le nhiệt, van nước tự động) khi hỏng hóc có thể gây ngạt hoặc chết gà chỉ trong 30-60 phút.
+   - Nhân viên tại trại cần một luồng 1 chạm: Chụp ảnh hiện trường $\rightarrow$ Nhập lý do hỏng $\rightarrow$ Tự động sinh phiếu đổi mới và duyệt thẳng để thủ kho xuất đồ mới cứu trại ngay lập tức mà không phải chờ duyệt qua nhiều cấp.
 
 2. **Quản lý Mượn & Trả dụng cụ dùng chung:**
-   - Trại có các công cụ, máy móc giá trị cao dùng chung giữa các chuồng: máy hàn cơ, máy rửa áp lực cao, máy cắt sắt cầm tay, thang nhôm chữ A, kìm bấm thẻ cánh gà, máy đo nhiệt độ độ ẩm...
-   - Hiện tại hệ thống đang xuất kho theo dạng tiêu hao (Requisition), dẫn đến khó theo dõi công nhân nào/khu chuồng nào đang giữ máy gì, hay bị thất lạc hoặc quên không trả về kho.
+   - Trại có các công cụ, máy móc giá trị cao dùng chung giữa các trại: máy hàn cơ, máy rửa áp lực cao, máy cắt sắt cầm tay, thang nhôm chữ A, kìm bấm thẻ cánh gà, máy đo nhiệt độ độ ẩm...
+   - Hiện tại hệ thống đang xuất kho theo dạng tiêu hao (Requisition), dẫn đến khó theo dõi công nhân nào/khu trại nào đang giữ máy gì, hay bị thất lạc hoặc quên không trả về kho.
    - Cần một phân hệ Mượn/Trả dụng cụ chuyên biệt (`/tools`) để quản lý tồn kho khả dụng, theo dõi danh sách *"Dụng cụ tôi đang giữ"*, cảnh báo quá hạn trả, và hỗ trợ trả từng phần.
 
 ---
@@ -38,8 +38,8 @@ create table public.tool_borrowings (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,                  -- VD: 'MDC-20260908-0001' (Mượn Dụng Cụ)
   borrower_id uuid not null references public.profiles(id), -- Người mượn
-  zone_id uuid references public.zones(id),   -- Khu vực chuồng sử dụng
-  purpose text not null,                      -- Mục đích sử dụng (vd: 'Hàn khung quạt chuồng 3')
+  zone_id uuid references public.zones(id),   -- Khu vực trại sử dụng
+  purpose text not null,                      -- Mục đích sử dụng (vd: 'Hàn khung quạt trại 3')
   borrowed_at timestamptz not null default now(), -- Ngày giờ mượn
   expected_return_date date,                  -- Ngày hẹn trả (để tính cờ quá hạn)
   returned_at timestamptz,                    -- Ngày giờ hoàn tất trả đủ
@@ -168,7 +168,7 @@ $$;
 
 ### 4.2. Phân hệ Quản lý Mượn & Trả Dụng Cụ (`/tools`)
 * **Menu điều hướng:** Thêm mục **"Dụng cụ"** (`/tools`) với icon `Wrench` trên Main Navigation.
-* **Màn hình phía Nhân viên chuồng (Requester):**
+* **Màn hình phía Nhân viên trại (Requester):**
   * **Tab "Dụng cụ tôi đang giữ":**
     * Các thẻ dụng cụ trực quan: Tên dụng cụ, Số lượng đang cầm, Ngày mượn, Ngày hẹn trả.
     * Badge cảnh báo: Xanh (Còn hạn) / Đỏ nhấp nháy (Quá hạn).
@@ -176,7 +176,7 @@ $$;
   * **Tab "Lịch sử mượn trả":** Lịch sử các lần mượn trước đây.
   * **Nút "Mượn dụng cụ" (`ToolBorrowDialog`):** Chọn dụng cụ từ kho, chọn ngày hẹn trả, nhập mục đích.
 * **Màn hình phía Quản lý Kho (Manager):**
-  * **Tab "Đang cho mượn":** Danh sách toàn trại ai đang mượn máy móc gì, lọc theo chuồng hoặc quá hạn.
+  * **Tab "Đang cho mượn":** Danh sách toàn trại ai đang mượn máy móc gì, lọc theo trại hoặc quá hạn.
   * **Nút thao tác "Nhận lại đồ" (`ToolReturnDialog`):** Thủ kho kiểm đếm, nhập số lượng nhận lại và xác nhận để hoàn kho.
   * **In phiếu mượn:** Hỗ trợ xem và in PDF phiếu mượn theo chuẩn `StandardSlip`.
 

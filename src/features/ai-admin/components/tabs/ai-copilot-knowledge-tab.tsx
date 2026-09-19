@@ -297,7 +297,7 @@ export function AICopilotKnowledgeTab({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-4 space-y-4 overflow-y-auto flex-1">
+          <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0 overscroll-contain">
             {/* Tab selector */}
             <div className="flex items-center gap-2 border-b pb-2">
               <Button
@@ -423,7 +423,7 @@ Bước 2: ...
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/10">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-muted/10 overscroll-contain">
             {loadingChunks ? (
               <div className="flex items-center justify-center py-12 text-muted-foreground text-xs gap-2">
                 <RefreshCw className="size-4 animate-spin text-primary" />

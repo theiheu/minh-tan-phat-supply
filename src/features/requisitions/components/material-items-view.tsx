@@ -7,9 +7,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { variantLabel } from "@/lib/labels";
 import { ZoomableImage } from "@/components/image-lightbox";
@@ -139,14 +141,15 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
 
   return (
     <Dialog open={item !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-lg h-[90svh] max-h-[90svh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 border-2 border-border shadow-2xl rounded-2xl min-w-0">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full sm:max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
         {item && (
           <>
-            <DialogHeader className="pb-3 border-b border-border/60 pr-10 sm:pr-8 min-w-0">
+            <DialogHeader className="shrink-0 pb-3 border-b border-border/60 pr-10 sm:pr-8 min-w-0">
               <DialogTitle className="break-words">{item.productName ?? "Vật tư"}</DialogTitle>
               {item.description ? <DialogDescription className="break-words">{item.description}</DialogDescription> : null}
             </DialogHeader>
 
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-3 overscroll-contain pr-1">
             {/* Ảnh vật tư */}
             <div>
               {item.images.length > 0 ? (
@@ -213,6 +216,13 @@ function MaterialDetailDialog({ item, onClose }: { item: MaterialItemView | null
                 </div>
               )}
             </dl>
+            </div>
+
+            <DialogFooter className="shrink-0 pt-2 border-t">
+              <Button type="button" variant="outline" size="sm" onClick={onClose}>
+                Đóng
+              </Button>
+            </DialogFooter>
           </>
         )}
       </DialogContent>

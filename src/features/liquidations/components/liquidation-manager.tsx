@@ -99,9 +99,9 @@ export function LiquidationManager({
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader><DialogTitle>Phiếu thanh lý</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3 overscroll-contain">
             <div className="space-y-1.5">
               <Label>Lý do</Label>
               <Input value={reason} onChange={(e) => setReason(e.target.value)} />
@@ -188,9 +188,9 @@ export function LiquidationManager({
       </Card>
 
       <Dialog open={!!completing} onOpenChange={(o) => !o && setCompleting(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Hoàn tất thanh lý (tiền thu)</DialogTitle></DialogHeader>
-          <div className="space-y-2">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-2 overscroll-contain">
             {notes.find((n) => n.id === completing)?.items.map((i) => (
               <div key={i.id} className="grid grid-cols-2 items-center gap-2">
                 <span className="truncate text-sm">{i.label} × {i.quantity}</span>

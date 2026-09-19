@@ -40,7 +40,7 @@ const mockGeneralData: GeneralReportData = {
     },
     {
       variantId: "var-2",
-      productName: "Dung dịch sát trùng chuồng",
+      productName: "Dung dịch sát trùng trại",
       variantLabel: "Can 5L",
       unit: "can",
       categoryName: "Thuốc thú y",
@@ -84,7 +84,7 @@ describe("XntReportTab component", () => {
     const tableScope = within(table);
 
     expect(tableScope.getByText("Bóng đèn sưởi hồng ngoại")).toBeDefined();
-    expect(tableScope.getByText("Dung dịch sát trùng chuồng")).toBeDefined();
+    expect(tableScope.getByText("Dung dịch sát trùng trại")).toBeDefined();
     expect(tableScope.getByText("Béc phun sương làm mát")).toBeDefined();
 
     // Out of stock badge for 0 closingQty
@@ -103,7 +103,7 @@ describe("XntReportTab component", () => {
     const table = screen.getByRole("table");
     const tableScope = within(table);
 
-    expect(tableScope.getByText("Dung dịch sát trùng chuồng")).toBeDefined();
+    expect(tableScope.getByText("Dung dịch sát trùng trại")).toBeDefined();
     expect(tableScope.queryByText("Bóng đèn sưởi hồng ngoại")).toBeNull();
   });
 

@@ -10,8 +10,8 @@
 
 Trại gà đẻ trứng quy mô công nghiệp là một môi trường sản xuất đặc thù:
 - **Độ nhạy cảm cực cao:** Mất điện 15 phút, hỏng quạt thông gió giữa trưa nắng, hoặc thiếu nước uống có thể làm gà chết ngạt hàng loạt, sụt giảm sản lượng trứng kéo dài cả tháng.
-- **Vật tư đa dạng & phân tán:** Từ linh kiện cơ điện (motor quạt, tấm làm mát cooling pad, béc phun sương, van phao núm uống), vật tư thú y (thuốc sát trùng, vắc-xin, men vi sinh), phụ kiện chuồng trại (vỉ đựng trứng, lồng gà, bóng đèn sưởi), đến xăng dầu nhiên liệu cho dàn xe ben, xe xúc dọn phân và máy phát điện dự phòng.
-- **Nhân sự thực địa:** Công nhân chuồng, thợ cơ điện, tài xế thường bận rộn tay chân, không thạo các phần mềm kế toán phức tạp.
+- **Vật tư đa dạng & phân tán:** Từ linh kiện cơ điện (motor quạt, tấm làm mát cooling pad, béc phun sương, van phao núm uống), vật tư thú y (thuốc sát trùng, vắc-xin, men vi sinh), phụ kiện trang trại (vỉ đựng trứng, lồng gà, bóng đèn sưởi), đến xăng dầu nhiên liệu cho dàn xe ben, xe xúc dọn phân và máy phát điện dự phòng.
+- **Nhân sự thực địa:** Công nhân trại, thợ cơ điện, tài xế thường bận rộn tay chân, không thạo các phần mềm kế toán phức tạp.
 
 Hệ thống **Minh Tân Phát Supply** được thiết kế "đo ni đóng giày" cho trại gà: giao diện tiếng Việt thân thiện, đăng nhập nhanh bằng tên đăng nhập (không cần email), quét mã QR 5 giây trên điện thoại, in phiếu chuẩn chỉ với 1 chạm.
 
@@ -23,16 +23,16 @@ Tài liệu này là **cẩm nang thực chiến**, hướng dẫn từng bướ
 1. [Phân quyền & Tài khoản người dùng](#1-phan-quyen--tai-khoan-nguoi-dung)
 2. [Sơ đồ Luồng di chuyển của một món đồ trong trại](#2-so-do-luong-di-chuyen-cua-mot-mon-do-trong-trai)
 3. [Cẩm nang Xử lý 10 Tình huống Thực tế Hàng ngày](#3-cam-nang-xu-ly-10-tinh-huong-thuc-te-hang-ngay)
-   - [Tình huống 1: Motor quạt chuồng bị cháy / Hư hỏng cấp bách (Đổi 1-1 nhanh)](#tinh-huong-1-motor-quat-chuong-bi-chay--hu-hong-cap-bach-doi-1-1-nhanh)
+   - [Tình huống 1: Motor quạt trại bị cháy / Hư hỏng cấp bách (Đổi 1-1 nhanh)](#tinh-huong-1-motor-quat-trai-bi-chay--hu-hong-cap-bach-doi-1-1-nhanh)
    - [Tình huống 2: Xe ben / Máy xúc / Xe bồn đến đổ dầu (Quét QR 5 giây)](#tinh-huong-2-xe-ben--may-xuc--xe-bon-den-do-dau-quet-qr-5-giay)
-   - [Tình huống 3: Chuồng xin cấp vật tư định kỳ (Bóng đèn, vỉ trứng, thuốc)](#tinh-huong-3-chuong-xin-cap-vat-tu-dinh-ky-bong-den-vi-trung-thuoc)
+   - [Tình huống 3: Trại xin cấp vật tư định kỳ (Bóng đèn, vỉ trứng, thuốc)](#tinh-huong-3-trai-xin-cap-vat-tu-dinh-ky-bong-den-vi-trung-thuoc)
    - [Tình huống 4: Xe hàng nhà cung cấp giao vật tư mới đến trại](#tinh-huong-4-xe-hang-nha-cung-cap-giao-vat-tu-moi-den-trai)
    - [Tình huống 5: Xuất bán phân gà / vỉ trứng / thiết bị cũ cho khách ngoài](#tinh-huong-5-xuat-ban-phan-ga--vi-trung--thiet-bi-cu-cho-khach-ngoai)
    - [Tình huống 6: Gom thiết bị hỏng đi quấn motor / sửa chữa bên ngoài](#tinh-huong-6-gom-thiet-bi-hong-di-quan-motor--sua-chua-ben-ngoai)
    - [Tình huống 7: Thanh lý phế liệu / Ve chai / Hàng không thể sửa](#tinh-huong-7-thanh-ly-phe-lieu--ve-chai--hang-khong-the-sua)
    - [Tình huống 8: Mất điện lưới đột ngột – Chạy máy phát điện khẩn cấp](#tinh-huong-8-mat-dien-luoi-dot-ngot--chay-may-phat-dien-khan-cap)
    - [Tình huống 9: Cuối tháng kiểm kê kho – Xử lý thừa thiếu](#tinh-huong-9-cuoi-thang-kiem-ke-kho--xu-ly-thua-thieu)
-   - [Tình huống 10: Chủ trại xem báo cáo chi phí vật tư của từng khu chuồng](#tinh-huong-10-chu-trai-xem-bao-cao-chi-phi-vat-tu-cua-tung-khu-chuong)
+   - [Tình huống 10: Chủ trại xem báo cáo chi phí vật tư của từng khu trại](#tinh-huong-10-chu-trai-xem-bao-cao-chi-phi-vat-tu-cua-tung-khu-trai)
 4. [Hướng dẫn In Phiếu chuẩn & Tem nhãn QR](#4-huong-dan-in-phieu-chuan--tem-nhan-qr)
 5. [Quy định & Kỷ luật vận hành kho](#5-quy-dinh--ky-luat-van-hanh-kho)
 
@@ -49,7 +49,7 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
 | 3 | **Kế toán** | `accountant` | Kế toán kho & nội bộ | Quản lý giá mua/bán, công nợ NCC/khách hàng, duyệt hóa đơn chứng từ, xem báo cáo chi phí, tạo/sửa/xóa tài khoản. |
 | 4 | **Quản kho** | `warehouse` | Quản lý kho, thủ kho tổng | Toàn quyền xuất - nhập - chuyển kho, đổi 1-1 cấp tốc, quản lý kho dầu, kiểm kê kho. |
 | 5 | **Kỹ thuật** | `technician` | Quản lý khu / Cơ sở / Cơ điện | Quản lý toàn diện khu/cơ sở phụ trách: Duyệt cấp 1 phiếu yêu cầu, mượn/trả dụng cụ, đề xuất & nghiệm thu sửa chữa, xem báo cáo tiêu hao khu vực. |
-| 6 | **Người yêu cầu** | `requester` | Công nhân chuồng, thợ phụ | Tra cứu tồn kho, lập phiếu xin cấp vật tư, mượn/trả dụng cụ, báo hỏng thiết bị, xác nhận nhận đồ. |
+| 6 | **Người yêu cầu** | `requester` | Công nhân trại, thợ phụ | Tra cứu tồn kho, lập phiếu xin cấp vật tư, mượn/trả dụng cụ, báo hỏng thiết bị, xác nhận nhận đồ. |
 | 7 | **Tài xế** | `driver` | Lái xe ben, xe xúc, xe bồn | Quét mã QR đổ dầu tại trạm bồn, cập nhật số Km (ODO)/giờ máy, xem lịch sử cấp dầu xe mình. |
 
 > **Lưu ý quan trọng về Quản lý Tài khoản & Định danh:**
@@ -58,7 +58,7 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
 >    - **Xóa vĩnh viễn (Hard Delete):** Dành cho tài khoản tạo nhầm/thử nghiệm và *chưa từng phát sinh bất kỳ chứng từ nào*.
 >    - **Lưu trữ / Đánh dấu nghỉ việc (Archive):** Khi nhân viên đã có lịch sử chứng từ (phiếu nhập, xuất, biến động kho...), hệ thống sẽ tự động khóa đăng nhập và chuyển vào tab **"Đã nghỉ việc / Lưu trữ"** nhằm bảo toàn 100% chứng từ kế toán.
 >    - **Kích hoạt lại (Reactivate):** Đối với nhân sự thời vụ quay lại làm việc, Chủ trại / Kế toán chỉ cần bấm **"Kích hoạt lại"** để mở khóa tài khoản ngay lập tức.
-> 3. **Đăng nhập nhanh:** Đăng nhập trực tiếp bằng **Tên đăng nhập** (Ví dụ: `thukho_dung`, `truongchuong_tuan`, `taixe_nam`) và mật khẩu được cấp.
+> 3. **Đăng nhập nhanh:** Đăng nhập trực tiếp bằng **Tên đăng nhập** (Ví dụ: `thukho_dung`, `truongtrai_tuan`, `taixe_nam`) và mật khẩu được cấp.
 
 ---
 
@@ -78,12 +78,12 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
                          ▼                               ▼
        ┌─────────────────────────────────┐   ┌───────────────────────────┐
        │ 3. PHIẾU XUẤT / CẤP PHÁT        │   │ 3B. ĐỔI 1-1 LẤY HÀNG MỚI  │
-       │    (Giao cho Khu Chuồng/Xe)     │   │     (Đồ hỏng đưa về kho)  │
+       │    (Giao cho Khu Trại/Xe)     │   │     (Đồ hỏng đưa về kho)  │
        └─────────────────┬───────────────┘   └─────────────┬─────────────┘
                          │                                 │
                          ▼                                 ▼
        ┌─────────────────────────────────┐   ┌───────────────────────────┐
-       │ 4. KHU CHUỒNG LẮP ĐẶT SỬ DỤNG   │   │ 5. KHO TẬP KẾT HỎNG / PHẾ │
+       │ 4. KHU TRẠI LẮP ĐẶT SỬ DỤNG   │   │ 5. KHO TẬP KẾT HỎNG / PHẾ │
        └─────────────────┬───────────────┘   └─────────────┬─────────────┘
                          │ (Hết tuổi thọ / Cháy)           │
                          └─────────────────────────────────┤
@@ -101,22 +101,22 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
 
 ## 3. CẨM NANG XỬ LÝ 10 TÌNH HUỐNG THỰC TẾ HÀNG NGÀY
 
-### TÌNH HUỐNG 1: MOTOR QUẠT CHUỒNG BỊ CHÁY / HƯ HỎNG CẤP BÁCH (ĐỔI 1-1 NHANH)
-* **Vấn đề:** 12h trưa, quạt hút số 3 chuồng Hậu Bị 2 bị kẹt bạc đạn bốc khói, nhiệt độ chuồng đang tăng nhanh. Cần thay gấp motor mới ngay lập tức.
+### TÌNH HUỐNG 1: MOTOR QUẠT TRẠI BỊ CHÁY / HƯ HỎNG CẤP BÁCH (ĐỔI 1-1 NHANH)
+* **Vấn đề:** 12h trưa, quạt hút số 3 trại Hậu Bị 2 bị kẹt bạc đạn bốc khói, nhiệt độ trại đang tăng nhanh. Cần thay gấp motor mới ngay lập tức.
 * **Nguyên tắc:** **Cứu gà trước - Thủ tục xong trong 30 giây.** Không bắt công nhân ngồi làm phiếu duyệt qua nhiều cấp.
 
 #### Cách thực hiện:
 1. **Bước 1 (Tháo đồ hỏng):** Thợ điện mang motor cháy xuống kho tổng.
 2. **Bước 2 (Thủ kho thao tác trên phần mềm):**
    - Vào menu **Báo hỏng & Đổi trả** (`/defects`) ➜ Chọn **Đổi 1-1 cấp tốc**.
-   - Chọn **Khu vực:** `Chuồng Hậu Bị 2`.
+   - Chọn **Khu vực:** `Trại Hậu Bị 2`.
    - Chọn **Sản phẩm hỏng:** `Motor quạt hút 1.1kW`. Số lượng: `1`.
    - Lý do: *Cháy cuộn dây / Kẹt bạc đạn*.
    - Nhấn **Xác nhận đổi ngay**.
 3. **Bước 3 (Hệ thống tự động xử lý 100% phía sau):**
    - Tự động trừ `1` Motor mới trong **Kho Tổng** để giao cho thợ mang đi lắp ngay.
    - Tự động cộng `1` Motor hỏng vào **Kho Tập Kết Hỏng**.
-   - Tạo mã phiếu đổi trả có lưu vết giờ giấc, người đổi và khu chuồng chịu phí.
+   - Tạo mã phiếu đổi trả có lưu vết giờ giấc, người đổi và khu trại chịu phí.
 4. **Kết quả:** Quạt được thay trong 5 phút. Tồn kho chính xác tuyệt đối, không sợ thất thoát.
 
 ---
@@ -142,27 +142,27 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
 
 ---
 
-### TÌNH HUỐNG 3: CHUỒNG XIN CẤP VẬT TƯ ĐỊNH KỲ (BÓNG ĐÈN, VỈ TRỨNG, THUỐC)
-* **Vấn đề:** Đầu tuần, Trưởng khu Chuồng Đẻ 1 cần nhận 50 vỉ trứng nhựa, 10 bóng đèn sưởi sợi đốt, 2 can thuốc sát trùng Benkocid 5L.
+### TÌNH HUỐNG 3: TRẠI XIN CẤP VẬT TƯ ĐỊNH KỲ (BÓNG ĐÈN, VỈ TRỨNG, THUỐC)
+* **Vấn đề:** Đầu tuần, Trưởng khu Trại Đẻ 1 cần nhận 50 vỉ trứng nhựa, 10 bóng đèn sưởi sợi đốt, 2 can thuốc sát trùng Benkocid 5L.
 
 #### Cách thực hiện:
-1. **Trưởng khu chuồng (Người yêu cầu):**
+1. **Trưởng khu trại (Người yêu cầu):**
    - Đăng nhập tài khoản trên điện thoại.
    - Vào mục **Danh mục sản phẩm** ➜ Bấm nút **Thêm vào giỏ** các món cần lấy (tương tự mua hàng Shopee).
-   - Mở giỏ hàng ➜ Chọn **Khu vực nhận:** `Chuồng Đẻ 1` ➜ Nhập ghi chú: `Cấp đầu tuần` ➜ Nhấn **Gửi phiếu yêu cầu**.
+   - Mở giỏ hàng ➜ Chọn **Khu vực nhận:** `Trại Đẻ 1` ➜ Nhập ghi chú: `Cấp đầu tuần` ➜ Nhấn **Gửi phiếu yêu cầu**.
 2. **Thủ kho / Quản lý:**
    - Thấy thông báo phiếu mới ở trạng thái `Chờ duyệt` (`submitted`).
    - Bấm xem chi tiết, kiểm tra số lượng tồn kho còn đủ.
    - Bấm **Duyệt & Xuất kho** (`approved` ➜ `issued`).
    - Soạn hàng ra kệ xuất, bấm **In phiếu xuất kho** kẹp cùng thùng hàng.
 3. **Bàn giao:**
-   - Công nhân chuồng nhận hàng, mở điện thoại bấm **Đã nhận đủ hàng** (`fulfilled`).
-   - Giao dịch hoàn tất, chi phí được ghi nhận chính xác cho `Chuồng Đẻ 1`.
+   - Công nhân trại nhận hàng, mở điện thoại bấm **Đã nhận đủ hàng** (`fulfilled`).
+   - Giao dịch hoàn tất, chi phí được ghi nhận chính xác cho `Trại Đẻ 1`.
 
 ---
 
 ### TÌNH HUỐNG 4: XE HÀNG NHÀ CUNG CẤP GIAO VẬT TƯ MỚI ĐẾN TRẠI
-* **Vấn đề:** Công ty Thiết bị Chăn nuôi giao tới: 20 tấm làm mát Cooling Pad 1800x600, 100 núm uống tự động inox, 5 cuộn bạt trần chuồng. Kèm hóa đơn giấy.
+* **Vấn đề:** Công ty Thiết bị Chăn nuôi giao tới: 20 tấm làm mát Cooling Pad 1800x600, 100 núm uống tự động inox, 5 cuộn bạt trần trại. Kèm hóa đơn giấy.
 
 #### Cách thực hiện:
 1. **Bước 1:** Thủ kho mở mục **Nhập kho** (`/receipts`) ➜ Bấm **Tạo phiếu nhập mới**.
@@ -256,9 +256,9 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
 
 ---
 
-### TÌNH HUỐNG 10: CHỦ TRẠI XEM BÁO CÁO CHI PHÍ VẬT TƯ CỦA TỪNG KHU CHUỒNG
+### TÌNH HUỐNG 10: CHỦ TRẠI XEM BÁO CÁO CHI PHÍ VẬT TƯ CỦA TỪNG KHU TRẠI
 * **Vấn đề:** 
-  - Cuối tuần / cuối tháng, Chủ trại cần nắm rõ: Chuồng Đẻ 3 tiêu tốn bao nhiêu tiền vật tư, tại sao tiền điện/vật tư chuồng đó lại cao hơn Chuồng Đẻ 2? Đội xe ben, máy xúc có xe nào chạy ngốn dầu bất thường vượt định mức không?
+  - Cuối tuần / cuối tháng, Chủ trại cần nắm rõ: Trại Đẻ 3 tiêu tốn bao nhiêu tiền vật tư, tại sao tiền điện/vật tư trại đó lại cao hơn Trại Đẻ 2? Đội xe ben, máy xúc có xe nào chạy ngốn dầu bất thường vượt định mức không?
   - Kế toán cần số liệu tổng hợp Xuất - Nhập - Tồn kho, công nợ mua hàng nhà cung cấp, doanh thu bán phân gà/phế liệu và kiểm tra chi tiết thẻ kho từng mã vật tư để chốt sổ tài chính và lập báo cáo.
 
 #### Cách thực hiện:
@@ -269,14 +269,14 @@ Hệ thống phân quyền chuẩn hóa 7 vai trò theo đúng cơ cấu vận h
 
 2. **Bước 2: Khai thác số liệu qua 5 Tab chuyên sâu**
    - **Tab 1: Báo cáo Chung (Tổng quan & Xuất - Nhập - Tồn):**
-     - Quan sát 4 thẻ KPI đầu trang: Tổng giá trị tài sản đang tồn trong kho, Tổng tiền nhập hàng trong kỳ, Tổng chi phí vật tư cấp phát cho các chuồng và Doanh thu xuất bán ngoài.
+     - Quan sát 4 thẻ KPI đầu trang: Tổng giá trị tài sản đang tồn trong kho, Tổng tiền nhập hàng trong kỳ, Tổng chi phí vật tư cấp phát cho các trại và Doanh thu xuất bán ngoài.
      - Kiểm tra bảng **Xuất - Nhập - Tồn**: Xem chi tiết Tồn đầu kỳ, Nhập trong kỳ, Xuất trong kỳ, Tồn cuối kỳ và Giá trị tồn của từng mã vật tư.
      - Xem biểu đồ **Phân bổ chi phí theo danh mục** (Cơ điện, Chiếu sáng, Thú y, Bao bì...) để biết nhóm vật tư nào chiếm tỷ trọng chi phí cao nhất.
      - Xem tóm tắt **Sự cố & Sửa chữa** (số vụ hỏng, chi phí sửa chữa, tiền thanh lý) và **Bồn xăng dầu** (nhập, cấp, tồn bồn).
-   - **Tab 2: Báo cáo theo Chuồng (Zone Cost):**
-     - Xem biểu đồ cột so sánh trực quan chi phí giữa các khu vực: Chuồng 1, Chuồng 2, Chuồng 3, Xưởng cơ điện...
-     - Xem tổng tiền, tỷ trọng chi phí (%) và số lượt cấp phát của từng chuồng.
-     - **Xem chi tiết vật tư chuồng đã dùng (Drill-down):** Bấm nút **"Xem chi tiết"** tại dòng chuồng cần kiểm tra. Hệ thống hiển thị bảng chi tiết liệt kê chính xác từng món vật tư (bóng đèn, motor, béc tưới, dây điện...), số lượng đã cấp, đơn giá và thành tiền.
+   - **Tab 2: Báo cáo theo Trại (Zone Cost):**
+     - Xem biểu đồ cột so sánh trực quan chi phí giữa các khu vực: Trại 1, Trại 2, Trại 3, Xưởng cơ điện...
+     - Xem tổng tiền, tỷ trọng chi phí (%) và số lượt cấp phát của từng trại.
+     - **Xem chi tiết vật tư trại đã dùng (Drill-down):** Bấm nút **"Xem chi tiết"** tại dòng trại cần kiểm tra. Hệ thống hiển thị bảng chi tiết liệt kê chính xác từng món vật tư (bóng đèn, motor, béc tưới, dây điện...), số lượng đã cấp, đơn giá và thành tiền.
    - **Tab 3: Báo cáo Phương tiện & Nhiên liệu:**
      - Theo dõi lượng dầu Diesel đã cấp cho toàn bộ xe tải, xe ben, máy xúc, máy phát điện trong kỳ.
      - So sánh giữa **Mức tiêu hao thực tế (Lít/100km hoặc Lít/giờ)** với **Định mức chuẩn**.
@@ -325,7 +325,7 @@ Tất cả các phiếu tạo ra trên hệ thống (Phiếu Nhập, Phiếu Xu�
 1. **"HÀNG KHÔNG RA KHỎI KHO NẾU CHƯA CÓ TRÊN HỆ THỐNG"**  
    Mọi hành động lấy đồ (dù chỉ là 1 con ốc hay 1 bóng đèn) đều phải được thực hiện qua: Phiếu Yêu Cầu, hoặc Đổi 1-1 Cấp Tốc, hoặc Quét QR Cấp Dầu. Tuyệt đối không lấy miệng rồi "lát về ghi sau".
 2. **"ĐỔI 1-1 BẮT BUỘC PHẢI THU HỒI ĐỒ CŨ"**  
-   Thủ kho chỉ giao motor mới, béc tưới mới khi người nhận giao lại món đồ cũ đã hỏng. Đồ cũ lập tức đưa vào khu vực Kho Hỏng, không để vứt bừa bãi tại hành lang chuồng trại.
+   Thủ kho chỉ giao motor mới, béc tưới mới khi người nhận giao lại món đồ cũ đã hỏng. Đồ cũ lập tức đưa vào khu vực Kho Hỏng, không để vứt bừa bãi tại hành lang trang trại.
 3. **"NHẬP HÀNG LÀ PHẢI CHỤP ẢNH HÓA ĐƠN"**  
    Khi xe giao hàng tới, thủ kho kiểm đếm xong phải chụp rõ nét hóa đơn giấy/phiếu giao hàng tải lên hệ thống ngay lúc bấm tạo phiếu nhập. Tránh thất lạc giấy tờ làm chậm thanh toán cho nhà cung cấp.
 

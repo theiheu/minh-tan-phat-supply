@@ -11,7 +11,7 @@ export const actionTools = {
       quantity: z.number().optional().default(1).describe("Số lượng yêu cầu"),
       qty: z.number().optional().describe("Số lượng thay thế"),
       unit: z.string().optional().default("Cái").describe("Đơn vị tính (Cái, Cuộn, Mét, Kg, Hộp)"),
-      targetZone: z.string().optional().default("Khu chuồng chung").describe("Khu vực/chuồng sử dụng"),
+      targetZone: z.string().optional().default("Khu trại chung").describe("Khu vực/trại sử dụng"),
       target_zone: z.string().optional().describe("Khu vực thay thế"),
       zone: z.string().optional().describe("Khu vực thay thế"),
       reason: z.string().optional().default("Cấp phát phục vụ sản xuất").describe("Lý do xin cấp vật tư"),
@@ -33,7 +33,7 @@ export const actionTools = {
       const productName = rawArgs.productName || rawArgs.product_name || rawArgs.item || "Vật tư chung";
       const quantity = typeof rawArgs.quantity === "number" ? rawArgs.quantity : (typeof rawArgs.qty === "number" ? rawArgs.qty : 1);
       const unit = rawArgs.unit || "Cái";
-      const targetZone = rawArgs.targetZone || rawArgs.target_zone || rawArgs.zone || "Khu chuồng chung";
+      const targetZone = rawArgs.targetZone || rawArgs.target_zone || rawArgs.zone || "Khu trại chung";
       const reason = rawArgs.reason || rawArgs.purpose || "Cấp phát phục vụ sản xuất";
 
       return {

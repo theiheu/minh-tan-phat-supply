@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -208,12 +209,13 @@ export function ProductHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="pr-8">{productName}</DialogTitle>
           <DialogDescription>Lịch sử cấp phát và xuất kho vật tư</DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain">
         {rows === null && !error && (
           <div className="flex flex-col items-center justify-center gap-3 py-10 text-sm text-muted-foreground">
             <span className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -283,6 +285,13 @@ export function ProductHistoryDialog({
               </Table>
             </div>
           ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Đóng
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

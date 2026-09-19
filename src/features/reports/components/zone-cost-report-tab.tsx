@@ -118,16 +118,16 @@ export function ZoneCostReportTab({
               </div>
             )}
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Tổng giá trị vật tư đã xuất cấp cho các chuồng
+              Tổng giá trị vật tư đã xuất cấp cho các trại
             </p>
           </div>
         </Card>
 
-        {/* Card 2: Khu chuồng chi phí cao nhất */}
+        {/* Card 2: Khu trại chi phí cao nhất */}
         <Card className="p-4 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
-              Khu chuồng chi phí cao nhất
+              Khu trại chi phí cao nhất
             </span>
             <div className="flex size-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
               <Home className="size-4" aria-hidden="true" />
@@ -186,7 +186,7 @@ export function ZoneCostReportTab({
               </div>
             )}
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Khu chuồng trại có phát sinh xuất cấp hoặc báo hỏng
+              Khu trang trại có phát sinh xuất cấp hoặc báo hỏng
             </p>
           </div>
         </Card>
@@ -200,11 +200,11 @@ export function ZoneCostReportTab({
               <div className="flex items-center gap-2">
                 <Layers className="size-4 text-primary" aria-hidden="true" />
                 <CardTitle className="text-base font-semibold">
-                  Bảng Phân Bổ Chi Phí Theo Chuồng / Khu Vực
+                  Bảng Phân Bổ Chi Phí Theo Trại / Khu Vực
                 </CardTitle>
               </div>
               <CardDescription className="text-xs">
-                Chi tiết giá trị vật tư tiêu hao, số phiếu cấp và sự cố báo hỏng của từng khu chuồng
+                Chi tiết giá trị vật tư tiêu hao, số phiếu cấp và sự cố báo hỏng của từng khu trại
               </CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
@@ -214,11 +214,11 @@ export function ZoneCostReportTab({
               />
               <Input
                 type="search"
-                placeholder="Tìm kiếm khu vực, chuồng trại..."
+                placeholder="Tìm kiếm khu vực, trại..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-8 pl-8 text-xs"
-                aria-label="Tìm kiếm khu vực trong bảng chi phí chuồng"
+                aria-label="Tìm kiếm khu vực trong bảng chi phí trại"
               />
             </div>
           </div>
@@ -227,7 +227,7 @@ export function ZoneCostReportTab({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[180px]">Tên khu vực / Chuồng trại</TableHead>
+                <TableHead className="min-w-[180px]">Tên khu vực / Trại</TableHead>
                 <TableHead className="w-[150px] text-right">Tổng chi phí vật tư</TableHead>
                 <TableHead className="min-w-[160px]">Tỷ trọng (%)</TableHead>
                 <TableHead className="w-[120px] text-right">Số phiếu xuất cấp</TableHead>

@@ -8,7 +8,7 @@ Tài liệu hướng dẫn nhân viên và quản lý cách sử dụng Trợ l�
 
 * **Vị trí hiển thị:** Nút bong bóng chat màu tím nổi ở góc dưới bên phải màn hình (có thể kéo thả di chuyển vị trí) trên mọi trang web.
 * **Khả năng chính:**
-  1. **Tra cứu quy trình chuẩn (SOP):** Hướng dẫn xử lý sự cố chuồng gà (cháy quạt thông gió, tắc dàn lạnh, cách ly dịch bệnh...).
+  1. **Tra cứu quy trình chuẩn (SOP):** Hướng dẫn xử lý sự cố trại gà (cháy quạt thông gió, tắc dàn lạnh, cách ly dịch bệnh...).
   2. **Tra cứu thông số kỹ thuật:** Quy cách motor, áp suất đường ống nước, tỷ lệ pha thuốc sát trùng, dầu nhớt phù hợp cho từng loại xe tải/máy xúc.
   3. **Tra cứu nhanh tồn kho & nhiên liệu:** Hỏi đáp về tồn kho khả dụng hiện tại, định mức tiêu hao của xe.
   4. **Gợi ý câu hỏi nhanh (Quick Prompts):** Bấm chọn ngay các câu hỏi phổ biến mà không cần gõ phím.
@@ -19,9 +19,9 @@ Tài liệu hướng dẫn nhân viên và quản lý cách sử dụng Trợ l�
 
 1. **Mở khung chat:** Bấm vào biểu tượng AI Copilot ở góc dưới màn hình.
 2. **Đặt câu hỏi:**
-   * *Ví dụ 1:* "Quạt chuồng 1.5kW bị kẹt cánh bốc khói thì xử lý thế nào?"
+   * *Ví dụ 1:* "Quạt trại 1.5kW bị kẹt cánh bốc khói thì xử lý thế nào?"
    * *Ví dụ 2:* "Xe ben Đồng Vàng chạy 100km tiêu thụ bao nhiêu lít dầu là bình thường?"
-   * *Ví dụ 3:* "Thuốc sát trùng Benkocid pha theo tỷ lệ nào khi phun chuồng trống?"
+   * *Ví dụ 3:* "Thuốc sát trùng Benkocid pha theo tỷ lệ nào khi phun trại trống?"
 3. **Đọc câu trả lời:** AI Copilot sẽ tự động trích xuất đúng tài liệu nội bộ của trại, trả lời ngắn gọn, có trích dẫn nguồn văn bản và gợi ý các bước xử lý kế tiếp.
 4. **Tạo phiên trò chuyện mới:** Bấm nút **"+ Cuộc trò chuyện mới"** ở thanh tiêu đề drawer khi muốn chuyển sang chủ đề khác.
 

@@ -60,7 +60,7 @@ describe("Tool Schemas", () => {
   it("rejects borrowing with empty items array", () => {
     const invalid = toolBorrowingSchema.safeParse({
       items: [],
-      purpose: "Sửa chuồng",
+      purpose: "Sửa trại",
     });
     expect(invalid.success).toBe(false);
   });
@@ -103,7 +103,7 @@ describe("Tool Server Actions", () => {
       const input = {
         items: [{ skuId: "47814b7e-9762-42da-91ef-07755efcfa77", quantity: 2 }],
         zoneId: "55814b7e-9762-42da-91ef-07755efcfa88",
-        purpose: "Hàn máng ăn chuồng 2",
+        purpose: "Hàn máng ăn trại 2",
         expectedReturnDate: "2026-09-12",
       };
 
@@ -116,7 +116,7 @@ describe("Tool Server Actions", () => {
           quantity: 2,
         }],
         p_zone_id: "55814b7e-9762-42da-91ef-07755efcfa88",
-        p_purpose: "Hàn máng ăn chuồng 2",
+        p_purpose: "Hàn máng ăn trại 2",
         p_expected_return_date: "2026-09-12",
         p_borrower_id: "user-123",
         p_sub_zone_id: null,

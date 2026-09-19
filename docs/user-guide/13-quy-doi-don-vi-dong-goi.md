@@ -1,6 +1,6 @@
 # 📖 HƯỚNG DẪN 13: QUY ĐỔI ĐƠN VỊ TÍNH & ĐÓNG GÓI VẬT TƯ ĐA CẤP (THÙNG, HỘP, ML, BAO, KG...)
 
-Tài liệu hướng dẫn chi tiết quy trình thiết lập, quản lý và sử dụng tính năng **Quy đổi Đơn vị Tính & Đóng gói Đa cấp** cho Quản trị viên, Thủ kho, Kế toán và Nhân viên chuồng trại tại Trại gà Minh Tân Phát.
+Tài liệu hướng dẫn chi tiết quy trình thiết lập, quản lý và sử dụng tính năng **Quy đổi Đơn vị Tính & Đóng gói Đa cấp** cho Quản trị viên, Thủ kho, Kế toán và Nhân viên trang trại tại Trại gà Minh Tân Phát.
 
 ---
 
@@ -8,10 +8,10 @@ Tài liệu hướng dẫn chi tiết quy trình thiết lập, quản lý và s
 
 Trong vận hành trang trại quy mô lớn, nhiều loại vật tư được đóng gói theo nhiều cấp độ khác nhau:
 * **Đơn vị đóng gói lớn (Nhập hàng & Lưu kho):** Thùng, Can, Bao lớn, Cuộn, Kiện, Phuy, Pallet.
-* **Đơn vị sử dụng lẻ (Xuất kho & Cấp phát chuồng):** Hộp, Chai, Gói, Vỉ, Lít, ml, Kg, Mét, Viên.
+* **Đơn vị sử dụng lẻ (Xuất kho & Cấp phát trại):** Hộp, Chai, Gói, Vỉ, Lít, ml, Kg, Mét, Viên.
 
 ### 🌟 Lợi ích của tính năng:
-1. **Linh hoạt tuyệt đối cho người dùng:** Nhân viên chuồng có thể tùy ý chọn xin vật tư theo bất kỳ đơn vị nào (xin nguyên 1 Thùng hoặc chỉ xin 2 Hộp lẻ).
+1. **Linh hoạt tuyệt đối cho người dùng:** Nhân viên trại có thể tùy ý chọn xin vật tư theo bất kỳ đơn vị nào (xin nguyên 1 Thùng hoặc chỉ xin 2 Hộp lẻ).
 2. **Quản lý tồn kho duy nhất & an toàn:** Toàn bộ tồn kho thực tế được quy về **Đơn vị cơ sở (nhỏ nhất)**. Hệ thống tự động tính toán số lượng khả dụng của đơn vị lớn hơn mà không cần tạo nhiều mã hàng rời rạc.
 3. **Trừ kho tự động chính xác theo sổ cái:** Khi xuất 2 Thùng keo (1 Thùng = 6 Hộp), hệ thống tự động trừ 12 Hộp trong kho mà thủ kho không cần bấm máy tính tay.
 
@@ -27,7 +27,7 @@ Trong vận hành trang trại quy mô lớn, nhiều loại vật tư được 
 * Trong bảng chọn *Kiểu quản lý vật tư & đơn vị*, bấm chọn: **"Quy đổi đơn vị"** *(VD 1 Thùng = 6 Hộp 550ml, tự động tính tồn)*.
 
 ### Bước 3: Nhập thông tin chung của vật tư
-* **Tên vật tư:** Nhập tên chuẩn (VD: `Keo dán bạt chuồng trại`, `Thuốc sát trùng chuồng trại Benkocid`).
+* **Tên vật tư:** Nhập tên chuẩn (VD: `Keo dán bạt trang trại`, `Thuốc sát trùng trang trại Benkocid`).
 * **Danh mục:** Chọn danh mục phù hợp (VD: *Keo & Hóa chất kết dính*, *Thuốc thú y*...).
 * **Ảnh vật tư:** Tải lên từ 1 đến nhiều ảnh thực tế của sản phẩm.
 * **Mô tả:** Nhập tóm tắt công dụng hoặc hướng dẫn sử dụng.
@@ -61,11 +61,11 @@ Trong vận hành trang trại quy mô lớn, nhiều loại vật tư được 
 
 ### Bước 1: Mở xem vật tư
 * Vào màn hình **Vật tư** (`/products`) hoặc bấm nút **Quét QR** quét mã dán trên kệ hàng.
-* Bấm vào thẻ vật tư (VD: *Keo dán bạt chuồng trại*).
+* Bấm vào thẻ vật tư (VD: *Keo dán bạt trang trại*).
 
 ### Bước 2: Chọn đơn vị cấp phát mong muốn
 Hộp thoại chi tiết sẽ hiển thị các đơn vị có sẵn:
-* **Chọn Thùng:** Phù hợp khi cần làm diện rộng, thay mới toàn bộ bạt che chuồng kín.  
+* **Chọn Thùng:** Phù hợp khi cần làm diện rộng, thay mới toàn bộ bạt che trại kín.  
   👉 Màn hình hiển thị: *Tồn: 10 Thùng khả dụng*.
 * **Chọn Hộp (550ml):** Phù hợp khi chỉ cần dặm vá vết thủng nhỏ.  
   👉 Màn hình hiển thị: *Tồn: 64 Hộp khả dụng*.
@@ -78,7 +78,7 @@ Hộp thoại chi tiết sẽ hiển thị các đơn vị có sẵn:
 ### Bước 4: Thêm vào giỏ & Tạo phiếu yêu cầu
 1. Bấm **"Thêm vào giỏ hàng"**.
 2. Mở **Giỏ hàng** ➜ Kiểm tra danh sách vật tư đã chọn với đúng đơn vị (`2 Thùng`).
-3. Bấm **"Tạo phiếu yêu cầu"** ➜ Chọn Khu vực/Dãy chuồng sử dụng ➜ Bấm **"Gửi yêu cầu"**.
+3. Bấm **"Tạo phiếu yêu cầu"** ➜ Chọn Khu vực/Dãy trại sử dụng ➜ Bấm **"Gửi yêu cầu"**.
 
 ---
 
@@ -87,10 +87,10 @@ Hộp thoại chi tiết sẽ hiển thị các đơn vị có sẵn:
 ### 4.1. Xuất kho theo Phiếu Yêu cầu (Requisitions)
 1. Vào menu **Yêu cầu** (`/requisitions`) ➜ Mở phiếu đã được Kỹ thuật duyệt.
 2. Danh sách vật tư thể hiện rõ:
-   * **Tên hàng:** Keo dán bạt chuồng trại
+   * **Tên hàng:** Keo dán bạt trang trại
    * **Quy cách yêu cầu:** 1 Thùng = 6 Hộp (550ml)
    * **Số lượng:** 2 Thùng
-3. Thủ kho xuất nguyên 2 Thùng giao cho nhân viên chuồng.
+3. Thủ kho xuất nguyên 2 Thùng giao cho nhân viên trại.
 4. Bấm **"Xác nhận xuất kho"** ➜ Hệ thống tự động trừ đúng **12 Hộp** trong cơ sở dữ liệu tồn kho Kho chính.
 
 ### 4.2. Nhập kho từ Nhà cung cấp (Receipts)
@@ -105,11 +105,11 @@ Hộp thoại chi tiết sẽ hiển thị các đơn vị có sẵn:
 
 | Nhóm hàng | Tên vật tư | Đơn vị cơ sở (Child) | Đơn vị đóng gói quy đổi (Parent) | Tỷ lệ quy đổi |
 |---|---|---|---|---|
-| **Keo dán & Chống dột** | Keo dán bạt chuồng kín | `Hộp` (550ml) | `Thùng` | 1 Thùng = 6 Hộp (3.300ml) |
+| **Keo dán & Chống dột** | Keo dán bạt trại kín | `Hộp` (550ml) | `Thùng` | 1 Thùng = 6 Hộp (3.300ml) |
 | **Hóa chất sát trùng** | Thuốc sát trùng Benkocid | `Chai` (1 Lít) | `Can` | 1 Can = 5 Chai (5 Lít) |
-| **Hóa chất công nghiệp** | Formol sát trùng chuồng | `Can` (5 Lít) | `Phuy` | 1 Phuy = 40 Can (200 Lít) |
+| **Hóa chất công nghiệp** | Formol sát trùng trại | `Can` (5 Lít) | `Phuy` | 1 Phuy = 40 Can (200 Lít) |
 | **Thức ăn chăn nuôi** | Cám gà đẻ siêu trứng | `Bao` (25 Kg) | `Tấn` | 1 Tấn = 40 Bao (1.000 Kg) |
-| **Xử lý môi trường** | Vôi bột khử trùng chuồng | `Kg` | `Bao` | 1 Bao = 25 Kg |
+| **Xử lý môi trường** | Vôi bột khử trùng trại | `Kg` | `Bao` | 1 Bao = 25 Kg |
 | **Vật tư cơ khí** | Dây kẽm buộc lồng gà | `Mét` | `Cuộn` | 1 Cuộn = 100 Mét |
 | **Thuốc thú y** | Men tiêu hóa men sống | `Gói` (100g) | `Hộp` | 1 Hộp = 10 Gói (1 Kg) |
 | **Vật tư đóng gói** | Băng keo dán thùng | `Cuộn` | `Cây` / `Thùng` | 1 Cây = 6 Cuộn; 1 Thùng = 36 Cuộn |

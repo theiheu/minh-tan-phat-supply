@@ -194,7 +194,7 @@ export function AICopilotSessionsTab({
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-muted/10 overscroll-contain">
             {loadingMessages ? (
               <div className="flex items-center justify-center py-12 text-muted-foreground text-xs gap-2">
                 <RefreshCw className="size-4 animate-spin text-primary" />

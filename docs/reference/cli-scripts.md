@@ -92,7 +92,7 @@ Bộ tập lệnh kiểm thử tự động độc lập từng luồng nghiệp
 | `verify-username-login.ts` | Đăng nhập bằng Username không cần email & Trigger khóa họ tên. | `npx tsx scripts/verify-username-login.ts` |
 | `verify-receipt-flow.ts` | Nhập kho NCC, upload hóa đơn VAT & tự động cấp phát phiếu đã duyệt. | `npx tsx scripts/verify-receipt-flow.ts` |
 | `verify-requisition-flow.ts` | Quy trình yêu cầu vật tư duyệt 2 cấp & xác nhận nhận hàng 2 chiều. | `npx tsx scripts/verify-requisition-flow.ts` |
-| `verify-issue-flow.ts` | Xuất kho trực tiếp theo Dãy chuồng (`sub_zone`) & xuất bán. | `npx tsx scripts/verify-issue-flow.ts` |
+| `verify-issue-flow.ts` | Xuất kho trực tiếp theo Dãy trại (`sub_zone`) & xuất bán. | `npx tsx scripts/verify-issue-flow.ts` |
 | `verify-defect-exchange.ts` | Đổi 1-1 motor cháy cấp tốc trong 30 giây & nạp kho hỏng. | `npx tsx scripts/verify-defect-exchange.ts` |
 | `verify-exchange-repair.ts` | Vòng đời sửa chữa thiết bị cơ điện & nghiệm thu nhập lại kho. | `npx tsx scripts/verify-exchange-repair.ts` |
 | `verify-fuel-flow.ts` | Quét QR đổ dầu xe ben, nhập ODO & tính định mức $L/100km$. | `npx tsx scripts/verify-fuel-flow.ts` |

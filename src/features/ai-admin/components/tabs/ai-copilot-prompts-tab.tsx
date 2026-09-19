@@ -211,7 +211,7 @@ export function AICopilotPromptsTab({
           </DialogHeader>
 
           {editingPrompt && (
-            <div className="space-y-3.5 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3.5 overscroll-contain">
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Tiêu đề gợi ý (Ngắn gọn)</Label>
                 <Input

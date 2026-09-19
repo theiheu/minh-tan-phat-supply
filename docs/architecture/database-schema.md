@@ -74,14 +74,14 @@ erDiagram
 
 ### A. Tổ Chức Không Gian & Nhân Sự (Organization & Auth)
 1. **`zones`**: Khu vực địa lý lớn của trang trại (Khu A, Khu B, Cơ sở 1, Xưởng Cơ Điện, Trạm Bồn Dầu...).
-2. **`sub_zones`**: Dãy chuồng nuôi hoặc phân xưởng chi tiết thuộc Khu (Chuồng A1, Chuồng A2, Dãy B1, Kho cám...).
+2. **`sub_zones`**: Dãy trại nuôi hoặc phân xưởng chi tiết thuộc Khu (Trại A1, Trại A2, Dãy B1, Kho cám...).
 3. **`profiles`**: Hồ sơ người dùng mở rộng từ Supabase Auth (`id`, `name`, `username`, `email`, `role`, `zone_id`, `is_active`, `is_protected`).
 4. **`audit_logs`**: Sổ kiểm toán lưu vết 100% mọi hành động tạo, sửa, xóa, khóa tài khoản (`actor_id`, `action`, `entity_type`, `entity_id`, `before`, `after`).
 5. **`notifications`**: Hàng đợi thông báo chuông tức thì theo người dùng (`user_id`, `title`, `message`, `type`, `link`, `is_read`).
 6. **`email_delivery_attempts`**: Lịch sử gửi mail thông báo nền qua SMTP (`recipient`, `subject`, `status`, `error_message`, `attempt_count`).
 
 ### B. Danh Mục Hàng Hóa & Đa Quy Cách (Catalog & Packaging)
-7. **`categories`**: Danh mục phân loại vật tư (Cơ điện, Nước & Chuồng trại, Thuốc thú y, Bao bì...).
+7. **`categories`**: Danh mục phân loại vật tư (Cơ điện, Nước & Trang trại, Thuốc thú y, Bao bì...).
 8. **`products`**: Sản phẩm gốc làm danh tính chung (`code`, `name`, `category_id`, `base_unit`, `manage_type`, `is_active`).
 9. **`skus`**: Dòng hàng SKU chi tiết duy nhất giữ tồn kho (`sku_code`, `product_id`, `name`, `base_unit_id`, `kit_type`, `cost_price`, `selling_price`).
 10. **`units`**: Danh mục đơn vị tính chuẩn (`code`, `name`, `symbol`).
@@ -105,7 +105,7 @@ erDiagram
 24. **`issue_items`**: Chi tiết hàng xuất (`issue_id`, `sku_id`, `quantity`, `unit_price`).
 
 ### E. Yêu Cầu Vật Tư & Trả Lại Hàng Thừa (Requisitions & Returns)
-25. **`requisitions`**: Phiếu xin cấp vật tư từ chuồng trại (`code`, `requester_id`, `zone_id`, `sub_zone_id`, `priority`, `status`: `draft`/`pending`/`approved`/`issued`/`received`/`rejected`/`cancelled`, `approved_by`, `issued_by`, `received_by`, `invoice_images`).
+25. **`requisitions`**: Phiếu xin cấp vật tư từ trang trại (`code`, `requester_id`, `zone_id`, `sub_zone_id`, `priority`, `status`: `draft`/`pending`/`approved`/`issued`/`received`/`rejected`/`cancelled`, `approved_by`, `issued_by`, `received_by`, `invoice_images`).
 26. **`requisition_items`**: Chi tiết vật tư yêu cầu (`requisition_id`, `sku_id`, `quantity_requested`, `quantity_issued`).
 27. **`requisition_returns`**: Phiếu công nhân trả lại vật tư dùng thừa về kho (`code`, `requisition_id`, `returned_by`, `location_id`, `status`).
 28. **`requisition_return_items`**: Chi tiết vật tư trả lại (`return_id`, `sku_id`, `quantity`).

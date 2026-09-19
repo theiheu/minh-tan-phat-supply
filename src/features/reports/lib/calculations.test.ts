@@ -232,7 +232,7 @@ describe("Report calculations", () => {
         {
           id: "issue-1",
           zone_id: "zone-a",
-          zone_name: "Khu Chuồng A1",
+          zone_name: "Khu Trại A1",
           items: [
             {
               product_name: "Bóng đèn sưởi hồng ngoại",
@@ -255,7 +255,7 @@ describe("Report calculations", () => {
         {
           id: "issue-2",
           zone_id: "zone-a",
-          zone_name: "Khu Chuồng A1",
+          zone_name: "Khu Trại A1",
           items: [
             {
               product_name: "Bóng đèn sưởi hồng ngoại",
@@ -270,7 +270,7 @@ describe("Report calculations", () => {
         {
           id: "issue-3",
           zone_id: "zone-b",
-          zone_name: "Khu Chuồng B1",
+          zone_name: "Khu Trại B1",
           items: [
             {
               product_name: "Núm uống nước tự động",

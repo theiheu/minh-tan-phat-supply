@@ -81,24 +81,25 @@ export async function createIssue(input: IssueInput) {
   if (issueId) {
     const meta = await issueMeta(issueId);
     const code = meta?.code ?? "PXK";
-    const destName = (meta?.zone as { name?: string } | null)?.name || (meta?.customer as { name?: string } | null)?.name;
+    const _destName = (meta?.zone as { name?: string } | null)?.name || (meta?.customer as { name?: string } | null)?.name;
 
-    try {
-      const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
-      if (whUsers && whUsers.length > 0) {
-        await supabase.from("notifications").insert(
-          whUsers.map((u) => ({
-            user_id: u.id,
-            type: "issue",
-            title: `[Xuất kho] ${code} - Tạo mới phiếu xuất kho`,
-            body: `Người lập ${profile.name} đã tạo phiếu xuất kho${destName ? ` tới ${destName}` : ""}.`,
-            link: `/issues/${issueId}`,
-          }))
-        );
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV !== "test") console.warn("[createIssue] In-app notification error:", err);
-    }
+    await dispatchBusinessEvent({
+      supabase,
+      input: {
+        event: "issue.created",
+        actorId: profile.id,
+        subject: { type: "issue", id: issueId },
+        payload: {
+          code,
+          destinationType: parsed.destinationType,
+          zoneName: (meta?.zone as { name?: string } | null)?.name,
+          customerName: (meta?.customer as { name?: string } | null)?.name,
+          issuerName: profile.name,
+          items: formatIssueItems((meta as any)?.items),
+          notes: parsed.notes ?? undefined,
+        },
+      },
+    });
   }
 
   revalidatePath("/issues");
@@ -173,22 +174,20 @@ export async function cancelIssue(id: string) {
   const { error } = await supabase.rpc("cancel_issue", { p_id: id, p_by: profile.id });
   if (error) throw new Error(error.message);
 
-  try {
-    const userIds = [...new Set([meta?.creator_id].filter(Boolean))];
-    if (userIds.length > 0) {
-      await supabase.from("notifications").insert(
-        userIds.map((uid) => ({
-          user_id: uid!,
-          type: "issue",
-          title: `[Xuất kho] ${code} - Đã hủy phiếu xuất kho`,
-          body: `Phiếu xuất kho đã được hủy bỏ trên hệ thống bởi ${profile.name}.`,
-          link: "/issues",
-        }))
-      );
-    }
-  } catch (err) {
-    if (process.env.NODE_ENV !== "test") console.warn("[cancelIssue] In-app notification error:", err);
-  }
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "issue.cancelled",
+      actorId: profile.id,
+      subject: { type: "issue", id },
+      payload: {
+        code,
+        destinationType: meta?.destination_type as any,
+        issuerName: profile.name,
+        items: formatIssueItems((meta as any)?.items),
+      },
+    },
+  });
 
   revalidatePath("/issues");
 }

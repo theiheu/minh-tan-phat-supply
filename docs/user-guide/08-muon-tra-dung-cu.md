@@ -5,7 +5,7 @@ Quy trình kiểm soát tủ đồ nghề dùng chung của trang trại (Máy h
 ---
 
 ## 1. QUY TRÌNH MƯỢN DỤNG CỤ (Quản kho)
-1. Thợ / Công nhân đến kho mượn đồ nghề đi sửa chuồng.
+1. Thợ / Công nhân đến kho mượn đồ nghề đi sửa trại.
 2. Quản kho vào menu **Dụng cụ** (`/tools`) ➜ Bấm **"Cho mượn dụng cụ"**.
 3. Chọn **Người mượn** và **Khu vực công tác**.
 4. Chọn danh sách dụng cụ (Ví dụ: *1 Máy hàn điện tử Jasic*, *1 Thang nhôm rút 3.8m*).

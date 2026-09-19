@@ -11,20 +11,20 @@
 ## 1. TỔNG QUAN HỆ THỐNG & BỐI CẢNH VẬN HÀNH THỰC TẾ
 
 ### 1.1. Bối cảnh Vận hành tại Trại Gà Minh Tân Phát
-Trại gà Minh Tân Phát vận hành theo mô hình chuồng kín quy mô công nghiệp với hàng trăm nghìn cá thể gà đẻ trứng. Công tác hậu cần kho vận tại trại bao gồm quản lý hàng nghìn danh mục vật tư tiêu hao, hóa chất sát trùng, thuốc thú y, thức ăn cám và linh phụ kiện sửa chữa chuồng trại.
+Trại gà Minh Tân Phát vận hành theo mô hình trại kín quy mô công nghiệp với hàng trăm nghìn cá thể gà đẻ trứng. Công tác hậu cần kho vận tại trại bao gồm quản lý hàng nghìn danh mục vật tư tiêu hao, hóa chất sát trùng, thuốc thú y, thức ăn cám và linh phụ kiện sửa chữa trang trại.
 
-Trong thực tế, **đơn vị mua hàng/nhập kho từ nhà cung cấp** và **đơn vị sử dụng/xuất kho thực tế tại từng dãy chuồng** thường xuyên không đồng nhất:
-1. **Keo dán bạt chuồng kín:** Nhập từ nhà phân phối theo **Thùng** (1 Thùng = 6 Hộp keo chuyên dụng 550ml).
-   - Khi kỹ thuật đại tu thay bạt toàn bộ dãy chuồng 1: Cần xin **2 Thùng**.
+Trong thực tế, **đơn vị mua hàng/nhập kho từ nhà cung cấp** và **đơn vị sử dụng/xuất kho thực tế tại từng dãy trại** thường xuyên không đồng nhất:
+1. **Keo dán bạt trại kín:** Nhập từ nhà phân phối theo **Thùng** (1 Thùng = 6 Hộp keo chuyên dụng 550ml).
+   - Khi kỹ thuật đại tu thay bạt toàn bộ dãy trại 1: Cần xin **2 Thùng**.
    - Khi công nhân đi kiểm tra định kỳ phát hiện 1 vết rách nhỏ cần dặm vá: Chỉ cần xin **1 Hộp** (550ml).
-2. **Thuốc sát trùng / Hóa chất diệt khuẩn chuồng (Iodine, Formol, Glutaraldehyde):**
+2. **Thuốc sát trùng / Hóa chất diệt khuẩn trại (Iodine, Formol, Glutaraldehyde):**
    - Nhập từ công ty thú y theo **Can** 5 Lít hoặc **Phuy** 200 Lít.
    - Khi phun sát trùng cổng trại và hố sát trùng: Cấp **1 Can** (5.000 ml).
-   - Khi pha bình phun thuốc diệt mạt gà định kỳ ô chuồng: Cấp **500 ml** hoặc **1.000 ml**.
+   - Khi pha bình phun thuốc diệt mạt gà định kỳ ô trại: Cấp **500 ml** hoặc **1.000 ml**.
 3. **Cám thức ăn hỗn hợp & Vôi bột xử lý nền:**
    - Nhập theo **Tấn** (1 Tấn = 40 Bao = 1.000 Kg) hoặc **Bao 25kg**.
-   - Chuồng nhỏ hoặc khu vực úm gà cần cấp lẻ **2 Bao** hoặc **50 Kg**.
-4. **Dây kẽm bọc nhựa buộc chuồng & Lưới thép:**
+   - Trại nhỏ hoặc khu vực úm gà cần cấp lẻ **2 Bao** hoặc **50 Kg**.
+4. **Dây kẽm bọc nhựa buộc trại & Lưới thép:**
    - Nhập theo **Cuộn** (1 Cuộn = 100 Mét).
    - Cấp phát sửa lồng gà theo **Mét** (VD: xin 15 Mét).
 5. **Thuốc thú y dạng vỉ/viên/gói (Thuốc bổ trợ đẻ trứng, men tiêu hóa, kháng sinh):**
@@ -40,7 +40,7 @@ Trong thực tế, **đơn vị mua hàng/nhập kho từ nhà cung cấp** và 
   1. *Lẻ (1 quy cách)*: Bắt buộc chọn 1 đơn vị duy nhất (chỉ chọn được Thùng HOẶC Hộp), không hỗ trợ đơn vị thứ hai.
   2. *Nhiều quy cách*: Mỗi quy cách (10kg, 25kg) là một dòng tồn kho độc lập, không liên thông số lượng tồn vật lý với nhau.
   3. *Bộ lắp ráp*: Giao diện và thuật ngữ hướng cơ khí/BOM (Bộ gồm Linh kiện A ×1 + Linh kiện B ×2), khó hiểu và không phù hợp với nghiệp vụ đóng gói quy đổi.
-* **Người xin vật tư tại chuồng bị gò bó:** Không thể chọn xin theo Thùng hoặc theo Hộp một cách linh hoạt.
+* **Người xin vật tư tại trại bị gò bó:** Không thể chọn xin theo Thùng hoặc theo Hộp một cách linh hoạt.
 * **Tồn kho bị chia cắt hoặc tính toán sai lệch:** Thủ kho phải tự tính nhẩm quy đổi bên ngoài bằng máy tính tay, dễ dẫn đến thất thoát hoặc âm kho.
 
 #### 🎯 Mục tiêu Hệ thống Mới:
@@ -61,7 +61,7 @@ Tận dụng cấu trúc bảng products, variants, variant_components và stock
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                       BẢNG PRODUCTS                                         │
 │  id: uuid (PK)                                                                              │
-│  name: "Keo dán bạt chuồng trại"                                                            │
+│  name: "Keo dán bạt trang trại"                                                            │
 │  category_id: uuid -> categories(id)                                                        │
 │  images: text[]                                                                             │
 │  options: ["Quy cách"]                                                                      │
@@ -286,9 +286,9 @@ Thêm tab **"Quy đổi đơn vị"** (quy-doi) nằm cạnh các chế độ *L
 │ │ 1 dòng tồn kho duy nhất   │ │ VD 1 Thùng = 6 Hộp 550ml  │ │ 10kg, 25kg độc lập        │  │
 │ └───────────────────────────┘ └───────────────────────────┘ └───────────────────────────┘  │
 │                                                                                             │
-│ Tên vật tư: [ Keo dán bạt chuồng trại                                                     ] │
+│ Tên vật tư: [ Keo dán bạt trang trại                                                     ] │
 │ Danh mục:   [ Keo & Hóa chất kết dính                                                   ▼ ] │
-│ Mô tả:      [ Keo chuyên dụng chống thấm, dán vá bạt che chuồng kín                       ] │
+│ Mô tả:      [ Keo chuyên dụng chống thấm, dán vá bạt che trại kín                       ] │
 │                                                                                             │
 │ ┌── 1. ĐƠN VỊ CƠ SỞ (Đơn vị nhỏ nhất để quản lý tồn kho) ─────────────────────────────────┐ │
 │ │ Tên đơn vị cơ sở: [ Hộp        ]   Quy cách/Thể tích: [ 550ml                         ] │ │
@@ -321,8 +321,8 @@ Khi nhân viên bấm vào sản phẩm để thêm vào giỏ yêu cầu:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│ Keo dán bạt chuồng trại                                                                     │
-│ Keo chuyên dụng chống thấm, dán vá bạt che chuồng kín                                       │
+│ Keo dán bạt trang trại                                                                     │
+│ Keo chuyên dụng chống thấm, dán vá bạt che trại kín                                       │
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤
 │ Danh sách đơn vị cấp phát:                                                                  │
 │                                                                                             │
@@ -349,7 +349,7 @@ Khi nhân viên bấm vào sản phẩm để thêm vào giỏ yêu cầu:
 
 ### 4.3. Hiển thị trên Giỏ hàng & Phiếu Yêu cầu Cấp phát (RequisitionForm)
 * Dòng vật tư trong giỏ hàng và trên phiếu yêu cầu:
-  * **Tên:** Keo dán bạt chuồng trại
+  * **Tên:** Keo dán bạt trang trại
   * **Quy cách yêu cầu:** 1 Thùng = 6 Hộp (550ml)
   * **Số lượng:** 2 Thùng
   * **Ghi chú chuẩn bị:** = 12 Hộp (550ml)
@@ -362,7 +362,7 @@ Khi nhân viên bấm vào sản phẩm để thêm vào giỏ yêu cầu:
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **Quản lý / Ban Giám đốc (Admin/Manager)** | ✅ Toàn quyền | ✅ Có | ✅ Có | ✅ Toàn quyền duyệt | ✅ Có |
 | **Thủ kho (Warehouse Manager)** | ✅ Toàn quyền | ✅ Có | ✅ Có | ✅ Xuất kho & Trừ kho | ✅ Toàn quyền |
-| **Kỹ thuật / Nhân viên chuồng (Technician/Staff)** | ❌ Không có quyền | ✅ Tự do chọn ĐVT | ✅ Gửi yêu cầu | ❌ Không | ❌ Không |
+| **Kỹ thuật / Nhân viên trại (Technician/Staff)** | ❌ Không có quyền | ✅ Tự do chọn ĐVT | ✅ Gửi yêu cầu | ❌ Không | ❌ Không |
 
 ---
 
@@ -384,4 +384,4 @@ Khi nhân viên bấm vào sản phẩm để thêm vào giỏ yêu cầu:
 
 ## 7. KẾT LUẬN & HƯỚNG DẪN BẢO TRÌ
 
-Tính năng **Quy đổi Đơn vị & Đóng gói Đa cấp** đã được triển khai hoàn chỉnh, mang lại trải nghiệm tối ưu cho cả nhân viên kỹ thuật chuồng trại và thủ kho. Kiến trúc tận dụng bảng variant_components giúp hệ thống hoàn toàn tương thích với dữ liệu lịch sử, không tạo ra nợ kỹ thuật và sẵn sàng mở rộng cho các phân hệ ERP nâng cao trong tương lai.
+Tính năng **Quy đổi Đơn vị & Đóng gói Đa cấp** đã được triển khai hoàn chỉnh, mang lại trải nghiệm tối ưu cho cả nhân viên kỹ thuật trang trại và thủ kho. Kiến trúc tận dụng bảng variant_components giúp hệ thống hoàn toàn tương thích với dữ liệu lịch sử, không tạo ra nợ kỹ thuật và sẵn sàng mở rộng cho các phân hệ ERP nâng cao trong tương lai.

@@ -26,15 +26,15 @@ Mọi agent, developer và tài liệu trong repo phải tuân thủ nghiêm ng�
 
 | Thuật ngữ | Định nghĩa & Ý nghĩa Vận hành |
 |---|---|
-| **Phiếu yêu cầu (Requisition)** | Công nhân/Trưởng chuồng lập phiếu xin cấp vật tư trên điện thoại. Quy trình duyệt 2 cấp: Kỹ thuật duyệt cấp 1 ➔ Quản kho xuất cấp cấp 2. |
+| **Phiếu yêu cầu (Requisition)** | Công nhân/Trưởng trại lập phiếu xin cấp vật tư trên điện thoại. Quy trình duyệt 2 cấp: Kỹ thuật duyệt cấp 1 ➔ Quản kho xuất cấp cấp 2. |
 | **Phiếu nhập kho (Receipt / GRN)** | Nhập vật tư từ Nhà cung cấp, gắn số hóa đơn VAT, upload ảnh chứng từ và tự động cấp phát (Auto-fulfill) cho phiếu đã duyệt. |
-| **Phiếu xuất kho (Issue / PXK)** | Xuất vật tư trực tiếp gắn theo Dãy chuồng (`sub_zones`) để hạch toán chi phí, hoặc xuất bán thương mại cho khách hàng. |
-| **Phiếu báo hỏng (Defect Note)** | Ghi nhận sự cố hư hỏng tại chuồng, bắt buộc chụp >= 1 ảnh hiện trường và mô tả lỗi để phục vụ đối soát. |
-| **Đổi 1-1 cấp tốc (Quick Exchange)** | Nghiệp vụ khẩn cấp cứu chuồng: Xuất ngay thiết bị mới và thu thiết bị cháy về Kho Hỏng trong 30 giây (1 transaction). |
+| **Phiếu xuất kho (Issue / PXK)** | Xuất vật tư trực tiếp gắn theo Dãy trại (`sub_zones`) để hạch toán chi phí, hoặc xuất bán thương mại cho khách hàng. |
+| **Phiếu báo hỏng (Defect Note)** | Ghi nhận sự cố hư hỏng tại trại, bắt buộc chụp >= 1 ảnh hiện trường và mô tả lỗi để phục vụ đối soát. |
+| **Đổi 1-1 cấp tốc (Quick Exchange)** | Nghiệp vụ khẩn cấp cứu trại: Xuất ngay thiết bị mới và thu thiết bị cháy về Kho Hỏng trong 30 giây (1 transaction). |
 | **Phiếu sửa chữa (Repair Order)** | Gom thiết bị hỏng gửi xưởng cơ điện ngoài quấn lại motor/bơm; nghiệm thu đạt chuẩn chuyển về Kho Tổng tái sử dụng. |
 | **Phiếu thanh lý (Liquidation)** | Bán phế liệu ve chai hoặc tiêu hủy thiết bị không thể phục hồi, Chủ trại duyệt thu tiền về quỹ. |
 | **Mượn - Trả dụng cụ (Tool Borrowing)** | Quản lý tủ đồ nghề dùng chung (máy hàn, máy khoan, thang nhôm). Có hẹn ngày trả và gửi email cảnh báo quá hạn. |
-| **Khu vực & Dãy chuồng (Zones & Sub-zones)** | Cây không gian 2 cấp: Khu lớn (`zones`, VD: Khu A, Khu B) và Dãy chuồng con (`sub_zones`, VD: Chuồng A1, A2). |
+| **Khu vực & Dãy trại (Zones & Sub-zones)** | Cây không gian 2 cấp: Khu lớn (`zones`, VD: Khu A, Khu B) và Dãy trại con (`sub_zones`, VD: Trại A1, A2). |
 | **Kho dầu & Xe cơ giới (Fuel & Fleet)** | Trạm bồn dầu Diesel nội bộ: Quét tem QR xe, ghi nhận ODO/giờ máy, tự động tính L/100km hoặc L/h, cảnh báo bất thường. |
 | **Kiểm kê kho (Stocktake)** | Đếm tồn kho thực tế định kỳ bằng điện thoại, chụp ảnh bằng chứng, đối soát thừa/thiếu và duyệt cân bằng tồn kho. |
 | **Chuyển kho (Transfer)** | Điều chuyển vật tư giữa Kho Tổng, Kho Cơ Điện, Kho Hỏng, Trạm Bồn Dầu với lịch sử minh bạch. |

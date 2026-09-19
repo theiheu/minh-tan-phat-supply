@@ -72,7 +72,7 @@ export function VehicleQrModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <QrCode className="size-5 text-emerald-600" />
@@ -84,7 +84,8 @@ export function VehicleQrModal({
         </DialogHeader>
 
         {/* Visual Decal Sticker Preview (Rendered natively in HTML) */}
-        <div className="flex flex-col items-center justify-center p-2">
+        <div className="flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain">
+          <div className="flex flex-col items-center justify-center p-2">
           <div className="w-full max-w-[380px] overflow-hidden rounded-xl border-2 border-emerald-700 bg-white p-3.5 shadow-xl text-emerald-950 dark:bg-white dark:text-emerald-950">
             {/* Decal Header */}
             <div className="flex items-center justify-between border-b border-emerald-200 pb-2">
@@ -155,6 +156,7 @@ export function VehicleQrModal({
               </p>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Action Buttons */}

@@ -82,22 +82,22 @@ export async function createLiquidation(input: z.infer<typeof liquidationSchema>
     if (meta?.code) code = meta.code;
   }
 
-  try {
-    const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
-    if (whUsers && whUsers.length > 0) {
-      await supabase.from("notifications").insert(
-        whUsers.map((u) => ({
-          user_id: u.id,
-          type: "liquidation",
-          title: `[Thanh lý vật tư] ${code} - Chờ phê duyệt thanh lý`,
-          body: `Người lập ${profile.name} đã tạo phiếu đề xuất thanh lý ${items.length} mặt hàng vật tư.`,
-          link: "/liquidations",
-        }))
-      );
-    }
-  } catch (err) {
-    if (process.env.NODE_ENV !== "test") console.warn("[createLiquidation] In-app notification error:", err);
-  }
+  const meta = liquidationId ? await liquidationMeta(liquidationId) : null;
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "liquidation.created",
+      actorId: profile.id,
+      subject: { type: "liquidation", id: liquidationId },
+      payload: {
+        code,
+        itemCount: items.length,
+        reason: parsed.reason,
+        handlerName: profile.name,
+        items: formatLiquidationItems((meta as any)?.items),
+      },
+    },
+  });
 
   revalidatePath("/liquidations");
   return data as string;

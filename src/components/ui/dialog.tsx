@@ -63,8 +63,8 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] rounded-xl border bg-background shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
-          isCustomLayout ? "" : "grid gap-4 p-6",
+          "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] max-h-[calc(100dvh-2rem)] sm:max-h-[min(90dvh,calc(100vh-3rem))] translate-x-[-50%] translate-y-[-50%] rounded-xl sm:rounded-2xl border bg-background shadow-2xl duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg flex flex-col overflow-hidden",
+          isCustomLayout ? "" : "p-4 sm:p-6",
           className
         )}
         onOpenAutoFocus={(e) => {
@@ -115,7 +115,20 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 pb-3 border-b border-border/60 text-center sm:text-left pr-8 sm:pr-8", className)}
+      className={cn("flex flex-col gap-2 pb-3 border-b border-border/60 text-center sm:text-left pr-8 sm:pr-8 shrink-0", className)}
+      {...props}
+    />
+  )
+}
+
+function DialogBody({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("flex-1 min-h-0 overflow-y-auto overscroll-contain", className)}
       {...props}
     />
   )
@@ -133,7 +146,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end shrink-0",
         className
       )}
       {...props}
@@ -176,6 +189,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

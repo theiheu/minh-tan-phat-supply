@@ -29,14 +29,14 @@ Dành cho kỹ sư phần mềm, kiến trúc sư hệ thống và AI Agents tì
 | 01 | [**Đăng nhập & Quản lý Tài khoản**](./user-guide/01-tong-quan-dang-nhap.md) | Mọi nhân viên | Đăng nhập Username/Mật khẩu (không email), đổi mật khẩu, xem phân quyền. |
 | 02 | [**Danh mục Vật tư & Khai báo SKU**](./user-guide/02-quan-ly-vat-tu-qr.md) / [**Chi tiết Khai báo 5 Bước**](./user-guide/02-huong-dan-tao-vat-tu-chi-tiet.md) | Quản kho, Kỹ thuật | Khai báo 4 mô hình: Đơn quy cách, Quy đổi UOM, Biến thể 3 trục, BOM Bộ lắp ráp. |
 | 03 | [**Nhập kho NCC & Hóa đơn VAT**](./user-guide/03-nhap-kho-vat-tu.md) | Quản kho, Kế toán | Nhập kho, upload ảnh hóa đơn VAT có lightbox, cập nhật giá vốn, auto-fulfill phiếu đã duyệt. |
-| 04 | [**Xuất kho & Hạch toán Dãy chuồng**](./user-guide/04-xuat-kho-cap-phat.md) | Quản kho, Kế toán | Xuất cấp nội bộ gắn Sub-zone chuồng, xuất bán thương mại cho khách hàng. |
+| 04 | [**Xuất kho & Hạch toán Dãy trại**](./user-guide/04-xuat-kho-cap-phat.md) | Quản kho, Kế toán | Xuất cấp nội bộ gắn Sub-zone trại, xuất bán thương mại cho khách hàng. |
 | 05 | [**Yêu cầu Vật tư (Duyệt 2 cấp)**](./user-guide/05-yeu-cau-vat-tu.md) | Công nhân, Kỹ thuật, Kho | Giỏ hàng trên mobile, Kỹ thuật duyệt cấp 1, Kho xuất cấp 2, hoàn trả vật tư thừa. |
-| 06 | [**Đổi 1-1 Cấp Tốc & Báo Hỏng**](./user-guide/06-doi-1-1-va-bao-hong.md) | Kỹ thuật, Quản kho | Đổi motor/bơm cháy trong 30 giây cứu chuồng, bắt buộc ảnh hiện trường. |
+| 06 | [**Đổi 1-1 Cấp Tốc & Báo Hỏng**](./user-guide/06-doi-1-1-va-bao-hong.md) | Kỹ thuật, Quản kho | Đổi motor/bơm cháy trong 30 giây cứu trại, bắt buộc ảnh hiện trường. |
 | 07 | [**Sửa chữa Cơ điện & Thanh lý**](./user-guide/07-sua-chua-thanh-ly.md) | Kỹ thuật, Quản kho, Chủ trại | Gửi xưởng quấn motor, nghiệm thu về Kho Tổng, thanh lý phế liệu ve chai. |
 | 08 | [**Mượn - Trả Dụng cụ Đồ nghề**](./user-guide/08-muon-tra-dung-cu.md) | Quản kho, Thợ cơ điện | Tủ đồ nghề dùng chung (máy hàn, thang nhôm), cảnh báo quá hạn mượn qua email. |
 | 09 | [**Trạm Bồn Dầu & Quét QR Xe**](./user-guide/09-kho-xang-dau-xe.md) | Quản kho dầu, Tài xế | Quét tem QR dán cabin xe trong 5 giây, nhập ODO/giờ máy, tính L/100km hoặc L/h, quản lý giấy tờ xe. |
 | 10 | [**Điều chuyển Kho & Kiểm kê**](./user-guide/10-chuyen-kho-kiem-ke.md) | Quản kho, Kế toán | Chuyển kho nội bộ, kiểm kê quét QR thực tế, chụp ảnh đối soát, duyệt cân bằng tồn kho. |
-| 11 | [**Báo cáo Tổng hợp & Xuất Excel**](./user-guide/11-bao-cao-phan-tich.md) | Chủ trại, Kế toán | Báo cáo XNT, Thẻ kho (Stock Card), Chi phí dãy chuồng, Tiêu hao xe, xuất Excel kế toán. |
+| 11 | [**Báo cáo Tổng hợp & Xuất Excel**](./user-guide/11-bao-cao-phan-tich.md) | Chủ trại, Kế toán | Báo cáo XNT, Thẻ kho (Stock Card), Chi phí dãy trại, Tiêu hao xe, xuất Excel kế toán. |
 | 12 | [**In ấn Chứng từ & Tem Decal QR**](./user-guide/12-in-an-va-tem-nhan.md) | Quản kho, Kế toán | In phiếu A4/A5 có mã QR tra cứu, in tem QR dán kệ hàng và cabin xe. |
 | 13 | [**Đơn vị Tính Đa cấp & Đóng gói**](./user-guide/13-quy-doi-don-vi-dong-goi.md) | Quản trị, Quản kho | Quản lý Thùng/Hộp/ml, cho phép xin cấp linh hoạt, tự động quy đổi Base UOM. |
 | 14 | [**Quản trị Người dùng & Phân cấp Khu**](./user-guide/14-quan-tri-nguoi-dung-va-khu-vuc.md) | Quản trị, Chủ trại | Quản lý 7 roles, khóa định danh, lưu trữ/kích hoạt lại nhân viên, cấu hình Zones & Sub-zones. |

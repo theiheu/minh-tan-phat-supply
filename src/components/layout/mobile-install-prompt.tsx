@@ -82,7 +82,7 @@ export function MobileInstallPrompt() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold leading-tight text-foreground truncate">Cài đặt ứng dụng Kho MTP</p>
-            <p className="text-[11px] text-muted-foreground truncate">Mở nhanh toàn màn hình, tiện dùng tại chuồng</p>
+            <p className="text-[11px] text-muted-foreground truncate">Mở nhanh toàn màn hình, tiện dùng tại trại</p>
           </div>
         </div>
 

@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
       case "zone_cost": {
         const data = await fetchZoneCostReportData({ from: fromStr, to: toStr });
         buffer = await buildZoneCostExcel(data, range);
-        filename = `chi-phi-chuong-${fromStr}-den-${toStr}.xlsx`;
+        filename = `chi-phi-trai-${fromStr}-den-${toStr}.xlsx`;
         break;
       }
 

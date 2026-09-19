@@ -81,7 +81,7 @@ export function CreateUserDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <DialogHeader>
             <DialogTitle>Tạo tài khoản mới</DialogTitle>
             <DialogDescription>
@@ -89,7 +89,8 @@ export function CreateUserDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* 1. Thông tin định danh cố định */}
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
+            {/* 1. Thông tin định danh cố định */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="create-user-name">Họ và tên *</Label>
@@ -176,6 +177,7 @@ export function CreateUserDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
           </div>
 
           <DialogFooter className="gap-2 sm:justify-end">

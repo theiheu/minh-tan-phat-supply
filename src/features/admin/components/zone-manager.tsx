@@ -257,7 +257,7 @@ export function ZoneManager({
 
       {/* Dialog Thêm / Sửa Khu vực */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingZone ? `Chỉnh sửa: ${editingZone.name}` : "Thêm khu vực mới"}
@@ -267,7 +267,7 @@ export function ZoneManager({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2 overscroll-contain">
             {/* Tên khu */}
             <div className="space-y-1.5">
               <Label htmlFor="zone-name" className="text-sm font-medium">
@@ -371,7 +371,7 @@ export function ZoneManager({
         open={Boolean(deleteConfirmZone)}
         onOpenChange={(open) => !open && setDeleteConfirmZone(null)}
       >
-        <DialogContent className="max-w-sm">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Xác nhận xoá khu vực</DialogTitle>
             <DialogDescription>

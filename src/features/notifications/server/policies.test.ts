@@ -11,16 +11,27 @@ describe("Business Event Policies Registry", () => {
       "requisition.cancelled",
       "requisition.received",
       "requisition.returned",
+      "receipt.created",
+      "receipt.approved",
       "receipt.posted",
       "receipt.cancelled_or_reversed",
+      "issue.created",
       "issue.sale_posted",
       "issue.internal_action_required",
+      "issue.cancelled",
+      "liquidation.created",
       "liquidation.approved",
       "liquidation.completed",
       "liquidation.rejected",
+      "stocktake.created",
       "stocktake.posted_with_variance",
       "stocktake.posted_without_variance",
       "stocktake.completed_discrepancy",
+      "stocktake.cancelled",
+      "transfer.completed",
+      "stock.adjusted",
+      "assembly.completed",
+      "disassembly.completed",
       "defect.created",
       "defect.resolution_selected",
       "defect.sent_to_liquidation",
@@ -55,40 +66,84 @@ describe("Business Event Policies Registry", () => {
       }
     });
 
-    it("routes requester confirmation actions (submit, receive, return) to warehouse managers", () => {
+    it("includes accountant in targetRoles for all warehouse progress and management events", () => {
+      const warehouseProgressKeys: BusinessEventKey[] = [
+        "requisition.submitted",
+        "requisition.approved",
+        "requisition.rejected",
+        "requisition.fulfilled",
+        "requisition.cancelled",
+        "requisition.received",
+        "requisition.returned",
+        "receipt.created",
+        "receipt.approved",
+        "receipt.posted",
+        "receipt.cancelled_or_reversed",
+        "issue.created",
+        "issue.sale_posted",
+        "issue.internal_action_required",
+        "issue.cancelled",
+        "stocktake.created",
+        "stocktake.posted_with_variance",
+        "stocktake.posted_without_variance",
+        "stocktake.completed_discrepancy",
+        "stocktake.cancelled",
+        "transfer.completed",
+        "stock.adjusted",
+        "assembly.completed",
+        "disassembly.completed",
+      ];
+
+      for (const key of warehouseProgressKeys) {
+        const policy = getEventPolicy(key);
+        expect(policy.targetRoles).toContain("accountant");
+      }
+    });
+
+    it("routes requester confirmation actions (submit, receive, return) to warehouse managers and accountants", () => {
       const reqSubmitted = getEventPolicy("requisition.submitted");
       expect(reqSubmitted.targetRoles).toContain("warehouse");
+      expect(reqSubmitted.targetRoles).toContain("accountant");
       expect(reqSubmitted.templateKind).toBe("action");
 
       const reqReceived = getEventPolicy("requisition.received");
       expect(reqReceived.targetRoles).toContain("warehouse");
+      expect(reqReceived.targetRoles).toContain("accountant");
       expect(reqReceived.templateKind).toBe("result");
 
       const reqReturned = getEventPolicy("requisition.returned");
       expect(reqReturned.targetRoles).toContain("warehouse");
+      expect(reqReturned.targetRoles).toContain("accountant");
 
       const toolReturned = getEventPolicy("tool.returned");
       expect(toolReturned.targetRoles).toContain("warehouse");
+      expect(toolReturned.targetRoles).toContain("accountant");
 
       const exchangeReceived = getEventPolicy("exchange.received");
       expect(exchangeReceived.targetRoles).toContain("warehouse");
+      expect(exchangeReceived.targetRoles).toContain("accountant");
     });
 
-    it("routes warehouse goods operations (receipt, issue, fuel, stocktake) to all warehouse managers for multi-warehouse synchronization", () => {
+    it("routes warehouse goods operations (receipt, issue, fuel, stocktake) to all warehouse managers and accountants", () => {
       const receiptPosted = getEventPolicy("receipt.posted");
       expect(receiptPosted.targetRoles).toContain("warehouse");
+      expect(receiptPosted.targetRoles).toContain("accountant");
 
       const issueSale = getEventPolicy("issue.sale_posted");
       expect(issueSale.targetRoles).toContain("warehouse");
+      expect(issueSale.targetRoles).toContain("accountant");
 
       const reqFulfilled = getEventPolicy("requisition.fulfilled");
       expect(reqFulfilled.targetRoles).toContain("warehouse");
+      expect(reqFulfilled.targetRoles).toContain("accountant");
 
       const fuelReceipt = getEventPolicy("fuel.receipt_completed");
       expect(fuelReceipt.targetRoles).toContain("warehouse");
+      expect(fuelReceipt.targetRoles).toContain("accountant");
 
       const stocktakePosted = getEventPolicy("stocktake.posted_with_variance");
       expect(stocktakePosted.targetRoles).toContain("warehouse");
+      expect(stocktakePosted.targetRoles).toContain("accountant");
     });
 
     it("only grants financial permissions to accountant and owner events", () => {
@@ -138,7 +193,7 @@ describe("Business Event Policies Registry", () => {
 
       const overduePolicy = getEventPolicy("tool.overdue_started");
       expect(overduePolicy.templateKind).toBe("action");
-      expect(overduePolicy.targetRoles).toEqual(["warehouse"]);
+      expect(overduePolicy.targetRoles).toEqual(["warehouse", "accountant"]);
       expect(overduePolicy.targetParticipants).toEqual(["borrowerId"]);
       expect(overduePolicy.excludeActor).toBe(false);
     });

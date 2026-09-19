@@ -66,7 +66,7 @@ export function TechnicianDashboardView({
               Kỹ Thuật Trưởng / Quản Lý Khu
             </span>
             <span className="text-xs text-muted-foreground font-mono">
-              Cơ điện & Chuồng trại
+              Cơ điện & Trang trại
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">

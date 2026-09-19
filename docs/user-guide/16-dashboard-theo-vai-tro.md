@@ -16,7 +16,7 @@ Hệ thống không dùng chung một giao diện tĩnh cho tất cả mọi ng�
 * **Chỉ số KPI:**
   * **Tổng giá trị tài sản kho (VNĐ):** Định giá toàn bộ hàng hóa trong kho theo giá vốn thời gian thực.
   * **Cảnh báo tồn kho an toàn:** Số lượng mặt hàng chạm ngưỡng tối thiểu cần nhập bổ sung.
-  * **Tổng chi phí xuất dùng tháng:** Chi phí vật tư đã cấp cho các khu chuồng trong tháng hiện tại.
+  * **Tổng chi phí xuất dùng tháng:** Chi phí vật tư đã cấp cho các khu trại trong tháng hiện tại.
   * **Tồn kho bồn dầu Diesel:** Số lít dầu hiện còn trong trạm bồn tổng.
 * **Tác vụ nhanh:** Xem báo cáo tài chính, mở phiên kiểm kê, duyệt thanh lý, quản lý tài khoản nhân viên.
 
@@ -38,16 +38,16 @@ Hệ thống không dùng chung một giao diện tĩnh cho tất cả mọi ng�
 
 ### D. Kỹ Thuật Trưởng / Quản Lý Khu (`technician`) — Maintenance View
 * **Chỉ số KPI:**
-  * **Yêu cầu cần duyệt Cấp 1:** Các phiếu xin vật tư của công nhân chuồng trực thuộc khu.
+  * **Yêu cầu cần duyệt Cấp 1:** Các phiếu xin vật tư của công nhân trại trực thuộc khu.
   * **Thiết bị đang gửi sửa ngoài:** Số motor, máy bơm đang ở xưởng cơ điện ngoài chờ nghiệm thu.
   * **Dụng cụ đội kỹ thuật đang mượn:** Máy móc cầm tay đang phục vụ sửa chữa.
-  * **Sự cố báo hỏng chưa xử lý:** Danh sách thiết bị hỏng tại chuồng cần đổi mới hoặc gửi sửa.
+  * **Sự cố báo hỏng chưa xử lý:** Danh sách thiết bị hỏng tại trại cần đổi mới hoặc gửi sửa.
 * **Tác vụ nhanh:** Duyệt phiếu yêu cầu, Báo hỏng hiện trường, Lập đơn gửi sửa chữa, Nghiệm thu thiết bị.
 
-### E. Người Yêu Cầu / Công Nhân Chuồng (`requester`) — My Requests View
+### E. Người Yêu Cầu / Công Nhân Trại (`requester`) — My Requests View
 * **Chỉ số KPI:**
   * **Phiếu yêu cầu đang xử lý:** Theo dõi tiến độ duyệt và xuất hàng của phiếu xin vật tư.
-  * **Vật tư đã nhận trong tháng:** Lịch sử các món đồ đã mang về chuồng sử dụng.
+  * **Vật tư đã nhận trong tháng:** Lịch sử các món đồ đã mang về trại sử dụng.
   * **Vật tư cần hoàn trả:** Các món đồ dùng thừa cần trả lại kho.
 * **Tác vụ nhanh:** Bấm tạo phiếu yêu cầu mới (Giỏ hàng mobile), Chụp ảnh báo hỏng thiết bị, Bấm nút "Đã nhận hàng".
 

@@ -628,7 +628,7 @@ export function CatalogDraftWorkflow({
               <Label htmlFor="product-description">Mô tả / Thông số kỹ thuật</Label>
               <Textarea
                 id="product-description"
-                placeholder="Nhập thông số kỹ thuật, ứng dụng chuồng nuôi hoặc ghi chú bảo quản..."
+                placeholder="Nhập thông số kỹ thuật, ứng dụng trại nuôi hoặc ghi chú bảo quản..."
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

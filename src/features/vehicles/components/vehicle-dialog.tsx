@@ -159,16 +159,17 @@ export function VehicleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{vehicle ? "Chỉnh sửa phương tiện" : "Thêm phương tiện mới"}</DialogTitle>
-          <DialogDescription>
-            Khai báo xe, máy móc và định mức tiêu hao để quản lý cấp phát nhiên liệu.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-xl">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>{vehicle ? "Chỉnh sửa phương tiện" : "Thêm phương tiện mới"}</DialogTitle>
+            <DialogDescription>
+              Khai báo xe, máy móc và định mức tiêu hao để quản lý cấp phát nhiên liệu.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 min-w-0">
               <Label htmlFor="code" className="text-xs font-semibold">
                 Biển số xe / Mã máy <span className="text-destructive">*</span>
@@ -326,8 +327,9 @@ export function VehicleDialog({
               />
             </div>
           </div>
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
               Hủy
             </Button>

@@ -1443,7 +1443,7 @@ export function CatalogDetailView({
 
       {/* Modal Chỉnh sửa thông tin chi tiết SKU */}
       <Dialog open={Boolean(editingSku)} onOpenChange={(open) => !open && setEditingSku(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-2">
               <Pencil className="size-4 text-primary" />
@@ -1455,7 +1455,7 @@ export function CatalogDetailView({
           </DialogHeader>
 
           {editingSku && (
-            <div className="space-y-4 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>Đơn vị tính cơ bản</Label>
@@ -1599,7 +1599,7 @@ export function CatalogDetailView({
 
       {/* Modal Quản lý nhóm quy cách / trục thuộc tính */}
       <Dialog open={showManageAxes} onOpenChange={(open) => !open && setShowManageAxes(false)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-2">
               <SlidersHorizontal className="size-4 text-primary" />
@@ -1610,7 +1610,7 @@ export function CatalogDetailView({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
             {/* Gợi ý mẫu nhanh */}
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Gợi ý mẫu theo loại vật tư:</Label>
@@ -1708,7 +1708,7 @@ export function CatalogDetailView({
 
       {/* Dialog chỉnh sửa đơn vị quy đổi (UOM) */}
       <Dialog open={Boolean(editingUom)} onOpenChange={(open) => !open && setEditingUom(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-2">
               <Scale className="size-4 text-primary" />
@@ -1720,7 +1720,7 @@ export function CatalogDetailView({
           </DialogHeader>
 
           {editingUom && (
-            <div className="space-y-3 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3 overscroll-contain">
               <div className="space-y-1">
                 <Label>Tên đơn vị đóng gói</Label>
                 <Input
@@ -1766,7 +1766,7 @@ export function CatalogDetailView({
 
       {/* Modal chỉnh sửa hình ảnh riêng của SKU */}
       <Dialog open={Boolean(editingSkuForImages)} onOpenChange={(open) => !open && setEditingSkuForImages(null)}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-base flex items-center gap-2">
               <ImageIcon className="size-4 text-primary" />
@@ -1778,7 +1778,7 @@ export function CatalogDetailView({
           </DialogHeader>
 
           {editingSkuForImages && (
-            <div className="space-y-4 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold flex items-center gap-1.5">
                   <ImagePlus className="size-3.5 text-primary" />

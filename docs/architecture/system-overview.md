@@ -68,7 +68,7 @@ flowchart TD
 | **Bảo mật & Auth** | **GoTrue + Row Level Security (RLS)** | Đăng nhập Username/Mật khẩu (không email), mã hóa phiên làm việc qua HTTP-only cookies (`@supabase/ssr`), phân quyền chi tiết 7 vai trò. |
 | **Ngoại tuyến & PWA** | **Serwist + IndexedDB + Zustand** | Service worker cache tĩnh các trang web và bảng dữ liệu sản phẩm, offline requisition queue tự động đồng bộ khi có mạng. |
 | **In ấn & Tem nhãn** | **@react-pdf/renderer + QRCode** | Xuất phiếu kho chuẩn A4/A5 và tem QR vector độ nét cao, nhúng font tiếng Việt UTF-8 `Roboto-Regular` & `Roboto-Bold`. |
-| **Báo cáo & Xuất liệu** | **ExcelJS + Date-fns** | Xuất dữ liệu kế toán (XNT, Thẻ kho, Chi phí chuồng, Xe), có công thức và định dạng chuẩn. |
+| **Báo cáo & Xuất liệu** | **ExcelJS + Date-fns** | Xuất dữ liệu kế toán (XNT, Thẻ kho, Chi phí trại, Xe), có công thức và định dạng chuẩn. |
 | **AI Copilot** | **Vercel AI SDK + Omniroute + OpenAI** | Trợ lý AI RAG nội bộ — chat với dữ liệu vận hành trại, quản lý và chunking tài liệu tri thức. |
 | **Hệ thống Email** | **Nodemailer SMTP + Background Worker** | Tự động gửi email thông báo phê duyệt phiếu, cảnh báo tồn kho an toàn và nhắc mượn đồ quá hạn. |
 | **Kiểm thử (Testing)** | **Vitest 5.x + Testing Library** | **562 tests / 103 test suites**, kiểm soát toàn diện luồng nghiệp vụ. |
@@ -86,7 +86,7 @@ src/
 │   │   ├── dashboard/                # Dashboard may đo theo 7 vai trò
 │   │   ├── admin/                    # Phân hệ quản trị (Users, Zones, Vehicles, Suppliers, Categories, AI Copilot)
 │   │   ├── products/                 # Phân hệ tra cứu danh mục & tồn kho SKU
-│   │   ├── requisitions/             # Phân hệ phiếu yêu cầu vật tư chuồng (duyệt 2 cấp)
+│   │   ├── requisitions/             # Phân hệ phiếu yêu cầu vật tư trại (duyệt 2 cấp)
 │   │   ├── receipts/                 # Phân hệ phiếu nhập kho NCC, hóa đơn & auto-fulfill
 │   │   ├── issues/                   # Phân hệ phiếu xuất kho nội bộ (theo Sub-zone) & xuất bán
 │   │   ├── defects/                  # Phân hệ báo hỏng & đổi 1-1 cấp tốc 30s
@@ -125,7 +125,7 @@ src/
 │   ├── products/                     # Actions, Form dialog, Bộ quy đổi đơn vị, QR Scanner
 │   ├── receipts/                     # Actions nhập kho, đính kèm hóa đơn VAT, Auto-fulfill FIFO
 │   ├── repairs/                      # Actions đợt sửa chữa, Nghiệm thu nhập kho
-│   ├── reports/                      # Truy vấn tài chính, XNT, Chi phí chuồng, Thẻ kho, Excel Engine
+│   ├── reports/                      # Truy vấn tài chính, XNT, Chi phí trại, Thẻ kho, Excel Engine
 │   ├── requisitions/                 # Actions duyệt 2 cấp, Giỏ hàng, Đơn vị linh hoạt, Trả hàng thừa
 │   ├── stocktake/                    # Actions mở phiên kiểm đếm, Cân bằng tồn, Đính kèm ảnh
 │   ├── tools/                        # Actions mượn trả dụng cụ, Tính hạn quá hạn
@@ -142,7 +142,7 @@ src/
 │   └── stock.ts                      # Helper tính toán tồn khả dụng và quy đổi UOM
 │
 ├── stores/                           # Zustand Global Client Stores
-│   ├── cart-store.ts                 # Giỏ hàng xin cấp vật tư chuồng
+│   ├── cart-store.ts                 # Giỏ hàng xin cấp vật tư trại
 │   ├── offline-queue-store.ts        # Hàng đợi lưu trữ phiếu ngoại tuyến (localStorage/IndexedDB)
 │   └── ui-store.ts                   # Trạng thái đóng/mở sidebar, dark/light theme
 │
@@ -186,9 +186,9 @@ sequenceDiagram
 
 ## 5. CƠ CHẾ NGOẠI TUYẾN PWA (OFFLINE SERVICE WORKER)
 
-Trong điều kiện trang trại rộng lớn (hàng chục hecta) thường có những góc chuồng hoặc kho xa mất sóng di động:
+Trong điều kiện trang trại rộng lớn (hàng chục hecta) thường có những góc trại hoặc kho xa mất sóng di động:
 1. **Pre-caching Giao diện:** Toàn bộ bundle giao diện HTML/CSS/JS được Serwist Service Worker cache sẵn trên điện thoại.
-2. **Offline Requisition Queue:** Khi công nhân ở trong chuồng không có sóng, thao tác lập phiếu yêu cầu được lưu trữ an toàn trong `offline-queue-store`.
+2. **Offline Requisition Queue:** Khi công nhân ở trong trại không có sóng, thao tác lập phiếu yêu cầu được lưu trữ an toàn trong `offline-queue-store`.
 3. **Tự động đồng bộ (Auto-Sync):** Khi thiết bị kết nối lại Wi-Fi hoặc 4G, `OfflineSyncProvider` tự động nhận diện và đẩy các phiếu trong hàng đợi lên máy chủ.
 4. **Trạng thái trực quan:** `OfflineStatusBar` hiển thị dải thông báo màu vàng thông báo số lượng phiếu đang chờ đồng bộ.
 

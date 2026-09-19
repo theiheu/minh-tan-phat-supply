@@ -9,7 +9,7 @@
 
 ## 1. THÔNG TIN ĐIỀU HÀNH & KIẾN TRÚC (PLAN HEADER)
 
-* **Mục tiêu:** Thiết kế lại toàn bộ trang chủ Dashboard (`/dashboard`) hiển thị chuyên biệt cho 7 vai trò người dùng (Chủ trại, Superuser, Kế toán, Thủ kho, Kỹ thuật trưởng, Công nhân chuồng, Tài xế).
+* **Mục tiêu:** Thiết kế lại toàn bộ trang chủ Dashboard (`/dashboard`) hiển thị chuyên biệt cho 7 vai trò người dùng (Chủ trại, Superuser, Kế toán, Thủ kho, Kỹ thuật trưởng, Công nhân trại, Tài xế).
 * **Công nghệ & Thư viện:** Next.js 15 (App Router, Server Components), TypeScript, Tailwind CSS, Lucide Icons, Shadcn UI, Supabase Server Client, Vitest.
 * **Tài liệu tham chiếu chuẩn:**
   * `docs/architecture/rbac-and-roles.md`
@@ -44,7 +44,7 @@
 6. `src/components/dashboard/views/accountant-dashboard-view.tsx` — Khung nhìn Kế toán
 7. `src/components/dashboard/views/warehouse-dashboard-view.tsx` — Khung nhìn Thủ kho
 8. `src/components/dashboard/views/technician-dashboard-view.tsx` — Khung nhìn Kỹ thuật trưởng
-9. `src/components/dashboard/views/requester-dashboard-view.tsx` — Khung nhìn Công nhân chuồng
+9. `src/components/dashboard/views/requester-dashboard-view.tsx` — Khung nhìn Công nhân trại
 10. `src/components/dashboard/views/driver-dashboard-view.tsx` — Khung nhìn Tài xế xe
 11. `src/features/dashboard/server/get-role-dashboard-data.ts` — Module tải dữ liệu Supabase theo role
 12. `src/components/dashboard/dashboard-role-views.test.tsx` — Unit/Component tests cho các view

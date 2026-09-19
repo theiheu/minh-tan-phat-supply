@@ -18,7 +18,7 @@ Hướng dẫn in ấn chứng từ kho chuẩn mực theo nhận diện thươn
 | Mẫu phiếu in | Mã chứng từ | Khổ giấy | Đối tượng ký duyệt |
 |---|---|:---:|---|
 | **Phiếu Nhập Kho** | `NK-YYYYMM-XXX` | A4 / A5 | Người giao hàng (NCC), Thủ kho, Kế toán |
-| **Phiếu Xuất Kho / Cấp Phát** | `XK-YYYYMM-XXX` | A4 / A5 | Người nhận hàng (Trưởng chuồng), Thủ kho, Kế toán |
+| **Phiếu Xuất Kho / Cấp Phát** | `XK-YYYYMM-XXX` | A4 / A5 | Người nhận hàng (Trưởng trại), Thủ kho, Kế toán |
 | **Phiếu Yêu Cầu Vật Tư** | `REQ-YYYYMM-XXX` | A4 / A5 | Người lập phiếu, Kỹ thuật trưởng duyệt, Thủ kho |
 | **Phiếu Đổi 1-1 Cấp Tốc** | `EX-YYYYMM-XXX` | A5 | Thợ cơ điện đổi, Thủ kho xác nhận |
 | **Phiếu Sửa Chữa Cơ Điện** | `SC-YYYYMM-XXX` | A4 / A5 | Đại diện xưởng quấn motor, Kỹ thuật trưởng |

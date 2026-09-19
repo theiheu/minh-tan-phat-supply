@@ -18,6 +18,7 @@ import { PendingTasksCard } from "../shared/pending-tasks-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useUIStore } from "@/stores/ui-store";
 
 interface RequesterDashboardViewProps {
   profile: Profile;
@@ -29,6 +30,7 @@ export function RequesterDashboardView({
   data,
 }: RequesterDashboardViewProps) {
   const router = useRouter();
+  const openSlipModal = useUIStore((s) => s.openSlipModal);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -38,7 +40,7 @@ export function RequesterDashboardView({
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
               <Package className="size-3.5" />
-              Công Nhân Chuồng / Người Yêu Cầu
+              Công Nhân Trại / Người Yêu Cầu
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
               Xin chào, {profile.name}
@@ -80,7 +82,7 @@ export function RequesterDashboardView({
             </div>
             <div className="text-left">
               <div className="text-sm sm:text-base font-bold leading-tight text-foreground">Mượn dụng cụ</div>
-              <div className="text-[11px] text-muted-foreground font-normal">Đồ nghề làm chuồng</div>
+              <div className="text-[11px] text-muted-foreground font-normal">Đồ nghề làm trại</div>
             </div>
           </Link>
         </Button>
@@ -146,25 +148,38 @@ export function RequesterDashboardView({
             {data.readyToReceiveList.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-background gap-2"
+                onClick={() => openSlipModal(item.type || "requisition", item.id)}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-500/20 bg-background hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 hover:border-emerald-300 transition-all gap-2 cursor-pointer group shadow-2xs"
               >
-                <div className="space-y-0.5 min-w-0">
+                <div className="space-y-0.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-primary">{item.code}</span>
-                    <Badge variant="outline" className="text-[10px] border-emerald-400 text-emerald-700 dark:text-emerald-300">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openSlipModal(item.type || "requisition", item.id);
+                      }}
+                      className="font-mono text-sm font-bold text-primary hover:underline text-left cursor-pointer"
+                    >
+                      {item.code}
+                    </button>
+                    <Badge variant="outline" className="text-[10px] border-emerald-400 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30">
                       Đã có hàng
                     </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground truncate">{item.description}</div>
                 </div>
                 <Button
-                  asChild
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-8.5 px-4 text-xs rounded-lg shrink-0"
+                  type="button"
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold h-8.5 px-4 text-xs rounded-lg shrink-0 gap-1.5 shadow-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openSlipModal(item.type || "requisition", item.id);
+                  }}
                 >
-                  <Link href={item.href || `/requisitions/${item.id}`}>
-                    <CheckCircle2 className="size-3.5 mr-1" />
-                    Xác nhận nhận hàng
-                  </Link>
+                  <CheckCircle2 className="size-3.5" />
+                  Xác nhận nhận hàng
                 </Button>
               </div>
             ))}
@@ -180,6 +195,7 @@ export function RequesterDashboardView({
         emptyMessage="Bạn chưa có phiếu yêu cầu nào."
         viewAllHref="/requisitions"
         viewAllLabel="Tất cả phiếu của tôi"
+        pageSize={5}
       />
     </div>
   );

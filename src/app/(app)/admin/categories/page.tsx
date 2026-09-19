@@ -24,7 +24,7 @@ const ICON_OPTIONS = [
   { value: "ppe", label: "Bảo hộ (Khiên)" },
   { value: "clean", label: "Vệ sinh (Lấp lánh)" },
   { value: "medicine", label: "Thuốc thú y (Viên thuốc)" },
-  { value: "coop", label: "Chuồng trại (Ngôi nhà)" },
+  { value: "coop", label: "Trang trại (Ngôi nhà)" },
 ];
 
 const PAGE_SIZE = 20;

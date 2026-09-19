@@ -525,7 +525,7 @@ export async function buildStockLedgerExcel(
 }
 
 // ---------------------------------------------------------------------------------
-// 2. Zone Cost (Chi phí theo khu vực / chuồng) Excel workbook
+// 2. Zone Cost (Chi phí theo khu vực / trại) Excel workbook
 // ---------------------------------------------------------------------------------
 export async function buildZoneCostExcel(
   data: ZoneCostReportData,
@@ -536,7 +536,7 @@ export async function buildZoneCostExcel(
 
   const columns: ExcelReportColumn[] = [
     { header: "STT", width: 7, align: "center" },
-    { header: "Khu vực / Chuồng", width: 38, align: "left", colSpan: 2 }, // Merger cột BC
+    { header: "Khu vực / Trại", width: 38, align: "left", colSpan: 2 }, // Merger cột BC
     { header: "Số phiếu xuất", width: 18, align: "right", numFmt: "#,##0" },
     { header: "Số BB hỏng", width: 18, align: "right", numFmt: "#,##0" },
     { header: "Tổng chi phí", width: 26, align: "right" },

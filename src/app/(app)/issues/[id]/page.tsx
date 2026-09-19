@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IssueActions } from "@/features/issues/components/issue-actions";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { IssueInvoices } from "@/features/issues/components/issue-invoices";
 import { DevDocTools } from "@/features/dev-tools/dev-doc-tools";
 import { requireManager } from "@/lib/auth";
@@ -43,7 +44,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
   // ---- Dòng vật tư xuất (giữ thứ tự nhập) ----
   const { data: items } = await supabase
     .from("issue_items")
-    .select("id, quantity, entered_quantity, transaction_unit_id, unit_price, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("id, quantity, entered_quantity, transaction_unit_id, unit_price, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, price, images, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("issue_id", id)
     .order("created_at", { ascending: true });
 
@@ -181,7 +182,8 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">STT</TableHead>
+                  <TableHead className="w-12 text-center">STT</TableHead>
+                  <TableHead className="w-16 text-center">Ảnh</TableHead>
                   <TableHead>Tên hàng</TableHead>
                   <TableHead>Đơn vị tính</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
@@ -196,14 +198,15 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
               <TableBody>
                 {(items ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={isCustomer ? 6 : 4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={isCustomer ? 7 : 5} className="text-center text-muted-foreground">
                       Chưa có vật tư nào.
                     </TableCell>
                   </TableRow>
                 )}
                 {(items ?? []).map((it, idx) => {
                   const v = it.skus as {
-                    products?: { name?: string | null } | null;
+                    images?: string[] | null;
+                    products?: { name?: string | null; images?: string[] | null } | null;
                     units?: { name?: string | null; symbol?: string | null } | null;
                     sku_attribute_values?: Array<{
                       text_value?: string | null;
@@ -212,6 +215,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                       units?: { symbol?: string | null } | null;
                     }> | null;
                   } | null;
+                  const itemImages = (v?.images && v.images.length > 0) ? v.images : (v?.products?.images ?? []);
                   const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
                   const detail = attrVals.length > 0 ? attrVals.join(" · ") : null;
                   const displayName = it.sku_name_snapshot || v?.products?.name || "Vật tư";
@@ -220,7 +224,29 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
 
                   return (
                     <TableRow key={it.id}>
-                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="w-12 text-center text-muted-foreground font-mono text-xs">{idx + 1}</TableCell>
+                      <TableCell className="w-16 text-center">
+                        {itemImages && itemImages.length > 0 ? (
+                          <div className="relative inline-flex shrink-0">
+                            <ZoomableImage
+                              src={itemImages[0]}
+                              images={itemImages}
+                              alt={displayName}
+                              title={displayName}
+                              className="size-11 shrink-0 rounded-md border object-cover"
+                            />
+                            {itemImages.length > 1 && (
+                              <span className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-black/80 text-[8px] font-bold text-white shadow pointer-events-none">
+                                +{itemImages.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="mx-auto size-11 rounded-md border bg-muted/40 flex items-center justify-center text-muted-foreground/40 text-[10px]">
+                            —
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <span className="font-medium">{displayName}</span>
                         {detail && detail !== "—" && !displayName.includes(detail) && (
@@ -244,7 +270,7 @@ export default async function IssueDetailPage({ params }: { params: Promise<{ id
                 })}
                 {(items ?? []).length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="font-medium">
+                    <TableCell colSpan={4} className="font-medium">
                       Tổng cộng
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{totalQuantity}</TableCell>

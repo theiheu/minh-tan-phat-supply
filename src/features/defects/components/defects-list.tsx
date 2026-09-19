@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -378,7 +379,7 @@ export function DefectsList({
       {/* Delete Confirmation Dialog */}
       {deletingRow && (
         <Dialog open onOpenChange={(o) => (!o ? setDeletingRow(null) : undefined)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="text-base font-semibold text-destructive flex items-center gap-2">
                 <Trash2 className="size-5" />
@@ -395,7 +396,7 @@ export function DefectsList({
                 </div>
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-end gap-2 pt-3 border-t">
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -412,7 +413,7 @@ export function DefectsList({
               >
                 {isDeleting ? "Đang xóa…" : "Xóa vĩnh viễn"}
               </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       )}

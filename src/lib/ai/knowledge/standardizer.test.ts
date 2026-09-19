@@ -15,8 +15,8 @@ describe("Knowledge Standardizer", () => {
       JSON.stringify({
         title: "📖 QUY TRÌNH 15: BẢO DƯỠNG QUẠT HÚT CÔNG NGHIỆP",
         category: "sop",
-        summary: "Quy trình kiểm tra, vệ sinh và bôi trơn bạc đạn quạt hút tại các dãy chuồng.",
-        content: "## 1. Mục đích\nĐảm bảo thông gió chuồng trại.\n\n## 2. Các bước\nBước 1: Ngắt cầu dao điện.\nBước 2: Vệ sinh cánh quạt.",
+        summary: "Quy trình kiểm tra, vệ sinh và bôi trơn bạc đạn quạt hút tại các dãy trại.",
+        content: "## 1. Mục đích\nĐảm bảo thông gió trang trại.\n\n## 2. Các bước\nBước 1: Ngắt cầu dao điện.\nBước 2: Vệ sinh cánh quạt.",
         keywords: ["quạt hút", "bảo dưỡng", "cơ điện"]
       }, null, 2),
       "```",

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Xây dựng trung tâm Báo cáo & Thống kê toàn diện (Unified Report Hub) tại `/reports` phục vụ Trại gà đẻ trứng Lê Văn Dương, bao gồm Báo cáo Chung (Xuất-Nhập-Tồn ledger, Giá trị tồn kho, Hư hỏng/Sửa chữa/Thanh lý, Nhiên liệu tổng hợp) và Báo cáo Riêng (Chi phí theo từng Khu chuồng, Tiêu hao nhiên liệu từng Xe/Máy móc, Đối tác Nhà cung cấp/Khách hàng, Sổ Thẻ kho chi tiết), kèm tính năng Xuất Excel (`.xlsx`) chuẩn hóa và In PDF A4 nhận diện thương hiệu.
+**Goal:** Xây dựng trung tâm Báo cáo & Thống kê toàn diện (Unified Report Hub) tại `/reports` phục vụ Trại gà đẻ trứng Lê Văn Dương, bao gồm Báo cáo Chung (Xuất-Nhập-Tồn ledger, Giá trị tồn kho, Hư hỏng/Sửa chữa/Thanh lý, Nhiên liệu tổng hợp) và Báo cáo Riêng (Chi phí theo từng Khu trại, Tiêu hao nhiên liệu từng Xe/Máy móc, Đối tác Nhà cung cấp/Khách hàng, Sổ Thẻ kho chi tiết), kèm tính năng Xuất Excel (`.xlsx`) chuẩn hóa và In PDF A4 nhận diện thương hiệu.
 
-**Architecture:** Tạo module `src/features/reports` với các data aggregator queries server-side, bộ tính toán cân đối ledger XNT/định mức xe/phân bổ chuồng, giao diện tabbed hub Client Component mượt mà với bộ lọc thời gian & kho dùng chung, thẻ KPI số liệu & thanh tỷ lệ CSS/Tailwind, cùng các API route xuất file Excel (`xlsx`) và In PDF (`@react-pdf/renderer`).
+**Architecture:** Tạo module `src/features/reports` với các data aggregator queries server-side, bộ tính toán cân đối ledger XNT/định mức xe/phân bổ trại, giao diện tabbed hub Client Component mượt mà với bộ lọc thời gian & kho dùng chung, thẻ KPI số liệu & thanh tỷ lệ CSS/Tailwind, cùng các API route xuất file Excel (`xlsx`) và In PDF (`@react-pdf/renderer`).
 
 **Tech Stack:** Next.js 15 (App Router, Server Components + Server Actions), Supabase (PostgreSQL), TypeScript (Strict), Tailwind CSS v4, shadcn/ui, TanStack Query v5, SheetJS (`xlsx`), `@react-pdf/renderer`, Vitest.
 
@@ -349,7 +349,7 @@ git commit -m "feat(reports): implement general overview and XNT ledger tab"
 
 ---
 
-### Task 5: Tab 2 — Báo Cáo Riêng theo Chuồng / Khu Vực (Zone Cost Analysis)
+### Task 5: Tab 2 — Báo Cáo Riêng theo Trại / Khu Vực (Zone Cost Analysis)
 
 **Files:**
 - Create: `src/features/reports/components/zone-cost-report-tab.tsx`
@@ -360,7 +360,7 @@ git commit -m "feat(reports): implement general overview and XNT ledger tab"
 - Produces: `<ZoneCostReportTab data={zoneCostData} />`
 
 - [ ] **Step 1: Implement `ZoneCostReportTab`**
-  - Zone cost summary cards: Chuồng tiêu hao lớn nhất, Tổng chi phí vật tư toàn khu, Số chuồng có phát sinh.
+  - Zone cost summary cards: Trại tiêu hao lớn nhất, Tổng chi phí vật tư toàn khu, Số trại có phát sinh.
   - Interactive table showing: Tên khu vực, Chi phí vật tư (VNĐ), Thanh tiến độ % so với toàn trại, Số phiếu cấp phát, Số lần đổi 1-1.
   - Click on any zone opens `ZoneCostDetailDialog` showing exact items issued to that specific zone with quantities and unit prices.
 

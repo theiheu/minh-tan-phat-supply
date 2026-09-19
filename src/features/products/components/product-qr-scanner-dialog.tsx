@@ -185,7 +185,7 @@ export function ProductQrScannerDialog({
     <>
       <Dialog open={open && !scannedVariant} onOpenChange={onOpenChange}>
         <DialogContent className="p-0 sm:max-w-md overflow-hidden bg-black text-white border-zinc-800">
-          <DialogHeader className="p-3 bg-zinc-900 border-b border-zinc-800 flex-row items-center justify-between space-y-0">
+          <DialogHeader className="p-3 bg-zinc-900 border-b border-zinc-800 flex-row items-center justify-between space-y-0 shrink-0">
             <DialogTitle className="text-sm font-semibold flex items-center gap-2">
               <Camera className="size-4 text-primary" />
               Quét mã QR / Barcode Vật tư
@@ -233,7 +233,7 @@ export function ProductQrScannerDialog({
             )}
           </div>
 
-          <form onSubmit={handleManualSubmit} className="p-3 bg-zinc-900 flex gap-2">
+          <form onSubmit={handleManualSubmit} className="p-3 bg-zinc-900 flex gap-2 shrink-0 border-t border-zinc-800">
             <Input
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}

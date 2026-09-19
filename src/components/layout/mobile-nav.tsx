@@ -16,7 +16,7 @@ export function MobileNav({ profile }: { profile: Profile }) {
   const setMobileDrawerOpen = useUIStore((s) => s.setMobileDrawerOpen);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 grid h-16 grid-cols-5 border-t bg-background lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 border-t bg-background lg:hidden">
       {items.map((group) => {
         const Icon = group.icon;
         const active = isGroupActive(group, pathname);
@@ -25,11 +25,11 @@ export function MobileNav({ profile }: { profile: Profile }) {
             key={group.id}
             href={group.href}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 px-1 text-[11px] text-muted-foreground",
+              "flex flex-1 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] text-muted-foreground",
               active && "text-primary font-medium",
             )}
           >
-            <Icon className="size-5" />
+            <Icon className="size-5 shrink-0" />
             <span className="max-w-full truncate">{group.label}</span>
           </Link>
         );
@@ -37,10 +37,10 @@ export function MobileNav({ profile }: { profile: Profile }) {
       <button
         type="button"
         onClick={() => setMobileDrawerOpen(true)}
-        className="flex flex-col items-center justify-center gap-1 px-1 text-[11px] text-muted-foreground"
+        className="flex flex-1 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] text-muted-foreground"
         aria-label="Xem thêm"
       >
-        <MoreHorizontal className="size-5" />
+        <MoreHorizontal className="size-5 shrink-0" />
         <span>Thêm</span>
       </button>
     </nav>

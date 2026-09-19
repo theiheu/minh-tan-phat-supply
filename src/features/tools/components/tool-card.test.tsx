@@ -35,7 +35,7 @@ describe("ToolCard", () => {
         returnedQuantity={0}
         borrowedAt="2026-09-08T08:00:00Z"
         expectedReturnDate="2026-09-10"
-        purpose="Hàn khung chuồng"
+        purpose="Hàn khung trại"
         borrowerName="Nguyễn Văn A"
         isManager={false}
       />,
@@ -43,7 +43,7 @@ describe("ToolCard", () => {
 
     expect(screen.getByText("Máy hàn que")).toBeInTheDocument();
     expect(screen.getByText(/Đang giữ: 2/i)).toBeInTheDocument();
-    expect(screen.getByText(/Hàn khung chuồng/i)).toBeInTheDocument();
+    expect(screen.getByText(/Hàn khung trại/i)).toBeInTheDocument();
     expect(screen.getByText(/Nguyễn Văn A/i)).toBeInTheDocument();
   });
 
@@ -168,8 +168,8 @@ describe("ToolBorrowDialog", () => {
     fireEvent.click(screen.getByText(/Máy cắt sắt Bosch/i));
 
     // Fill purpose
-    const purposeInput = screen.getByPlaceholderText(/VD: Hàn khung chuồng, sửa ống nước/i);
-    fireEvent.change(purposeInput, { target: { value: "Sửa chuồng heo A2" } });
+    const purposeInput = screen.getByPlaceholderText(/VD: Hàn khung trại, sửa ống nước/i);
+    fireEvent.change(purposeInput, { target: { value: "Sửa trại heo A2" } });
 
     // Click quick preset for return date (+3 ngày)
     const preset3Days = screen.getByRole("button", { name: /\+3 ngày/i });
@@ -183,7 +183,7 @@ describe("ToolBorrowDialog", () => {
       expect(createToolBorrowing).toHaveBeenCalledWith(
         expect.objectContaining({
           items: [{ skuId: "v-1", quantity: 1 }],
-          purpose: "Sửa chuồng heo A2",
+          purpose: "Sửa trại heo A2",
         }),
       );
     });

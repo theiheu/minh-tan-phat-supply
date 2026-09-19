@@ -1,13 +1,13 @@
-# 📖 HƯỚNG DẪN 05: YÊU CẦU VẬT TƯ CHUỒNG TRẠI (DUYỆT 2 CẤP)
+# 📖 HƯỚNG DẪN 05: YÊU CẦU VẬT TƯ TRANG TRẠI (DUYỆT 2 CẤP)
 
-Quy trình công nhân/trưởng chuồng lập phiếu xin cấp vật tư, Kỹ thuật duyệt cấp 1, Quản kho xuất hàng và hoàn trả vật tư dùng thừa.
+Quy trình công nhân/trưởng trại lập phiếu xin cấp vật tư, Kỹ thuật duyệt cấp 1, Quản kho xuất hàng và hoàn trả vật tư dùng thừa.
 
 ---
 
 ## 1. SƠ ĐỒ QUY TRÌNH DUYỆT 2 CẤP
 
 ```
-  [1. Công nhân / Trưởng chuồng]  ─── (Lập phiếu xin cấp vật tư trên điện thoại)
+  [1. Công nhân / Trưởng trại]  ─── (Lập phiếu xin cấp vật tư trên điện thoại)
                  │
                  ▼
   [2. Kỹ thuật / Quản lý khu]    ─── (Xem xét & Duyệt cấp 1: Chấp thuận / Từ chối)
@@ -32,12 +32,12 @@ Quy trình công nhân/trưởng chuồng lập phiếu xin cấp vật tư, K�
 
 ### Bước 2: Duyệt cấp 1 (Kỹ thuật / Quản lý cơ sở)
 * Trưởng khu / Kỹ sư cơ sở vào mục **Yêu cầu**, lọc các phiếu ở trạng thái *Chờ duyệt*.
-* Kiểm tra định mức sử dụng của chuồng ➜ Bấm **"Duyệt yêu cầu"** hoặc **"Từ chối"** kèm lý do.
+* Kiểm tra định mức sử dụng của trại ➜ Bấm **"Duyệt yêu cầu"** hoặc **"Từ chối"** kèm lý do.
 
 ### Bước 3: Xuất kho giao hàng (Quản kho)
 * Quản kho nhận phiếu đã được Kỹ thuật duyệt ➜ Chuẩn bị hàng ➜ Bấm **"Xuất kho giao hàng"**.
 * Tồn kho trừ ngay lập tức và in phiếu giao nhận.
 
 ### Bước 4: Trả lại vật tư thừa (Nếu có)
-* Nếu chuồng xin 10 bóng đèn nhưng chỉ dùng hết 8 bóng, công nhân mang 2 bóng thừa trả lại kho.
+* Nếu trại xin 10 bóng đèn nhưng chỉ dùng hết 8 bóng, công nhân mang 2 bóng thừa trả lại kho.
 * Quản kho mở lại phiếu yêu cầu ➜ Bấm **"Trả lại vật tư thừa"** ➜ Kho tự động cộng lại 2 bóng vào tồn kho.

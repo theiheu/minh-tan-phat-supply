@@ -234,7 +234,7 @@ export function RepairBatchTab({
       )}
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Tạo phiếu sửa chữa</DialogTitle>
             <DialogDescription>
@@ -242,7 +242,7 @@ export function RepairBatchTab({
               vào 1 phiếu SC.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3 overscroll-contain">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Đơn vị sửa chữa (Nhà cung cấp)</Label>
               <ComboboxInput
@@ -278,7 +278,7 @@ export function RepairBatchTab({
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="ghost" onClick={() => setOpenForm(false)}>
               Hủy
             </Button>

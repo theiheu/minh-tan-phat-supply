@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Xây dựng trải nghiệm thực địa di động hoàn chỉnh cho nhân viên trại: cài đặt PWA Standalone trên điện thoại, quét mã QR/Barcode camera để chọn nhanh vật tư vào giỏ hàng, và lưu trữ hàng đợi ngoại tuyến tự động đồng bộ khi mất sóng 4G/Wifi trong chuồng kín.
+**Goal:** Xây dựng trải nghiệm thực địa di động hoàn chỉnh cho nhân viên trại: cài đặt PWA Standalone trên điện thoại, quét mã QR/Barcode camera để chọn nhanh vật tư vào giỏ hàng, và lưu trữ hàng đợi ngoại tuyến tự động đồng bộ khi mất sóng 4G/Wifi trong trại kín.
 
 **Architecture:** 
 - PWA Manifest (`src/app/manifest.ts`) & Apple Web App Meta cấu hình App chạy toàn màn hình với màu nhận diện thương hiệu trại gà.
@@ -202,7 +202,7 @@ export function MobileInstallPrompt() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold leading-tight text-foreground truncate">Cài đặt ứng dụng Kho MTP</p>
-            <p className="text-[11px] text-muted-foreground truncate">Mở nhanh toàn màn hình, tiện dùng tại chuồng</p>
+            <p className="text-[11px] text-muted-foreground truncate">Mở nhanh toàn màn hình, tiện dùng tại trại</p>
           </div>
         </div>
 
@@ -276,7 +276,7 @@ describe("useOfflineQueueStore", () => {
     const id = useOfflineQueueStore.getState().enqueue({
       items: [{ variantId: "v1", quantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
       zoneId: "z1",
-      purpose: "Thay bóng hỏng chuồng 2",
+      purpose: "Thay bóng hỏng trại 2",
       requesterId: "u1",
     });
 
@@ -472,7 +472,7 @@ describe("OfflineStatusBar", () => {
     useOfflineQueueStore.getState().enqueue({
       items: [{ variantId: "v1", quantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
       zoneId: "z1",
-      purpose: "Chuồng 1",
+      purpose: "Trại 1",
     });
 
     render(<OfflineStatusBar isOnline={true} onSyncNow={() => {}} />);

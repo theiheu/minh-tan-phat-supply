@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { requireManager, requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import { isOwner, isWarehouse } from "@/lib/types";
 import {
   assemblyOrderSchema,
@@ -102,6 +103,21 @@ export async function executeAssembly(
   if (rpcErr) {
     throw new Error(rpcErr.message || "Lỗi khi thực hiện lệnh lắp ráp");
   }
+
+  await dispatchBusinessEvent({
+    supabase: admin,
+    input: {
+      event: "assembly.completed",
+      actorId: profile.id,
+      subject: { type: "assembly", id: movementId as string },
+      payload: {
+        code: `LR-${parsed.kitSkuId.slice(0, 8)}`,
+        kitSkuName: sku.sku_code ?? undefined,
+        quantity: parsed.quantity,
+        handlerName: profile.name,
+      },
+    },
+  });
 
   revalidateAssemblyPaths();
 
@@ -215,6 +231,20 @@ export async function executeDisassembly(
   if (rpcErr) {
     throw new Error(rpcErr.message || "Lỗi khi thực hiện lệnh tháo dỡ");
   }
+
+  await dispatchBusinessEvent({
+    supabase: admin,
+    input: {
+      event: "disassembly.completed",
+      actorId: profile.id,
+      subject: { type: "assembly", id: movementId as string },
+      payload: {
+        code: `TD-${parsed.kitSkuId.slice(0, 8)}`,
+        quantity: parsed.quantity,
+        handlerName: profile.name,
+      },
+    },
+  });
 
   revalidateAssemblyPaths();
 

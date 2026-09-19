@@ -64,19 +64,19 @@ const TEMPLATE_PROMPTS = [
     icon: Shield,
     label: "Quy chế & An toàn",
     prompt:
-      "Soạn thảo quy chế an toàn lao động khi vào khu chuồng nuôi cách ly: Trang phục bảo hộ, sát trùng ủng/xe, không mang thiết bị lạ, chế tài xử lý nếu vi phạm.",
+      "Soạn thảo quy chế an toàn lao động khi vào khu trại nuôi cách ly: Trang phục bảo hộ, sát trùng ủng/xe, không mang thiết bị lạ, chế tài xử lý nếu vi phạm.",
   },
   {
     icon: Wrench,
     label: "Khắc phục sự cố",
     prompt:
-      "Viết hướng dẫn các bước xử lý khẩn cấp khi hệ thống quạt thông gió chuồng bị ngắt điện: Chuyển máy phát dự phòng, mở cửa gió khẩn cấp, báo đội cơ điện.",
+      "Viết hướng dẫn các bước xử lý khẩn cấp khi hệ thống quạt thông gió trại bị ngắt điện: Chuyển máy phát dự phòng, mở cửa gió khẩn cấp, báo đội cơ điện.",
   },
   {
     icon: Package,
     label: "Tiêu chuẩn vật tư",
     prompt:
-      "Soạn tài liệu tiêu chuẩn quy cách và bảo quản thuốc sát trùng chuồng trại: Đơn vị tính (Can 5L, Thùng 4 can), nhiệt độ bảo quản 20-25 độ C, hạn sử dụng sau khi mở nắp.",
+      "Soạn tài liệu tiêu chuẩn quy cách và bảo quản thuốc sát trùng trang trại: Đơn vị tính (Can 5L, Thùng 4 can), nhiệt độ bảo quản 20-25 độ C, hạn sử dụng sau khi mở nắp.",
   },
 ];
 

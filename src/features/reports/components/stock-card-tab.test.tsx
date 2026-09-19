@@ -22,7 +22,7 @@ const mockVariants: StockVariantOption[] = [
   },
   {
     id: "var-2",
-    productName: "Dung dịch sát trùng chuồng",
+    productName: "Dung dịch sát trùng trại",
     variantLabel: "Can 5L",
     unit: "can",
     sku: "SAT-5L",
@@ -66,8 +66,8 @@ const mockStockCardData: StockCardData = {
       refType: "requisition",
       refCode: "PXK-20260903-005",
       movementType: "requisition_out",
-      movementLabel: "Xuất cấp chuồng",
-      notes: "Cấp cho Chuồng Đẻ 2",
+      movementLabel: "Xuất cấp trại",
+      notes: "Cấp cho Trại Đẻ 2",
       actorName: "Trần Kỹ Thuật",
       inQty: 0,
       outQty: 20,
@@ -132,14 +132,14 @@ describe("StockCardTab component", () => {
       screen.getByText("Bóng đèn sưởi hồng ngoại - 150W (bóng)")
     ).toBeDefined();
     expect(
-      screen.getByText("Dung dịch sát trùng chuồng - Can 5L (can)")
+      screen.getByText("Dung dịch sát trùng trại - Can 5L (can)")
     ).toBeDefined();
     expect(
       screen.getByText("Cám heo con tập ăn - Bao 25kg (bao)")
     ).toBeDefined();
 
     // Select variant
-    const option = screen.getByText("Dung dịch sát trùng chuồng - Can 5L (can)");
+    const option = screen.getByText("Dung dịch sát trùng trại - Can 5L (can)");
     fireEvent.click(option);
     expect(handleSelect).toHaveBeenCalledWith("var-2");
   });
@@ -219,10 +219,10 @@ describe("StockCardTab component", () => {
     expect(tableScope.getAllByText("+100").length).toBeGreaterThanOrEqual(1);
     expect(tableScope.getByText("150")).toBeDefined();
 
-    // Row 2: Xuất cấp chuồng
+    // Row 2: Xuất cấp trại
     expect(tableScope.getByText("PXK-20260903-005")).toBeDefined();
-    expect(tableScope.getByText("Xuất cấp chuồng")).toBeDefined();
-    expect(tableScope.getByText("Cấp cho Chuồng Đẻ 2")).toBeDefined();
+    expect(tableScope.getByText("Xuất cấp trại")).toBeDefined();
+    expect(tableScope.getByText("Cấp cho Trại Đẻ 2")).toBeDefined();
     expect(tableScope.getByText("Trần Kỹ Thuật")).toBeDefined();
     expect(tableScope.getByText("-20")).toBeDefined();
     expect(tableScope.getByText("130")).toBeDefined();

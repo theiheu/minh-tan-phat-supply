@@ -29,7 +29,7 @@ Nhân viên này đã từng tham gia ký duyệt chứng từ (Phiếu nhập k
 Màn hình điện thoại công nhân xuất hiện thanh thông báo màu vàng: *Đang ở chế độ ngoại tuyến (Offline)*.
 
 ### Nguyên nhân:
-Vị trí chuồng nuôi hoặc kho nằm ngoài vùng phủ sóng Wi-Fi hoặc mất kết nối 4G.
+Vị trí trại nuôi hoặc kho nằm ngoài vùng phủ sóng Wi-Fi hoặc mất kết nối 4G.
 
 ### Hướng xử lý:
 * **Không cần tải lại trang:** Ứng dụng PWA (Service Worker) vẫn cho phép tra cứu danh mục hàng hóa và lập phiếu yêu cầu bình thường.

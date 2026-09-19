@@ -157,8 +157,8 @@ export function FuelTypeDialog({
         </DialogTrigger>
       ) : null}
 
-      <DialogContent className="sm:max-w-[540px] max-h-[90vh] overflow-y-auto">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <DialogContent className="sm:max-w-[540px]">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Droplet className="size-5 text-emerald-600" />
@@ -170,6 +170,8 @@ export function FuelTypeDialog({
                 : "Khai báo loại dầu, nhớt động cơ, nước làm mát, dầu thủy lực... để quản lý tồn kho và cấp phát."}
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
 
           {/* Quick Suggestions / Presets (Only in Create Mode) */}
           {!isEdit && (
@@ -318,8 +320,9 @@ export function FuelTypeDialog({
               />
             </div>
           </div>
+          </div>
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t">
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"

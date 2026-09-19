@@ -106,7 +106,7 @@ export function GeneralReportTab({
               </div>
             )}
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Cấp phát cho chuồng trại & đổi hỏng
+              Cấp phát cho trang trại & đổi hỏng
             </p>
           </div>
         </Card>

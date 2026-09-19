@@ -37,7 +37,7 @@ Hệ thống cung cấp trình thuật sĩ **Catalog Draft Workflow** gồm 5 b�
 ```
 
 - **Bảo toàn dữ liệu nháp:** Hệ thống tự động kiểm tra tính toàn vẹn ở mỗi bước trước khi chuyển sang bước tiếp theo.
-- **Hỗ trợ đa dạng nghiệp vụ nông trại:** Phù hợp từ thiết bị chuồng trại, thuốc sát trùng, vòng bi cơ kim khí, đến dụng cụ xịt rửa và phụ tùng xe tải.
+- **Hỗ trợ đa dạng nghiệp vụ nông trại:** Phù hợp từ thiết bị trang trại, thuốc sát trùng, vòng bi cơ kim khí, đến dụng cụ xịt rửa và phụ tùng xe tải.
 
 ---
 
@@ -51,11 +51,11 @@ Tại màn hình **"1. Thông tin cơ bản"**, tiến hành nhập các trườ
 
 | Tên trường | Bắt buộc | Mô tả & Hướng dẫn điền | Ví dụ |
 | :--- | :---: | :--- | :--- |
-| **Tên vật tư** | ⭐ Có | Tên gọi chung của danh mục vật tư. Đặt tên ngắn gọn, rõ ràng, dễ tìm kiếm. | `Bạc đạn công nghiệp`, `Quạt thông gió chuồng 1.1kW`, `Keo dán bạt HDPE` |
+| **Tên vật tư** | ⭐ Có | Tên gọi chung của danh mục vật tư. Đặt tên ngắn gọn, rõ ràng, dễ tìm kiếm. | `Bạc đạn công nghiệp`, `Quạt thông gió trại 1.1kW`, `Keo dán bạt HDPE` |
 | **Loại vật tư** | ⭐ Có | Chọn 1 trong 3 cơ chế vận hành tồn kho:<br>• **Vật tư thông thường:** Tồn kho độc lập theo từng SKU con.<br>• **Bộ lắp ráp ảo (Virtual Kit):** Tồn kho tự động tính theo số lượng linh kiện con có thể ráp được. Không nhập kho trực tiếp mã bộ.<br>• **Bộ lắp ráp có tồn (Stocked Assembly):** Quản lý tồn kho riêng cho bộ thành phẩm. Cần lệnh ráp/tháo để chuyển đổi giữa linh kiện và bộ. | Chọn `Vật tư thông thường` cho 90% các loại linh kiện/hàng hóa mua sẵn. |
-| **Danh mục phân loại** | Không | Phân nhóm vật tư vào cây danh mục phục vụ lọc báo cáo và cấp quyền (VD: *Cơ kim khí, Điện & Tự động hóa, Thuốc & Sát trùng, Thiết bị chuồng nuôi*). | Chọn từ danh sách thả xuống. |
+| **Danh mục phân loại** | Không | Phân nhóm vật tư vào cây danh mục phục vụ lọc báo cáo và cấp quyền (VD: *Cơ kim khí, Điện & Tự động hóa, Thuốc & Sát trùng, Thiết bị trại nuôi*). | Chọn từ danh sách thả xuống. |
 | **Từ khóa tìm kiếm** | Không | Các từ viết tắt, tên gọi dân gian, tiếng Việt không dấu hoặc mã thông dụng cách nhau bởi dấu phẩy. Giúp công nhân và thợ tìm ra ngay trên thanh tìm kiếm. | `bac dan, vong bi, koyo, skf, 6203, 6204` |
-| **Mô tả / Thông số kỹ thuật** | Không | Ghi chú quy cách chi tiết, hướng dẫn bảo quản, vị trí lắp đặt trên chuồng hoặc cảnh báo an toàn. | `Vòng bi chịu nhiệt cho motor quạt thông gió dãy chuồng A1-A5.` |
+| **Mô tả / Thông số kỹ thuật** | Không | Ghi chú quy cách chi tiết, hướng dẫn bảo quản, vị trí lắp đặt trên trại hoặc cảnh báo an toàn. | `Vòng bi chịu nhiệt cho motor quạt thông gió dãy trại A1-A5.` |
 | **Hình ảnh vật tư** | Không | Tải lên 1 hoặc nhiều ảnh chụp nhận diện thực tế của vật tư (hỗ trợ JPG, PNG, WebP). | Bấm ô tải ảnh hoặc kéo thả file từ máy tính. |
 
 👉 Bấm **"Tiếp tục"** để sang Bước 2.
@@ -74,7 +74,7 @@ Hệ thống cho phép lựa chọn giữa **Vật tư đơn nhất** hoặc **N
 - **Đơn giá tham khảo (VNĐ):** Giá mua ước tính gần nhất phục vụ tính toán dự toán.
 - **Chính sách quản lý định danh:**
   - *Không theo dõi riêng:* Dùng cho ốc vít, bóng đèn, bạc đạn thông thường.
-  - *Quản lý theo Số Lô & Hạn sử dụng (FEFO):* Dùng cho vắc-xin, thuốc sát trùng, hóa chất chuồng nuôi có date.
+  - *Quản lý theo Số Lô & Hạn sử dụng (FEFO):* Dùng cho vắc-xin, thuốc sát trùng, hóa chất trại nuôi có date.
   - *Quản lý theo Số Serial / Mã thiết bị:* Dùng cho máy phát điện, motor công suất lớn, máy hàn, thiết bị có bảo hành theo serial.
 
 #### 🔹 Lựa chọn B: Nhiều quy cách / Biến thể đa tầng (Multi-SKU 1-3 Trục)
@@ -152,20 +152,20 @@ Màn hình hiển thị bảng tổng hợp toàn bộ dữ liệu vừa khai b�
 ## 3. HƯỚNG DẪN MẪU CHO 4 LOẠI VẬT TƯ THỰC TẾ
 
 ### Trường hợp 1: Vật tư đơn nhất (1 SKU duy nhất)
-> **Bài toán:** Khai báo quạt thông gió chuồng gà *Quạt hút trang trại 1.1kW composite*.
+> **Bài toán:** Khai báo quạt thông gió trại gà *Quạt hút trang trại 1.1kW composite*.
 
 1. **Bước 1:**
    - Tên vật tư: `Quạt hút composite 1.1kW 1400x1400`
    - Loại vật tư: `Vật tư thông thường`
-   - Danh mục: `Thiết bị chuồng nuôi`
-   - Từ khóa: `quat hut, quat thong gio, composite, 1.1kw, quat chuong ga`
+   - Danh mục: `Thiết bị trại nuôi`
+   - Từ khóa: `quat hut, quat thong gio, composite, 1.1kw, quat trai ga`
 2. **Bước 2:**
    - Chọn `Vật tư đơn nhất (1 SKU duy nhất)`
    - Đơn vị tính cơ bản: `Cái`
    - Mã SKU: `QH-COMP-1.1KW`
    - Tồn an toàn: `2`
    - Đơn giá: `4500000`
-   - Chính sách định danh: `Quản lý theo Số Serial / Mã thiết bị` (theo dõi số motor gắn vào chuồng).
+   - Chính sách định danh: `Quản lý theo Số Serial / Mã thiết bị` (theo dõi số motor gắn vào trại).
 3. **Bước 3 & 4:** Bỏ qua.
 4. **Bước 5:** Bấm **"Kích hoạt vật tư"**.
 
@@ -195,7 +195,7 @@ Màn hình hiển thị bảng tổng hợp toàn bộ dữ liệu vừa khai b�
 ---
 
 ### Trường hợp 3: Vật tư có Đơn vị đóng gói quy đổi (Thùng/Hộp/ml)
-> **Bài toán:** Khai báo *Thuốc sát trùng chuồng Omnicide* (Đơn vị tính tồn kho là Lít, khi nhập/xuất mua theo Can 5L hoặc Thùng 4 can = 20L).
+> **Bài toán:** Khai báo *Thuốc sát trùng trại Omnicide* (Đơn vị tính tồn kho là Lít, khi nhập/xuất mua theo Can 5L hoặc Thùng 4 can = 20L).
 
 1. **Bước 1:**
    - Tên vật tư: `Thuốc sát trùng Omnicide`
@@ -215,7 +215,7 @@ Màn hình hiển thị bảng tổng hợp toàn bộ dữ liệu vừa khai b�
 
 ### Trường hợp 4: Bộ lắp ráp Combo / Vật tư bộ (Virtual Kit & Stocked Assembly)
 
-#### 🔹 Ví dụ A: Bộ phao cơ tự ngắt nước chuồng trại (Virtual Kit — Bộ ảo tính tồn theo linh kiện)
+#### 🔹 Ví dụ A: Bộ phao cơ tự ngắt nước trang trại (Virtual Kit — Bộ ảo tính tồn theo linh kiện)
 > **Bài toán:** Khai báo *Bộ phao cơ ngắt nước phi 27* gồm 2 linh kiện thành phần rời trong kho là *Bóng phao cơ* và *Cần phao cơ (Cụm van)*.
 
 1. **Chuẩn bị linh kiện con trước:**
@@ -223,7 +223,7 @@ Màn hình hiển thị bảng tổng hợp toàn bộ dữ liệu vừa khai b�
 2. **Bước 1 (Thông tin cơ bản):**
    - Tên vật tư: `Bộ phao cơ tự ngắt nước phi 27`
    - Loại vật tư: `Bộ lắp ráp ảo (Virtual Kit)` *(Khuyên dùng để tồn kho tự động tính theo số lượng bóng & cần có sẵn)*
-   - Danh mục: `Thiết bị cấp thoát nước` hoặc `Thiết bị chuồng nuôi`
+   - Danh mục: `Thiết bị cấp thoát nước` hoặc `Thiết bị trại nuôi`
    - Từ khóa: `phao co, bo phao co, can phao, bong phao, ngat nuoc`
 3. **Bước 2 (Quy cách & SKU):**
    - Đơn vị tính cơ bản: `Bộ`
@@ -240,11 +240,11 @@ Màn hình hiển thị bảng tổng hợp toàn bộ dữ liệu vừa khai b�
 
 ---
 
-#### 🔹 Ví dụ B: Bộ súng xịt áp lực rửa chuồng cao áp (Stocked Assembly — Bộ có tồn kho riêng)
+#### 🔹 Ví dụ B: Bộ súng xịt áp lực rửa trại cao áp (Stocked Assembly — Bộ có tồn kho riêng)
 > **Bài toán:** Khai báo *Bộ súng xịt áp lực* được đóng gói sẵn và lưu kho riêng lẻ theo từng bộ hoàn chỉnh.
 
 1. **Bước 1:**
-   - Tên vật tư: `Bộ súng xịt áp lực rửa chuồng cao áp`
+   - Tên vật tư: `Bộ súng xịt áp lực rửa trại cao áp`
    - Loại vật tư: `Bộ lắp ráp có tồn (Stocked Assembly)`
    - Danh mục: `Dụng cụ & Đồ nghề`
 2. **Bước 2:**

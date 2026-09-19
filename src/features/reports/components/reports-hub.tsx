@@ -274,7 +274,7 @@ export function ReportsHub({
             ) : (
               <Home className="size-3.5 sm:size-4 text-amber-500" aria-hidden="true" />
             )}
-            <span>Theo Chuồng</span>
+            <span>Theo Trại</span>
           </button>
           <button
             type="button"

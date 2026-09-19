@@ -1,12 +1,12 @@
 # 📖 HƯỚNG DẪN 04: XUẤT KHO NỘI BỘ & CẤP PHÁT
 
-Hướng dẫn lập phiếu xuất kho vật tư cho các khu chuồng trại, phân xưởng hoặc xuất bán.
+Hướng dẫn lập phiếu xuất kho vật tư cho các khu trang trại, phân xưởng hoặc xuất bán.
 
 ---
 
 ## 1. CÁC HÌNH THỨC XUẤT KHO
-1. **Xuất kho nội bộ (Cấp cho chuồng):** Cấp vật tư theo nhu cầu định kỳ của các khu chăn nuôi (Bóng đèn sưởi, vôi bột, bao bì...).
-2. **Xuất bán thương mại:** Xuất bán phụ phẩm (phân chuồng, bao tải cũ) hoặc vật tư dư thừa cho khách hàng bên ngoài.
+1. **Xuất kho nội bộ (Cấp cho trại):** Cấp vật tư theo nhu cầu định kỳ của các khu chăn nuôi (Bóng đèn sưởi, vôi bột, bao bì...).
+2. **Xuất bán thương mại:** Xuất bán phụ phẩm (phân trại, bao tải cũ) hoặc vật tư dư thừa cho khách hàng bên ngoài.
 
 ---
 
@@ -22,5 +22,5 @@ Hướng dẫn lập phiếu xuất kho vật tư cho các khu chuồng trại, 
 ---
 
 ## 3. IN PHIẾU XUẤT KHO
-* Sau khi tạo phiếu, bấm nút **"In phiếu xuất"** để in ra khổ giấy A4/A5 cho người nhận hàng ký xác nhận mang về chuồng.
+* Sau khi tạo phiếu, bấm nút **"In phiếu xuất"** để in ra khổ giấy A4/A5 cho người nhận hàng ký xác nhận mang về trại.
 * Tồn kho trong hệ thống sẽ tự động trừ ngay lập tức.

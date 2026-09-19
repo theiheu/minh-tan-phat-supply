@@ -195,7 +195,7 @@ export function ToolBorrowDialog({
       )}
 
       <DialogContent className="sm:max-w-lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wrench className="size-5 text-primary" />
@@ -206,7 +206,7 @@ export function ToolBorrowDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3.5">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3.5 overscroll-contain">
             {/* Tool Selection */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">
@@ -289,7 +289,7 @@ export function ToolBorrowDialog({
               </Label>
               <Input
                 id="borrow-purpose"
-                placeholder="VD: Hàn khung chuồng, sửa ống nước, thay bóng đèn..."
+                placeholder="VD: Hàn khung trại, sửa ống nước, thay bóng đèn..."
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
                 disabled={pending}

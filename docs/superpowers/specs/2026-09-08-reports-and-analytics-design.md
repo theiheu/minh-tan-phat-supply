@@ -7,8 +7,8 @@
 ## 1. Bối cảnh & Mục tiêu
 
 Trại Gà Đẻ Trứng Lê Văn Dương (Minh Tân Phát Supply) vận hành với quy mô công nghiệp:
-- Hàng trăm danh mục vật tư cơ điện, thuốc thú y, bao bì vỉ trứng, phụ kiện chuồng trại.
-- Hàng chục khu chuồng đẻ, chuồng hậu bị, nhà ấp, trạm cơ điện.
+- Hàng trăm danh mục vật tư cơ điện, thuốc thú y, bao bì vỉ trứng, phụ kiện trang trại.
+- Hàng chục khu trại đẻ, trại hậu bị, nhà ấp, trạm cơ điện.
 - Dàn xe cơ giới (xe ben chở phân, xe xúc lật, xe bồn) và máy phát điện dự phòng 250kVA tiêu thụ lượng lớn dầu Diesel.
 - Giao dịch liên tục với nhiều Nhà cung cấp (mua vật tư) và Khách hàng/Thương lái (bán phân, bán vỉ, bán tài sản cũ/ve chai).
 
@@ -16,7 +16,7 @@ Trại Gà Đẻ Trứng Lê Văn Dương (Minh Tân Phát Supply) vận hành v
 Xây dựng một trung tâm Báo cáo & Thống kê (Unified Report Hub) tại `/reports` phục vụ Chủ trại, Quản lý kho và Kế toán:
 1. **Báo cáo Chung (Toàn trại):** Xuất - Nhập - Tồn (XNT) đa chiều, biến động giá trị tài sản kho, tổng hợp sự cố thiết bị (hỏng / sửa / thanh lý), và tổng quan nhiên liệu dầu.
 2. **Báo cáo Riêng (Theo từng đối tượng nghiệp vụ):**
-   - **Khu vực / Chuồng trại (Zone Cost):** Chi phí vật tư từng chuồng để tính giá thành trứng & phát hiện chuồng hao phí bất thường.
+   - **Khu vực / Trang trại (Zone Cost):** Chi phí vật tư từng trại để tính giá thành trứng & phát hiện trại hao phí bất thường.
    - **Phương tiện / Máy móc (Vehicle Fuel & Machinery):** Tiêu hao nhiên liệu từng xe/máy, so sánh định mức Lít/100km hoặc Lít/giờ, cảnh báo vượt định mức.
    - **Nhà cung cấp (Suppliers):** Thống kê tiền nhập hàng, tần suất giao hàng theo từng nhà cung cấp.
    - **Khách hàng / Thương lái (Customers):** Thống kê doanh thu xuất bán theo từng đối tác.
@@ -40,7 +40,7 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
 │ [ Hôm nay | 7 ngày qua | Tháng này | Tháng trước | Quý này | Tùy chọn ngày] │
 │ Kho áp dụng: [ Tất cả kho ▼ ]       Từ: [2026-09-01]  Đến: [2026-09-30]     │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ [📊 Báo cáo Chung] [🏠 Theo Chuồng] [🚜 Phương tiện] [🤝 Đối tác] [📑 Thẻ kho]│
+│ [📊 Báo cáo Chung] [🏠 Theo Trại] [🚜 Phương tiện] [🤝 Đối tác] [📑 Thẻ kho]│
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -48,7 +48,7 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
 1. **Thẻ KPI Tổng quan:**
    - **Tổng giá trị kho hiện tại (VNĐ)**: Giá trị tồn theo đơn giá niêm yết.
    - **Tổng tiền nhập kho trong kỳ**: Tổng giá trị hàng từ Nhà cung cấp.
-   - **Tổng chi phí vật tư đã xuất dùng**: Cấp cho chuồng + đổi hỏng.
+   - **Tổng chi phí vật tư đã xuất dùng**: Cấp cho trại + đổi hỏng.
    - **Doanh thu xuất bán & thanh lý**: Tiền thu từ bán phân, vỉ, phế liệu.
 2. **Bảng Báo cáo Xuất - Nhập - Tồn (XNT) Tổng Hợp:**
    - Các cột:
@@ -62,7 +62,7 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
      - `Giá trị tồn cuối (VNĐ)`
    - Hàng Tổng cộng toàn kho ở chân bảng.
 3. **Phân bổ Chi phí Vật tư theo Nhóm Danh Mục:**
-   - Thanh tỷ lệ % chi phí theo từng nhóm: *Cơ điện quạt gió, Thuốc sát trùng, Phụ kiện chuồng, Bao bì vỉ trứng...*
+   - Thanh tỷ lệ % chi phí theo từng nhóm: *Cơ điện quạt gió, Thuốc sát trùng, Phụ kiện trại, Bao bì vỉ trứng...*
 4. **Tổng hợp Sự cố & Thiết bị (Hư hỏng - Sửa chữa - Thanh lý):**
    - Tổng số lượt hỏng đổi 1-1, số thiết bị phục hồi sau sửa chữa, tổng chi phí thuê thợ quấn/sửa, doanh thu thanh lý phế liệu ve chai.
 5. **Tổng hợp Kho Dầu:**
@@ -70,13 +70,13 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
 
 ---
 
-### 2.2. Tab 2: Báo cáo Riêng theo Chuồng / Khu vực (Zone Cost Analysis)
-1. **Bảng Chi phí từng Khu Chuồng:**
-   - Liệt kê: Chuồng Đẻ 1..N, Chuồng Hậu Bị 1..N, Nhà Ấp, Nhà Cơ Điện, Trạm Bơm, Văn Phòng...
+### 2.2. Tab 2: Báo cáo Riêng theo Trại / Khu vực (Zone Cost Analysis)
+1. **Bảng Chi phí từng Khu Trại:**
+   - Liệt kê: Trại Đẻ 1..N, Trại Hậu Bị 1..N, Nhà Ấp, Nhà Cơ Điện, Trạm Bơm, Văn Phòng...
    - Cột: `Tên khu vực` - `Tổng chi phí vật tư (VNĐ)` - `Tỷ trọng (%)` - `Số lượt cấp phát` - `Số lần báo hỏng đổi 1-1`.
-   - Thanh tỷ lệ % trực quan so sánh giữa các chuồng để Quản lý nhận biết ngay chuồng nào tiêu hao đột biến.
-2. **Xem chi tiết Vật tư theo từng Chuồng (Drilldown / Modal / Bảng chi tiết):**
-   - Khi bấm vào 1 chuồng cụ thể (VD: Chuồng Đẻ 3): Hiển thị chi tiết từng mặt hàng đã cấp cho chuồng đó trong kỳ (Tên hàng, số lượng, đơn giá, thành tiền, ngày cấp, người nhận).
+   - Thanh tỷ lệ % trực quan so sánh giữa các trại để Quản lý nhận biết ngay trại nào tiêu hao đột biến.
+2. **Xem chi tiết Vật tư theo từng Trại (Drilldown / Modal / Bảng chi tiết):**
+   - Khi bấm vào 1 trại cụ thể (VD: Trại Đẻ 3): Hiển thị chi tiết từng mặt hàng đã cấp cho trại đó trong kỳ (Tên hàng, số lượng, đơn giá, thành tiền, ngày cấp, người nhận).
 
 ---
 
@@ -103,7 +103,7 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
    - Chọn 1 vật tư / biến thể cụ thể (Hỗ trợ tìm kiếm theo tên hoặc mã QR).
    - Chọn Kho (Kho chính, Kho dầu, Kho hỏng...).
 2. **Bảng Sổ Chi Tiết Biến Động Vật Tư:**
-   - Cột: `Ngày giờ` - `Mã chứng từ` (Click mở chi tiết phiếu) - `Loại nghiệp vụ` (Nhập NCC, Xuất Chuồng, Đổi 1-1, Gửi sửa chữa, Hoàn sửa chữa, Thanh lý, Cân bằng kiểm kê) - `Diễn giải / Ghi chú` - `Số lượng Nhập` - `Số lượng Xuất` - `Tồn lũy kế sau phát sinh` - `Người thực hiện`.
+   - Cột: `Ngày giờ` - `Mã chứng từ` (Click mở chi tiết phiếu) - `Loại nghiệp vụ` (Nhập NCC, Xuất Trại, Đổi 1-1, Gửi sửa chữa, Hoàn sửa chữa, Thanh lý, Cân bằng kiểm kê) - `Diễn giải / Ghi chú` - `Số lượng Nhập` - `Số lượng Xuất` - `Tồn lũy kế sau phát sinh` - `Người thực hiện`.
 
 ---
 
@@ -139,7 +139,7 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
   - Header: Tên trang trại, tên loại báo cáo, kỳ báo cáo (Từ ngày ... Đến ngày ...).
   - Bảng dữ liệu có tiêu đề cột rõ ràng, định dạng số ngăn cách hàng nghìn (`1,000,000`).
   - Hàng tổng cộng tự động cộng dồn.
-  - Tham số `type`: `stock_ledger` (XNT), `zone_cost` (Theo chuồng), `vehicles` (Nhiên liệu xe), `partners` (Đối tác), `stock_card` (Thẻ kho).
+  - Tham số `type`: `stock_ledger` (XNT), `zone_cost` (Theo trại), `vehicles` (Nhiên liệu xe), `partners` (Đối tác), `stock_card` (Thẻ kho).
 
 ### 4.2. In Ấn Báo Cáo PDF Chuẩn Khổ A4
 - Tạo API route `/api/reports/pdf` render trực tiếp PDF khổ A4 bằng `@react-pdf/renderer` hoặc popup in chuyên dụng:
@@ -156,11 +156,11 @@ Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với 
 ## 5. Kế hoạch Từng bước Triển khai
 
 1. **Giai đoạn 1 (Server Queries & Data Aggregators):**
-   - Viết các hàm query dữ liệu báo cáo tối ưu trong `src/features/reports/queries.ts` (XNT toàn trại, Chi phí theo chuồng, Nhiên liệu theo xe, Đối tác NCC/Khách, Sổ thẻ kho).
+   - Viết các hàm query dữ liệu báo cáo tối ưu trong `src/features/reports/queries.ts` (XNT toàn trại, Chi phí theo trại, Nhiên liệu theo xe, Đối tác NCC/Khách, Sổ thẻ kho).
 2. **Giai đoạn 2 (UI Components & Tabs):**
    - Xây dựng thanh lọc ngày chuẩn `src/features/reports/components/report-date-filters.tsx`.
    - Xây dựng Tab Báo cáo Chung `src/features/reports/components/general-report-tab.tsx`.
-   - Xây dựng Tab Báo cáo Chi phí Chuồng `src/features/reports/components/zone-cost-report-tab.tsx`.
+   - Xây dựng Tab Báo cáo Chi phí Trại `src/features/reports/components/zone-cost-report-tab.tsx`.
    - Xây dựng Tab Báo cáo Phương tiện `src/features/reports/components/vehicle-report-tab.tsx`.
    - Xây dựng Tab Báo cáo Đối tác `src/features/reports/components/partners-report-tab.tsx`.
    - Xây dựng Tab Sổ Thẻ Kho `src/features/reports/components/stock-card-tab.tsx`.

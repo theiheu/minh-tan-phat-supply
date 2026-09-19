@@ -8,7 +8,7 @@ const mockZoneCostData: ZoneCostReportData = {
   zones: [
     {
       zoneId: "zone-1",
-      zoneName: "Chuồng Đẻ 3",
+      zoneName: "Trại Đẻ 3",
       totalCost: 45000000,
       percentage: 60,
       issueCount: 8,
@@ -23,7 +23,7 @@ const mockZoneCostData: ZoneCostReportData = {
           totalAmount: 30000000,
         },
         {
-          productName: "Dung dịch sát trùng chuồng",
+          productName: "Dung dịch sát trùng trại",
           variantLabel: "Can 5L",
           unit: "can",
           quantity: 30,
@@ -34,7 +34,7 @@ const mockZoneCostData: ZoneCostReportData = {
     },
     {
       zoneId: "zone-2",
-      zoneName: "Chuồng Hậu Bị 1",
+      zoneName: "Trại Hậu Bị 1",
       totalCost: 20000000,
       percentage: 26.67,
       issueCount: 4,
@@ -77,12 +77,12 @@ describe("ZoneCostReportTab component", () => {
 
     // KPI Titles
     expect(screen.getByText("Tổng chi phí vật tư toàn trại")).toBeDefined();
-    expect(screen.getByText("Khu chuồng chi phí cao nhất")).toBeDefined();
+    expect(screen.getByText("Khu trại chi phí cao nhất")).toBeDefined();
     expect(screen.getByText("Số khu vực phát sinh chi phí")).toBeDefined();
 
     // KPI Values
     expect(screen.getAllByText("75.000.000 đ").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Chuồng Đẻ 3").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Trại Đẻ 3").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/45\.000\.000 đ/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("(60%)")).toBeDefined();
     expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1);
@@ -96,15 +96,15 @@ describe("ZoneCostReportTab component", () => {
     const tableScope = within(table);
 
     // Check table headers
-    expect(tableScope.getByText("Tên khu vực / Chuồng trại")).toBeDefined();
+    expect(tableScope.getByText("Tên khu vực / Trại")).toBeDefined();
     expect(tableScope.getByText("Tổng chi phí vật tư")).toBeDefined();
     expect(tableScope.getByText("Tỷ trọng (%)")).toBeDefined();
     expect(tableScope.getByText("Số phiếu xuất cấp")).toBeDefined();
     expect(tableScope.getByText("Số lần báo hỏng (1-1)")).toBeDefined();
 
     // Check table row items
-    expect(tableScope.getByText("Chuồng Đẻ 3")).toBeDefined();
-    expect(tableScope.getByText("Chuồng Hậu Bị 1")).toBeDefined();
+    expect(tableScope.getByText("Trại Đẻ 3")).toBeDefined();
+    expect(tableScope.getByText("Trại Hậu Bị 1")).toBeDefined();
     expect(tableScope.getByText("Khu Xử Lý Nước Thải")).toBeDefined();
 
     // Check costs in table
@@ -132,15 +132,15 @@ describe("ZoneCostReportTab component", () => {
   it("filters zone rows by search term and updates totals", () => {
     render(<ZoneCostReportTab data={mockZoneCostData} />);
 
-    const searchInput = screen.getByLabelText("Tìm kiếm khu vực trong bảng chi phí chuồng");
+    const searchInput = screen.getByLabelText("Tìm kiếm khu vực trong bảng chi phí trại");
     const table = screen.getByRole("table");
 
     // Filter by "Hậu Bị"
     fireEvent.change(searchInput, { target: { value: "Hậu Bị" } });
 
     const tableScope = within(table);
-    expect(tableScope.getByText("Chuồng Hậu Bị 1")).toBeDefined();
-    expect(tableScope.queryByText("Chuồng Đẻ 3")).toBeNull();
+    expect(tableScope.getByText("Trại Hậu Bị 1")).toBeDefined();
+    expect(tableScope.queryByText("Trại Đẻ 3")).toBeNull();
     expect(tableScope.queryByText("Khu Xử Lý Nước Thải")).toBeNull();
 
     // Footer updates for 1 zone
@@ -157,8 +157,8 @@ describe("ZoneCostReportTab component", () => {
   it("opens drill-down dialog when clicking 'Chi tiết vật tư' button", () => {
     render(<ZoneCostReportTab data={mockZoneCostData} />);
 
-    // Click "Chi tiết vật tư" for Chuồng Đẻ 3
-    const detailBtn = screen.getByLabelText("Xem chi tiết vật tư Chuồng Đẻ 3");
+    // Click "Chi tiết vật tư" for Trại Đẻ 3
+    const detailBtn = screen.getByLabelText("Xem chi tiết vật tư Trại Đẻ 3");
     fireEvent.click(detailBtn);
 
     const dialog = screen.getByRole("dialog");
@@ -166,7 +166,7 @@ describe("ZoneCostReportTab component", () => {
 
     // Dialog Title
     expect(
-      dialogScope.getByText("Chi tiết vật tư đã cấp cho: Chuồng Đẻ 3")
+      dialogScope.getByText("Chi tiết vật tư đã cấp cho: Trại Đẻ 3")
     ).toBeDefined();
 
     // Dialog Summary
@@ -183,7 +183,7 @@ describe("ZoneCostReportTab component", () => {
     expect(dialogScope.getByText("600.000 đ")).toBeDefined();
     expect(dialogScope.getByText("30.000.000 đ")).toBeDefined();
 
-    expect(dialogScope.getByText("Dung dịch sát trùng chuồng")).toBeDefined();
+    expect(dialogScope.getByText("Dung dịch sát trùng trại")).toBeDefined();
     expect(dialogScope.getByText("Can 5L")).toBeDefined();
     expect(dialogScope.getByText("30")).toBeDefined();
     expect(dialogScope.getByText("500.000 đ")).toBeDefined();
@@ -198,7 +198,7 @@ describe("ZoneCostReportTab component", () => {
     render(<ZoneCostReportTab data={null} isLoading={true} />);
 
     expect(screen.queryByText("75.000.000 đ")).toBeNull();
-    expect(screen.queryByText("Chuồng Đẻ 3")).toBeNull();
+    expect(screen.queryByText("Trại Đẻ 3")).toBeNull();
   });
 
   it("renders empty state gracefully when data is null or empty", () => {

@@ -47,6 +47,6 @@ Ngay sau khi bấm hoàn tất phiếu nhập kho, hệ thống sẽ thực hi�
 2. **Cập nhật đơn giá mua vốn:** Hệ thống tự động ghi nhận đơn giá mới nhất vào bảng giá vốn để phục vụ tính giá thành sau này.
 3. **Ghi sổ cái biến động kho (`stock_movements`):** Lưu vết chi tiết ai nhập, nhập lúc mấy giờ, từ nhà cung cấp nào và số dư tồn kho sau khi nhập.
 4. **Tự động xuất cấp phát cho phiếu yêu cầu ĐÃ DUYỆT (Auto-Fulfill FIFO):**
-   * Hệ thống tự động quét tìm các Phiếu yêu cầu vật tư từ chuồng trại **ĐÃ ĐƯỢC DUYỆT (`approved`)** trước đó đang chờ hàng.
+   * Hệ thống tự động quét tìm các Phiếu yêu cầu vật tư từ trang trại **ĐÃ ĐƯỢC DUYỆT (`approved`)** trước đó đang chờ hàng.
    * Tự động xuất kho theo thứ tự ưu tiên thời gian lập phiếu cũ nhất trước (FIFO).
    * *Lưu ý quan trọng:* Các phiếu yêu cầu đang ở trạng thái Chờ duyệt (`pending`) sẽ **không** bị tự động xuất hàng mà bắt buộc phải qua bước Quản kho xem xét & phê duyệt trước.

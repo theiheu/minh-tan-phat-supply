@@ -6,9 +6,9 @@ Ngày: 2026-09-08 · Trạng thái: Chờ duyệt · Phạm vi: repo `minh-tan-p
 
 ## 1. Bối cảnh & Mục tiêu
 
-Tại Trại gà Minh Tân Phát, nhân viên kỹ thuật và công nhân chuồng trại thường xuyên phải di chuyển giữa các dãy chuồng kín để kiểm tra, bảo trì thiết bị và yêu cầu vật tư thay thế. Quá trình này gặp các rào cản thực tế:
+Tại Trại gà Minh Tân Phát, nhân viên kỹ thuật và công nhân trang trại thường xuyên phải di chuyển giữa các dãy trại kín để kiểm tra, bảo trì thiết bị và yêu cầu vật tư thay thế. Quá trình này gặp các rào cản thực tế:
 1. **Thiết bị di động khó thao tác bàn phím:** Khi ở hiện trường, nhân viên đeo găng tay hoặc tay dính bụi, việc gõ chữ tìm kiếm tên vật tư (bóng đèn, đui đèn, van nước, rơ le...) trên điện thoại rất chậm và dễ nhầm quy cách.
-2. **Sóng 4G/Wifi chập chờn hoặc mất hẳn:** Các dãy chuồng kiên cố thường có sóng yếu. Nếu bấm gửi phiếu mà mất mạng, ứng dụng web thông thường sẽ báo lỗi hoặc mất toàn bộ nội dung vừa soạn.
+2. **Sóng 4G/Wifi chập chờn hoặc mất hẳn:** Các dãy trại kiên cố thường có sóng yếu. Nếu bấm gửi phiếu mà mất mạng, ứng dụng web thông thường sẽ báo lỗi hoặc mất toàn bộ nội dung vừa soạn.
 3. **Thanh địa chỉ trình duyệt chiếm diện tích:** Dùng web trên Safari/Chrome trên mobile dễ bị thanh điều hướng che khuất nút bấm hoặc vô tình vuốt back mất trang.
 
 ### Mục tiêu giải pháp (Giai đoạn 1)
@@ -96,7 +96,7 @@ Bổ sung `apple-mobile-web-app-capable: "yes"` và `apple-touch-icon`.
 
 #### 3.2.1. Thành phần giao diện & Camera Controls
 * **Khung quét trực quan:** Viewfinder hình vuông căn giữa có hiệu ứng laser quét.
-* **Đèn Flash (Torch):** Nút bật/tắt đèn pin hỗ trợ khi quét tem trong chuồng tối.
+* **Đèn Flash (Torch):** Nút bật/tắt đèn pin hỗ trợ khi quét tem trong trại tối.
 * **Đổi Camera:** Chuyển đổi giữa camera sau (góc rộng/macro) và camera trước.
 * **Nhập mã thủ công:** Ô input cho phép gõ mã code hoặc SKU nếu mã tem bị trầy xước.
 

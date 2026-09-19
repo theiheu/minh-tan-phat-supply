@@ -247,7 +247,7 @@ async function main() {
     {
       name: "Động cơ điện 3 pha Toàn Phát",
       categoryName: "Điện - Điện tử",
-      description: "Động cơ điện vỏ nhôm tản nhiệt nhanh, dây đồng 100%, chuyên dùng cho hệ thống quạt hút chuồng trại.",
+      description: "Động cơ điện vỏ nhôm tản nhiệt nhanh, dây đồng 100%, chuyên dùng cho hệ thống quạt hút trang trại.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Công suất", "Điện áp"],
       skus: [
@@ -276,7 +276,7 @@ async function main() {
       ],
     },
     {
-      name: "Tủ điều khiển tiểu khí hậu chuồng trại tự động",
+      name: "Tủ điều khiển tiểu khí hậu trang trại tự động",
       categoryName: "Điện - Điện tử",
       description: "Tủ điều khiển tự động bật/tắt quạt hút, bơm giàn mát theo ngưỡng nhiệt độ và độ ẩm cài đặt.",
       images: ["https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600"],
@@ -302,7 +302,7 @@ async function main() {
     {
       name: "Cảm biến nhiệt độ & độ ẩm RS485 công nghiệp",
       categoryName: "Điện - Điện tử",
-      description: "Đầu dò cảm biến độ chính xác cao SHT30, vỏ bảo vệ chống bụi và khí amoniac (NH3) chuồng trại.",
+      description: "Đầu dò cảm biến độ chính xác cao SHT30, vỏ bảo vệ chống bụi và khí amoniac (NH3) trang trại.",
       images: ["https://images.unsplash.com/photo-1518770660439-4636190af475?w=600"],
       options: ["Kiểu dáng"],
       skus: [
@@ -374,7 +374,7 @@ async function main() {
 
     // 2. Phụ tùng Xe - Máy móc
     {
-      name: "Cánh quạt hút composite chuồng trại 1380",
+      name: "Cánh quạt hút composite trang trại 1380",
       categoryName: "Phụ tùng Xe - Máy móc",
       description: "Cánh quạt hút gió công nghiệp kích thước khung 1380x1380, lưu lượng 44.000 m3/h.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
@@ -443,7 +443,7 @@ async function main() {
     {
       name: "Ủng cao su bảo hộ lao động Thùy Dương",
       categoryName: "Dụng cụ - Bảo hộ",
-      description: "Ủng cao su chống trơn trượt, kháng hóa chất tẩy rửa chuồng trại và axit nhẹ.",
+      description: "Ủng cao su chống trơn trượt, kháng hóa chất tẩy rửa trang trại và axit nhẹ.",
       images: ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600"],
       options: ["Kích cỡ"],
       skus: [
@@ -522,7 +522,7 @@ async function main() {
     {
       name: "Máy siết bulong dùng pin Dekton 21V lực 450N.m",
       categoryName: "Dụng cụ - Bảo hộ",
-      description: "Động cơ không chổi than mạnh mẽ, 2 pin 4.0Ah, mở ốc khung chuồng và dàn quạt dễ dàng.",
+      description: "Động cơ không chổi than mạnh mẽ, 2 pin 4.0Ah, mở ốc khung trại và dàn quạt dễ dàng.",
       images: ["https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600"],
       options: ["Bộ phụ kiện"],
       skus: [
@@ -597,7 +597,7 @@ async function main() {
       ],
     },
     {
-      name: "Tấm lót sàn chuồng bằng nhựa PP nguyên sinh",
+      name: "Tấm lót sàn trại bằng nhựa PP nguyên sinh",
       categoryName: "Thiết bị Chăn nuôi",
       description: "Tấm sàn nan dày chịu tải trọng trên 300kg, chống đọng phân và dễ vệ sinh xịt rửa.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
@@ -625,7 +625,7 @@ async function main() {
     {
       name: "Van bi đồng tay gạt Sanwa Thái Lan chính hãng",
       categoryName: "Nước - Khí nén",
-      description: "Van đồng đúc dày dặn chống rỉ sét, chịu áp lực nước cao cấp cho đường ống cấp nước uống chuồng.",
+      description: "Van đồng đúc dày dặn chống rỉ sét, chịu áp lực nước cao cấp cho đường ống cấp nước uống trại.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Đường kính"],
       skus: [
@@ -656,7 +656,7 @@ async function main() {
     {
       name: "Ống mềm cao su bố vải chịu áp lực cao",
       categoryName: "Nước - Khí nén",
-      description: "Ống cao su 3 lớp bố vải chịu áp lực 20 bar, dùng cho bơm rửa chuồng và dẫn khí nén.",
+      description: "Ống cao su 3 lớp bố vải chịu áp lực 20 bar, dùng cho bơm rửa trại và dẫn khí nén.",
       images: ["https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=600"],
       options: ["Quy cách"],
       skus: [
@@ -749,7 +749,7 @@ async function main() {
     {
       name: "Dây curoa thang Bando B-Series chịu nhiệt",
       categoryName: "Dây curoa - Nhông xích",
-      description: "Dây curoa bản B truyền động puly quạt hút thông gió chuồng gà, chạy êm và bền bỉ.",
+      description: "Dây curoa bản B truyền động puly quạt hút thông gió trại gà, chạy êm và bền bỉ.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Quy cách"],
       skus: [
@@ -852,7 +852,7 @@ async function main() {
       ],
     },
     {
-      name: "Thuốc sát trùng chuồng trại Vimekon",
+      name: "Thuốc sát trùng trang trại Vimekon",
       categoryName: "Dầu mỡ - Hóa chất",
       description: "Thuốc khử trùng tiêu độc diệt vi khuẩn, nấm và virus dịch tả, an toàn khi phun có gia cầm.",
       images: ["https://images.unsplash.com/photo-1584634731339-252c581abfc5?w=600"],
@@ -897,7 +897,7 @@ async function main() {
     {
       name: "Que hàn điện Kim Tín KT-421 tiêu chuẩn E6013",
       categoryName: "Hàn - Cắt - Gia công",
-      description: "Que hàn hồ quang ổn định, mối hàn ngấu đẹp, ít bắn tóe khi gia cố chuồng trại.",
+      description: "Que hàn hồ quang ổn định, mối hàn ngấu đẹp, ít bắn tóe khi gia cố trang trại.",
       images: ["https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600"],
       options: ["Đường kính"],
       skus: [
@@ -940,7 +940,7 @@ async function main() {
     {
       name: "Bulong lục giác Inox 304 tiêu chuẩn DIN 933",
       categoryName: "Kim khí - Bulong - Ốc vít",
-      description: "Bulong không rỉ sét trong môi trường ẩm ướt chuồng trại, kèm tán và long đền phẳng.",
+      description: "Bulong không rỉ sét trong môi trường ẩm ướt trang trại, kèm tán và long đền phẳng.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Kích thước"],
       skus: [
@@ -971,7 +971,7 @@ async function main() {
     {
       name: "Vít tự khoan bắn tôn mạ kẽm nhúng nóng SEC",
       categoryName: "Kim khí - Bulong - Ốc vít",
-      description: "Đầu lục giác 8mm có đệm cao su EPDM chống dột nước mái chuồng trại.",
+      description: "Đầu lục giác 8mm có đệm cao su EPDM chống dột nước mái trang trại.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Quy cách"],
       skus: [
@@ -988,7 +988,7 @@ async function main() {
     {
       name: "Dây rút nhựa trắng chống tia UV siêu bền",
       categoryName: "Kim khí - Bulong - Ốc vít",
-      description: "Dây lạt nhựa buộc cố định đường dây điện và lưới thép chuồng gà.",
+      description: "Dây lạt nhựa buộc cố định đường dây điện và lưới thép trại gà.",
       images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"],
       options: ["Kích cỡ"],
       skus: [
@@ -1014,7 +1014,7 @@ async function main() {
     {
       name: "Bạt nhựa 2 da Xanh Cam che phủ nông nghiệp",
       categoryName: "Đóng gói - Bạt - Dây",
-      description: "Bạt tráng phủ chống thấm tuyệt đối, may viền đóng khoen che chắn gió rét cho chuồng hở.",
+      description: "Bạt tráng phủ chống thấm tuyệt đối, may viền đóng khoen che chắn gió rét cho trại hở.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Khổ bạt"],
       skus: [
@@ -1038,7 +1038,7 @@ async function main() {
     {
       name: "Dây thừng bện xoắn Polypropylene chống mục",
       categoryName: "Đóng gói - Bạt - Dây",
-      description: "Dây thừng dẻo dai buộc dàn tời bạt và kéo rèm che chuồng trại.",
+      description: "Dây thừng dẻo dai buộc dàn tời bạt và kéo rèm che trang trại.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Kích cỡ"],
       skus: [
@@ -1079,9 +1079,9 @@ async function main() {
 
     // 12. Vật tư Khác
     {
-      name: "Vôi bột sát trùng môi trường chuồng trại",
+      name: "Vôi bột sát trùng môi trường trang trại",
       categoryName: "Vật tư Khác",
-      description: "Vôi tôi hoạt tính cao rắc lối đi, hố sát trùng và xử lý đáy chuồng trước khi vào đàn mới.",
+      description: "Vôi tôi hoạt tính cao rắc lối đi, hố sát trùng và xử lý đáy trại trước khi vào đàn mới.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Quy cách"],
       skus: [
@@ -1098,7 +1098,7 @@ async function main() {
     {
       name: "Men vi sinh đệm lót sinh học Balasa N01",
       categoryName: "Vật tư Khác",
-      description: "Men ủ phân và phân hủy mùn cưa trấu đệm lót chuồng, giảm mùi hôi khí amoniac tới 90%.",
+      description: "Men ủ phân và phân hủy mùn cưa trấu đệm lót trại, giảm mùi hôi khí amoniac tới 90%.",
       images: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600"],
       options: ["Quy cách"],
       skus: [
@@ -1214,7 +1214,7 @@ async function main() {
   const vUng = findVariant("Ủng");
   const vVimekon = findVariant("Vimekon");
 
-  // 1. HONG-0001: Mới báo hỏng tại chuồng (chưa về kho tập kết)
+  // 1. HONG-0001: Mới báo hỏng tại trại (chưa về kho tập kết)
   const { data: h1 } = await admin
     .from("defect_notes")
     .insert({
@@ -1250,7 +1250,7 @@ async function main() {
       source_location_id: mainLoc,
       reported_by: staffId,
       collected_at: null,
-      notes: "Quạt thông gió chuồng A2 bị cong vênh cánh inox",
+      notes: "Quạt thông gió trại A2 bị cong vênh cánh inox",
       created_at: new Date(Date.now() - 3600 * 1000 * 6).toISOString(),
     })
     .select("id")
@@ -1460,7 +1460,7 @@ async function main() {
       reported_by: requesterId,
       collected_at: new Date(Date.now() - 3600 * 1000 * 96).toISOString(),
       collected_by: managerId,
-      notes: "Bơm chìm xịt rửa chuồng trại bị kẹt rác cánh bơm",
+      notes: "Bơm chìm xịt rửa trang trại bị kẹt rác cánh bơm",
       created_at: new Date(Date.now() - 3600 * 1000 * 120).toISOString(),
     })
     .select("id")
@@ -1515,7 +1515,7 @@ async function main() {
       zone_id: zone2,
       requester_id: staffId,
       status: "pending",
-      purpose: "Cấp phát thuốc sát trùng Vimekon phun xịt khử khuẩn định kỳ chuồng B",
+      purpose: "Cấp phát thuốc sát trùng Vimekon phun xịt khử khuẩn định kỳ trại B",
       created_at: new Date(Date.now() - 3600 * 1000 * 5).toISOString(),
     })
     .select("id")
@@ -1562,7 +1562,7 @@ async function main() {
       approved_by: managerId,
       fulfilled_by: managerId,
       status: "issued",
-      purpose: "Cấp bổ sung bóng sưởi úm gia cầm non chuồng A1",
+      purpose: "Cấp bổ sung bóng sưởi úm gia cầm non trại A1",
       approved_at: new Date(Date.now() - 3600 * 1000 * 18).toISOString(),
       fulfilled_at: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
       created_at: new Date(Date.now() - 3600 * 1000 * 24).toISOString(),
@@ -1588,7 +1588,7 @@ async function main() {
       fulfilled_by: managerId,
       received_by: staffId,
       status: "received",
-      purpose: "Cấp vôi bột và bạt phủ cách nhiệt xử lý chuồng trước khi đón gà",
+      purpose: "Cấp vôi bột và bạt phủ cách nhiệt xử lý trại trước khi đón gà",
       approved_at: new Date(Date.now() - 3600 * 1000 * 36).toISOString(),
       fulfilled_at: new Date(Date.now() - 3600 * 1000 * 30).toISOString(),
       received_at: new Date(Date.now() - 3600 * 1000 * 28).toISOString(),
@@ -1664,7 +1664,7 @@ async function main() {
       created_by: managerId,
       approved_by: managerId,
       approved_at: new Date(Date.now() - 3600 * 1000 * 8).toISOString(),
-      notes: "Đặt hàng thuốc khử trùng chuồng trại phòng dịch cao điểm",
+      notes: "Đặt hàng thuốc khử trùng trang trại phòng dịch cao điểm",
       created_at: new Date(Date.now() - 3600 * 1000 * 14).toISOString(),
     })
     .select("id")
@@ -1687,7 +1687,7 @@ async function main() {
       created_by: managerId,
       approved_by: managerId,
       approved_at: new Date(Date.now() - 3600 * 1000 * 40).toISOString(),
-      notes: "Nhập kho kim khí, bulong inox và vật tư gia cố mái chuồng",
+      notes: "Nhập kho kim khí, bulong inox và vật tư gia cố mái trại",
       created_at: new Date(Date.now() - 3600 * 1000 * 48).toISOString(),
     })
     .select("id")
@@ -1817,7 +1817,7 @@ async function main() {
       status: "posted",
       vehicle_plate: "88C-567.89",
       driver_name: "Lê Văn Tiến",
-      notes: "Xuất bán thiết bị châm thuốc Dosatron và cảm biến nhiệt độ chuồng",
+      notes: "Xuất bán thiết bị châm thuốc Dosatron và cảm biến nhiệt độ trại",
       created_at: new Date(Date.now() - 3600 * 1000 * 72).toISOString(),
     })
     .select("id")

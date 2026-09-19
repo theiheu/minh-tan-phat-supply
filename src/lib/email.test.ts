@@ -70,7 +70,7 @@ describe("lib/email", () => {
     it("render bảng chi tiết danh sách vật tư chuẩn MTP-ERP khi có items", () => {
       const html = renderNotificationEmailHtml({
         title: "[Yêu cầu cấp phát] YCCP-2024-001 - Chờ duyệt",
-        body: "Đề xuất cấp vật tư chuồng 1",
+        body: "Đề xuất cấp vật tư trại 1",
         document: {
           code: "YCCP-2024-001",
           type: "Phiếu yêu cầu cấp phát",

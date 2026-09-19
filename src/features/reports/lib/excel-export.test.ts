@@ -120,7 +120,7 @@ describe("excel-export engine", () => {
       zones: [
         {
           zoneId: "z1",
-          zoneName: "Chuồng 1 - Gà hậu bị",
+          zoneName: "Trại 1 - Gà hậu bị",
           totalCost: 15000000,
           percentage: 60,
           issueCount: 5,
@@ -129,7 +129,7 @@ describe("excel-export engine", () => {
         },
         {
           zoneId: "z2",
-          zoneName: "Chuồng 2 - Gà đẻ",
+          zoneName: "Trại 2 - Gà đẻ",
           totalCost: 10000000,
           percentage: 40,
           issueCount: 3,
@@ -155,7 +155,7 @@ describe("excel-export engine", () => {
       const headerRowIdx = rows.findIndex((r) => r && r[0] === "STT");
       expect(rows[headerRowIdx]).toEqual([
         "STT",
-        "Khu vực / Chuồng",
+        "Khu vực / Trại",
         undefined,
         "Số phiếu xuất",
         "Số BB hỏng",
@@ -163,8 +163,8 @@ describe("excel-export engine", () => {
         "Tỷ trọng",
       ]);
 
-      expect(rows[headerRowIdx + 1][1]).toBe("Chuồng 1 - Gà hậu bị");
-      expect(rows[headerRowIdx + 2][1]).toBe("Chuồng 2 - Gà đẻ");
+      expect(rows[headerRowIdx + 1][1]).toBe("Trại 1 - Gà hậu bị");
+      expect(rows[headerRowIdx + 2][1]).toBe("Trại 2 - Gà đẻ");
     });
   });
 
@@ -329,7 +329,7 @@ describe("excel-export engine", () => {
         code: "REQ-20260901-0001",
         createdAt: "2026-09-01T10:00:00Z",
         requesterName: "Nguyễn Văn A",
-        zoneName: "Chuồng Đẻ 1",
+        zoneName: "Trại Đẻ 1",
         purpose: "Thay bóng sưởi định kỳ",
         requisitionType: "replacement",
         status: "approved",
@@ -348,7 +348,7 @@ describe("excel-export engine", () => {
     it("generates valid workbook with summary and detail sheets for requisitions", async () => {
       const buffer = await buildRequisitionsExcel(mockRequisitions, range, {
         status: "Đã duyệt",
-        zoneName: "Chuồng Đẻ 1",
+        zoneName: "Trại Đẻ 1",
       });
       expect(buffer).toBeInstanceOf(Uint8Array);
 

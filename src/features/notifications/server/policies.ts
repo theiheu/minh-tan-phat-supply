@@ -14,16 +14,27 @@ export const BUSINESS_EVENT_KEYS: BusinessEventKey[] = [
   "requisition.cancelled",
   "requisition.received",
   "requisition.returned",
+  "receipt.created",
+  "receipt.approved",
   "receipt.posted",
   "receipt.cancelled_or_reversed",
+  "issue.created",
   "issue.sale_posted",
   "issue.internal_action_required",
+  "issue.cancelled",
+  "liquidation.created",
   "liquidation.approved",
   "liquidation.completed",
   "liquidation.rejected",
+  "stocktake.created",
   "stocktake.posted_with_variance",
   "stocktake.posted_without_variance",
   "stocktake.completed_discrepancy",
+  "stocktake.cancelled",
+  "transfer.completed",
+  "stock.adjusted",
+  "assembly.completed",
+  "disassembly.completed",
   "defect.created",
   "defect.resolution_selected",
   "defect.sent_to_liquidation",
@@ -48,11 +59,11 @@ export const BUSINESS_EVENT_KEYS: BusinessEventKey[] = [
 ];
 
 const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
-  // --- Requisition ---
+  // --- Requisition (Yêu cầu cấp phát vật tư) ---
   "requisition.submitted": {
     key: "requisition.submitted",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -62,7 +73,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "requisition.approved": {
     key: "requisition.approved",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -72,7 +83,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "requisition.rejected": {
     key: "requisition.rejected",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -82,7 +93,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "requisition.fulfilled": {
     key: "requisition.fulfilled",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -92,7 +103,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "requisition.cancelled": {
     key: "requisition.cancelled",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -102,7 +113,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "requisition.received": {
     key: "requisition.received",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -112,7 +123,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "requisition.returned": {
     key: "requisition.returned",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -120,7 +131,27 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getLink: (s) => `/requisitions/${s.id}`,
   },
 
-  // --- Receipt & Issue (Finance & Warehouse - Quản kho khác cùng nhận) ---
+  // --- Receipt & Orders (Phiếu đặt hàng / Nhập kho) ---
+  "receipt.created": {
+    key: "receipt.created",
+    templateKind: "action",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Đặt hàng / Nhập kho] ${p.code} - Tạo mới phiếu đặt hàng`,
+    getLink: (s) => `/receipts/${s.id}`,
+  },
+  "receipt.approved": {
+    key: "receipt.approved",
+    templateKind: "action",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Đặt hàng / Nhập kho] ${p.code} - Đã duyệt đơn đặt hàng / Chờ nhập kho`,
+    getLink: (s) => `/receipts/${s.id}`,
+  },
   "receipt.posted": {
     key: "receipt.posted",
     templateKind: "finance",
@@ -141,6 +172,18 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getSubjectTitle: (p) => `[Nhập kho] ${p.code} - Đã hủy / Đảo bút toán nhập kho`,
     getLink: (s) => `/receipts/${s.id}`,
   },
+
+  // --- Issue (Phiếu xuất kho) ---
+  "issue.created": {
+    key: "issue.created",
+    templateKind: "action",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Xuất kho] ${p.code} - Tạo mới phiếu xuất kho`,
+    getLink: (s) => `/issues/${s.id}`,
+  },
   "issue.sale_posted": {
     key: "issue.sale_posted",
     templateKind: "finance",
@@ -154,19 +197,39 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "issue.internal_action_required": {
     key: "issue.internal_action_required",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
     getSubjectTitle: (p) => `[Xuất kho] ${p.code} - Cần thực hiện xuất kho nội bộ`,
     getLink: (s) => `/issues/${s.id}`,
   },
+  "issue.cancelled": {
+    key: "issue.cancelled",
+    templateKind: "result",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Xuất kho] ${p.code} - Đã hủy phiếu xuất kho`,
+    getLink: (_s) => `/issues`,
+  },
 
-  // --- Liquidation ---
+  // --- Liquidation (Thanh lý tài sản / vật tư) ---
+  "liquidation.created": {
+    key: "liquidation.created",
+    templateKind: "action",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Thanh lý] ${p.code} - Đề xuất thanh lý vật tư mới cần duyệt`,
+    getLink: (_s) => `/liquidations`,
+  },
   "liquidation.approved": {
     key: "liquidation.approved",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -186,7 +249,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "liquidation.rejected": {
     key: "liquidation.rejected",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: ["creatorId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -194,7 +257,17 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getLink: (_s: BusinessSubject) => `/liquidations`,
   },
 
-  // --- Stocktake ---
+  // --- Stocktake (Kiểm kê kho) ---
+  "stocktake.created": {
+    key: "stocktake.created",
+    templateKind: "action",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Kiểm kê] ${p.code} - Khởi tạo kỳ kiểm kê kho`,
+    getLink: (s) => `/stocktake/${s.id}`,
+  },
   "stocktake.posted_with_variance": {
     key: "stocktake.posted_with_variance",
     templateKind: "finance",
@@ -208,7 +281,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "stocktake.posted_without_variance": {
     key: "stocktake.posted_without_variance",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant", "owner"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -225,12 +298,66 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getSubjectTitle: (p) => `[Kiểm kê] ${p.code} - Đã chốt kỳ kiểm kê (Có chênh lệch)`,
     getLink: (s: BusinessSubject) => `/stocktake/${s.id}`,
   },
+  "stocktake.cancelled": {
+    key: "stocktake.cancelled",
+    templateKind: "result",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Kiểm kê] ${p.code} - Đã hủy kỳ kiểm kê kho`,
+    getLink: (_s) => `/stocktake`,
+  },
 
-  // --- Defect & Repair ---
+  // --- Transfer & Stock Adjustments (Điều chuyển kho & Điều chỉnh tồn) ---
+  "transfer.completed": {
+    key: "transfer.completed",
+    templateKind: "result",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Chuyển kho] ${p.code || "DCK"} - Đã hoàn tất điều chuyển kho nội bộ`,
+    getLink: (_s) => `/transfers`,
+  },
+  "stock.adjusted": {
+    key: "stock.adjusted",
+    templateKind: "result",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Điều chỉnh tồn] ${p.code || "ĐCK"} - Ghi nhận điều chỉnh tồn kho`,
+    getLink: (_s) => `/transfers`,
+  },
+
+  // --- Assembly & Disassembly (Lắp ráp & Tháo dỡ) ---
+  "assembly.completed": {
+    key: "assembly.completed",
+    templateKind: "result",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Lắp ráp] ${p.code || "LR"} - Hoàn tất lắp ráp bộ thành phẩm`,
+    getLink: (_s) => `/assemblies`,
+  },
+  "disassembly.completed": {
+    key: "disassembly.completed",
+    templateKind: "result",
+    targetRoles: ["warehouse", "accountant", "owner"],
+    targetParticipants: [],
+    excludeActor: true,
+    allowsFinancialData: false,
+    getSubjectTitle: (p) => `[Tháo dỡ] ${p.code || "TD"} - Hoàn tất tháo dỡ bộ thành phẩm`,
+    getLink: (_s) => `/assemblies`,
+  },
+
+  // --- Defect & Repair (Báo hỏng & Sửa chữa) ---
   "defect.created": {
     key: "defect.created",
     templateKind: "action",
-    targetRoles: ["technician", "warehouse"],
+    targetRoles: ["technician", "warehouse", "accountant"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -240,7 +367,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "defect.resolution_selected": {
     key: "defect.resolution_selected",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -250,7 +377,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "defect.sent_to_liquidation": {
     key: "defect.sent_to_liquidation",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -260,7 +387,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "repair.sent": {
     key: "repair.sent",
     templateKind: "action",
-    targetRoles: ["technician"],
+    targetRoles: ["technician", "warehouse", "accountant"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -270,7 +397,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "repair.ready_for_acceptance": {
     key: "repair.ready_for_acceptance",
     templateKind: "action",
-    targetRoles: ["technician"],
+    targetRoles: ["technician", "warehouse", "accountant"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -280,7 +407,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "repair.accepted_and_returned": {
     key: "repair.accepted_and_returned",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["reporterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -298,11 +425,11 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getLink: (_s: BusinessSubject) => `/repairs`,
   },
 
-  // --- Tool Borrowing ---
+  // --- Tool Borrowing (Mượn - Trả dụng cụ) ---
   "tool.borrowed": {
     key: "tool.borrowed",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["borrowerId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -322,7 +449,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "tool.overdue_started": {
     key: "tool.overdue_started",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["borrowerId"],
     excludeActor: false, // Automated system cron
     allowsFinancialData: false,
@@ -332,7 +459,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "tool.returned": {
     key: "tool.returned",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["borrowerId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -342,7 +469,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "tool.cancelled": {
     key: "tool.cancelled",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["borrowerId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -350,7 +477,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getLink: (_s) => `/tools`,
   },
 
-  // --- Fuel ---
+  // --- Fuel (Nhiên liệu) ---
   "fuel.receipt_completed": {
     key: "fuel.receipt_completed",
     templateKind: "finance",
@@ -374,7 +501,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "fuel.dispensed": {
     key: "fuel.dispensed",
     templateKind: "driver",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["driverId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -384,7 +511,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "fuel.dispense_cancelled_or_adjusted": {
     key: "fuel.dispense_cancelled_or_adjusted",
     templateKind: "driver",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["driverId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -392,11 +519,11 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
     getLink: (_s) => `/fuel`,
   },
 
-  // --- Exchange ---
+  // --- Exchange (Đổi mới vật tư) ---
   "exchange.created": {
     key: "exchange.created",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: [],
     excludeActor: true,
     allowsFinancialData: false,
@@ -406,7 +533,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "exchange.approved": {
     key: "exchange.approved",
     templateKind: "action",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -416,7 +543,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "exchange.rejected": {
     key: "exchange.rejected",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -426,7 +553,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "exchange.issued": {
     key: "exchange.issued",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,
@@ -436,7 +563,7 @@ const POLICIES: Record<BusinessEventKey, EventPolicy<any>> = {
   "exchange.received": {
     key: "exchange.received",
     templateKind: "result",
-    targetRoles: ["warehouse"],
+    targetRoles: ["warehouse", "accountant"],
     targetParticipants: ["requesterId"],
     excludeActor: true,
     allowsFinancialData: false,

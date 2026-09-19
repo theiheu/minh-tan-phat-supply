@@ -21,6 +21,7 @@ import { canDeleteDoc, isPrivileged } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ReceiptInvoices } from "@/features/receipts/components/receipt-invoices";
+import { ZoomableImage } from "@/components/image-lightbox";
 
 export const dynamic = "force-dynamic";
 
@@ -80,30 +81,35 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
   // ---- Vật tư nhập ----
   const { data: items } = await supabase
     .from("receipt_items")
-    .select("id, quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
+    .select("id, quantity, entered_quantity, unit_cost, batch_no, expiry_date, sku_name_snapshot, uom_name_snapshot, skus(id, sku_code, price, images, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol)))")
     .eq("receipt_id", id)
     .order("created_at", { ascending: true });
 
   const total = (items ?? []).reduce((n, it) => n + (it.entered_quantity ?? it.quantity) * (it.unit_cost ?? 0), 0);
   const totalQuantity = (items ?? []).reduce((n, it) => n + (it.entered_quantity ?? it.quantity), 0);
 
-  // ---- Các phiếu yêu cầu được auto cấp phát khi ghi nhận (FIFO) ----
+  // ---- Các phiếu yêu cầu được auto cấp phát khi ghi nhận (FIFO) & đồng bộ ảnh hóa đơn ----
   const linkedIds = receipt.linked_requisition_ids ?? [];
   let linkedReqs: {
     id: string;
     code: string;
     purpose: string | null;
     status: string;
+    invoice_images?: string[];
     requester: { name: string | null } | null;
   }[] = [];
+  let reqInvoices: string[] = [];
   if (linkedIds.length > 0) {
     const { data } = await supabase
       .from("requisitions")
-      .select("id, code, purpose, status, requester:profiles!requisitions_requester_id_fkey(name)")
+      .select("id, code, purpose, status, invoice_images, requester:profiles!requisitions_requester_id_fkey(name)")
       .in("id", linkedIds)
       .order("created_at", { ascending: true });
     linkedReqs = (data ?? []) as typeof linkedReqs;
+    reqInvoices = linkedReqs.flatMap((r) => r.invoice_images ?? []);
   }
+
+  const allInvoiceImages = Array.from(new Set([...(receipt.invoice_images ?? []), ...reqInvoices])).filter(Boolean);
 
   // ---- Tiến trình ----
   const adminClient = createAdminClient();
@@ -232,7 +238,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
       <ReceiptInvoices
         receiptId={receipt.id}
         receiptCode={receipt.code}
-        invoiceImages={receipt.invoice_images ?? []}
+        invoiceImages={allInvoiceImages}
         status={receipt.status}
         isManager={isPrivileged(profile?.role)}
         currentUser={profile ? { id: profile.id, role: profile.role, name: profile.name } : null}
@@ -248,6 +254,8 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12 text-center">STT</TableHead>
+                  <TableHead className="w-16 text-center">Ảnh</TableHead>
                   <TableHead>Tên vật tư</TableHead>
                   <TableHead>Đơn vị tính</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
@@ -260,14 +268,15 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
               <TableBody>
                 {(items ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground">
                       Chưa có vật tư nào.
                     </TableCell>
                   </TableRow>
                 )}
-                {(items ?? []).map((it) => {
+                {(items ?? []).map((it, idx) => {
                   const v = it.skus as {
-                    products?: { name?: string | null } | null;
+                    images?: string[] | null;
+                    products?: { name?: string | null; images?: string[] | null } | null;
                     units?: { name?: string | null; symbol?: string | null } | null;
                     sku_attribute_values?: Array<{
                       text_value?: string | null;
@@ -276,12 +285,36 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                       units?: { symbol?: string | null } | null;
                     }> | null;
                   } | null;
+                  const itemImages = (v?.images && v.images.length > 0) ? v.images : (v?.products?.images ?? []);
                   const attrVals = (v?.sku_attribute_values ?? []).map(av => av.text_value || av.legacy_text_value || (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)).filter(Boolean);
                   const detail = attrVals.length > 0 ? attrVals.join(" · ") : null;
                   const displayName = it.sku_name_snapshot || v?.products?.name || "Vật tư";
                   const enteredQty = it.entered_quantity ?? it.quantity;
                   return (
                     <TableRow key={it.id}>
+                      <TableCell className="w-12 text-center text-muted-foreground font-mono text-xs">{idx + 1}</TableCell>
+                      <TableCell className="w-16 text-center">
+                        {itemImages && itemImages.length > 0 ? (
+                          <div className="relative inline-flex shrink-0">
+                            <ZoomableImage
+                              src={itemImages[0]}
+                              images={itemImages}
+                              alt={displayName}
+                              title={displayName}
+                              className="size-11 shrink-0 rounded-md border object-cover"
+                            />
+                            {itemImages.length > 1 && (
+                              <span className="absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-black/80 text-[8px] font-bold text-white shadow pointer-events-none">
+                                +{itemImages.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="mx-auto size-11 rounded-md border bg-muted/40 flex items-center justify-center text-muted-foreground/40 text-[10px]">
+                            —
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <span className="font-medium">{displayName}</span>
                         {detail && detail !== "—" && !displayName.includes(detail) && (
@@ -305,7 +338,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                 })}
                 {(items ?? []).length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={2} className="font-medium">Tổng cộng</TableCell>
+                    <TableCell colSpan={4} className="font-medium">Tổng cộng</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{totalQuantity}</TableCell>
                     <TableCell />
                     <TableCell className="text-right font-medium tabular-nums">{formatVnd(total)}</TableCell>

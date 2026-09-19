@@ -189,16 +189,17 @@ export function FuelDispenseDialog({
           Cấp dầu
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Cấp phát dầu cho Phương tiện / Khu vực</DialogTitle>
-          <DialogDescription>
-            Ghi nhận xuất dầu chạy xe hoặc máy móc công trình. Tồn kho sẽ tự động giảm.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-xl">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Cấp phát dầu cho Phương tiện / Khu vực</DialogTitle>
+            <DialogDescription>
+              Ghi nhận xuất dầu chạy xe hoặc máy móc công trình. Tồn kho sẽ tự động giảm.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="vehicleId" className="text-xs font-semibold">
                 Phương tiện / Xe nhận dầu
@@ -380,8 +381,9 @@ export function FuelDispenseDialog({
               />
             </div>
           </div>
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
               Hủy
             </Button>

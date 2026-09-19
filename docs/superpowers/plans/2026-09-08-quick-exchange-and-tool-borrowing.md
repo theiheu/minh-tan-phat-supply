@@ -1,8 +1,8 @@
-# Phân hệ Đổi mới 1-1 Cấp tốc & Mượn/Trả Dụng cụ Chuồng Trại Implementation Plan
+# Phân hệ Đổi mới 1-1 Cấp tốc & Mượn/Trả Dụng cụ Trang Trại Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Triển khai luồng 1 chạm "Đổi mới 1-1 cấp tốc" khi thiết bị chuồng nuôi gặp sự cố khẩn cấp và xây dựng phân hệ Mượn/Trả Dụng cụ dùng chung (`/tools`) để quản lý tài sản, theo dõi người đang giữ, cảnh báo quá hạn trả và cập nhật tồn kho chính xác.
+**Goal:** Triển khai luồng 1 chạm "Đổi mới 1-1 cấp tốc" khi thiết bị trại nuôi gặp sự cố khẩn cấp và xây dựng phân hệ Mượn/Trả Dụng cụ dùng chung (`/tools`) để quản lý tài sản, theo dõi người đang giữ, cảnh báo quá hạn trả và cập nhật tồn kho chính xác.
 
 **Architecture:** 
 - Database: Migration `0061_quick_exchange_and_tool_borrowing.sql` tạo bảng `tool_borrowings`, `tool_borrowing_items`, mở rộng `movement_type` với `tool_borrow_out` / `tool_return_in`, cùng các RPC `quick_emergency_exchange`, `create_tool_borrowing`, `return_tool_borrowing`, `cancel_tool_borrowing`.
@@ -683,7 +683,7 @@ describe("ToolCard", () => {
         returnedQuantity={0}
         borrowedAt="2026-09-08T08:00:00Z"
         expectedReturnDate="2026-09-10"
-        purpose="Hàn khung chuồng"
+        purpose="Hàn khung trại"
         borrowerName="Nguyễn Văn A"
         isManager={false}
       />,
@@ -691,7 +691,7 @@ describe("ToolCard", () => {
 
     expect(screen.getByText("Máy hàn que")).toBeInTheDocument();
     expect(screen.getByText(/Đang giữ: 2/i)).toBeInTheDocument();
-    expect(screen.getByText(/Hàn khung chuồng/i)).toBeInTheDocument();
+    expect(screen.getByText(/Hàn khung trại/i)).toBeInTheDocument();
   });
 });
 ```

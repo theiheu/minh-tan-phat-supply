@@ -71,7 +71,7 @@ export function AccountantDashboardView({
             Xin chào, {profile.name}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Theo dõi hóa đơn đỏ VAT, đối soát chứng từ nhập xuất và chi phí vật tư theo chuồng trại.
+            Theo dõi hóa đơn đỏ VAT, đối soát chứng từ nhập xuất và chi phí vật tư theo trang trại.
           </p>
         </div>
 

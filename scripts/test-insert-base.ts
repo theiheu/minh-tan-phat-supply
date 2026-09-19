@@ -28,7 +28,7 @@ async function testInsertBase() {
     name: "Quạt thông gió vuông công nghiệp",
     category_id: cat?.id,
     catalog_status: "active",
-    description: "Quạt hút chuồng trại 1380x1380",
+    description: "Quạt hút trang trại 1380x1380",
     images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600"]
   }).select("id").single();
   console.log("product insert:", pErr?.message || "OK", p?.id);

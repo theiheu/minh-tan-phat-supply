@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import { receiptSchema, type ReceiptInput } from "./schema";
 
@@ -84,20 +85,23 @@ export async function createReceipt(input: ReceiptInput) {
     const code = meta?.code ?? "PNK";
     const supplierName = (meta?.supplier as { name?: string } | null)?.name;
 
-    try {
-      const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
-      if (whUsers && whUsers.length > 0) {
-        await supabase.from("notifications").insert(
-          whUsers.map((u) => ({
-            user_id: u.id,
-            type: "receipt",
-            title: `[Nhập kho] ${code} - Tạo mới phiếu nhập kho`,
-            body: `Người lập ${profile.name} đã tạo phiếu nhập kho từ nhà cung cấp ${supplierName || "N/A"}.`,
-            link: `/receipts/${receiptId}`,
-          }))
-        );
-      }
+    await dispatchBusinessEvent({
+      supabase,
+      input: {
+        event: "receipt.created",
+        actorId: profile.id,
+        subject: { type: "receipt", id: receiptId },
+        payload: {
+          code,
+          supplierName: supplierName ?? undefined,
+          receiverName: profile.name,
+          items: formatReceiptItems((meta as any)?.items),
+          notes: parsed.notes ?? undefined,
+        },
+      },
+    });
 
+    try {
       if (parsed.linkedRequisitionIds && parsed.linkedRequisitionIds.length > 0) {
         const { data: linkedReqs } = await supabase
           .from("requisitions")
@@ -120,7 +124,7 @@ export async function createReceipt(input: ReceiptInput) {
         }
       }
     } catch (err) {
-      if (process.env.NODE_ENV !== "test") console.warn("[createReceipt] In-app notification error:", err);
+      if (process.env.NODE_ENV !== "test") console.warn("[createReceipt] Linked requisitions notification error:", err);
     }
   }
 
@@ -165,6 +169,32 @@ export async function updateReceiptInvoiceImages(id: string, invoiceImages: stri
     p_by: profile.id,
   });
   if (error) throw new Error(error.message);
+
+  try {
+    const adminClient = createAdminClient();
+    const { data: rec } = await adminClient
+      .from("receipts")
+      .select("linked_requisition_ids")
+      .eq("id", id)
+      .single();
+    const linkedIds = rec?.linked_requisition_ids ?? [];
+    for (const reqId of linkedIds) {
+      const { data: req } = await adminClient
+        .from("requisitions")
+        .select("invoice_images")
+        .eq("id", reqId)
+        .single();
+      const merged = Array.from(new Set([...(req?.invoice_images ?? []), ...invoiceImages])).filter(Boolean);
+      await adminClient
+        .from("requisitions")
+        .update({ invoice_images: merged, updated_at: new Date().toISOString() })
+        .eq("id", reqId);
+      revalidatePath(`/requisitions/${reqId}`);
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[updateReceiptInvoiceImages] Sync reqs error:", err);
+  }
+
   revalidatePath("/receipts");
   revalidatePath(`/receipts/${id}`);
 }
@@ -178,22 +208,21 @@ export async function approveReceipt(id: string) {
   const meta = await receiptMeta(id);
   const code = meta?.code ?? "PNK";
   const _supplierName = (meta?.supplier as { name?: string } | null)?.name;
-  try {
-    const userIds = [...new Set([meta?.created_by].filter(Boolean))];
-    if (userIds.length > 0) {
-      await supabase.from("notifications").insert(
-        userIds.map((uid) => ({
-          user_id: uid!,
-          type: "receipt",
-          title: `[Nhập kho] ${code} - Đã phê duyệt nhập kho`,
-          body: `Phiếu nhập kho đã được phê duyệt bởi ${profile.name}.`,
-          link: `/receipts/${id}`,
-        }))
-      );
-    }
-  } catch (err) {
-    if (process.env.NODE_ENV !== "test") console.warn("[approveReceipt] In-app notification error:", err);
-  }
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "receipt.approved",
+      actorId: profile.id,
+      subject: { type: "receipt", id },
+      payload: {
+        code,
+        supplierName: (meta?.supplier as { name?: string } | null)?.name ?? undefined,
+        receiverName: profile.name,
+        items: formatReceiptItems((meta as any)?.items),
+        notes: meta?.notes ?? undefined,
+      },
+    },
+  });
 
   revalidatePath("/receipts");
   revalidatePath(`/receipts/${id}`);
@@ -224,7 +253,43 @@ export async function postReceipt(id: string) {
     },
   });
 
+  try {
+    const adminClient = createAdminClient();
+    const { data: rec } = await adminClient
+      .from("receipts")
+      .select("linked_requisition_ids, invoice_images")
+      .eq("id", id)
+      .single();
+    const linkedIds = rec?.linked_requisition_ids ?? [];
+    const allImages = [...(rec?.invoice_images ?? [])];
+    for (const reqId of linkedIds) {
+      const { data: req } = await adminClient
+        .from("requisitions")
+        .select("invoice_images")
+        .eq("id", reqId)
+        .single();
+      if (req?.invoice_images) allImages.push(...req.invoice_images);
+    }
+    const finalImages = Array.from(new Set(allImages)).filter(Boolean);
+    if (finalImages.length > (rec?.invoice_images?.length ?? 0)) {
+      await adminClient
+        .from("receipts")
+        .update({ invoice_images: finalImages, updated_at: new Date().toISOString() })
+        .eq("id", id);
+    }
+    for (const reqId of linkedIds) {
+      await adminClient
+        .from("requisitions")
+        .update({ invoice_images: finalImages, updated_at: new Date().toISOString() })
+        .eq("id", reqId);
+      revalidatePath(`/requisitions/${reqId}`);
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[postReceipt] Sync invoice images error:", err);
+  }
+
   revalidatePath("/receipts");
+  revalidatePath(`/receipts/${id}`);
   revalidatePath("/dashboard");
   revalidatePath("/products");
   return data;

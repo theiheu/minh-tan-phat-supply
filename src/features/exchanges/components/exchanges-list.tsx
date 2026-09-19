@@ -153,7 +153,7 @@ function ExchangeDetailModal({
 
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2 font-mono text-lg">
             {row.code}
@@ -173,33 +173,35 @@ function ExchangeDetailModal({
           </DialogDescription>
         </DialogHeader>
 
-        {row.rejectionReason ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-300">
-            <span className="font-semibold">Lý do từ chối: </span>
-            {row.rejectionReason}
-          </p>
-        ) : null}
+        <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
+          {row.rejectionReason ? (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-300">
+              <span className="font-semibold">Lý do từ chối: </span>
+              {row.rejectionReason}
+            </p>
+          ) : null}
 
-        {/* Vật tư cấp mới */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold">Vật tư cấp mới ({row.items.length})</h3>
-          {row.items.length === 0 && (
-            <p className="text-sm text-muted-foreground">Không có vật tư.</p>
-          )}
-          {row.items.map((it, idx) => (
-            <div key={it.id} className="flex items-baseline justify-between gap-3 rounded-lg border p-3">
-              <span className="font-medium">
-                {idx + 1}. {it.productName ?? "Vật tư"}
-              </span>
-              <span className="shrink-0 text-sm text-muted-foreground">
-                {it.variantLabel} · SL {it.quantity}
-              </span>
-            </div>
-          ))}
+          {/* Vật tư cấp mới */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Vật tư cấp mới ({row.items.length})</h3>
+            {row.items.length === 0 && (
+              <p className="text-sm text-muted-foreground">Không có vật tư.</p>
+            )}
+            {row.items.map((it, idx) => (
+              <div key={it.id} className="flex items-baseline justify-between gap-3 rounded-lg border p-3">
+                <span className="font-medium">
+                  {idx + 1}. {it.productName ?? "Vật tư"}
+                </span>
+                <span className="shrink-0 text-sm text-muted-foreground">
+                  {it.variantLabel} · SL {it.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Thao tác theo trạng thái */}
-        <div className="space-y-3 border-t pt-4">
+        <div className="shrink-0 space-y-3 border-t pt-3">
           <h4 className="text-sm font-semibold">Xử lý phiếu</h4>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {row.status === "pending" && (

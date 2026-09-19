@@ -16,13 +16,13 @@ Hệ thống quản lý vật tư & chuỗi cung ứng **Minh Tân Phát Supply*
 
 ### 1.2 Vấn đề tồn tại
 1. **Lệch trọng tâm nghiệp vụ**:
-   * **Tài xế (`driver`)**: Chỉ cần quét QR đổ dầu nhanh và xem lịch sử tiếp nhiên liệu, nhưng lại thấy danh sách phiếu vật tư chuồng trại không liên quan.
-   * **Công nhân chuồng (`requester`)**: Cần phím tắt tạo phiếu xin cấp đồ, mượn dụng cụ, chụp ảnh báo hỏng và danh sách phiếu của cá nhân mình cần nhận, nhưng lại thấy toàn bộ phiếu chờ duyệt của cả trại.
+   * **Tài xế (`driver`)**: Chỉ cần quét QR đổ dầu nhanh và xem lịch sử tiếp nhiên liệu, nhưng lại thấy danh sách phiếu vật tư trang trại không liên quan.
+   * **Công nhân trại (`requester`)**: Cần phím tắt tạo phiếu xin cấp đồ, mượn dụng cụ, chụp ảnh báo hỏng và danh sách phiếu của cá nhân mình cần nhận, nhưng lại thấy toàn bộ phiếu chờ duyệt của cả trại.
    * **Kỹ thuật trưởng (`technician`)**: Cần duyệt cấp 1 phiếu của khu vực mình, theo dõi thiết bị gửi quấn motor/sửa chữa và đổi 1-1 khẩn cấp.
    * **Thủ kho (`warehouse`)**: Cần hàng đợi xuất kho (phiếu đã duyệt), cảnh báo hết hàng/tồn kho tối thiểu, dụng cụ mượn quá hạn.
    * **Kế toán (`accountant`)**: Cần theo dõi phiếu nhập thiếu hóa đơn VAT, phiếu thanh lý chờ kiểm tra, các phiên kiểm kê cần cân bằng số liệu kế toán.
    * **Chủ trại / Superuser (`owner`, `superuser`)**: Cần bức tranh điều hành toàn cảnh: giá trị kho, chi phí tháng, các phê duyệt cấp cao (thanh lý tài sản, cân bằng kiểm kê), tiêu thụ dầu bất thường.
-2. **Trải nghiệm di động chưa tối ưu**: Các vai trò hiện trường (công nhân, tài xế) thao tác bằng smartphone ngoài chuồng cần nút bấm to, thao tác 1 chạm (One-tap actions), không cần bảng dữ liệu dạng table rườm rà.
+2. **Trải nghiệm di động chưa tối ưu**: Các vai trò hiện trường (công nhân, tài xế) thao tác bằng smartphone ngoài trại cần nút bấm to, thao tác 1 chạm (One-tap actions), không cần bảng dữ liệu dạng table rườm rà.
 
 ### 1.3 Mục tiêu thiết kế
 * Tự động điều hướng và kết xuất giao diện Dashboard chuyên biệt (Role-Tailored View) dựa trên `profile.role`.
@@ -70,7 +70,7 @@ src/
 │   │   ├── accountant-dashboard-view.tsx   # Giao diện Kế toán
 │   │   ├── warehouse-dashboard-view.tsx    # Giao diện Quản kho / Thủ kho
 │   │   ├── technician-dashboard-view.tsx   # Giao diện Kỹ thuật trưởng
-│   │   ├── requester-dashboard-view.tsx    # Giao diện Công nhân chuồng (Mobile-first)
+│   │   ├── requester-dashboard-view.tsx    # Giao diện Công nhân trại (Mobile-first)
 │   │   └── driver-dashboard-view.tsx       # Giao diện Tài xế xe (Mobile-first)
 │   ├── shared/
 │   │   ├── dashboard-quick-actions.tsx     # Thanh phím tắt thao tác nhanh
@@ -127,20 +127,20 @@ src/
 #### A. Thẻ chỉ số kế toán (Accountant Metrics)
 1. **Phiếu nhập chưa có hóa đơn đỏ / Chờ ghi sổ**: Số lượng phiếu nhập kho (`receipts`) ở trạng thái `draft` hoặc chưa đính kèm ảnh hóa đơn VAT.
 2. **Tổng giá trị nhập kho tháng này**: Tổng tiền hàng đã nhập từ nhà cung cấp.
-3. **Chi phí xuất kho theo khu vực**: Tổng giá trị xuất kho chuồng trại trong tháng.
+3. **Chi phí xuất kho theo khu vực**: Tổng giá trị xuất kho trang trại trong tháng.
 4. **Kiểm kê chờ xử lý chênh lệch**: Số phiên kiểm kê cần kế toán xác nhận số liệu chênh lệch.
 
 #### B. Phím tắt thao tác nhanh (Quick Actions)
 * 📥 **Ghi sổ phiếu nhập kho**: Chuyển đến `/receipts`
 * 📑 **Xuất sổ kho & Excel kế toán**: Mở hộp thoại xuất báo cáo nhanh
 * 🏢 **Quản lý Nhà cung cấp & Khách hàng**: Chuyển đến `/admin/suppliers`
-* 📊 **Báo cáo chi phí theo khu/dãy chuồng**: Chuyển đến `/reports`
+* 📊 **Báo cáo chi phí theo khu/dãy trại**: Chuyển đến `/reports`
 
 #### C. Khối nội dung chính
 1. **Hàng đợi chứng từ kế toán cần rà soát**:
    * Danh sách các phiếu nhập kho mới lập cần kiểm tra đơn giá, số lượng và hóa đơn.
    * Danh sách phiếu xuất bán thương phẩm cho khách hàng bên ngoài.
-2. **Bảng phân bổ chi phí vật tư theo từng Khu/Dãy chuồng gần nhất**.
+2. **Bảng phân bổ chi phí vật tư theo từng Khu/Dãy trại gần nhất**.
 
 ---
 
@@ -169,7 +169,7 @@ src/
 
 ---
 
-### 🔧 3.4 Giao diện Kỹ Thuật Trưởng / Quản Lý Khu Chuồng (`technician`)
+### 🔧 3.4 Giao diện Kỹ Thuật Trưởng / Quản Lý Khu Trại (`technician`)
 **Mục tiêu**: Duyệt nhanh đề xuất của thợ/công nhân, quản lý sửa chữa bảo trì thiết bị và kiểm soát chi phí khu vực mình phụ trách.
 
 #### A. Thẻ chỉ số kỹ thuật (Technician Metrics)
@@ -182,19 +182,19 @@ src/
 * ⚡ **Duyệt phiếu yêu cầu**: Chuyển đến danh sách phiếu chờ duyệt
 * 🔁 **Đổi 1-1 thiết bị hỏng**: Tạo phiếu đổi mới nhanh
 * 🛠️ **Tạo đơn gửi xưởng sửa chữa**: `/repairs`
-* 🚨 **Báo hỏng thiết bị chuồng trại**: `/defects/new`
+* 🚨 **Báo hỏng thiết bị trang trại**: `/defects/new`
 
 #### C. Khối nội dung chính
 1. **Danh sách phiếu yêu cầu chờ duyệt Cấp 1**:
-   * Hiển thị rõ: Người yêu cầu, Dãy chuồng/Khu vực, Danh sách món và mức độ ưu tiên (Bình thường / Khẩn cấp).
+   * Hiển thị rõ: Người yêu cầu, Dãy trại/Khu vực, Danh sách món và mức độ ưu tiên (Bình thường / Khẩn cấp).
    * Hỗ trợ nút **"Duyệt nhanh"** hoặc mở xem chi tiết.
 2. **Theo dõi thiết bị gửi sửa chữa ngoại**:
    * Danh sách motor, quạt thông gió, máy bơm đang gửi xưởng quấn kèm ngày hẹn trả.
 
 ---
 
-### 📋 3.5 Giao diện Người Yêu Cầu / Công Nhân Chuồng (`requester`)
-**Mục tiêu**: Giao diện Mobile-first cực kỳ đơn giản, trực quan, hỗ trợ 1 chạm cho công nhân chuồng.
+### 📋 3.5 Giao diện Người Yêu Cầu / Công Nhân Trại (`requester`)
+**Mục tiêu**: Giao diện Mobile-first cực kỳ đơn giản, trực quan, hỗ trợ 1 chạm cho công nhân trại.
 
 #### A. Thanh thao tác nhanh nổi bật (Big Action Buttons)
 * 🛒 **Xin cấp vật tư mới**: Mở nhanh danh mục chọn hàng `/products` (hỗ trợ giỏ hàng)

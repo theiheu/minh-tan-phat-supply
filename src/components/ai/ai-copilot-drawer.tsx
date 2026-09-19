@@ -68,7 +68,7 @@ const DEFAULT_PROMPTS: QuickPromptItem[] = [
   {
     icon: "BookOpen",
     label: "Quy trình Đổi 1-1",
-    prompt: "Hướng dẫn quy trình đổi 1-1 cấp tốc khi thiết bị hỏng tại chuồng trại.",
+    prompt: "Hướng dẫn quy trình đổi 1-1 cấp tốc khi thiết bị hỏng tại trang trại.",
   },
 ];
 

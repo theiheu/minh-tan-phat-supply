@@ -184,7 +184,7 @@ export async function GET(req: NextRequest) {
 
       case "zone_cost": {
         title = "BÁO CÁO CHI PHÍ VẬT TƯ THEO KHU VỰC";
-        filename = `chi-phi-chuong-${fromStr}-den-${toStr}.pdf`;
+        filename = `chi-phi-trai-${fromStr}-den-${toStr}.pdf`;
 
         const data = await fetchZoneCostReportData({ from: fromStr, to: toStr });
 
@@ -196,7 +196,7 @@ export async function GET(req: NextRequest) {
         ];
 
         columns = [
-          { label: "Khu vực / Chuồng", flex: 2.5 },
+          { label: "Khu vực / Trại", flex: 2.5 },
           { label: "Số phiếu xuất", flex: 1.0, align: "right" },
           { label: "Số BB hỏng", flex: 1.0, align: "right" },
           { label: "Tổng chi phí", flex: 1.5, align: "right" },

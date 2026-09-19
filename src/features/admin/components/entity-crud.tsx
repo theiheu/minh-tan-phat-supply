@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -380,16 +381,17 @@ export function EntityCrud({
           }}
         >
           <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Thêm {title.toLowerCase()}</DialogTitle>
-            </DialogHeader>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 run(() => save(null, fullData(columns, form)), "Đã thêm");
               }}
+              className="flex flex-col flex-1 min-h-0 overflow-hidden"
             >
-              <div className={hasIcon ? "space-y-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
+              <DialogHeader>
+                <DialogTitle>Thêm {title.toLowerCase()}</DialogTitle>
+              </DialogHeader>
+              <div className={cn("flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain", hasIcon ? "space-y-3" : "grid grid-cols-1 gap-3 sm:grid-cols-2")}>
                 {simpleCols.map((c) => (
                   <label key={c.key} className={hasIcon ? "block min-w-40 flex-1 basis-52" : "block space-y-1.5"}>
                     <span className="mb-1.5 block text-sm font-medium">{c.label}</span>
@@ -411,7 +413,7 @@ export function EntityCrud({
                   </div>
                 ))}
               </div>
-              <DialogFooter className="mt-5">
+              <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setAddOpen(false)} disabled={pending}>
                   Hủy
                 </Button>

@@ -1,40 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { IssueInvoices } from "./issue-invoices";
-import { uploadIssueInvoiceImage } from "../upload";
-import { updateIssueInvoiceImages } from "../actions";
+import { RequisitionInvoices } from "./requisition-invoices";
+import { uploadRequisitionInvoiceImage } from "../upload";
+import { updateRequisitionInvoiceImages } from "../actions";
 
 vi.mock("../upload", () => ({
-  uploadIssueInvoiceImage: vi.fn(),
+  uploadRequisitionInvoiceImage: vi.fn(),
 }));
 
 vi.mock("../actions", () => ({
-  updateIssueInvoiceImages: vi.fn(),
+  updateRequisitionInvoiceImages: vi.fn(),
 }));
 
 vi.mock("@/components/image-lightbox", () => ({
   ZoomableImage: ({ src, alt }: { src: string; alt?: string }) => <img src={src} alt={alt} />,
 }));
 
-describe("IssueInvoices permissions & confirmation flow", () => {
+describe("RequisitionInvoices permissions & confirmation flow", () => {
   const userA = "11111111-1111-1111-1111-111111111111";
   const userB = "22222222-2222-2222-2222-222222222222";
-  const imageByA = `http://example.com/storage/v1/object/public/issue-images/${userA}/slip-a.jpg`;
-  const imageByB = `http://example.com/storage/v1/object/public/issue-images/${userB}/slip-b.jpg`;
+  const imageByA = `http://example.com/storage/v1/object/public/requisition-images/${userA}/req-a.jpg`;
+  const imageByB = `http://example.com/storage/v1/object/public/requisition-images/${userB}/req-b.jpg`;
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("shows delete button only for user's own uploaded images when logged in as manager", () => {
+  it("shows delete button only for user's own uploaded images when logged in as manager/requester", () => {
     render(
-      <IssueInvoices
-        issueId="iss-1"
-        issueCode="PXK0001"
+      <RequisitionInvoices
+        requisitionId="req-1"
+        requisitionCode="YCCP0001"
         invoiceImages={[imageByA, imageByB]}
-        status="posted"
+        status="received"
+        isManager={true}
         currentUser={{ id: userA, role: "warehouse", name: "User A" }}
-        creatorId={userA}
+        requesterId={userA}
       />,
     );
 
@@ -42,34 +43,19 @@ describe("IssueInvoices permissions & confirmation flow", () => {
     expect(deleteButtons).toHaveLength(1);
   });
 
-  it("shows delete buttons for all images when logged in as dev/superuser", () => {
-    render(
-      <IssueInvoices
-        issueId="iss-1"
-        issueCode="PXK0001"
-        invoiceImages={[imageByA, imageByB]}
-        status="posted"
-        currentUser={{ id: userA, role: "superuser", name: "Dev User" }}
-        creatorId={userB}
-      />,
-    );
-
-    const deleteButtons = screen.getAllByRole("button", { name: /Xóa ảnh này/i });
-    expect(deleteButtons).toHaveLength(2);
-  });
-
-  it("stages uploaded images without calling updateIssueInvoiceImages until confirmed", async () => {
-    const newImage = "http://example.com/storage/v1/object/public/issue-images/new-slip.jpg";
-    vi.mocked(uploadIssueInvoiceImage).mockResolvedValueOnce(newImage);
+  it("stages uploaded images without calling updateRequisitionInvoiceImages until confirmed", async () => {
+    const newImage = "http://example.com/storage/v1/object/public/requisition-images/new-req.jpg";
+    vi.mocked(uploadRequisitionInvoiceImage).mockResolvedValueOnce(newImage);
 
     render(
-      <IssueInvoices
-        issueId="iss-1"
-        issueCode="PXK0001"
+      <RequisitionInvoices
+        requisitionId="req-1"
+        requisitionCode="YCCP0001"
         invoiceImages={[imageByA]}
-        status="posted"
+        status="approved"
+        isManager={true}
         currentUser={{ id: userA, role: "warehouse", name: "User A" }}
-        creatorId={userA}
+        requesterId={userA}
       />,
     );
 
@@ -79,11 +65,11 @@ describe("IssueInvoices permissions & confirmation flow", () => {
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(uploadIssueInvoiceImage).toHaveBeenCalledTimes(1);
+      expect(uploadRequisitionInvoiceImage).toHaveBeenCalledTimes(1);
     });
 
-    // Should NOT call updateIssueInvoiceImages yet!
-    expect(updateIssueInvoiceImages).not.toHaveBeenCalled();
+    // Should NOT call updateRequisitionInvoiceImages yet!
+    expect(updateRequisitionInvoiceImages).not.toHaveBeenCalled();
 
     // Confirm & Cancel buttons exist
     const confirmButton = screen.getByRole("button", { name: /Xác nhận lưu/i });
@@ -94,22 +80,23 @@ describe("IssueInvoices permissions & confirmation flow", () => {
     // Click cancel
     fireEvent.click(cancelButton);
     expect(screen.queryByRole("button", { name: /Xác nhận lưu/i })).toBeNull();
-    expect(updateIssueInvoiceImages).not.toHaveBeenCalled();
+    expect(updateRequisitionInvoiceImages).not.toHaveBeenCalled();
   });
 
   it("saves images to server only when clicking confirm button", async () => {
-    const newImage = "http://example.com/storage/v1/object/public/issue-images/new-slip.jpg";
-    vi.mocked(uploadIssueInvoiceImage).mockResolvedValueOnce(newImage);
-    vi.mocked(updateIssueInvoiceImages).mockResolvedValueOnce(undefined as never);
+    const newImage = "http://example.com/storage/v1/object/public/requisition-images/new-req.jpg";
+    vi.mocked(uploadRequisitionInvoiceImage).mockResolvedValueOnce(newImage);
+    vi.mocked(updateRequisitionInvoiceImages).mockResolvedValueOnce(undefined as never);
 
     render(
-      <IssueInvoices
-        issueId="iss-1"
-        issueCode="PXK0001"
+      <RequisitionInvoices
+        requisitionId="req-1"
+        requisitionCode="YCCP0001"
         invoiceImages={[imageByA]}
-        status="posted"
+        status="approved"
+        isManager={true}
         currentUser={{ id: userA, role: "warehouse", name: "User A" }}
-        creatorId={userA}
+        requesterId={userA}
       />,
     );
 
@@ -126,7 +113,7 @@ describe("IssueInvoices permissions & confirmation flow", () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(updateIssueInvoiceImages).toHaveBeenCalledWith("iss-1", [imageByA, newImage]);
+      expect(updateRequisitionInvoiceImages).toHaveBeenCalledWith("req-1", [imageByA, newImage]);
     });
   });
 });

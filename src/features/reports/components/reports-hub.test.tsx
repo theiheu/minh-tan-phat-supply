@@ -100,7 +100,7 @@ const mockZoneData: ZoneCostReportData = {
   zones: [
     {
       zoneId: "zone-1",
-      zoneName: "Chuồng Gà Đẻ Số 01",
+      zoneName: "Trại Gà Đẻ Số 01",
       totalCost: 30000000,
       percentage: 66.7,
       issueCount: 8,
@@ -118,7 +118,7 @@ const mockZoneData: ZoneCostReportData = {
     },
     {
       zoneId: "zone-2",
-      zoneName: "Chuồng Gà Đẻ Số 02",
+      zoneName: "Trại Gà Đẻ Số 02",
       totalCost: 15000000,
       percentage: 33.3,
       issueCount: 4,
@@ -202,7 +202,7 @@ const mockStockCardData: StockCardData = {
       refCode: "PXK-20260905-02",
       movementType: "issue",
       movementLabel: "Xuất sử dụng",
-      notes: "Thay bóng hư chuồng 1",
+      notes: "Thay bóng hư trại 1",
       actorName: "Nguyễn Văn Kho",
       inQty: 0,
       outQty: 20,
@@ -246,7 +246,7 @@ describe("ReportsHub component", () => {
     // All 6 tabs exist
     expect(screen.getByRole("tab", { name: /Tổng quan/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Xuất - Nhập - Tồn/i })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /Theo Chuồng/i })).toBeDefined();
+    expect(screen.getByRole("tab", { name: /Theo Trại/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Phương tiện/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Đối tác/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Sổ Thẻ kho/i })).toBeDefined();
@@ -306,8 +306,8 @@ describe("ReportsHub component", () => {
       expect(screen.getByText("Tổng cộng (1 mặt hàng)")).toBeDefined();
     });
 
-    // 2. Switch to "Theo Chuồng" (zones)
-    const zonesTab = screen.getByRole("tab", { name: /Theo Chuồng/i });
+    // 2. Switch to "Theo Trại" (zones)
+    const zonesTab = screen.getByRole("tab", { name: /Theo Trại/i });
     fireEvent.click(zonesTab);
 
     await waitFor(() => {
@@ -315,8 +315,8 @@ describe("ReportsHub component", () => {
         from: "2026-09-01",
         to: "2026-09-30",
       });
-      expect(screen.getAllByText("Chuồng Gà Đẻ Số 01").length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText("Chuồng Gà Đẻ Số 02")).toBeDefined();
+      expect(screen.getAllByText("Trại Gà Đẻ Số 01").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText("Trại Gà Đẻ Số 02")).toBeDefined();
       expect(screen.getAllByText("45.000.000 đ").length).toBeGreaterThanOrEqual(1);
     });
 
@@ -396,7 +396,7 @@ describe("ReportsHub component", () => {
     expect(exportBtn.getAttribute("href")).toContain("type=stock_ledger");
 
     // Switch to Zones: type=zone_cost
-    fireEvent.click(screen.getByRole("tab", { name: /Theo Chuồng/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Theo Trại/i }));
     await waitFor(() => {
       exportBtn = screen.getByRole("link", { name: /Xuất Excel \(\.xlsx\)/i });
       expect(exportBtn.getAttribute("href")).toContain("type=zone_cost");

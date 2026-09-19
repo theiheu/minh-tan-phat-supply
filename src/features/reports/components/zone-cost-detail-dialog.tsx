@@ -41,7 +41,7 @@ export function ZoneCostDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             Chi tiết vật tư đã cấp cho: {zone.zoneName}
@@ -51,6 +51,7 @@ export function ZoneCostDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain">
         {/* 1. Summary Mini Cards */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-lg border bg-muted/20 p-3">
@@ -155,9 +156,10 @@ export function ZoneCostDetailDialog({
             )}
           </Table>
         </div>
+        </div>
 
         {/* 3. Dialog Footer */}
-        <DialogFooter className="flex items-center justify-between sm:justify-between pt-2">
+        <DialogFooter className="flex items-center justify-between sm:justify-between">
           <div className="text-xs text-muted-foreground">
             Tổng giá trị:{" "}
             <span className="font-semibold text-foreground font-mono">

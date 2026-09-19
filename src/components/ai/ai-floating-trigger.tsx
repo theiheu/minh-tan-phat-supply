@@ -6,8 +6,9 @@ import { AICopilotDrawer } from "./ai-copilot-drawer";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "mtp_ai_copilot_fab_pos";
-const BUTTON_WIDTH = 140;
-const BUTTON_HEIGHT = 48;
+const BUTTON_WIDTH_DESKTOP = 140;
+const BUTTON_HEIGHT_DESKTOP = 48;
+const BUTTON_SIZE_MOBILE = 44;
 const PADDING = 12;
 const DRAG_THRESHOLD = 6;
 
@@ -30,8 +31,11 @@ export function AIFloatingTrigger() {
 
   const clampPosition = React.useCallback((x: number, y: number) => {
     if (typeof window === "undefined") return { x, y };
-    const maxX = Math.max(PADDING, window.innerWidth - BUTTON_WIDTH - PADDING);
-    const maxY = Math.max(PADDING, window.innerHeight - BUTTON_HEIGHT - PADDING);
+    const isMobile = window.innerWidth < 640;
+    const btnWidth = isMobile ? BUTTON_SIZE_MOBILE : BUTTON_WIDTH_DESKTOP;
+    const btnHeight = isMobile ? BUTTON_SIZE_MOBILE : BUTTON_HEIGHT_DESKTOP;
+    const maxX = Math.max(PADDING, window.innerWidth - btnWidth - PADDING);
+    const maxY = Math.max(PADDING, window.innerHeight - btnHeight - PADDING);
     return {
       x: Math.min(Math.max(PADDING, x), maxX),
       y: Math.min(Math.max(PADDING, y), maxY),
@@ -63,13 +67,15 @@ export function AIFloatingTrigger() {
       }
 
       // Vị trí mặc định ở góc phải dưới (tránh thanh bottom nav trên mobile)
-      const isMobile = window.innerWidth < 1024;
-      const bottomOffset = isMobile ? 84 : 24;
+      const isMobile = window.innerWidth < 640;
+      const btnWidth = isMobile ? BUTTON_SIZE_MOBILE : BUTTON_WIDTH_DESKTOP;
+      const btnHeight = isMobile ? BUTTON_SIZE_MOBILE : BUTTON_HEIGHT_DESKTOP;
+      const bottomOffset = isMobile ? 80 : 24;
       const rightOffset = isMobile ? 16 : 24;
 
       return clampPosition(
-        window.innerWidth - BUTTON_WIDTH - rightOffset,
-        window.innerHeight - BUTTON_HEIGHT - bottomOffset
+        window.innerWidth - btnWidth - rightOffset,
+        window.innerHeight - btnHeight - bottomOffset
       );
     };
 
@@ -211,12 +217,12 @@ export function AIFloatingTrigger() {
           type="button"
           onClick={handleClick}
           className={cn(
-            "group relative flex items-center gap-2 rounded-full cursor-pointer",
+            "group relative flex items-center rounded-full cursor-pointer",
             "bg-linear-to-r from-primary via-primary/95 to-amber-500",
             "text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-primary/25",
-            "pl-2.5 pr-4 py-2.5 sm:py-3",
             "border border-white/20 active:scale-95 transition-transform",
-            "h-12 w-[140px] justify-between"
+            "size-11 justify-center p-0",
+            "sm:h-12 sm:w-[140px] sm:justify-between sm:pl-2.5 sm:pr-4 sm:py-2.5 sm:gap-2"
           )}
           aria-label="Mở trợ lý AI Copilot (Ctrl+J)"
           title="Trợ lý AI Copilot (Kéo để di chuyển, bấm để mở)"
@@ -224,16 +230,17 @@ export function AIFloatingTrigger() {
           {/* Glowing pulse ring */}
           <span className="absolute -inset-0.5 rounded-full bg-linear-to-r from-primary to-amber-400 opacity-40 blur-xs group-hover:opacity-75 transition duration-500 animate-pulse pointer-events-none" />
 
-          {/* Grip drag handle icon */}
-          <div className="relative flex items-center justify-center text-white/60 group-hover:text-white transition-colors pointer-events-none">
+          {/* Grip drag handle icon - visible on desktop */}
+          <div className="relative hidden sm:flex items-center justify-center text-white/60 group-hover:text-white transition-colors pointer-events-none">
             <GripVertical className="size-3.5" />
           </div>
 
           <div className="relative flex items-center justify-center size-5 shrink-0 pointer-events-none">
-            <Sparkles className="size-4.5 text-amber-200 animate-[spin_4s_linear_infinite]" />
+            <Sparkles className="size-5 sm:size-4.5 text-amber-200 animate-[spin_4s_linear_infinite]" />
           </div>
 
-          <div className="relative flex items-center gap-1 font-semibold text-xs sm:text-sm tracking-wide shrink-0 pointer-events-none">
+          {/* Label - visible on desktop */}
+          <div className="relative hidden sm:flex items-center gap-1 font-semibold text-xs sm:text-sm tracking-wide shrink-0 pointer-events-none">
             <span>AI Copilot</span>
           </div>
         </button>

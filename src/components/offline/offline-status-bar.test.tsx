@@ -23,7 +23,7 @@ describe("OfflineStatusBar", () => {
     useOfflineQueueStore.getState().enqueue({
       items: [{ skuId: "v1", enteredQuantity: 1, name: "Bóng đèn", label: "220V", unit: "cái" }],
       zoneId: "z1",
-      purpose: "Chuồng 1",
+      purpose: "Trại 1",
     });
 
     render(<OfflineStatusBar isOnline={true} isSyncing={true} onSyncNow={() => {}} />);

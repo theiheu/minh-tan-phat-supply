@@ -31,13 +31,13 @@
 | `description` | `text` | `NULL` | Mô tả chi tiết |
 | `created_at` | `timestamptz` | `DEFAULT now()` | Thời điểm tạo |
 
-### `sub_zones` — Dãy chuồng / Phân xưởng trực thuộc
+### `sub_zones` — Dãy trại / Phân xưởng trực thuộc
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
-| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính dãy chuồng |
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính dãy trại |
 | `zone_id` | `uuid` | `NOT NULL, REFERENCES zones(id)` | Khóa ngoại thuộc Khu vực nào |
-| `code` | `text` | `NOT NULL` | Mã dãy chuồng (VD: `A1`, `A2`, `B1`) |
-| `name` | `text` | `NOT NULL` | Tên dãy chuồng (VD: `Chuồng A1`, `Chuồng A2`) |
+| `code` | `text` | `NOT NULL` | Mã dãy trại (VD: `A1`, `A2`, `B1`) |
+| `name` | `text` | `NOT NULL` | Tên dãy trại (VD: `Trại A1`, `Trại A2`) |
 | `description` | `text` | `NULL` | Ghi chú thêm |
 
 ### `profiles` — Thông tin định danh & Phân quyền nhân sự
@@ -245,7 +245,7 @@
 | `code` | `text` | `NOT NULL, UNIQUE` | Mã phiếu (VD: `REQ-202609-001`) |
 | `requester_id` | `uuid` | `NOT NULL, REFERENCES profiles(id)` | Người lập yêu cầu |
 | `zone_id` | `uuid` | `NOT NULL, REFERENCES zones(id)` | Khu vực nhận |
-| `sub_zone_id` | `uuid` | `NULL, REFERENCES sub_zones(id)` | Dãy chuồng nhận chi tiết |
+| `sub_zone_id` | `uuid` | `NULL, REFERENCES sub_zones(id)` | Dãy trại nhận chi tiết |
 | `priority` | `text` | `DEFAULT 'normal'` | `normal`, `urgent` |
 | `status` | `requisition_status` | `DEFAULT 'draft'` | `draft`, `pending`, `approved`, `issued`, `received`, `rejected`, `cancelled` |
 | `invoice_images`| `text[]` | `DEFAULT '{}'` | Ảnh chứng từ/hóa đơn đính kèm |
@@ -263,7 +263,7 @@
 ### `issues` & `issue_items` — Xuất Kho Trực Tiếp
 | Bảng | Cột chính | Diễn giải |
 |---|---|---|
-| `issues` | `id, code, destination_type, zone_id, sub_zone_id, customer_id, location_id, status, notes, invoice_images` | Phiếu xuất kho nội bộ theo dãy chuồng hoặc xuất bán |
+| `issues` | `id, code, destination_type, zone_id, sub_zone_id, customer_id, location_id, status, notes, invoice_images` | Phiếu xuất kho nội bộ theo dãy trại hoặc xuất bán |
 | `issue_items` | `id, issue_id, sku_id, quantity, unit_price` | Chi tiết hàng xuất và đơn giá |
 
 ---
@@ -272,7 +272,7 @@
 
 | Bảng | Cột chính | Diễn giải |
 |---|---|---|
-| `defect_notes` | `id, code, zone_id, sub_zone_id, reporter_id, status` | Phiếu báo hỏng thiết bị tại chuồng |
+| `defect_notes` | `id, code, zone_id, sub_zone_id, reporter_id, status` | Phiếu báo hỏng thiết bị tại trại |
 | `defect_note_items`| `id, defect_note_id, sku_id, quantity, damage_type, severity, images, note` | Chi tiết thiết bị hỏng kèm ảnh hiện trường |
 | `exchange_notes` | `id, code, defect_note_id, source_location_id, defect_location_id, status` | Phiếu đổi 1-1 cấp tốc 30s |
 | `exchange_note_items`| `id, exchange_id, sku_id, quantity` | Chi tiết thiết bị đổi mới |

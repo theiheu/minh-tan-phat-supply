@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { dispatchBusinessEvent } from "@/features/notifications/server/dispatch-business-event";
 import { requisitionSchema, type RequisitionInput } from "./schema";
 
@@ -393,8 +394,27 @@ export async function updateRequisitionInvoiceImages(id: string, invoiceImages: 
     if (process.env.NODE_ENV !== "test") console.warn("[updateRequisitionInvoiceImages] In-app notification error:", err);
   }
 
+  try {
+    const adminClient = createAdminClient();
+    const { data: linkedRecs } = await adminClient
+      .from("receipts")
+      .select("id, invoice_images")
+      .contains("linked_requisition_ids", [id]);
+    for (const rec of linkedRecs ?? []) {
+      const merged = Array.from(new Set([...(rec.invoice_images ?? []), ...invoiceImages])).filter(Boolean);
+      await adminClient
+        .from("receipts")
+        .update({ invoice_images: merged, updated_at: new Date().toISOString() })
+        .eq("id", rec.id);
+      revalidatePath(`/receipts/${rec.id}`);
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[updateRequisitionInvoiceImages] Sync receipts error:", err);
+  }
+
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);
+  revalidatePath("/receipts");
 }
 
 export async function completeRequisitionDirect(id: string, notes?: string) {
@@ -439,6 +459,32 @@ export async function completeRequisitionDirect(id: string, notes?: string) {
       },
     },
   });
+
+  try {
+    const adminClient = createAdminClient();
+    const { data: reqData } = await adminClient
+      .from("requisitions")
+      .select("invoice_images")
+      .eq("id", id)
+      .single();
+    const reqImages = reqData?.invoice_images ?? [];
+    if (reqImages.length > 0) {
+      const { data: linkedRecs } = await adminClient
+        .from("receipts")
+        .select("id, invoice_images")
+        .contains("linked_requisition_ids", [id]);
+      for (const rec of linkedRecs ?? []) {
+        const merged = Array.from(new Set([...(rec.invoice_images ?? []), ...reqImages])).filter(Boolean);
+        await adminClient
+          .from("receipts")
+          .update({ invoice_images: merged, updated_at: new Date().toISOString() })
+          .eq("id", rec.id);
+        revalidatePath(`/receipts/${rec.id}`);
+      }
+    }
+  } catch (err) {
+    if (process.env.NODE_ENV !== "test") console.warn("[completeRequisitionDirect] Sync receipts error:", err);
+  }
 
   revalidatePath("/requisitions");
   revalidatePath(`/requisitions/${id}`);

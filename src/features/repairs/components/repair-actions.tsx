@@ -63,11 +63,11 @@ export function RepairActions({ order }: { order: { id: string; status: string; 
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Kết quả sửa chữa</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3 overscroll-contain">
             {order.items.map((i) => (
               <div key={i.id} className="grid grid-cols-3 items-end gap-2 rounded-lg border p-2">
                 <div className="col-span-1">

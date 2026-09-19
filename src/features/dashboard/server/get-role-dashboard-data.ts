@@ -200,7 +200,7 @@ export async function getAccountantDashboardData(
     type: "issue",
     typeLabel: "Phiếu xuất kho",
     actorName: (i.customer as { name?: string })?.name ? `Khách: ${(i.customer as { name?: string }).name}` : (i.zone as { name?: string })?.name,
-    description: i.notes || "Xuất vật tư chuồng trại",
+    description: i.notes || "Xuất vật tư trang trại",
     status: i.status,
     statusLabel: ISSUE_STATUS[i.status] ?? i.status,
     createdAt: i.created_at,
@@ -473,7 +473,7 @@ export async function getRequesterDashboardData(
       .select("id, code, purpose, status, created_at, zone:zones!requisitions_zone_id_fkey(name), sub_zone:sub_zones!requisitions_sub_zone_id_fkey(name)")
       .eq("requester_id", profile.id)
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(50),
     supabase
       .from("tool_borrowings")
       .select("id, code, expected_return_date, status, created_at")
@@ -505,7 +505,7 @@ export async function getRequesterDashboardData(
     },
   }));
 
-  const recentTasks: TaskItem[] = allMyReqs.slice(0, 8).map((r): TaskItem => ({
+  const recentTasks: TaskItem[] = allMyReqs.map((r): TaskItem => ({
     id: r.id,
     code: r.code,
     type: "requisition",

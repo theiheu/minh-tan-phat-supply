@@ -11,7 +11,7 @@ describe("useOfflineQueueStore", () => {
     const id = useOfflineQueueStore.getState().enqueue({
       items: [{ skuId: "v1", enteredQuantity: 5, name: "Bóng đèn", label: "220V 45W", unit: "cái" }],
       zoneId: "z1",
-      purpose: "Thay bóng hỏng chuồng 2",
+      purpose: "Thay bóng hỏng trại 2",
       requesterId: "u1",
     });
 

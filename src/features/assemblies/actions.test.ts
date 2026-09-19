@@ -19,6 +19,10 @@ vi.mock("@/lib/auth", () => ({
   requireManager: () => mockRequireManager(),
 }));
 
+vi.mock("@/features/notifications/server/dispatch-business-event", () => ({
+  dispatchBusinessEvent: vi.fn().mockResolvedValue({ inAppDeliveredCount: 1, emailAttemptedCount: 1, errors: [] }),
+}));
+
 const mockAdminSupabase = {
   from: vi.fn(),
   rpc: mockRpc,

@@ -37,7 +37,7 @@ describe("SlipDocument", () => {
         fields={[
           { label: "Người mượn", value: "Trần Văn B" },
           { label: "Khu vực / Trại", value: "Khu A" },
-          { label: "Mục đích", value: "Hàn khung chuồng" },
+          { label: "Mục đích", value: "Hàn khung trại" },
           { label: "Hạn dự kiến trả", value: "10/09/2026" },
           { label: "Trạng thái", value: "Đang mượn" },
         ]}

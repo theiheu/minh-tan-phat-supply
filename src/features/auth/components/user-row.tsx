@@ -404,7 +404,7 @@ export function UserRow({
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-3 py-2">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-3 py-2 overscroll-contain">
                 <div className="space-y-1.5">
                   <Label htmlFor={`new-pw-${profile.id}`}>Mật khẩu mới (tối thiểu 8 ký tự) *</Label>
                   <Input

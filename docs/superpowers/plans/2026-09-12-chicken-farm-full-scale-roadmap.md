@@ -17,7 +17,7 @@
                                    ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │ GIAI ĐOẠN 1: QUẢN LÝ ĐÀN GÀ & THU HOẠCH TRỨNG THƯƠNG PHẨM              │
-│ - Quản lý lứa gà theo dãy chuồng, theo dõi gà chết/loại thải hằng ngày │
+│ - Quản lý lứa gà theo dãy trại, theo dõi gà chết/loại thải hằng ngày │
 │ - Nhật ký thu nhặt trứng theo ca, phân loại trứng, tính % Tỷ lệ đẻ    │
 │ - Xuất bán trứng cho thương lái & Quản lý bảng giá trứng theo ngày     │
 └──────────────────────────────────┬─────────────────────────────────────┘
@@ -35,7 +35,7 @@
 │ GIAI ĐOẠN 3: TÀI CHÍNH NÔNG TRẠI, GIÁ THÀNH 1 QUẢ TRỨNG & LÃI/LỖ P&L    │
 │ - Báo cáo Giá thành sản xuất 1 quả trứng (Cost per Egg) theo ngày     │
 │ - Báo cáo P&L Doanh thu - Chi phí toàn trại & từng lứa gà              │
-│ - Chấm công ca nhặt trứng & Công thức tính thưởng năng suất chuồng     │
+│ - Chấm công ca nhặt trứng & Công thức tính thưởng năng suất trại     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -53,7 +53,7 @@
   - Tạo bảng `egg_price_rates` & `egg_sales` & `egg_sale_items` (xuất bán trứng cho thương lái).
 - [ ] **RLS Policies & Indexes:**
   - Đánh index `idx_flocks_zone_sub_zone`, `idx_egg_collections_flock_date`, `idx_mortality_flock_date`.
-  - Phân quyền: `requester` được ghi nhận thu trứng và gà chết của chuồng mình; `manager` quản lý giá và xuất bán.
+  - Phân quyền: `requester` được ghi nhận thu trứng và gà chết của trại mình; `manager` quản lý giá và xuất bán.
 
 #### Task 1.2: Backend Actions & Logic Tính toán Tự động
 - [ ] **Server Actions:**
@@ -64,10 +64,10 @@
 
 #### Task 1.3: Giao diện Người dùng (UI/UX)
 - [ ] **Màn hình Nhặt trứng trên Mobile (`/production/eggs`):**
-  - Giao diện nút bấm số lớn, tối ưu hóa cho công nhân thao tác tại chuồng.
-  - Quét mã QR đầu dãy chuồng để tự động chọn đúng Flock/Sub-zone.
+  - Giao diện nút bấm số lớn, tối ưu hóa cho công nhân thao tác tại trại.
+  - Quét mã QR đầu dãy trại để tự động chọn đúng Flock/Sub-zone.
 - [ ] **Màn hình Quản lý Đàn gà (`/production/flocks`):**
-  - Danh sách các dãy chuồng, số lượng gà hiện tại, số tuần tuổi, % đẻ ngày hôm nay.
+  - Danh sách các dãy trại, số lượng gà hiện tại, số tuần tuổi, % đẻ ngày hôm nay.
 - [ ] **Màn hình Xuất bán Trứng (`/production/sales`):**
   - Tạo đơn bán trứng, chọn đại lý/thương lái, in phiếu xuất bán trứng A4/A5 chuẩn.
 
@@ -80,7 +80,7 @@
   - Tạo bảng `flock_feed_consumptions`.
   - Logic tính: $	ext{Định mức ăn} = rac{	ext{Tổng kg cám} 	imes 1000}{	ext{Tổng số gà sống}}$ (g/con/ngày).
   - Logic tính FCR: $	ext{FCR} = rac{	ext{Tổng kg cám tiêu thụ}}{	ext{Tổng kg trứng sản xuất}}$.
-  - Cảnh báo tự động: Khi chuồng ăn giảm $> 5%$ so với trung bình 3 ngày trước.
+  - Cảnh báo tự động: Khi trại ăn giảm $> 5%$ so với trung bình 3 ngày trước.
 - [ ] **Tích hợp Kho:** Khi bấm xác nhận cấp cám $ightarrow$ Tự động trừ tồn kho Cám trong Kho chính.
 
 #### Task 2.2: Lịch Vắc-xin & An toàn Sinh học
@@ -89,7 +89,7 @@
   - Tạo bảng `flock_treatments` (nhật ký điều trị kháng sinh, ngưng thuốc).
   - Tự động sinh lịch nhắc vắc-xin khi tạo một lứa gà mới (`flock`).
   - Gửi thông báo Notification và Email cho Trưởng trại trước 3 ngày đến lịch vắc-xin.
-- [ ] **Cảnh báo Thời gian Cách ly:** Khóa hoặc cảnh báo đỏ khi xuất bán gà thịt nếu chuồng chưa hết hạn ngưng thuốc.
+- [ ] **Cảnh báo Thời gian Cách ly:** Khóa hoặc cảnh báo đỏ khi xuất bán gà thịt nếu trại chưa hết hạn ngưng thuốc.
 
 ---
 
@@ -105,11 +105,11 @@
   - Chi phí nhân công phân bổ.
 - [ ] **Dashboard Tài chính:**
   - Biểu đồ biến động giá thành sản xuất so với giá bán thị trường theo từng ngày.
-  - Báo cáo Lãi/Lỗ ròng (Net Profit) của toàn trại và từng dãy chuồng.
+  - Báo cáo Lãi/Lỗ ròng (Net Profit) của toàn trại và từng dãy trại.
 
-#### Task 3.2: Quản lý Nhân sự & Thưởng Năng suất Chuồng
-- [ ] **Chấm công & Ca trực chuồng:**
-  - Quản lý phân công công nhân phụ trách từng dãy chuồng.
+#### Task 3.2: Quản lý Nhân sự & Thưởng Năng suất Trại
+- [ ] **Chấm công & Ca trực trại:**
+  - Quản lý phân công công nhân phụ trách từng dãy trại.
 - [ ] **Công thức Thưởng Năng suất:**
   - Thưởng vượt % đẻ chuẩn giống.
   - Thưởng giữ tỷ lệ chết thấp ($< 0.05%/	ext{ngày}$).

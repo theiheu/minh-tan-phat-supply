@@ -18,7 +18,7 @@ Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply
 - **AI Copilot draggable button:** floating button hỗ trợ drag cả touch và mouse
 
 ### Planned (Poultry ERP Phase 2+)
-- Giai đoạn 1 — Sản lượng & Đàn gà: Quản lý lứa gà theo dãy chuồng, tỷ lệ đẻ `% Laying Rate`, phân loại trứng.
+- Giai đoạn 1 — Sản lượng & Đàn gà: Quản lý lứa gà theo dãy trại, tỷ lệ đẻ `% Laying Rate`, phân loại trứng.
 - Giai đoạn 2 — Thức ăn & Thú y: Định mức cám (g/con/ngày), FCR, lịch vắc-xin tự động.
 - Giai đoạn 3 — Tài chính Nông trại: Chi phí/quả trứng, Báo cáo Lãi/Lỗ ròng (P&L).
 
@@ -55,7 +55,7 @@ Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply
 - **7 Vai trò chuẩn hóa (RBAC):** `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester`, `driver`.
 - **Immutable Identity:** Trigger `trg_profiles_prevent_identity_change` — khóa `full_name` + `username` vĩnh viễn sau khi tạo.
 - **Hybrid Archive & Force Purge:** Hard Delete cho tài khoản trống, Archive (`is_active=false`) cho tài khoản có lịch sử, Force Purge (`admin_purge_user_data`) cho superuser.
-- **Sub-zones 2 cấp:** Phân bổ chi phí chính xác đến từng dãy chuồng.
+- **Sub-zones 2 cấp:** Phân bổ chi phí chính xác đến từng dãy trại.
 - **User email notifications (migration 0063):** Notify khi phiếu được duyệt/từ chối.
 - **Performance indexes (migration 0064):** 38+ indexes tối ưu query.
 
@@ -66,14 +66,14 @@ Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply
 ### Added
 - **Trạm Bồn Xăng Dầu & Xe Cơ Giới (`/fuel`, `/fuel/scan`):** Quét QR 5 giây trên xe, nhập ODO/giờ máy, tự động tính L/100km hoặc L/h, cảnh báo tiêu hao bất thường.
 - **Mượn-Trả Dụng Cụ Đồ Nghề (`/tools`):** Tủ đồ nghề dùng chung, theo dõi hạn trả, cảnh báo quá hạn mượn.
-- **Báo cáo & Phân tích (`/reports`):** Thẻ kho (Stock Card), XNT, Zone Costing (chi phí từng dãy chuồng), xuất Excel kế toán.
+- **Báo cáo & Phân tích (`/reports`):** Thẻ kho (Stock Card), XNT, Zone Costing (chi phí từng dãy trại), xuất Excel kế toán.
 
 ---
 
 ## [0.6.0] - 2026-09-06
 
 ### Added
-- **Đổi 1-1 Cấp Tốc (`/defects`):** Xuất hàng mới + nhận hàng hỏng vào kho trong 1 atomic transaction. Xử lý trong ≤30 giây cho trường hợp cháy motor quạt/máy bơm chuồng gà.
+- **Đổi 1-1 Cấp Tốc (`/defects`):** Xuất hàng mới + nhận hàng hỏng vào kho trong 1 atomic transaction. Xử lý trong ≤30 giây cho trường hợp cháy motor quạt/máy bơm trại gà.
 - **Sửa chữa (`/repairs`) & Thanh lý (`/liquidations`):** Gom thiết bị đi quấn lại/sửa bên ngoài, nghiệm thu đưa về kho hoặc thanh lý ve chai.
 - **PDF Vector chuẩn nhận diện:** `@react-pdf/renderer` + font `Be Vietnam Pro` + logo trại + QR code tra cứu.
 
@@ -83,7 +83,7 @@ Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply
 
 ### Added
 - **Username Login:** Đăng nhập bằng tên đăng nhập (không cần email cá nhân).
-- **Trả lại vật tư thừa (`requisition_returns`):** Trả linh kiện thừa sau sửa chuồng, tự động cộng lại tồn.
+- **Trả lại vật tư thừa (`requisition_returns`):** Trả linh kiện thừa sau sửa trại, tự động cộng lại tồn.
 - **Tách môi trường Dev/Prod:** Dev port 3001 (`.next-dev`), Prod port 3000 (`.next`) qua systemd `mtp-web`.
 
 ---

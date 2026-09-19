@@ -54,7 +54,7 @@ async function testIngestChat() {
     const result = streamText({
       model: getChatModel(),
       system: KNOWLEDGE_STANDARDIZER_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: "Chuẩn hóa quy trình: Khi quạt chuồng hỏng, báo cơ điện trong 15p." }],
+      messages: [{ role: "user", content: "Chuẩn hóa quy trình: Khi quạt trại hỏng, báo cơ điện trong 15p." }],
       temperature: 0.2,
     });
 

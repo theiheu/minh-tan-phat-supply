@@ -72,7 +72,7 @@ export const getCachedZones = unstable_cache(
 );
 
 /**
- * Lấy danh sách dãy chuồng (sub_zones) có bộ nhớ đệm.
+ * Lấy danh sách dãy trại (sub_zones) có bộ nhớ đệm.
  */
 export const getCachedSubZones = unstable_cache(
   async (): Promise<SubZone[]> => {

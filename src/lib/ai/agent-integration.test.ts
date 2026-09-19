@@ -116,7 +116,7 @@ describe("AI Agent & Tools Unit Tests", () => {
           document_id: "doc-1",
           title: "📖 HƯỚNG DẪN 06: ĐỔI 1-1 CẤP TỐC",
           category: "sop",
-          content: "Quy trình đổi 1-1 cho thiết bị hỏng tại chuồng...",
+          content: "Quy trình đổi 1-1 cho thiết bị hỏng tại trại...",
           rank: 0.85,
         },
       ],
@@ -138,16 +138,16 @@ describe("AI Agent & Tools Unit Tests", () => {
       { action: string; draft: { productName: string; quantity: number } }
     >;
     const result = await tool.execute({
-      productName: "Bạt che chuồng 4x50m",
+      productName: "Bạt che trại 4x50m",
       quantity: 5,
       unit: "Cuộn",
-      targetZone: "Chuồng Gà Đẻ 02",
+      targetZone: "Trại Gà Đẻ 02",
       reason: "Bạt cũ bị rách do gió lớn",
     }, adminCtx);
 
     expect(result.action).toBe("DRAFT_REQUISITION");
     expect(result.draft.quantity).toBe(5);
-    expect(result.draft.productName).toBe("Bạt che chuồng 4x50m");
+    expect(result.draft.productName).toBe("Bạt che trại 4x50m");
   });
 
   it("should clean natural language query and handle aliases in get_stock_balance", async () => {

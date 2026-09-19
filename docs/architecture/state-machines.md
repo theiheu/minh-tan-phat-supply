@@ -6,7 +6,7 @@
 
 ## 1. PHIẾU YÊU CẦU VẬT TƯ (REQUISITIONS STATE MACHINE)
 
-Phiếu xin cấp vật tư chuồng trại trải qua quy trình kiểm soát 2 cấp nghiêm ngặt nhằm đảm bảo đúng mục đích sử dụng và có sự xác nhận 2 chiều khi giao nhận hàng:
+Phiếu xin cấp vật tư trang trại trải qua quy trình kiểm soát 2 cấp nghiêm ngặt nhằm đảm bảo đúng mục đích sử dụng và có sự xác nhận 2 chiều khi giao nhận hàng:
 
 ```mermaid
 stateDiagram-v2
@@ -31,7 +31,7 @@ stateDiagram-v2
 | `draft` | **Bản nháp** | `requester`, `technician` | Chưa trừ kho. Người tạo có thể tự do thêm/bớt vật tư trong giỏ hàng. |
 | `pending` | **Chờ phê duyệt** | `technician`, `warehouse`, `owner` | Đã khóa chỉnh sửa nội dung. Đang chờ Kỹ thuật trưởng hoặc Quản lý khu phê duyệt. |
 | `approved` | **Đã phê duyệt** | `warehouse` | Đã chấp thuận cấp phát. Phiếu sẵn sàng để Quản kho xuất hàng (hoặc tự động fulfill khi nhập kho mới). |
-| `issued` | **Đã xuất hàng** | `warehouse` (thực hiện) | Tồn kho vật lý trong hệ thống đã bị trừ. Hàng đang trên đường giao về chuồng. |
+| `issued` | **Đã xuất hàng** | `warehouse` (thực hiện) | Tồn kho vật lý trong hệ thống đã bị trừ. Hàng đang trên đường giao về trại. |
 | `received` | **Đã nhận đủ** | `requester` (xác nhận) | Người nhận bấm xác nhận 2 chiều trên app. Phiếu đóng lại hoàn tất. |
 | `rejected` | **Bị từ chối** | `technician`, `warehouse` | Ghi nhận lý do từ chối (ví dụ: xin vượt định mức), không xuất hàng. |
 | `cancelled` | **Đã hủy** | Người tạo phiếu | Người tạo chủ động hủy khi không còn nhu cầu. |
@@ -66,7 +66,7 @@ stateDiagram-v2
     draft --> posted: Xác nhận xuất kho & Trừ tồn ngay (post_issue)
     draft --> cancelled: Hủy phiếu nháp
     posted --> cancelled: Hoàn tác xuất kho - Reversal Movement (revert_issue)
-    posted --> [*]: Đã trừ tồn & Ghi nhận chi phí dãy chuồng
+    posted --> [*]: Đã trừ tồn & Ghi nhận chi phí dãy trại
     cancelled --> [*]
 ```
 
@@ -76,7 +76,7 @@ stateDiagram-v2
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Defect_Staging: Báo hỏng tại chuồng kèm >= 1 ảnh (record_defect)
+    [*] --> Defect_Staging: Báo hỏng tại trại kèm >= 1 ảnh (record_defect)
     Defect_Staging --> Quick_Exchange: Chọn Đổi 1-1 Cấp Tốc (create_exchange)
     Quick_Exchange --> Exchange_Approved: Duyệt đổi (approve_exchange)
     Exchange_Approved --> Exchange_Issued: Xuất hàng mới từ Kho Tổng & nạp đồ hỏng (issue_exchange)

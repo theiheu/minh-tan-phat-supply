@@ -257,7 +257,7 @@ export function AssemblyForm({ locations }: AssemblyFormProps) {
                 <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="VD: Lắp ráp đợt 1 phục vụ xuất chuồng..."
+                  placeholder="VD: Lắp ráp đợt 1 phục vụ xuất trại..."
                 />
               </div>
 

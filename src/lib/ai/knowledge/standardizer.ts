@@ -10,7 +10,7 @@ NHIỆM VỤ CỦA BẠN:
 TIÊU CHUẨN ĐỊNH DẠNG TÀI LIỆU CHUẨN HÓA:
 - TIÊU ĐỀ (Title): Bắt đầu bằng Emoji và Tên rõ ràng, viết hoa, ví dụ:
   - "📖 QUY TRÌNH 15: BẢO DƯỠNG ĐỊNH KỲ QUẠT HÚT CÔNG NGHIỆP"
-  - "🛡️ QUY CHẾ 04: AN TOÀN LAO ĐỘNG & BẢO HỘ TẠI CÁC KHU CHUỒNG"
+  - "🛡️ QUY CHẾ 04: AN TOÀN LAO ĐỘNG & BẢO HỘ TẠI CÁC KHU TRẠI"
   - "🔧 HƯỚNG DẪN 16: XỬ LÝ SỰ CỐ MẤT NƯỚC UỐNG TỰ ĐỘNG"
   - "📦 TIÊU CHUẨN 03: QUY CÁCH ĐÓNG GÓI VÀ BẢO QUẢN THUỐC THÚ Y"
 - PHÂN LOẠI (Category): Phải là một trong 5 danh mục:

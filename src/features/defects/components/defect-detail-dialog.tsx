@@ -215,8 +215,8 @@ export function DefectDetailDialog({
 
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
-      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full max-h-[90vh] sm:max-w-3xl overflow-y-auto p-4 sm:p-6 rounded-2xl min-w-0">
-        <DialogHeader className="pr-10 sm:pr-8 pb-3 border-b min-w-0">
+      <DialogContent className="w-[calc(100%-1.5rem)] sm:w-full max-h-[calc(100dvh-2rem)] sm:max-h-[92vh] sm:max-w-3xl flex flex-col p-4 sm:p-6 overflow-hidden border-2 border-border shadow-2xl rounded-2xl min-w-0">
+        <DialogHeader className="shrink-0 pr-10 sm:pr-8 pb-3 border-b min-w-0">
           <DialogTitle className="flex flex-wrap items-center gap-2 font-mono text-base sm:text-lg min-w-0">
             <span className="truncate">{row.code}</span>
             <Badge variant={statusBadgeVariant(row.status)} className="text-xs shrink-0">
@@ -240,6 +240,7 @@ export function DefectDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-4 overscroll-contain pr-1">
         {/* Tình trạng tiếp nhận đồ hỏng tại kho */}
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/20 p-2.5">
           <div className="flex items-center gap-2 text-sm">
@@ -656,9 +657,10 @@ export function DefectDetailDialog({
             )}
           </div>
         )}
+        </div>
 
         {/* Dev tools & Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
           <Button
             type="button"
             variant="outline"

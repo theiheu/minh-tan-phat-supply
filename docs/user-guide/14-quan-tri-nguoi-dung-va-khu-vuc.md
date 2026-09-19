@@ -1,6 +1,6 @@
-# 📖 HƯỚNG DẪN 14: QUẢN TRỊ NGƯỜI DÙNG, PHÂN QUYỀN & CẤU TRÚC KHU CHUỒNG
+# 📖 HƯỚNG DẪN 14: QUẢN TRỊ NGƯỜI DÙNG, PHÂN QUYỀN & CẤU TRÚC KHU TRẠI
 
-> Tài liệu hướng dẫn chi tiết dành cho Quản trị viên hệ thống (Superuser), Chủ trang trại (Owner) và Kế toán (Accountant) về quản lý tài khoản nhân sự, phân cấp 7 vai trò, chính sách bất biến định danh, cơ chế lưu trữ nhân viên nghỉ việc và thiết lập cây không gian Dãy chuồng (Zones & Sub-zones).
+> Tài liệu hướng dẫn chi tiết dành cho Quản trị viên hệ thống (Superuser), Chủ trang trại (Owner) và Kế toán (Accountant) về quản lý tài khoản nhân sự, phân cấp 7 vai trò, chính sách bất biến định danh, cơ chế lưu trữ nhân viên nghỉ việc và thiết lập cây không gian Dãy trại (Zones & Sub-zones).
 
 ---
 
@@ -58,29 +58,29 @@ flowchart TD
 
 ---
 
-## 3. QUẢN LÝ CẤU TRÚC KHU VỰC & DÃY CHUỒNG (`/admin/zones`)
+## 3. QUẢN LÝ CẤU TRÚC KHU VỰC & DÃY TRẠI (`/admin/zones`)
 
 Hệ thống quản lý không gian trang trại theo mô hình 2 tầng phân cấp rõ ràng:
 
 ```
-Khu vực lớn (zones)                     Dãy chuồng / Phân xưởng (sub_zones)
-├── Khu A (Trại gà đẻ trứng A) --------> Chuồng A1, Chuồng A2, Chuồng A3...
-├── Khu B (Trại gà đẻ trứng B) --------> Chuồng B1, Chuồng B2, Chuồng B3...
-├── Khu Úm (Gà con hậu bị)   --------> Chuồng Úm 1, Chuồng Úm 2...
+Khu vực lớn (zones)                     Dãy trại / Phân xưởng (sub_zones)
+├── Khu A (Trại gà đẻ trứng A) --------> Trại A1, Trại A2, Trại A3...
+├── Khu B (Trại gà đẻ trứng B) --------> Trại B1, Trại B2, Trại B3...
+├── Khu Úm (Gà con hậu bị)   --------> Trại Úm 1, Trại Úm 2...
 ├── Xưởng Cơ Điện              --------> Gian quấn motor, Gian hàn tiện...
 └── Trạm Bồn Dầu Trung Tâm     --------> Bồn dầu 10.000L, Cột bơm số 1...
 ```
 
 ### A. Thêm mới Khu vực lớn (`zones`):
-1. Truy cập Menu **Quản trị** ➜ **Khu vực & Chuồng** (`/admin/zones`).
+1. Truy cập Menu **Quản trị** ➜ **Khu vực & Trại** (`/admin/zones`).
 2. Bấm nút **"+ Thêm khu vực"**.
 3. Nhập **Mã khu vực** (VD: `KHU_C`) và **Tên khu vực** (VD: `Khu C - Trại Gà Mới`).
 4. Bấm **Lưu**.
 
-### B. Quản lý Dãy chuồng chi tiết (`sub_zones`):
-1. Bấm vào nút **"Quản lý dãy chuồng"** tại dòng của khu vực tương ứng.
-2. Hộp thoại danh sách Dãy chuồng mở ra:
-   * Nhập **Mã chuồng** (VD: `C1`, `C2`).
-   * Nhập **Tên dãy chuồng** (VD: `Dãy Chuồng C1`, `Dãy Chuồng C2`).
-   * Bấm **"+ Thêm dãy chuồng"**.
-3. **Ý nghĩa nghiệp vụ:** Khi nhân viên chuồng xin cấp bóng đèn hoặc béc phun nước, hệ thống bắt buộc chọn chính xác Dãy chuồng (`sub_zone`) để kế toán phân bổ chi phí chuẩn xác 100% đến từng dãy chuồng.
+### B. Quản lý Dãy trại chi tiết (`sub_zones`):
+1. Bấm vào nút **"Quản lý dãy trại"** tại dòng của khu vực tương ứng.
+2. Hộp thoại danh sách Dãy trại mở ra:
+   * Nhập **Mã trại** (VD: `C1`, `C2`).
+   * Nhập **Tên dãy trại** (VD: `Dãy Trại C1`, `Dãy Trại C2`).
+   * Bấm **"+ Thêm dãy trại"**.
+3. **Ý nghĩa nghiệp vụ:** Khi nhân viên trại xin cấp bóng đèn hoặc béc phun nước, hệ thống bắt buộc chọn chính xác Dãy trại (`sub_zone`) để kế toán phân bổ chi phí chuẩn xác 100% đến từng dãy trại.

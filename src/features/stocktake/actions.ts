@@ -65,22 +65,20 @@ export async function createStocktake(locationId: string, name: string) {
     locName = (meta?.location as { name?: string } | null)?.name;
   }
 
-  try {
-    const { data: whUsers } = await supabase.from("profiles").select("id").in("role", ["warehouse", "owner"]).eq("is_active", true);
-    if (whUsers && whUsers.length > 0) {
-      await supabase.from("notifications").insert(
-        whUsers.map((u) => ({
-          user_id: u.id,
-          type: "stocktake",
-          title: `[Kiểm kê kho] ${code} - Khởi tạo kỳ kiểm kê kho`,
-          body: `Kỳ kiểm kê kho "${name.trim()}" đã được khởi tạo bởi ${profile.name}${locName ? ` tại ${locName}` : ""}.`,
-          link: "/stocktake",
-        }))
-      );
-    }
-  } catch (err) {
-    if (process.env.NODE_ENV !== "test") console.warn("[createStocktake] In-app notification error:", err);
-  }
+  await dispatchBusinessEvent({
+    supabase,
+    input: {
+      event: "stocktake.created",
+      actorId: profile.id,
+      subject: { type: "stocktake", id: sessionId },
+      payload: {
+        code,
+        sessionName: name.trim(),
+        locationName: locName,
+        handlerName: profile.name,
+      },
+    },
+  });
 
   revalidatePath("/stocktake");
   return data as string;
@@ -132,15 +130,21 @@ export async function postStocktake(
   const code = meta?.code ?? "PKK";
   const sessionName = meta?.name || code;
 
+  const hasVariance = ((meta as any)?.items as any[])?.some(
+    (i) => (i.actual_quantity ?? 0) !== (i.system_quantity ?? 0)
+  );
+  const eventKey = hasVariance ? "stocktake.posted_with_variance" : "stocktake.posted_without_variance";
+
   await dispatchBusinessEvent({
     supabase,
     input: {
-      event: "stocktake.posted_without_variance",
+      event: eventKey,
       actorId: profile.id,
       subject: { type: "stocktake", id: sessionId },
       payload: {
         code,
         sessionName,
+        locationName: (meta?.location as { name?: string } | null)?.name,
         items: formatStocktakeItems((meta as any)?.items),
         handlerName: profile.name,
       },

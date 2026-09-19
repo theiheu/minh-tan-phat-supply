@@ -404,7 +404,7 @@ export async function getSlipDetail(
       const { data: rec, error } = await supabase
         .from("receipts")
         .select(
-          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, sku_id, quantity, unit_cost, batch_no, expiry_date, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, notes, status, created_by, invoice_images, linked_requisition_ids, created_at, approved_at, updated_at, supplier:suppliers!receipts_supplier_id_fkey(name), creator:profiles!receipts_created_by_fkey(name), approver:profiles!receipts_approved_by_fkey(name), items:receipt_items(id, sku_id, quantity, unit_cost, batch_no, expiry_date, skus(id, sku_code, price, images, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -422,9 +422,11 @@ export async function getSlipDetail(
             numeric_value?: number | null;
             units?: { symbol?: string | null } | null;
           }> | null;
-          products?: { name?: string | null } | null;
+          images?: string[] | null;
+          products?: { name?: string | null; images?: string[] | null } | null;
         } | null;
         const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
+        const images = (v?.images && v.images.length > 0) ? v.images : (v?.products?.images ?? []);
         return {
           id: it.id,
           variantId: it.sku_id,
@@ -435,16 +437,18 @@ export async function getSlipDetail(
           unitPrice: it.unit_cost ? Number(it.unit_cost) : null,
           batchNo: it.batch_no,
           expiryDate: it.expiry_date,
+          images,
         };
       });
 
-      // Lấy danh sách phiếu yêu cầu được auto cấp phát khi ghi nhận nhập kho
+      // Lấy danh sách phiếu yêu cầu được auto cấp phát khi ghi nhận nhập kho & đồng bộ ảnh hóa đơn
       let linkedRequisitions: SlipDetailPayload["linkedRequisitions"] = [];
+      let extraReqInvoices: string[] = [];
       const linkedIds = rec.linked_requisition_ids ?? [];
       if (linkedIds.length > 0) {
         const { data: lReqs } = await supabase
           .from("requisitions")
-          .select("id, code, purpose, status, requester:profiles!requisitions_requester_id_fkey(name)")
+          .select("id, code, purpose, status, invoice_images, requester:profiles!requisitions_requester_id_fkey(name)")
           .in("id", linkedIds)
           .order("created_at", { ascending: true });
         linkedRequisitions = (lReqs ?? []).map((rq) => ({
@@ -454,7 +458,10 @@ export async function getSlipDetail(
           purpose: rq.purpose,
           status: rq.status,
         }));
+        extraReqInvoices = (lReqs ?? []).flatMap((r) => (r as { invoice_images?: string[] }).invoice_images ?? []);
       }
+
+      const mergedInvoiceImages = Array.from(new Set([...(rec.invoice_images ?? []), ...extraReqInvoices])).filter(Boolean);
 
       let timeline: SlipTimelineEvent[] = [];
       if (auditLogs && auditLogs.length > 0) {
@@ -485,7 +492,7 @@ export async function getSlipDetail(
           creatorId: rec.created_by,
           supplierName: rec.supplier?.name,
           purposeOrNotes: rec.notes,
-          invoiceImages: rec.invoice_images ?? [],
+          invoiceImages: mergedInvoiceImages,
           items,
           linkedRequisitions,
           timeline,
@@ -498,7 +505,7 @@ export async function getSlipDetail(
       const { data: iss, error } = await supabase
         .from("issues")
         .select(
-          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, sku_id, quantity, unit_price, skus(id, sku_code, products(name), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
+          "id, code, destination_type, status, notes, creator_id, invoice_images, vehicle_plate, driver_name, created_at, customer:customers(name, address, phone), zone:zones(name), sub_zone:sub_zones(name), creator:profiles(name), items:issue_items(id, sku_id, quantity, unit_price, skus(id, sku_code, price, images, products(name, images), units(name, symbol), sku_attribute_values(text_value, numeric_value, legacy_text_value, units(symbol))))",
         )
         .eq("id", id)
         .single();
@@ -516,9 +523,11 @@ export async function getSlipDetail(
             numeric_value?: number | null;
             units?: { symbol?: string | null } | null;
           }> | null;
-          products?: { name?: string | null } | null;
+          images?: string[] | null;
+          products?: { name?: string | null; images?: string[] | null } | null;
         } | null;
         const unit = v?.units?.symbol || v?.units?.name || v?.unit || "—";
+        const images = (v?.images && v.images.length > 0) ? v.images : (v?.products?.images ?? []);
         return {
           id: it.id,
           variantId: it.sku_id,
@@ -527,6 +536,7 @@ export async function getSlipDetail(
           unit,
           quantity: it.quantity,
           unitPrice: it.unit_price ? Number(it.unit_price) : null,
+          images,
         };
       });
 

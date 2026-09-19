@@ -112,7 +112,7 @@ export function ExecutiveDashboardView({
           label="Phiếu xuất tháng này"
           value={data.metrics.monthIssuesCount}
           tone="emerald"
-          hint="Xuất cấp phát cho chuồng trại"
+          hint="Xuất cấp phát cho trang trại"
           onClick={() => router.push("/issues")}
         />
         <DashboardMetricCard

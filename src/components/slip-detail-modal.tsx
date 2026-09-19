@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, FileCheck, Printer, QrCode, Truck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileCheck, Printer, QrCode, Truck } from "lucide-react";
 import { BrandLoading } from "@/components/brand-loading";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +99,7 @@ export function SlipDetailModal({
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [uploadingInvoices, setUploadingInvoices] = useState(false);
+  const [pendingInvoiceImages, setPendingInvoiceImages] = useState<string[]>([]);
 
   const isOpen = Boolean(entityType && entityId);
 
@@ -108,6 +109,7 @@ export function SlipDetailModal({
       setRejecting(false);
       setRejectionReason("");
       setUploadingInvoices(false);
+      setPendingInvoiceImages([]);
       return;
     }
 
@@ -116,6 +118,7 @@ export function SlipDetailModal({
     setRejecting(false);
     setRejectionReason("");
     setUploadingInvoices(false);
+    setPendingInvoiceImages([]);
 
     getSlipDetail(entityType, entityId).then((res) => {
       if (!active) return;
@@ -160,31 +163,47 @@ export function SlipDetailModal({
           return uploadReceiptInvoiceImage(f);
         }),
       );
-      const currentImages = detail.invoiceImages ?? [];
-      const nextImages = [...currentImages, ...uploadedUrls];
-      setDetail({ ...detail, invoiceImages: nextImages });
-
-      startTransition(async () => {
-        try {
-          if (detail.type === "issue") {
-            await updateIssueInvoiceImages(detail.id, nextImages);
-          } else if (detail.type === "requisition") {
-            await updateRequisitionInvoiceImages(detail.id, nextImages);
-          } else {
-            await updateReceiptInvoiceImages(detail.id, nextImages);
-          }
-          toast.success(`Đã bổ sung ${uploadedUrls.length} ảnh hóa đơn thành công`);
-          reloadDetail();
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Cập nhật ảnh hóa đơn thất bại");
-        }
-      });
+      setPendingInvoiceImages((prev) => [...prev, ...uploadedUrls]);
+      toast.info(`Đã chọn ${uploadedUrls.length} ảnh. Vui lòng bấm "Xác nhận lưu" để hoàn tất.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Tải ảnh hóa đơn thất bại");
     } finally {
       setUploadingInvoices(false);
       e.target.value = "";
     }
+  }
+
+  function handleInvoiceRemovePending(urlToRemove: string) {
+    setPendingInvoiceImages((prev) => prev.filter((u) => u !== urlToRemove));
+  }
+
+  function handleInvoiceCancelPending() {
+    setPendingInvoiceImages([]);
+    toast.info("Đã hủy các ảnh chưa lưu");
+  }
+
+  function handleInvoiceConfirmPending() {
+    if (!detail || !isInvoiceCapable || pendingInvoiceImages.length === 0) return;
+    const currentImages = detail.invoiceImages ?? [];
+    const nextImages = [...currentImages, ...pendingInvoiceImages];
+    const count = pendingInvoiceImages.length;
+
+    startTransition(async () => {
+      try {
+        if (detail.type === "issue") {
+          await updateIssueInvoiceImages(detail.id, nextImages);
+        } else if (detail.type === "requisition") {
+          await updateRequisitionInvoiceImages(detail.id, nextImages);
+        } else {
+          await updateReceiptInvoiceImages(detail.id, nextImages);
+        }
+        setPendingInvoiceImages([]);
+        toast.success(`Đã bổ sung ${count} ảnh hóa đơn thành công`);
+        reloadDetail();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Cập nhật ảnh hóa đơn thất bại");
+      }
+    });
   }
 
   function handleInvoiceRemove(urlToRemove: string) {
@@ -371,8 +390,12 @@ export function SlipDetailModal({
                 currentUser={currentUser}
                 pending={pending}
                 uploadingInvoices={uploadingInvoices}
+                pendingInvoiceImages={pendingInvoiceImages}
                 onUpload={handleInvoiceUpload}
                 onRemove={handleInvoiceRemove}
+                onRemovePending={handleInvoiceRemovePending}
+                onConfirmPending={handleInvoiceConfirmPending}
+                onCancelPending={handleInvoiceCancelPending}
               />
 
               {/* Defect Evidence if replacement requisition */}
@@ -649,13 +672,14 @@ export function SlipDetailModal({
                         Cấp phát vật tư
                       </Button>
                     )}
-                    {isOwner && detail.status === "issued" && (
+                    {(isOwner || isManager) && detail.status === "issued" && (
                       <Button
                         size="sm"
                         onClick={() => handleAction(() => receiveRequisition(detail.id), "Đã xác nhận nhận hàng")}
                         disabled={pending}
-                        className="h-9 text-xs"
+                        className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow-xs"
                       >
+                        <CheckCircle2 className="size-3.5" />
                         Xác nhận đã nhận
                       </Button>
                     )}

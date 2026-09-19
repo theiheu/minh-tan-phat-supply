@@ -433,8 +433,10 @@ export function FuelTypeList({
               <span className="font-mono">{deletingType?.code}</span>)?
             </DialogDescription>
           </DialogHeader>
-          <div className="rounded-md bg-destructive/10 p-3 text-xs text-destructive">
-            Lưu ý: Chỉ có thể xóa loại nhiên liệu khi chưa từng phát sinh phiếu nhập kho, phiếu cấp phát hoặc liên kết với phương tiện.
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain">
+            <div className="rounded-md bg-destructive/10 p-3 text-xs text-destructive">
+              Lưu ý: Chỉ có thể xóa loại nhiên liệu khi chưa từng phát sinh phiếu nhập kho, phiếu cấp phát hoặc liên kết với phương tiện.
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, CheckCircle2, Clock, Eye } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +49,7 @@ interface PendingTasksCardProps {
   viewAllHref?: string;
   viewAllLabel?: string;
   className?: string;
+  pageSize?: number;
 }
 
 export function PendingTasksCard({
@@ -59,8 +61,17 @@ export function PendingTasksCard({
   viewAllHref,
   viewAllLabel = "Xem tất cả",
   className,
+  pageSize,
 }: PendingTasksCardProps) {
   const openSlipModal = useUIStore((s) => s.openSlipModal);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = pageSize && pageSize > 0 ? Math.max(1, Math.ceil(items.length / pageSize)) : 1;
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const displayItems = pageSize && pageSize > 0
+    ? items.slice((activePage - 1) * pageSize, activePage * pageSize)
+    : items;
 
   const handleOpenDetail = (item: TaskItem) => {
     if (
@@ -121,7 +132,7 @@ export function PendingTasksCard({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
+                  {displayItems.map((item) => (
                     <TableRow key={item.id} className="hover:bg-muted/50">
                       <TableCell>
                         <button
@@ -199,7 +210,7 @@ export function PendingTasksCard({
 
             {/* Mobile List View */}
             <div className="divide-y md:hidden">
-              {items.map((item) => (
+              {displayItems.map((item) => (
                 <div key={item.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
                   <div className="flex items-center justify-between gap-2">
                     <button
@@ -270,6 +281,54 @@ export function PendingTasksCard({
                 </div>
               ))}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && pageSize && pageSize > 0 && (
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pt-3.5 mt-2 border-t text-xs text-muted-foreground">
+                <span>
+                  Hiển thị{" "}
+                  <span className="font-semibold text-foreground">
+                    {(activePage - 1) * pageSize + 1}
+                  </span>{" "}
+                  –{" "}
+                  <span className="font-semibold text-foreground">
+                    {Math.min(activePage * pageSize, items.length)}
+                  </span>{" "}
+                  trên{" "}
+                  <span className="font-semibold text-foreground">{items.length}</span> phiếu
+                </span>
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={activePage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="h-7.5 gap-1 px-2.5 text-xs cursor-pointer"
+                  >
+                    <ChevronLeft className="size-3.5" />
+                    <span>Trước</span>
+                  </Button>
+                  <div className="flex items-center gap-1 px-2 text-xs font-medium">
+                    <span>Trang</span>
+                    <span className="font-semibold text-foreground">{activePage}</span>
+                    <span>/</span>
+                    <span>{totalPages}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={activePage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="h-7.5 gap-1 px-2.5 text-xs cursor-pointer"
+                  >
+                    <span>Sau</span>
+                    <ChevronRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </CardContent>

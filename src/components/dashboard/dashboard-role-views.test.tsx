@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Profile } from "@/lib/types";
+import { useUIStore } from "@/stores/ui-store";
 import { ExecutiveDashboardView } from "./views/executive-dashboard-view";
 import { AccountantDashboardView } from "./views/accountant-dashboard-view";
 import { WarehouseDashboardView } from "./views/warehouse-dashboard-view";
@@ -139,7 +140,7 @@ describe("Role-Tailored Dashboard Views", () => {
           statusLabel: "Đã duyệt",
           createdAt: "2026-09-20T07:00:00Z",
           actorName: "Kỹ thuật A",
-          locationOrZone: "Khu A - Chuồng 1",
+          locationOrZone: "Khu A - Trại 1",
           description: "Cần 5 bao vôi khử trùng",
         },
       ],
@@ -226,7 +227,7 @@ describe("Role-Tailored Dashboard Views", () => {
           status: "issued",
           statusLabel: "Đã xuất kho",
           createdAt: "2026-09-20T09:00:00Z",
-          description: "5 can sát trùng chuồng",
+          description: "5 can sát trùng trại",
         },
       ],
       myRecentRequisitions: [],
@@ -246,6 +247,87 @@ describe("Role-Tailored Dashboard Views", () => {
     expect(screen.getByText("Báo hỏng thiết bị")).toBeInTheDocument();
     expect(screen.getByText(/Hàng đã xuất — Vui lòng nhận vật tư/i)).toBeInTheDocument();
     expect(screen.getByText("Xác nhận nhận hàng")).toBeInTheDocument();
+
+    // Verify clicking "Xác nhận nhận hàng" or the ticket code opens the slip detail modal
+    fireEvent.click(screen.getByText("Xác nhận nhận hàng"));
+    expect(useUIStore.getState().slipModal).toEqual({
+      type: "requisition",
+      id: "req-ready-1",
+    });
+
+    // Reset and test clicking code
+    useUIStore.getState().closeSlipModal();
+    fireEvent.click(screen.getByText("YC-099"));
+    expect(useUIStore.getState().slipModal).toEqual({
+      type: "requisition",
+      id: "req-ready-1",
+    });
+  });
+
+  it("renders RequesterDashboardView with pagination for 'Lịch sử yêu cầu vật tư của tôi'", () => {
+    const mockReqs = Array.from({ length: 12 }, (_, i) => ({
+      id: `req-${i + 1}`,
+      code: `YC-${String(i + 1).padStart(3, "0")}`,
+      type: "requisition" as const,
+      typeLabel: "Phiếu yêu cầu",
+      status: "pending",
+      statusLabel: "Chờ duyệt",
+      createdAt: "2026-09-20T09:00:00Z",
+      description: `Mục đích yêu cầu ${i + 1}`,
+    }));
+
+    const reqData: RequesterDashboardData = {
+      metrics: {
+        myPendingCount: 12,
+        readyToReceiveCount: 0,
+        myBorrowedToolsCount: 0,
+      },
+      readyToReceiveList: [],
+      myRecentRequisitions: mockReqs,
+      myBorrowedTools: [],
+    };
+
+    render(
+      <RequesterDashboardView
+        profile={{ ...baseProfile, role: "requester", name: "Nguyễn Văn Thợ" }}
+        data={reqData}
+      />
+    );
+
+    // Header title and count badge
+    expect(screen.getByText("Lịch sử yêu cầu vật tư của tôi")).toBeInTheDocument();
+    expect(screen.getAllByText("12").length).toBeGreaterThan(0);
+
+    // Page 1 displays items 1 to 5 (pageSize = 5)
+    expect(screen.getAllByText("YC-001").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("YC-005").length).toBeGreaterThan(0);
+    expect(screen.queryByText("YC-006")).not.toBeInTheDocument();
+
+    // Pagination display
+    expect(screen.getByText(/Hiển thị/)).toBeInTheDocument();
+    expect(screen.getByText("Trang")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument(); // totalPages = 3
+
+    // Click next page button "Sau"
+    const nextBtn = screen.getByRole("button", { name: /Sau/i });
+    fireEvent.click(nextBtn);
+
+    // Page 2 displays items 6 to 10
+    expect(screen.queryByText("YC-001")).not.toBeInTheDocument();
+    expect(screen.getAllByText("YC-006").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("YC-010").length).toBeGreaterThan(0);
+    expect(screen.queryByText("YC-011")).not.toBeInTheDocument();
+
+    // Click next again to Page 3
+    fireEvent.click(nextBtn);
+    expect(screen.getAllByText("YC-011").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("YC-012").length).toBeGreaterThan(0);
+    expect(screen.queryByText("YC-010")).not.toBeInTheDocument();
+
+    // Click previous "Trước" to return to Page 2
+    const prevBtn = screen.getByRole("button", { name: /Trước/i });
+    fireEvent.click(prevBtn);
+    expect(screen.getAllByText("YC-006").length).toBeGreaterThan(0);
   });
 
   it("renders DriverDashboardView correctly with QR scan hero button", () => {

@@ -19,16 +19,16 @@ Hệ thống phân tách thành 3 nhóm định tuyến chính:
 |---|---|---|---|
 | `/dashboard` | **Tổng quan theo Vai trò** | Dashboard KPI may đo theo 7 vai trò, tác vụ nhanh, thông báo, nhật ký kiểm toán. | Tất cả vai trò đã đăng nhập |
 | `/products` | **Tra cứu Danh mục SKU** | Xem danh mục sản phẩm, biến thể, giá bán, vị trí kệ và tồn kho khả dụng. | Tất cả vai trò |
-| `/requisitions` | **Phiếu Yêu Cầu** | Danh sách phiếu xin cấp vật tư từ chuồng trại, trạng thái duyệt 2 cấp. | `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester` |
-| `/requisitions/new` | **Tạo Phiếu Yêu Cầu** | Giao diện giỏ hàng chọn vật tư xin cấp, chọn Dãy chuồng đích. | `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester` |
+| `/requisitions` | **Phiếu Yêu Cầu** | Danh sách phiếu xin cấp vật tư từ trang trại, trạng thái duyệt 2 cấp. | `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester` |
+| `/requisitions/new` | **Tạo Phiếu Yêu Cầu** | Giao diện giỏ hàng chọn vật tư xin cấp, chọn Dãy trại đích. | `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester` |
 | `/requisitions/[id]` | **Chi tiết Phiếu Yêu Cầu**| Xem chi tiết, phê duyệt cấp 1, xuất hàng và nút Xác nhận đã nhận. | Tùy vai trò & quyền hạn |
 | `/receipts` | **Phiếu Nhập Kho** | Quản lý danh sách các phiếu nhập hàng từ Nhà Cung Cấp. | `superuser`, `owner`, `accountant`, `warehouse` |
 | `/receipts/new` | **Tạo Phiếu Nhập** | Nhập hàng, chọn NCC, nhập đơn giá mua và upload ảnh hóa đơn đỏ VAT. | `superuser`, `owner`, `accountant`, `warehouse` |
 | `/receipts/[id]` | **Chi tiết Phiếu Nhập** | Xem chi tiết hàng nhập, xem ảnh hóa đơn phóng to, in phiếu nhập A4/A5. | `superuser`, `owner`, `accountant`, `warehouse` |
-| `/issues` | **Phiếu Xuất Kho** | Quản lý phiếu xuất kho nội bộ theo dãy chuồng và xuất bán thương mại. | `superuser`, `owner`, `accountant`, `warehouse` |
-| `/issues/new` | **Tạo Phiếu Xuất** | Lập phiếu xuất kho trực tiếp, gắn đích đến (Khu/Dãy chuồng hoặc Khách hàng).| `superuser`, `owner`, `accountant`, `warehouse` |
+| `/issues` | **Phiếu Xuất Kho** | Quản lý phiếu xuất kho nội bộ theo dãy trại và xuất bán thương mại. | `superuser`, `owner`, `accountant`, `warehouse` |
+| `/issues/new` | **Tạo Phiếu Xuất** | Lập phiếu xuất kho trực tiếp, gắn đích đến (Khu/Dãy trại hoặc Khách hàng).| `superuser`, `owner`, `accountant`, `warehouse` |
 | `/issues/[id]` | **Chi tiết Phiếu Xuất** | Xem chi tiết hàng xuất, in phiếu xuất kho A4/A5 chuẩn nhận diện. | `superuser`, `owner`, `accountant`, `warehouse` |
-| `/defects` | **Báo Hỏng & Đổi 1-1** | Danh sách thiết bị hỏng tại chuồng và lịch sử các lượt đổi 1-1 cấp tốc. | `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester` |
+| `/defects` | **Báo Hỏng & Đổi 1-1** | Danh sách thiết bị hỏng tại trại và lịch sử các lượt đổi 1-1 cấp tốc. | `superuser`, `owner`, `accountant`, `warehouse`, `technician`, `requester` |
 | `/defects/new` | **Đổi 1-1 Cấp Tốc** | Thao tác đổi motor/bơm cháy trong 30 giây: xuất hàng mới, nạp hàng hỏng. | `superuser`, `owner`, `accountant`, `warehouse`, `technician` |
 | `/defects/exchange/[id]`| **Chi tiết Đổi 1-1** | Xem chi tiết giao dịch đổi thiết bị và lịch sử xử lý. | `superuser`, `owner`, `accountant`, `warehouse`, `technician` |
 | `/repairs` | **Sửa Chữa Cơ Điện** | Quản lý các đợt gửi motor đi quấn, nghiệm thu hoàn thành đưa lại kho tổng. | `superuser`, `owner`, `accountant`, `warehouse`, `technician` |
@@ -39,7 +39,7 @@ Hệ thống phân tách thành 3 nhóm định tuyến chính:
 | `/transfers` | **Chuyển Kho Nội Bộ** | Điều chuyển hàng hóa giữa các vị trí kho vật lý (Kho Tổng -> Kho Cơ Điện).| `superuser`, `owner`, `accountant`, `warehouse` |
 | `/stocktake` | **Kiểm Kê Kho** | Mở phiên kiểm kê, quét QR đếm thực tế, tính thừa thiếu và duyệt cân bằng. | `superuser`, `owner`, `accountant`, `warehouse` |
 | `/assemblies` | **Lắp Ráp Bộ Vật Tư** | Lắp ráp bộ theo định mức BOM hoặc tháo rã thu hồi linh kiện. | `superuser`, `owner`, `accountant`, `warehouse` |
-| `/reports` | **Trung Tâm Báo Cáo** | Dashboard tài chính, Thẻ kho (Stock Card), Báo cáo XNT, Chi phí dãy chuồng. | `superuser`, `owner`, `accountant`, `warehouse`, `technician` (khu mình) |
+| `/reports` | **Trung Tâm Báo Cáo** | Dashboard tài chính, Thẻ kho (Stock Card), Báo cáo XNT, Chi phí dãy trại. | `superuser`, `owner`, `accountant`, `warehouse`, `technician` (khu mình) |
 | `/qr/[entity]/[id]` | **Trang Tra Cứu QR** | Màn hình hiển thị thông tin nhanh khi dùng điện thoại quét mã QR ngoài thực địa.| Tất cả vai trò |
 
 ---
@@ -50,7 +50,7 @@ Hệ thống phân tách thành 3 nhóm định tuyến chính:
 |---|---|---|---|
 | `/admin` | **Trung Tâm Quản Trị** | Menu điều hướng quản trị danh mục tổng thể. | `superuser`, `owner`, `accountant` |
 | `/admin/users` | **Quản Lý Người Dùng** | Tạo tài khoản, đổi mật khẩu, phân 7 vai trò, Khóa/Lưu trữ và Kích hoạt lại. | `superuser`, `owner`, `accountant` |
-| `/admin/zones` | **Khu Vực & Dãy Chuồng**| Quản lý danh mục 2 cấp: Khu vực lớn (`zones`) và Dãy chuồng (`sub_zones`). | `superuser`, `owner`, `accountant`, `warehouse` |
+| `/admin/zones` | **Khu Vực & Dãy Trại**| Quản lý danh mục 2 cấp: Khu vực lớn (`zones`) và Dãy trại (`sub_zones`). | `superuser`, `owner`, `accountant`, `warehouse` |
 | `/admin/products`| **Quản Trị SKU & Vật Tư**| Khai báo 5 bước, cấu hình thuộc tính, đơn vị quy đổi và định mức BOM. | `superuser`, `owner`, `accountant`, `warehouse` |
 | `/admin/categories`| **Ngành Hàng** | Quản lý danh mục phân loại vật tư và icon hiển thị. | `superuser`, `owner`, `accountant`, `warehouse` |
 | `/admin/suppliers` | **Nhà Cung Cấp** | Quản lý danh bạ công ty, cửa hàng cung cấp thiết bị và xăng dầu. | `superuser`, `owner`, `accountant`, `warehouse` |

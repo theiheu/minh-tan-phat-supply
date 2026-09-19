@@ -197,7 +197,7 @@ export function ToolReturnDialog({
       )}
 
       <DialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <RotateCcw className="size-5 text-primary" />
@@ -208,7 +208,7 @@ export function ToolReturnDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3 overscroll-contain">
             {defaultItems.map((item, index) => {
               const key = getItemKey(item, index);
               const remaining = Math.max(0, item.quantity - item.returnedQuantity);

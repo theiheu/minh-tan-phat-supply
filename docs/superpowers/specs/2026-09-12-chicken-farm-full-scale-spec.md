@@ -16,8 +16,8 @@ Hệ thống hiện tại đã hoàn thiện xuất sắc mảng **Quản lý V�
 1. **Module EGG & FLOCK:** Quản lý lứa gà, đàn gà sống/chết/thải loại, thu hoạch trứng theo ca/dãy, phân loại trứng và xuất bán trứng thương phẩm.
 2. **Module FEED & FCR:** Quản lý tiêu thụ thức ăn cám, định mức ăn (g/con/ngày), tính toán hiệu suất chuyển hóa FCR và cảnh báo ăn giảm.
 3. **Module VET & BIO-SECURITY:** Lịch vắc-xin tự động theo tuần tuổi, nhật ký dùng thuốc, cảnh báo thời gian cách ly thuốc (Withdrawal period).
-4. **Module FINANCIAL & COSTING:** Báo cáo giá thành sản xuất 1 quả trứng (Cost per Egg), tổng hợp P&L doanh thu - chi phí lãi/lỗ theo ngày/chuồng.
-5. **Module HR & ENVIRONMENT:** Chấm công ca nhặt trứng, công thức thưởng năng suất chuồng, nhật ký giám sát nhiệt độ/độ ẩm chuồng kín.
+4. **Module FINANCIAL & COSTING:** Báo cáo giá thành sản xuất 1 quả trứng (Cost per Egg), tổng hợp P&L doanh thu - chi phí lãi/lỗ theo ngày/trại.
+5. **Module HR & ENVIRONMENT:** Chấm công ca nhặt trứng, công thức thưởng năng suất trại, nhật ký giám sát nhiệt độ/độ ẩm trại kín.
 
 ---
 
@@ -26,7 +26,7 @@ Hệ thống hiện tại đã hoàn thiện xuất sắc mảng **Quản lý V�
 ### 2.1. Phân hệ Đàn gà & Lứa gà (Flock & Batch Management)
 
 ```sql
--- 1. Quản lý Đàn / Lứa gà tại từng Dãy chuồng
+-- 1. Quản lý Đàn / Lứa gà tại từng Dãy trại
 create table public.flocks (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,                  -- VD: 'LUA-2026-01-C1'
@@ -61,7 +61,7 @@ create table public.flock_mortality_logs (
 ### 2.2. Phân hệ Thu hoạch & Phân loại Trứng (Egg Production & Grading)
 
 ```sql
--- 3. Nhật ký thu trứng hàng ngày theo Ca và Dãy chuồng
+-- 3. Nhật ký thu trứng hàng ngày theo Ca và Dãy trại
 create table public.egg_collections (
   id uuid primary key default gen_random_uuid(),
   flock_id uuid not null references public.flocks(id),
@@ -121,7 +121,7 @@ create table public.egg_sale_items (
 ### 2.3. Phân hệ Tiêu thụ Cám & FCR (Feed & Nutrition)
 
 ```sql
--- 6. Nhật ký cấp cám cho từng chuồng hàng ngày
+-- 6. Nhật ký cấp cám cho từng trại hàng ngày
 create table public.flock_feed_consumptions (
   id uuid primary key default gen_random_uuid(),
   flock_id uuid not null references public.flocks(id),
@@ -180,17 +180,17 @@ create table public.flock_treatments (
 - **Card 3: Tỷ lệ hao hụt / Gà chết hôm nay:** $14 / 85.000$ con ($0.016%$).
 - **Card 4: Tiêu thụ cám & FCR tuần:** $115	ext{g/con/ngày}$ — FCR: $2.12	ext{ kg cám / kg trứng}$.
 - **Biểu đồ Đường cong Tỷ lệ đẻ (Egg Production Curve):** Trục hoành là tuần tuổi (Tuần 18 $ightarrow$ Tuần 80), so sánh đường thực tế với đường chuẩn giống gà (Standard Breed Curve).
-- **Danh sách chuồng cần chú ý:** Bảng highlight các dãy chuồng có tỷ lệ đẻ sụt giảm $> 3%$ hoặc ăn giảm trong 2 ngày liên tiếp.
+- **Danh sách trại cần chú ý:** Bảng highlight các dãy trại có tỷ lệ đẻ sụt giảm $> 3%$ hoặc ăn giảm trong 2 ngày liên tiếp.
 
 ### 3.2. Màn hình Thu nhặt Trứng (`/production/eggs`)
-- Giao diện thân thiện trên điện thoại cho công nhân chuồng:
-  - Chọn Dãy chuồng (Sub-zone) $ightarrow$ Nhập số trứng nhặt Ca sáng / Ca chiều.
+- Giao diện thân thiện trên điện thoại cho công nhân trại:
+  - Chọn Dãy trại (Sub-zone) $ightarrow$ Nhập số trứng nhặt Ca sáng / Ca chiều.
   - Nhập nhanh số lượng trứng dập, trứng méo, trứng bẩn.
-  - Tự động hiển thị ngay % Đẻ tức thì của chuồng đó để công nhân biết kết quả.
+  - Tự động hiển thị ngay % Đẻ tức thì của trại đó để công nhân biết kết quả.
 
 ### 3.3. Màn hình Lịch Vắc-xin & Thú y (`/vet`)
 - Dạng Lịch (Calendar View) & Danh sách nhắc việc (Todo List).
-- Badge cảnh báo màu đỏ: Các chuồng đang trong giai đoạn ngưng thuốc (Withdrawal period) cảnh báo không được xuất bán gà thịt.
+- Badge cảnh báo màu đỏ: Các trại đang trong giai đoạn ngưng thuốc (Withdrawal period) cảnh báo không được xuất bán gà thịt.
 - Nút bấm 1 chạm: "Đã tiêm / Đã cho uống" $ightarrow$ Tự động tạo phiếu xuất kho thuốc thú y tương ứng trong kho vật tư!
 
 ### 3.4. Màn hình Giá thành 1 quả trứng & P&L (`/reports/farm-pnl`)
@@ -204,8 +204,8 @@ create table public.flock_treatments (
 ## 4. TÍNH NĂNG TÍCH HỢP CHẶT CHẼ VỚI HỆ THỐNG VẬT TƯ HIỆN TẠI
 
 1. **Tự động trừ kho cám & thuốc khi ghi nhật ký trại:**
-   Khi công nhân chuồng ghi nhận đổ 30 bao cám hoặc dùng 5 chai vắc-xin, hệ thống tự động sinh phiếu xuất kho nội bộ (`issues`) trừ tồn kho chính, không cần thủ kho phải nhập tay lại.
-2. **Kế thừa hệ thống Khu vực & Dãy chuồng (`zones`, `sub_zones`):**
-   Mọi dữ liệu đàn gà, trứng, thức ăn, thiết bị cơ điện, máy phát điện đều gắn liền với ID phân cấp khu/dãy chuồng chuẩn đã xây dựng.
+   Khi công nhân trại ghi nhận đổ 30 bao cám hoặc dùng 5 chai vắc-xin, hệ thống tự động sinh phiếu xuất kho nội bộ (`issues`) trừ tồn kho chính, không cần thủ kho phải nhập tay lại.
+2. **Kế thừa hệ thống Khu vực & Dãy trại (`zones`, `sub_zones`):**
+   Mọi dữ liệu đàn gà, trứng, thức ăn, thiết bị cơ điện, máy phát điện đều gắn liền với ID phân cấp khu/dãy trại chuẩn đã xây dựng.
 3. **Kế thừa hệ thống Quét QR & In phiếu PDF A4:**
-   In phiếu xuất bán trứng cho thương lái, in tem QR dán đầu dãy chuồng để công nhân quét mã là mở ngay form nhặt trứng của chuồng đó.
+   In phiếu xuất bán trứng cho thương lái, in tem QR dán đầu dãy trại để công nhân quét mã là mở ngay form nhặt trứng của trại đó.
