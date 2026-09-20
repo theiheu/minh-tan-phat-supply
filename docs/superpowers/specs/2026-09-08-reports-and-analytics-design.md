@@ -1,176 +1,282 @@
-# Đặc tả Kỹ thuật: Phân hệ Báo cáo & Thống kê Toàn diện (Chung & Riêng)
+# Đặc tả thiết kế: Làm lại Trung tâm Báo cáo theo hướng quản trị
 
-**Ngày:** 2026-09-08 · **Trạng thái:** Bản thiết kế hoàn chỉnh (Chờ duyệt kế hoạch) · **Phạm vi:** `minh-tan-phat-supply`
+**Ngày cập nhật:** 2026-09-20 · **Trạng thái:** Đã duyệt để triển khai · **Phạm vi:** `/reports`
 
----
+## 1. Quyết định sản phẩm
 
-## 1. Bối cảnh & Mục tiêu
+Trang `/reports` được tái cấu trúc để ưu tiên **ra quyết định quản trị**, thay vì trình bày bảy tab ngang cấp. Kiến trúc được duyệt gồm ba khu vực:
 
-Trại Gà Đẻ Trứng Lê Văn Dương (Minh Tân Phát Supply) vận hành với quy mô công nghiệp:
-- Hàng trăm danh mục vật tư cơ điện, thuốc thú y, bao bì vỉ trứng, phụ kiện trang trại.
-- Hàng chục khu trại đẻ, trại hậu bị, nhà ấp, trạm cơ điện.
-- Dàn xe cơ giới (xe ben chở phân, xe xúc lật, xe bồn) và máy phát điện dự phòng 250kVA tiêu thụ lượng lớn dầu Diesel.
-- Giao dịch liên tục với nhiều Nhà cung cấp (mua vật tư) và Khách hàng/Thương lái (bán phân, bán vỉ, bán tài sản cũ/ve chai).
+1. **Tổng quan quản trị** — bề mặt mặc định, native trong ứng dụng.
+2. **Báo cáo nghiệp vụ** — các sổ chi tiết, đối soát và xuất Excel/PDF.
+3. **Phân tích chuyên sâu** — Metabase BI nhúng, dùng cho biểu đồ và drill-down nâng cao.
 
-### Mục tiêu phân hệ Báo cáo:
-Xây dựng một trung tâm Báo cáo & Thống kê (Unified Report Hub) tại `/reports` phục vụ Chủ trại, Quản lý kho và Kế toán:
-1. **Báo cáo Chung (Toàn trại):** Xuất - Nhập - Tồn (XNT) đa chiều, biến động giá trị tài sản kho, tổng hợp sự cố thiết bị (hỏng / sửa / thanh lý), và tổng quan nhiên liệu dầu.
-2. **Báo cáo Riêng (Theo từng đối tượng nghiệp vụ):**
-   - **Khu vực / Trang trại (Zone Cost):** Chi phí vật tư từng trại để tính giá thành trứng & phát hiện trại hao phí bất thường.
-   - **Phương tiện / Máy móc (Vehicle Fuel & Machinery):** Tiêu hao nhiên liệu từng xe/máy, so sánh định mức Lít/100km hoặc Lít/giờ, cảnh báo vượt định mức.
-   - **Nhà cung cấp (Suppliers):** Thống kê tiền nhập hàng, tần suất giao hàng theo từng nhà cung cấp.
-   - **Khách hàng / Thương lái (Customers):** Thống kê doanh thu xuất bán theo từng đối tác.
-   - **Sổ Thẻ Kho Chi Tiết (Stock Card):** Tra cứu dòng lịch sử biến động từng mã vật tư theo thời gian và mã chứng từ.
-3. **Trực quan hóa & Xuất báo cáo:**
-   - Thẻ KPI số liệu + Thanh tiến độ tỷ lệ (Tailwind CSS) tải siêu nhanh, nhẹ và mượt trên thiết bị di động thực địa.
-   - Xuất file Excel (`.xlsx`) chuẩn hóa qua SheetJS.
-   - In ấn Báo cáo PDF chuẩn khổ A4 mang nhận diện thương hiệu Trại Gà Lê Văn Dương.
+Dashboard native là nơi trả lời nhanh “điều gì cần chú ý”; Metabase là công cụ phân tích sâu, không cạnh tranh vị trí mặc định với dashboard native.
 
----
+## 2. Mục tiêu và tiêu chí thành công
 
-## 2. Kiến trúc & Thiết kế Giao diện (UI/UX Architecture)
+### 2.1 Mục tiêu
 
-Giao diện `/reports` được tổ chức dạng **Unified Tabbed Hub** với thanh điều hướng và bộ lọc dùng chung:
+- Giúp Chủ trại, Kế toán và Quản lý kho nhận ra tín hiệu quan trọng trong một màn hình.
+- Phân biệt rõ báo cáo quản trị, báo cáo sổ sách và công cụ BI.
+- Bổ sung KPI/cảnh báo được suy ra từ dữ liệu hiện có, không mở rộng schema nghiệp vụ.
+- Giữ nguyên khả năng đối soát XNT, thẻ kho và xuất chứng từ.
+- Hoạt động rõ ràng trên desktop và thiết bị di động.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 🌾 TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG — TRUNG TÂM BÁO CÁO & THỐNG KÊ             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ 📅 BỘ LỌC DÙNG CHUNG:                                                       │
-│ [ Hôm nay | 7 ngày qua | Tháng này | Tháng trước | Quý này | Tùy chọn ngày] │
-│ Kho áp dụng: [ Tất cả kho ▼ ]       Từ: [2026-09-01]  Đến: [2026-09-30]     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ [📊 Báo cáo Chung] [🏠 Theo Trại] [🚜 Phương tiện] [🤝 Đối tác] [📑 Thẻ kho]│
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### 2.2 Thành công quan sát được
 
-### 2.1. Tab 1: Báo cáo Chung (Toàn trại - Overview & Ledger XNT)
-1. **Thẻ KPI Tổng quan:**
-   - **Tổng giá trị kho hiện tại (VNĐ)**: Giá trị tồn theo đơn giá niêm yết.
-   - **Tổng tiền nhập kho trong kỳ**: Tổng giá trị hàng từ Nhà cung cấp.
-   - **Tổng chi phí vật tư đã xuất dùng**: Cấp cho trại + đổi hỏng.
-   - **Doanh thu xuất bán & thanh lý**: Tiền thu từ bán phân, vỉ, phế liệu.
-2. **Bảng Báo cáo Xuất - Nhập - Tồn (XNT) Tổng Hợp:**
-   - Các cột:
-     - `Mã VT` & `Tên vật tư`
-     - `Biến thể & ĐVT`
-     - `Tồn đầu kỳ`
-     - `Nhập trong kỳ` (Nhập NCC + Hoàn nhập sửa chữa + Kiểm kê tăng)
-     - `Xuất trong kỳ` (Cấp nội bộ + Xuất bán + Đổi hỏng + Xuất sửa chữa + Thanh lý + Kiểm kê giảm)
-     - `Tồn cuối kỳ` (Tồn đầu + Nhập - Xuất)
-     - `Đơn giá`
-     - `Giá trị tồn cuối (VNĐ)`
-   - Hàng Tổng cộng toàn kho ở chân bảng.
-3. **Phân bổ Chi phí Vật tư theo Nhóm Danh Mục:**
-   - Thanh tỷ lệ % chi phí theo từng nhóm: *Cơ điện quạt gió, Thuốc sát trùng, Phụ kiện trại, Bao bì vỉ trứng...*
-4. **Tổng hợp Sự cố & Thiết bị (Hư hỏng - Sửa chữa - Thanh lý):**
-   - Tổng số lượt hỏng đổi 1-1, số thiết bị phục hồi sau sửa chữa, tổng chi phí thuê thợ quấn/sửa, doanh thu thanh lý phế liệu ve chai.
-5. **Tổng hợp Kho Dầu:**
-   - Tổng lít dầu nhập bồn, tổng lít dầu đã cấp phát, tồn bồn thực tế, tổng chi phí dầu.
+- Khi mở `/reports`, người dùng thấy Tổng quan quản trị trước.
+- Trong một màn hình đầu, người dùng xác định được KPI kỳ hiện tại, cảnh báo cần xử lý và khu vực/đối tượng biến động đáng chú ý.
+- Người dùng đi từ cảnh báo hoặc khối phân tích đến đúng báo cáo chi tiết bằng một thao tác.
+- Báo cáo XNT, Theo trại, Phương tiện, Đối tác và Thẻ kho vẫn dùng được với bộ lọc ngày/kho và chức năng Excel/PDF hiện có.
+- Metabase vẫn truy cập được trong khu vực “Phân tích chuyên sâu”, có trạng thái tải/lỗi/không cấu hình rõ ràng.
+- Các luồng hiện có qua `/reports` và phân quyền manager không bị phá vỡ.
 
----
+## 3. Phạm vi
 
-### 2.2. Tab 2: Báo cáo Riêng theo Trại / Khu vực (Zone Cost Analysis)
-1. **Bảng Chi phí từng Khu Trại:**
-   - Liệt kê: Trại Đẻ 1..N, Trại Hậu Bị 1..N, Nhà Ấp, Nhà Cơ Điện, Trạm Bơm, Văn Phòng...
-   - Cột: `Tên khu vực` - `Tổng chi phí vật tư (VNĐ)` - `Tỷ trọng (%)` - `Số lượt cấp phát` - `Số lần báo hỏng đổi 1-1`.
-   - Thanh tỷ lệ % trực quan so sánh giữa các trại để Quản lý nhận biết ngay trại nào tiêu hao đột biến.
-2. **Xem chi tiết Vật tư theo từng Trại (Drilldown / Modal / Bảng chi tiết):**
-   - Khi bấm vào 1 trại cụ thể (VD: Trại Đẻ 3): Hiển thị chi tiết từng mặt hàng đã cấp cho trại đó trong kỳ (Tên hàng, số lượng, đơn giá, thành tiền, ngày cấp, người nhận).
+### 3.1 Trong phạm vi
 
----
+- Làm lại information architecture và giao diện `/reports`.
+- Tái sử dụng dữ liệu báo cáo hiện có và bổ sung phép suy diễn cảnh báo ở lớp reports.
+- Tổ chức lại điều hướng, bộ lọc, hành động xuất file và trạng thái tải/lỗi/rỗng.
+- Giữ Metabase như bề mặt phân tích chuyên sâu.
+- Bổ sung test cho điều hướng, truy vấn, cảnh báo và responsive behavior có thể kiểm chứng bằng DOM.
+- Cập nhật hướng dẫn người dùng liên quan.
 
-### 2.3. Tab 3: Báo cáo Riêng Phương tiện & Máy móc (Vehicles & Machinery)
-1. **Bảng Thống kê Tiêu hao Nhiên liệu theo Xe & Máy:**
-   - Danh sách: Xe ben dọn phân, Xe xúc lật, Xe bồn cám, Máy phát điện Cummins 250kVA, Xe ba gác...
-   - Cột: `Mã xe` - `Tên xe / Model` - `Biển số` - `ĐVT (km / hours)` - `Tổng lít dầu đã cấp` - `Tổng quãng đường/giờ chạy` - `Mức tiêu hao thực tế (L/100km hoặc L/h)` - `Định mức quy định` - `Chênh lệch` - `Trạng thái (Bình thường / Vượt định mức)`.
-   - Highlight cảnh báo: Màu đỏ nếu vượt định mức, màu xanh nếu đạt định mức.
-2. **Lịch sử các lần đổ dầu của phương tiện:**
-   - Ngày giờ, số lít, chỉ số Odo/giờ chạy trước & sau, tài xế/người vận hành, người cấp dầu.
+### 3.2 Ngoài phạm vi
 
----
+- Không tạo bảng nghiệp vụ mới hoặc thay đổi nguồn sự thật tồn kho/kế toán.
+- Không xây chart engine mới để thay Metabase.
+- Không thay đổi công thức kế toán XNT, giá trị tồn hoặc quyền truy cập hiện hành.
+- Không làm lại toàn bộ các API export/PDF nếu hợp đồng hiện tại vẫn đáp ứng.
+- Không mở quyền Báo cáo cho vai trò mới.
 
-### 2.4. Tab 4: Báo cáo Riêng Đối tác (Nhà Cung Cấp & Khách Hàng)
-1. **Phân hệ Nhà Cung Cấp (Suppliers):**
-   - Thống kê theo từng NCC: `Tên nhà cung cấp` - `Số phiếu nhập` - `Tổng số lượng hàng nhập` - `Tổng giá trị tiền hàng (VNĐ)` - `Các mặt hàng chủ lực`.
-2. **Phân hệ Khách Hàng / Thương Lái (Customers):**
-   - Thống kê xuất bán theo thương lái: `Tên khách hàng` - `Số phiếu xuất bán` - `Tổng doanh thu bán ra (VNĐ)` - `Mặt hàng mua` (Phân gà, vỉ trứng, phế liệu).
+## 4. Hiện trạng và vấn đề
 
----
+Hiện tại `ReportsHub` đặt nhiều tab ngang cấp: Metabase, Tổng quan, XNT, Theo Trại, Phương tiện, Đối tác và Sổ Thẻ kho. Cấu trúc này có các vấn đề:
 
-### 2.5. Tab 5: Sổ Thẻ Kho Chi Tiết (Stock Card)
-1. **Bộ chọn Vật tư & Kho:**
-   - Chọn 1 vật tư / biến thể cụ thể (Hỗ trợ tìm kiếm theo tên hoặc mã QR).
-   - Chọn Kho (Kho chính, Kho dầu, Kho hỏng...).
-2. **Bảng Sổ Chi Tiết Biến Động Vật Tư:**
-   - Cột: `Ngày giờ` - `Mã chứng từ` (Click mở chi tiết phiếu) - `Loại nghiệp vụ` (Nhập NCC, Xuất Trại, Đổi 1-1, Gửi sửa chữa, Hoàn sửa chữa, Thanh lý, Cân bằng kiểm kê) - `Diễn giải / Ghi chú` - `Số lượng Nhập` - `Số lượng Xuất` - `Tồn lũy kế sau phát sinh` - `Người thực hiện`.
+- Trộn ba mục đích khác nhau: ra quyết định, đối soát sổ sách và khám phá BI.
+- “Tổng quan” chủ yếu là tập KPI tĩnh, chưa tạo hàng đợi ưu tiên hoặc nêu biến động cần xử lý.
+- Metabase được đặt ngang cấp và nổi bật như một lựa chọn chính, làm mờ vai trò dashboard native.
+- Tab ngang dài phải cuộn trên mobile và khó truyền đạt quan hệ giữa báo cáo tổng hợp với báo cáo chi tiết.
+- Bộ lọc toàn cục xuất hiện cho nhiều bề mặt nhưng không phải bề mặt nào cũng sử dụng cùng ý nghĩa.
+- `reports-hub.tsx` đang gánh điều hướng, cache dữ liệu, tải dữ liệu và hành động export trong một component lớn.
 
----
+## 5. Kiến trúc thông tin đích
 
-## 3. Thiết kế Data Fetching & Business Logic
+### 5.1 Điều hướng cấp một
 
-### 3.1. Thuật toán Tính toán Xuất - Nhập - Tồn (XNT Engine)
-Để đảm bảo số liệu chính xác 100% khớp với Ledger kế toán:
-- **Tồn cuối kỳ hiện tại:** Lấy từ `stock_balances` (hoặc `variant_stock`).
-- **Biến động trong kỳ lọc `[from_date, to_date]`:**
-  - Nhập trong kỳ ($Qty_{in}$) = $\sum$ `stock_movements.quantity` với `movement_type` $\in$ (`receipt_in`, `repair_return_in`, `adjustment_in`).
-  - Xuất trong kỳ ($Qty_{out}$) = $\sum$ `stock_movements.quantity` với `movement_type` $\in$ (`issue_out`, `defect_out`, `repair_out`, `liquidation_out`, `adjustment_out`, `tool_borrow_out`).
-- **Tồn đầu kỳ ($Qty_{opening}$):**
-  - Tồn đầu kỳ = Tồn cuối kỳ - Tổng biến động từ ngày $from\_date$ đến hiện tại.
-  - Hoặc: Tồn tại thời điểm $from\_date$ = Tồn đầu kỳ khởi tạo + $\sum$ biến động trước $from\_date$.
-- **Giá trị tồn:**
-  - $Value = Qty \times Price$ (lấy theo `variants.price` niêm yết hoặc đơn giá bình quân).
+`ReportsHub` hiển thị ba lựa chọn cấp một:
 
-### 3.2. Thuật toán Tính Chi phí Khu vực (Zone Cost)
-- Truy vấn bảng `issues` join `issue_items` và `defect_notes` join `defect_items` theo `zone_id` và thời gian lọc `created_at`.
-- Chi phí vật tư = $\sum (\text{Số lượng cấp} \times \text{Đơn giá vật tư})$.
+| Khu vực | Mục đích | Mặc định |
+|---|---|---|
+| Tổng quan quản trị | KPI, cảnh báo, xu hướng, điểm nóng và lối tắt | Có |
+| Báo cáo nghiệp vụ | Sổ chi tiết và kết xuất chứng từ | Không |
+| Phân tích chuyên sâu | Metabase BI và drill-down nâng cao | Không |
 
-### 3.3. Thuật toán Tiêu hao Nhiên liệu (Fuel Consumption)
-- Lấy từ `fuel_logs` group by `vehicle_id`.
-- Tiêu hao xe chạy km: $\text{Rate} = (\text{Tổng lít} / \Delta\text{km}) \times 100$.
-- Tiêu hao máy phát chạy giờ: $\text{Rate} = \text{Tổng lít} / \Delta\text{giờ}$.
+Điều hướng cấp một dùng segmented control hoặc tab list ngắn, không dùng bảy tab ngang.
 
----
+### 5.2 Điều hướng báo cáo nghiệp vụ
 
-## 4. Thiết kế Xuất File & In Ấn (Export & PDF)
+Trong “Báo cáo nghiệp vụ”, người dùng chọn một trong năm báo cáo:
 
-### 4.1. Xuất File Excel (`.xlsx`) đa năng
-- Tạo API route `/api/reports/export` hỗ trợ xuất file Excel định dạng chuẩn:
-  - Header: Tên trang trại, tên loại báo cáo, kỳ báo cáo (Từ ngày ... Đến ngày ...).
-  - Bảng dữ liệu có tiêu đề cột rõ ràng, định dạng số ngăn cách hàng nghìn (`1,000,000`).
-  - Hàng tổng cộng tự động cộng dồn.
-  - Tham số `type`: `stock_ledger` (XNT), `zone_cost` (Theo trại), `vehicles` (Nhiên liệu xe), `partners` (Đối tác), `stock_card` (Thẻ kho).
+- Xuất – Nhập – Tồn
+- Chi phí theo trại
+- Tiêu hao phương tiện
+- Đối tác
+- Sổ thẻ kho
 
-### 4.2. In Ấn Báo Cáo PDF Chuẩn Khổ A4
-- Tạo API route `/api/reports/pdf` render trực tiếp PDF khổ A4 bằng `@react-pdf/renderer` hoặc popup in chuyên dụng:
-  - Header chuẩn:
-    ```
-    TRẠI GÀ ĐẺ TRỨNG LÊ VĂN DƯƠNG
-    Ấp Tân Tiến, xã Minh Tân, huyện Dầu Tiếng, tỉnh Bình Dương
-    Hotline: 0988 365 238 - 0963 077 879
-    ```
-  - Chữ ký 3 bên: Người lập báo cáo - Kế toán trại - Quản lý / Chủ trại duyệt.
+Trên desktop, các lựa chọn có thể là sidebar/rail nhỏ hoặc danh sách card gọn. Trên mobile, dùng select/sheet hoặc danh sách cuộn dọc; không bắt người dùng cuộn một hàng tab dài.
 
----
+### 5.3 URL và trạng thái
 
-## 5. Kế hoạch Từng bước Triển khai
+- `/reports` mở Tổng quan quản trị.
+- Trạng thái khu vực/báo cáo được phản ánh bằng query parameter để hỗ trợ deep link và nút Back, ví dụ `?section=operations&report=xnt` hoặc `?section=bi`.
+- Link cũ `/reports` vẫn hợp lệ.
+- Query parameter không hợp lệ quay về Tổng quan quản trị an toàn.
 
-1. **Giai đoạn 1 (Server Queries & Data Aggregators):**
-   - Viết các hàm query dữ liệu báo cáo tối ưu trong `src/features/reports/queries.ts` (XNT toàn trại, Chi phí theo trại, Nhiên liệu theo xe, Đối tác NCC/Khách, Sổ thẻ kho).
-2. **Giai đoạn 2 (UI Components & Tabs):**
-   - Xây dựng thanh lọc ngày chuẩn `src/features/reports/components/report-date-filters.tsx`.
-   - Xây dựng Tab Báo cáo Chung `src/features/reports/components/general-report-tab.tsx`.
-   - Xây dựng Tab Báo cáo Chi phí Trại `src/features/reports/components/zone-cost-report-tab.tsx`.
-   - Xây dựng Tab Báo cáo Phương tiện `src/features/reports/components/vehicle-report-tab.tsx`.
-   - Xây dựng Tab Báo cáo Đối tác `src/features/reports/components/partners-report-tab.tsx`.
-   - Xây dựng Tab Sổ Thẻ Kho `src/features/reports/components/stock-card-tab.tsx`.
-3. **Giai đoạn 3 (Export & Print):**
-   - Nâng cấp API xuất Excel `/api/reports/export` hỗ trợ đầy đủ 5 tab.
-   - Nâng cấp chức năng In PDF báo cáo.
-4. **Giai đoạn 4 (Tích hợp & Kiểm thử):**
-   - Ghép toàn bộ vào trang chính `/reports`.
-   - Viết unit test / integration test cho các thuật toán tính toán báo cáo.
-   - Kiểm tra giao diện trên cả Desktop và Điện thoại.
+## 6. Thiết kế Tổng quan quản trị
 
----
-*(Tài liệu đặc tả kiến trúc được chuẩn bị cho quá trình lập Kế hoạch thực thi chi tiết)*
+### 6.1 Thanh ngữ cảnh
+
+Một thanh bộ lọc dùng chung đặt ngay dưới tiêu đề:
+
+- Kỳ báo cáo: Hôm nay, 7 ngày, Tháng này, Tháng trước, Quý này, Tùy chọn.
+- Kho: Tất cả kho hoặc một kho cụ thể.
+- Nhãn “Cập nhật lúc” khi có dữ liệu.
+- Nút làm mới chỉ xuất hiện nếu cần; thay đổi bộ lọc tự tải lại theo hành vi hiện có.
+
+### 6.2 Hàng KPI chính
+
+Ưu tiên bốn KPI có giá trị quản trị:
+
+1. Giá trị tồn kho hiện tại.
+2. Giá trị nhập trong kỳ.
+3. Chi phí xuất dùng trong kỳ.
+4. Chi phí nhiên liệu hoặc doanh thu bán/thanh lý trong kỳ, chọn theo dữ liệu sẵn có và độ tin cậy.
+
+Mỗi KPI phải có nhãn, giá trị, đơn vị và ngữ cảnh kỳ. Chỉ hiển thị so sánh/tăng giảm khi có dữ liệu kỳ đối chiếu đáng tin cậy; không suy đoán phần trăm.
+
+### 6.3 Trung tâm cảnh báo
+
+Hiển thị danh sách tối đa 5–7 tín hiệu cần chú ý, sắp xếp theo mức độ:
+
+- Phương tiện vượt định mức nhiên liệu.
+- Khu/trại có tỷ trọng chi phí cao hoặc tăng bất thường theo quy tắc được xác định từ dữ liệu cùng kỳ.
+- Sự cố thiết bị đang mở hoặc khối lượng sự cố đáng chú ý.
+- Vật tư tồn thấp nếu dữ liệu ngưỡng tồn đã có trong nguồn hiện hành.
+- Công cụ mượn quá hạn nếu dữ liệu có sẵn qua view/report hiện hành.
+
+Mỗi cảnh báo gồm: mức độ, tiêu đề ngắn, số liệu làm bằng chứng, phạm vi thời gian và CTA mở báo cáo liên quan. Nếu một loại cảnh báo thiếu dữ liệu đáng tin cậy, loại đó không xuất hiện thay vì hiển thị số 0 gây hiểu nhầm.
+
+### 6.4 Điểm nóng và phân bổ
+
+- Top khu/trại theo chi phí vật tư.
+- Top phương tiện tiêu hao hoặc vượt định mức.
+- Phân bổ giá trị/chi phí theo nhóm vật tư.
+
+Ưu tiên bảng xếp hạng, progress bar và sparkline đơn giản nếu dữ liệu hỗ trợ; chart phân tích phức tạp thuộc Metabase.
+
+### 6.5 Lối tắt
+
+Các CTA từ Tổng quan phải chuyển thẳng đến báo cáo nghiệp vụ tương ứng và giữ bộ lọc hiện tại:
+
+- Xem XNT
+- Xem chi phí theo trại
+- Xem phương tiện
+- Mở phân tích BI
+
+## 7. Báo cáo nghiệp vụ
+
+### 7.1 Bộ lọc và hành động
+
+- Bộ lọc ngày/kho nằm ở đầu khu vực và chỉ hiển thị trường có nghĩa với báo cáo đang chọn.
+- Excel/PDF đặt cạnh tên báo cáo, không nằm lẫn trong điều hướng.
+- Với Thẻ kho, Excel/PDF bị vô hiệu hóa đến khi chọn vật tư; có giải thích rõ.
+- Thay đổi báo cáo không làm mất kỳ/kho đang chọn.
+
+### 7.2 Hành vi các báo cáo
+
+- **XNT:** giữ công thức Tồn đầu + Nhập − Xuất = Tồn cuối và bảng ledger hiện có.
+- **Theo trại:** giữ tổng chi phí, tỷ trọng, số lượt cấp và drill-down vật tư.
+- **Phương tiện:** giữ tổng lít, quãng đường/giờ, định mức và trạng thái vượt chuẩn.
+- **Đối tác:** giữ tổng hợp nhà cung cấp và khách hàng.
+- **Thẻ kho:** giữ chọn SKU/kho, bút toán và số dư lũy kế.
+
+Tất cả báo cáo phải có trạng thái loading, empty và error tại chính vùng nội dung; dữ liệu cũ không được trình bày như dữ liệu mới khi request thất bại.
+
+## 8. Phân tích chuyên sâu Metabase
+
+- Metabase nằm trong khu vực “Phân tích chuyên sâu”, không là tab mặc định.
+- Giữ danh sách dashboard chuyên đề, mở Studio và toàn màn hình.
+- Không hiển thị chi tiết hạ tầng như port/PostgreSQL cho người dùng nghiệp vụ.
+- Nếu chưa cấu hình, hiển thị empty state có hướng dẫn quản trị thay vì iframe lỗi.
+- Nếu tải iframe thất bại, cung cấp retry và link mở Metabase trực tiếp khi có URL hợp lệ.
+- Bộ lọc native chỉ truyền sang Metabase khi dashboard có contract filter tương ứng; không giả định mọi dashboard nhận cùng bộ lọc.
+
+## 9. Luồng dữ liệu và ownership
+
+### 9.1 Chủ sở hữu chuẩn
+
+- `src/features/reports/queries.ts`: truy vấn và tổng hợp dữ liệu báo cáo.
+- `src/features/reports/actions.ts`: cổng server action có kiểm tra quyền.
+- `src/features/reports/types.ts`: hợp đồng dữ liệu báo cáo.
+- `src/features/reports/components/`: trình bày và tương tác.
+- `src/lib/metabase.ts`: cấu hình/ký URL Metabase, không sở hữu KPI native.
+
+### 9.2 Dữ liệu Tổng quan
+
+Tổng quan sử dụng một hợp đồng dữ liệu chuyên biệt được tổng hợp ở server từ các truy vấn hiện hành. Không để component client tự ghép nhiều nguồn thành quy tắc nghiệp vụ. Các rule cảnh báo phải là hàm thuần có test hoặc kết quả từ query tổng hợp có test.
+
+### 9.3 Tải dữ liệu
+
+- Dữ liệu Tổng quan mặc định được tải server-side để first paint có nội dung.
+- Báo cáo nghiệp vụ tải lazy theo lựa chọn và có cache theo key `report + from + to + location + variant` trong vòng đời trang.
+- Chống race condition: response cũ không được ghi đè lựa chọn/bộ lọc mới.
+- Metabase chỉ khởi tạo khi người dùng mở khu vực BI.
+
+## 10. Trạng thái giao diện và accessibility
+
+- **Loading:** skeleton theo cấu trúc nội dung, không thay icon tab bằng spinner như tín hiệu duy nhất.
+- **Empty:** nói rõ “không có dữ liệu trong kỳ/bộ lọc này” và đề xuất đổi bộ lọc.
+- **Error:** giữ khu vực điều hướng/bộ lọc, hiển thị lỗi cục bộ và nút thử lại.
+- **Partial:** nếu một khối Tổng quan lỗi, các khối còn lại vẫn hiển thị; khối lỗi có trạng thái riêng.
+- **Accessibility:** dùng `tablist/tab/tabpanel` đúng quan hệ, hỗ trợ bàn phím, focus visible, nhãn icon và độ tương phản.
+- **Responsive:** KPI 1 cột trên màn hình hẹp, 2 cột trên tablet, 4 cột trên desktop; bảng có container cuộn ngang và cột nhận diện chính được ưu tiên.
+
+## 11. Compatibility boundary
+
+Phải giữ:
+
+- Route `/reports` và gate `requireManager()`.
+- Hợp đồng API export/PDF hiện đang được các báo cáo sử dụng.
+- Công thức và nguồn sự thật của XNT, giá trị tồn, chi phí, nhiên liệu.
+- Các component báo cáo chi tiết có thể được bọc/tái sử dụng thay vì viết lại toàn bộ.
+- Metabase là tùy chọn bổ sung; lỗi Metabase không được làm hỏng báo cáo native.
+
+Được thay đổi:
+
+- Kiểu `ReportTab` và cách biểu diễn navigation state.
+- Hợp đồng dữ liệu Tổng quan để bổ sung cảnh báo/điểm nóng.
+- Cấu trúc `ReportsHub` nhằm tách navigation, data orchestration và nội dung.
+
+## 12. Kiểm thử và xác minh
+
+### 12.1 Test tự động
+
+- Unit test cho rule cảnh báo và thứ tự ưu tiên.
+- Component test cho ba khu vực cấp một, deep link, query parameter sai và CTA drill-down.
+- Component test cho loading/empty/error/partial states.
+- Regression test cho bộ lọc, lazy load, cache key và chống response race.
+- Regression test cho URL Excel/PDF của từng báo cáo.
+- Test Metabase cho configured, unconfigured và load error.
+
+### 12.2 Quality gates
+
+- `pnpm test -- src/features/reports`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm build`
+- Browser smoke test desktop và mobile cho `/reports`: điều hướng, bộ lọc, drill-down, export và trạng thái Metabase.
+
+## 13. Rủi ro và giảm thiểu
+
+| Rủi ro | Giảm thiểu |
+|---|---|
+| KPI/cảnh báo sai nghĩa | Chỉ dùng nguồn hiện có, rule có bằng chứng và test; ẩn tín hiệu thiếu dữ liệu |
+| Component hub tiếp tục phình to | Tách config điều hướng, data hook/orchestrator và từng section component |
+| Request cũ ghi đè dữ liệu mới | Request key hoặc sequence guard; test race condition |
+| Metabase không khả dụng | Lazy load, error boundary/empty state cục bộ; native reports độc lập |
+| Mobile khó dùng với bảng lớn | Điều hướng dọc/select, bảng cuộn có nhãn rõ, CTA ưu tiên |
+| Ghi đè thay đổi đang làm dở | Bảo toàn và tích hợp phần Metabase hiện có; không reset các file dirty ngoài phạm vi |
+
+## 14. Artifact phạm vi
+
+### TaskIntentDraft
+
+- **Outcome:** Trung tâm Báo cáo giúp ra quyết định nhanh nhưng vẫn giữ đầy đủ sổ nghiệp vụ.
+- **Success evidence:** Tổng quan mặc định, cảnh báo có CTA, năm báo cáo chi tiết còn hoạt động, Metabase ở cấp chuyên sâu, test và browser smoke pass.
+- **Stop condition:** Không mở rộng schema hoặc xây hệ thống BI/chart mới.
+- **Non-goals:** Không đổi quyền, công thức kế toán hoặc API export nếu chưa cần.
+
+### BaselineReadSetHint
+
+- `docs/superpowers/specs/2026-09-08-reports-and-analytics-design.md` (tài liệu này, được cập nhật tại chỗ).
+- `docs/aegis/BASELINE-GOVERNANCE.md`.
+- `docs/reference/app-routes-and-navigation.md`.
+- `docs/user-guide/11-bao-cao-phan-tich.md`.
+- Các owner hiện hành trong `src/features/reports`.
+
+### BaselineUsageDraft
+
+- **Required refs:** đặc tả báo cáo, baseline governance, source hiện hành.
+- **Acknowledged before plan:** đã đọc.
+- **Missing refs:** không có blocker; Hindsight không khả dụng do thiếu API token.
+- **Decision:** continue.
+
+### ImpactStatementDraft
+
+- **Affected layers:** UI navigation, client data orchestration, report query/action/type, report tests, user guide.
+- **Canonical owner:** `src/features/reports`; Metabase config ở `src/lib/metabase.ts`.
+- **Preserved invariants:** auth, route, số liệu ledger, export/PDF, native reports độc lập với Metabase.
+- **Compatibility:** deep link mới bổ sung; route cũ vẫn hoạt động.
+- **Retirement:** thanh bảy tab ngang và mapping navigation cũ được thay thế hoàn toàn, không giữ hai hệ điều hướng song song.

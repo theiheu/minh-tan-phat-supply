@@ -14,6 +14,7 @@ import {
   PackageMinus,
   PackageOpen,
   Settings,
+  ShieldAlert,
   Tags,
   Trash2,
   Truck,
@@ -108,6 +109,8 @@ export const DEFECTS_NAV_ITEMS: NavItem[] = [
   { href: "/liquidations", label: "Thanh lý", icon: Trash2, roles: WAREHOUSE_ROLES },
 ];
 
+const ADMIN_MASTER_ROLES: Role[] = ["owner", "superuser"];
+
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/admin/products", label: "Vật tư", icon: Package, roles: ADMIN_ROLES },
   { href: "/admin/categories", label: "Danh mục", icon: Tags, roles: ADMIN_ROLES },
@@ -116,6 +119,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/admin/suppliers", label: "Nhà cung cấp", icon: Building2, roles: ADMIN_ROLES },
   { href: "/admin/customers", label: "Khách hàng", icon: Users, roles: ADMIN_ROLES },
   { href: "/admin/vehicles", label: "Phương tiện", icon: Truck, roles: ADMIN_ROLES },
+  { href: "/admin/documents", label: "Can thiệp phiếu", icon: ShieldAlert, roles: ADMIN_MASTER_ROLES },
   { href: "/admin/users", label: "Người dùng", icon: Users, roles: SUPERUSER_ONLY_ROLES },
   { href: "/admin/ai-copilot", label: "AI Copilot", icon: Bot, roles: SUPERUSER_ONLY_ROLES },
 ];

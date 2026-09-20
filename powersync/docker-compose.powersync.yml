@@ -1,0 +1,27 @@
+# Docker Compose triển khai PowerSync Service (Self-hosted)
+# Kết nối trực tiếp với Supabase PostgreSQL của Minh Tân Phát Supply
+#
+# Chạy: docker compose -f powersync/docker-compose.powersync.yml up -d
+
+services:
+  powersync:
+    image: journeyapps/powersync-service:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      # Cổng lắng nghe API HTTP/WebSocket của PowerSync Service
+      - POWERSYNC_PORT=8080
+      
+      # Kết nối PostgreSQL (Supabase / Postgres 17)
+      # Lưu ý: Cần bật logical replication (wal_level = logical) trên PostgreSQL
+      - PS_DATA_SOURCE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-127.0.0.1}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-postgres}?sslmode=disable
+      
+      # Cấu hình Supabase Auth / JWT Validation
+      - PS_JWKS_URL=${NEXT_PUBLIC_SUPABASE_URL}/auth/v1/.well-known/jwks.json
+      - PS_JWT_ISSUER=${NEXT_PUBLIC_SUPABASE_URL}/auth/v1
+      
+      # Đường dẫn file sync rules
+      - PS_SYNC_RULES_PATH=/etc/powersync/sync_rules.yaml
+    volumes:
+      - ./sync_rules.yaml:/etc/powersync/sync_rules.yaml:ro

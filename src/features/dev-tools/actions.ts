@@ -1,106 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { requireProfile } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+export {
+  devReopenDoc,
+  devDeleteDoc,
+  reopenDocumentDevAction,
+  deleteDocumentDevAction,
+  adminInspectDocAction,
+  adminDeleteDocAction,
+  adminReopenDocAction,
+  adminOverrideMetaAction,
+  adminGetMasterDocumentsAction,
+  adminGetAuditLogsAction,
+} from "@/features/admin-tools/actions";
 
-/**
- * Công cụ DEV (chỉ superuser — RPC phía DB tự kiểm is_superuser()):
- * mở lại phiếu đã ghi sổ về trạng thái sửa được, hoặc xoá phiếu (đã ghi sổ sẽ đảo bút toán trước).
- * Mỗi module có RPC riêng (migration 0042 + 0043).
- */
-export type DevDocKind =
-  | "issue"
-  | "liquidation"
-  | "receipt"
-  | "requisition"
-  | "stocktake"
-  | "defect"
-  | "repair"
-  | "exchange"
-  | "fuel_dispense"
-  | "fuel_receipt";
-
-type Callable = Awaited<ReturnType<typeof createClient>>;
-type RpcClient = { rpc: (name: string, params: Record<string, unknown>) => Promise<{ error: { message: string } | null }> };
-
-/** Gọi RPC mở lại (revert) theo loại — tên literal để đúng type supabase. */
-async function reopenByKind(supabase: Callable, kind: DevDocKind, id: string, pBy: string) {
-  const client = supabase as unknown as RpcClient;
-  const { error } =
-    kind === "issue"
-      ? await client.rpc("revert_issue", { p_id: id, p_by: pBy })
-      : kind === "liquidation"
-        ? await client.rpc("revert_liquidation", { p_id: id, p_by: pBy })
-        : kind === "receipt"
-          ? await client.rpc("revert_receipt", { p_id: id, p_by: pBy })
-          : kind === "requisition"
-            ? await client.rpc("revert_requisition", { p_id: id, p_by: pBy })
-            : kind === "exchange"
-              ? await client.rpc("revert_exchange", { p_id: id, p_by: pBy })
-              : kind === "repair"
-                ? await client.rpc("revert_repair", { p_id: id, p_by: pBy })
-                : await client.rpc("revert_stocktake", { p_session_id: id, p_by: pBy });
-  if (error) throw new Error(error.message);
-}
-
-/** Gọi RPC xoá theo loại — tên literal để đúng type supabase. */
-async function deleteByKind(supabase: Callable, kind: DevDocKind, id: string, pBy: string) {
-  const client = supabase as unknown as RpcClient;
-  const { error } =
-    kind === "issue"
-      ? await client.rpc("delete_issue", { p_id: id, p_by: pBy })
-      : kind === "liquidation"
-        ? await client.rpc("delete_liquidation", { p_id: id, p_by: pBy })
-        : kind === "receipt"
-          ? await client.rpc("delete_receipt", { p_id: id, p_by: pBy })
-          : kind === "requisition"
-            ? await client.rpc("delete_requisition", { p_id: id, p_by: pBy })
-            : kind === "defect"
-              ? await client.rpc("delete_defect", { p_id: id, p_by: pBy })
-              : kind === "repair"
-                ? await client.rpc("delete_repair", { p_id: id, p_by: pBy })
-                : kind === "exchange"
-                  ? await client.rpc("delete_exchange", { p_id: id, p_by: pBy })
-                  : kind === "fuel_dispense"
-                    ? await client.rpc("delete_fuel_dispense", { p_id: id, p_by: pBy })
-                    : kind === "fuel_receipt"
-                      ? await client.rpc("delete_fuel_receipt", { p_id: id, p_by: pBy })
-                      : await client.rpc("delete_stocktake", { p_session_id: id, p_by: pBy });
-  if (error) throw new Error(error.message);
-}
-
-/** Các route cần refresh vì tồn kho / danh sách thay đổi. */
-const ROUTES = [
-  "/issues",
-  "/receipts",
-  "/requisitions",
-  "/liquidations",
-  "/stocktake",
-  "/defects",
-  "/defects/exchange",
-  "/repairs",
-  "/fuel",
-  "/fuel/reports",
-  "/reports",
-  "/admin/audit-logs",
-];
-
-export async function devReopenDoc(kind: DevDocKind, id: string) {
-  const current = await requireProfile();
-  const supabase = await createClient();
-  await reopenByKind(supabase, kind, id, current.id);
-  for (const r of ROUTES) revalidatePath(r);
-  return { ok: true };
-}
-
-export async function devDeleteDoc(kind: DevDocKind, id: string) {
-  const current = await requireProfile();
-  const supabase = await createClient();
-  await deleteByKind(supabase, kind, id, current.id);
-  for (const r of ROUTES) revalidatePath(r);
-  return { ok: true };
-}
-
-export const reopenDocumentDevAction = devReopenDoc;
-export const deleteDocumentDevAction = devDeleteDoc;
+export type { AdminDocKind, AdminDocKind as DevDocKind } from "@/features/admin-tools/types";

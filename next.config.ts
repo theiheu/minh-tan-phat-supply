@@ -37,11 +37,12 @@ function supabaseStoragePatterns(): NonNullable<NonNullable<NextConfig["images"]
 
 const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline';
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval';
+    worker-src 'self' blob:;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https: http:;
     font-src 'self' data:;
-    connect-src 'self' ws: wss: http: https:;
+    connect-src 'self' ws: wss: http: https: blob:;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
@@ -109,6 +110,15 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/fonts/:all*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/@powersync/:all*",
         headers: [
           {
             key: "Cache-Control",

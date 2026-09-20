@@ -176,3 +176,27 @@ export interface RequisitionsReportData {
   totalCount: number;
   requisitions: RequisitionReportRow[];
 }
+
+export type ReportSection = "overview" | "operations" | "bi";
+
+export type OperationalReportKey = "xnt" | "zones" | "vehicles" | "partners" | "stock_card";
+
+export type ManagementAlertSeverity = "critical" | "warning" | "info";
+
+export interface ManagementAlert {
+  id: string;
+  severity: ManagementAlertSeverity;
+  title: string;
+  description: string;
+  value: string;
+  targetSection: ReportSection;
+  targetReport?: OperationalReportKey;
+}
+
+export interface ManagementOverviewData {
+  general: GeneralReportData;
+  zones: ZoneCostReportData;
+  vehicles: VehicleReportData;
+  alerts: ManagementAlert[];
+  generatedAt: string;
+}

@@ -19,6 +19,12 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.9.1
         version: 5.9.1(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.1.0))(zod@4.6.5)
+      '@powersync/react':
+        specifier: ^2.0.1
+        version: 2.0.1(@powersync/common@2.2.1)(react@19.1.0)
+      '@powersync/web':
+        specifier: ^2.3.1
+        version: 2.3.1(@powersync/common@2.2.1)(@powersync/shared-internals@1.2.0(@powersync/common@2.2.1))
       '@react-pdf/renderer':
         specifier: ^4.9.0
         version: 4.9.0(react@19.1.0)
@@ -926,6 +932,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@journeyapps/wa-sqlite@2.0.4':
+    resolution: {integrity: sha512-c5WE1UPOgDVy8+v63NRRhWsQqvWgkhS1TZKBxEYW/MS7bJE4ndbOfofz9covF7N2KElQVVRZ0qd+XjiS4zt63g==}
+
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
@@ -1120,6 +1129,27 @@ packages:
 
   '@oxc-project/types@0.150.0':
     resolution: {integrity: sha512-rDS5/31E9HfPl/CIzGrn0DOlvBbXFseQ5URJ9sYMfstbKLD/c6Gm9vmRzRGDdAXyOIL4zmO37lc9RIwYqVruZw==}
+
+  '@powersync/common@2.2.1':
+    resolution: {integrity: sha512-4+03E9ikc4jtczj4IJVi7zcvdfGDYXBKpKsVlLP+oCDweV9mil1U9sJ+11QCHAx3W2P4rqIOqwTPEYaTMaTi3w==}
+
+  '@powersync/react@2.0.1':
+    resolution: {integrity: sha512-t2604rFnQlK5LfXUJBD3NCzFozpHSbYwN02CtTiVH8GcFU0SkxM1Mij2103AnqmsAf9o0BOR3vuT07R2UBKJvg==}
+    peerDependencies:
+      '@powersync/common': ^2.2.0
+      react: '*'
+
+  '@powersync/shared-internals@1.2.0':
+    resolution: {integrity: sha512-wkSgKKcIo9It6axdDBfAJNxzQcfc6hVMlcycxoPSAuMIo/GnXuyi2bl3DpMaZWMutrXlkemPKG3y4nuqxLYpVA==}
+    peerDependencies:
+      '@powersync/common': ^2.2.0
+
+  '@powersync/web@2.3.1':
+    resolution: {integrity: sha512-+Tjqy5ZDJAUoGCPmh4Ui/rsut3/gFvyfMJl6UD2JSogQKzqxXjQvd5E48ZPumFwn75cgyxxsxCi4EbOUS1YlcQ==}
+    hasBin: true
+    peerDependencies:
+      '@powersync/common': ^2.2.1
+      '@powersync/shared-internals': ^1.2.0
 
   '@radix-ui/number@1.1.3':
     resolution: {integrity: sha512-Road2bidD0uu/1BGDOWNdPI06g0lIRy6IF9GZcIrDK2KGItfor8IQwQa+yM2ERgHM1MmHxaxpTzk0/Jp42lNfA==}
@@ -2847,12 +2877,19 @@ packages:
     resolution: {integrity: sha512-Bb6Cq8oq0IjDOe8wJmi4JeNn763Xs9cfrBcaylK1tPypWzyoy2G3l90v9k64kjphl/ZJjPIShFztenRomi8WTg==}
     engines: {node: '>=18'}
 
+  comlink@4.4.2:
+    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
+
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
 
   commander@11.1.0:
     resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
     engines: {node: '>=16'}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   commander@14.0.3:
     resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
@@ -6440,6 +6477,8 @@ snapshots:
   '@img/sharp-win32-x64@0.35.4':
     optional: true
 
+  '@journeyapps/wa-sqlite@2.0.4': {}
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
@@ -6586,6 +6625,25 @@ snapshots:
   '@opentelemetry/api@1.9.0': {}
 
   '@oxc-project/types@0.150.0': {}
+
+  '@powersync/common@2.2.1': {}
+
+  '@powersync/react@2.0.1(@powersync/common@2.2.1)(react@19.1.0)':
+    dependencies:
+      '@powersync/common': 2.2.1
+      react: 19.1.0
+
+  '@powersync/shared-internals@1.2.0(@powersync/common@2.2.1)':
+    dependencies:
+      '@powersync/common': 2.2.1
+
+  '@powersync/web@2.3.1(@powersync/common@2.2.1)(@powersync/shared-internals@1.2.0(@powersync/common@2.2.1))':
+    dependencies:
+      '@journeyapps/wa-sqlite': 2.0.4
+      '@powersync/common': 2.2.1
+      '@powersync/shared-internals': 1.2.0(@powersync/common@2.2.1)
+      comlink: 4.4.2
+      commander: 12.1.0
 
   '@radix-ui/number@1.1.3': {}
 
@@ -8324,9 +8382,13 @@ snapshots:
     dependencies:
       color-name: 2.1.1
 
+  comlink@4.4.2: {}
+
   comma-separated-tokens@2.0.3: {}
 
   commander@11.1.0: {}
+
+  commander@12.1.0: {}
 
   commander@14.0.3: {}
 

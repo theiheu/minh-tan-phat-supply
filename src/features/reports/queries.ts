@@ -1,4 +1,4 @@
-import { REQUISITION_STATUS, variantLabel } from "@/lib/labels";
+import { REQUISITION_STATUS } from "@/lib/labels";
 import { formatZoneLabel } from "@/lib/format-zone";
 import { dayRange } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -14,8 +14,10 @@ import {
   type ZoneDefectInput,
   type ZoneIssueInput,
 } from "./lib/calculations";
+import { buildManagementAlerts } from "./lib/management-insights";
 import type {
   GeneralReportData,
+  ManagementOverviewData,
   PartnersReportData,
   RequisitionReportItem,
   RequisitionReportRow,
@@ -369,7 +371,23 @@ export async function fetchZoneCostReportData(params: {
     supabase
       .from("issues")
       .select(
-        "id, zone_id, destination_type, status, zones(name), issue_items(quantity, unit_price, sku_id, skus(unit, attributes, products(name)))"
+        `
+        id, zone_id, destination_type, status,
+        zones(name),
+        issue_items(
+          quantity, unit_price, sku_id, sku_name_snapshot, uom_name_snapshot,
+          skus(
+            id, sku_code,
+            units(name, symbol),
+            products(name),
+            sku_attribute_values(
+              text_value, numeric_value, boolean_value, legacy_text_value,
+              attribute_definitions(name),
+              units(symbol)
+            )
+          )
+        )
+      `
       )
       .eq("destination_type", "zone")
       .eq("status", "posted")
@@ -390,10 +408,27 @@ export async function fetchZoneCostReportData(params: {
   const mappedIssues: ZoneIssueInput[] = (issuesRes.data ?? []).map((issue) => {
     const zoneName = (issue.zones as { name?: string } | null)?.name || "";
     const items = (issue.issue_items ?? []).map((it) => {
-      const v = it.skus as { unit?: string | null; attributes?: unknown; products?: { name?: string } | null } | null;
-      const productName = v?.products?.name || "Vật tư";
-      const vLabel = v ? variantLabel(v.attributes, v.unit) : "";
-      const unit = v?.unit || "cái";
+      const v = it.skus as {
+        units?: { name?: string | null; symbol?: string | null } | null;
+        sku_attribute_values?: Array<{
+          text_value?: string | null;
+          legacy_text_value?: string | null;
+          numeric_value?: number | null;
+          units?: { symbol?: string | null } | null;
+        }>;
+        products?: { name?: string } | null;
+      } | null;
+      const unit = v?.units?.symbol || v?.units?.name || it.uom_name_snapshot || "cái";
+      const attrVals = (v?.sku_attribute_values ?? [])
+        .map(
+          (av) =>
+            av.text_value ||
+            av.legacy_text_value ||
+            (av.numeric_value ? `${av.numeric_value} ${av.units?.symbol ?? ""}`.trim() : null)
+        )
+        .filter(Boolean);
+      const vLabel = attrVals.length > 0 ? attrVals.join(" · ") : "";
+      const productName = v?.products?.name || it.sku_name_snapshot || "Vật tư";
       const quantity = Number(it.quantity) || 0;
       const unitPrice = Number(it.unit_price) || 0;
       const totalAmount = quantity * unitPrice;
@@ -970,4 +1005,59 @@ export async function fetchRequisitionsReportData(params: {
       items,
     };
   });
+}
+
+/** Aggregates the native management landing view without changing detail report contracts. */
+export async function fetchManagementOverviewData(params: {
+  locationId?: string;
+  from: string;
+  to: string;
+}): Promise<ManagementOverviewData> {
+  const [generalResult, zonesResult, vehiclesResult] = await Promise.allSettled([
+    fetchGeneralReportData(params),
+    fetchZoneCostReportData({ from: params.from, to: params.to }),
+    fetchVehicleReportData({ from: params.from, to: params.to }),
+  ]);
+
+  const general: GeneralReportData =
+    generalResult.status === "fulfilled"
+      ? generalResult.value
+      : {
+          totalInventoryValue: 0,
+          totalImportValue: 0,
+          totalIssuedCost: 0,
+          totalSalesRevenue: 0,
+          stockLedger: [],
+          categoryBreakdown: [],
+          defectsSummary: {
+            totalDefects: 0,
+            repairedCount: 0,
+            repairCost: 0,
+            liquidationRevenue: 0,
+          },
+          fuelSummary: {
+            totalImportedLiters: 0,
+            totalDispensedLiters: 0,
+            currentTankStock: 0,
+            estimatedCost: 0,
+          },
+        };
+
+  const zones: ZoneCostReportData =
+    zonesResult.status === "fulfilled"
+      ? zonesResult.value
+      : { grandTotalCost: 0, zones: [] };
+
+  const vehicles: VehicleReportData =
+    vehiclesResult.status === "fulfilled"
+      ? vehiclesResult.value
+      : { totalLitersAllVehicles: 0, vehicles: [] };
+
+  return {
+    general,
+    zones,
+    vehicles,
+    alerts: buildManagementAlerts({ general, zones, vehicles }),
+    generatedAt: new Date().toISOString(),
+  };
 }

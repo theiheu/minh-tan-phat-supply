@@ -1,0 +1,57 @@
+# PowerSync Sync Rules Configuration
+# Dành cho Hệ thống Quản Lý Kho & Vận Hành Trại Gà Minh Tân Phát Supply
+
+bucket_definitions:
+  # 1. Bucket Danh mục Dùng chung Toàn Hệ thống (Global Catalog & Metadata)
+  # Đồng bộ danh mục vật tư, đơn vị quy đổi, xe cơ giới, khu vực trại về tất cả client
+  global_metadata:
+    data:
+      - SELECT * FROM categories WHERE deleted_at IS NULL
+      - SELECT * FROM products WHERE deleted_at IS NULL
+      - SELECT * FROM units
+      - SELECT * FROM skus WHERE sku_status = 'active'
+      - SELECT * FROM sku_transaction_units WHERE is_active = true
+      - SELECT * FROM zones WHERE deleted_at IS NULL
+      - SELECT * FROM sub_zones WHERE deleted_at IS NULL
+      - SELECT * FROM vehicles WHERE is_active = true
+      - SELECT * FROM fuel_types WHERE is_active = true
+
+  # 2. Bucket Phiếu Yêu Cầu Cấp Phát Vật Tư (User Requisitions)
+  # Phân vùng theo người yêu cầu hoặc cho phép Quản lý/Thủ kho thấy toàn bộ
+  user_requisitions:
+    parameters:
+      - SELECT request.user_id() as current_user_id
+    data:
+      - SELECT * FROM requisitions 
+        WHERE requester_id = current_user_id
+           OR EXISTS (
+             SELECT 1 FROM profiles 
+             WHERE id = current_user_id 
+               AND role IN ('superuser', 'owner', 'manager', 'warehouse', 'accountant')
+           )
+      - SELECT ri.* FROM requisition_items ri
+        INNER JOIN requisitions r ON ri.requisition_id = r.id
+        WHERE r.requester_id = current_user_id
+           OR EXISTS (
+             SELECT 1 FROM profiles 
+             WHERE id = current_user_id 
+               AND role IN ('superuser', 'owner', 'manager', 'warehouse', 'accountant')
+           )
+
+  # 3. Bucket Nhật Ký Thực Địa (Cấp phát nhiên liệu & Mượn trả công cụ dụng cụ)
+  field_operations:
+    parameters:
+      - SELECT request.user_id() as current_user_id
+    data:
+      # Lịch sử cấp phát nhiên liệu gần đây (30 ngày) hoặc do chính người dùng cấp phát
+      - SELECT * FROM fuel_dispenses 
+        WHERE dispenser_id = current_user_id 
+           OR created_at >= NOW() - INTERVAL '30 days'
+      # Phiếu mượn dụng cụ của người dùng hoặc đang trong trạng thái chưa trả
+      - SELECT * FROM tool_borrowings 
+        WHERE borrower_id = current_user_id 
+           OR status = 'borrowed'
+      - SELECT tbi.* FROM tool_borrowing_items tbi
+        INNER JOIN tool_borrowings tb ON tbi.borrowing_id = tb.id
+        WHERE tb.borrower_id = current_user_id 
+           OR tb.status = 'borrowed'

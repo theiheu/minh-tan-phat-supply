@@ -4741,6 +4741,41 @@ export type Database = {
         Args: { p_by: string; p_id: string; p_invoice_images: string[] }
         Returns: undefined
       }
+      admin_inspect_document_dependencies: {
+        Args: { p_kind: string; p_id: string }
+        Returns: Json
+      }
+      admin_delete_document: {
+        Args: {
+          p_kind: string
+          p_id: string
+          p_cascade?: boolean
+          p_reason?: string
+          p_by?: string
+        }
+        Returns: undefined
+      }
+      admin_reopen_document: {
+        Args: {
+          p_kind: string
+          p_id: string
+          p_reason?: string
+          p_by?: string
+        }
+        Returns: undefined
+      }
+      admin_override_document_meta: {
+        Args: {
+          p_kind: string
+          p_id: string
+          p_created_at?: string | null
+          p_actor_id?: string | null
+          p_notes?: string | null
+          p_reason?: string
+          p_by?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       damage_type:

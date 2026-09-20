@@ -1,444 +1,82 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import {
-  BarChart3,
-  BookOpen,
-  Boxes,
-  FileSpreadsheet,
-  Handshake,
-  Home,
-  Loader2,
-  Printer,
-  Truck,
-} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FileSpreadsheet, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  getGeneralReportAction,
-  getPartnersReportAction,
-  getStockCardAction,
-  getVehicleReportAction,
-  getZoneCostReportAction,
-} from "../actions";
-import type {
-  DatePreset,
-  GeneralReportData,
-  PartnersReportData,
-  StockCardData,
-  VehicleReportData,
-  ZoneCostReportData,
-} from "../types";
-import { GeneralReportTab } from "./general-report-tab";
-import { XntReportTab } from "./xnt-report-tab";
+import { getGeneralReportAction, getManagementOverviewAction, getPartnersReportAction, getStockCardAction, getVehicleReportAction, getZoneCostReportAction } from "../actions";
+import type { DatePreset, GeneralReportData, ManagementOverviewData, OperationalReportKey, PartnersReportData, ReportSection, StockCardData, VehicleReportData, ZoneCostReportData } from "../types";
+import { ManagementOverview } from "./management-overview";
+import { MetabaseBiTab } from "./metabase-bi-tab";
 import { PartnersReportTab } from "./partners-report-tab";
-import {
-  getPresetRange,
-  ReportDateFilters,
-  type StockLocationOption,
-} from "./report-date-filters";
+import { ReportDateFilters, type StockLocationOption } from "./report-date-filters";
+import { OPERATIONAL_REPORTS, ReportSectionNav } from "./report-section-nav";
 import { StockCardTab, type StockVariantOption } from "./stock-card-tab";
 import { VehicleReportTab } from "./vehicle-report-tab";
+import { XntReportTab } from "./xnt-report-tab";
 import { ZoneCostReportTab } from "./zone-cost-report-tab";
 
-export type ReportTab = "general" | "xnt" | "zones" | "vehicles" | "partners" | "stock_card";
-
 export interface ReportsHubProps {
-  initialGeneralData?: GeneralReportData | null;
-  locations?: StockLocationOption[];
-  variants?: StockVariantOption[];
-  initialDateRange?: {
-    from: string;
-    to: string;
-    preset: DatePreset;
-    locationId?: string;
-  };
+  initialOverviewData?: ManagementOverviewData | null; initialGeneralData?: GeneralReportData | null;
+  locations?: StockLocationOption[]; variants?: StockVariantOption[];
+  initialDateRange: { from:string; to:string; preset:DatePreset; locationId?:string };
+  initialSection?: ReportSection; initialReport?: OperationalReportKey;
 }
 
-/**
- * Maps the active tab key to the server export/PDF type identifier.
- */
-export function getExportType(tab: ReportTab): string {
-  switch (tab) {
-    case "general":
-    case "xnt":
-      return "stock_ledger";
-    case "zones":
-      return "zone_cost";
-    case "vehicles":
-      return "vehicles";
-    case "partners":
-      return "partners";
-    case "stock_card":
-      return "stock_card";
-  }
+const exportTypes: Record<OperationalReportKey,string> = { xnt:"stock_ledger", zones:"zone_cost", vehicles:"vehicles", partners:"partners", stock_card:"stock_card" };
+export function getExportType(report: OperationalReportKey) { return exportTypes[report]; }
+
+function parseLocation(): { section:ReportSection; report:OperationalReportKey } {
+  if (typeof window === "undefined") return { section:"overview", report:"xnt" };
+  const params = new URLSearchParams(window.location.search); const s=params.get("section"); const r=params.get("report");
+  const validReport = !r || r in exportTypes;
+  const section: ReportSection = s === "bi" ? "bi" : s === "operations" && validReport ? "operations" : "overview";
+  const report: OperationalReportKey = r && r in exportTypes ? r as OperationalReportKey : "xnt";
+  return { section, report };
 }
 
-export function ReportsHub({
-  initialGeneralData = null,
-  locations = [],
-  variants = [],
-  initialDateRange,
-}: ReportsHubProps) {
-  // Default to current month date range if none provided
-  const [dateRange, setDateRange] = useState<{
-    from: string;
-    to: string;
-    preset: DatePreset;
-    locationId?: string;
-  }>(() => {
-    if (initialDateRange) return initialDateRange;
-    const defaultRange = getPresetRange("this_month");
-    return {
-      from: defaultRange.from,
-      to: defaultRange.to,
-      preset: "this_month",
-      locationId: undefined,
-    };
-  });
+export function ReportsHub({ initialOverviewData=null, initialGeneralData=null, locations=[], variants=[], initialDateRange, initialSection="overview", initialReport="xnt" }: ReportsHubProps) {
+  const [section,setSection]=useState<ReportSection>(initialSection); const [report,setReport]=useState<OperationalReportKey>(initialReport);
+  const [dateRange,setDateRange]=useState(initialDateRange); const [selectedVariantId,setSelectedVariantId]=useState("");
+  const [overview,setOverview]=useState(initialOverviewData); const [general,setGeneral]=useState(initialGeneralData ?? initialOverviewData?.general ?? null);
+  const [zones,setZones]=useState<ZoneCostReportData|null>(initialOverviewData?.zones ?? null); const [vehicles,setVehicles]=useState<VehicleReportData|null>(initialOverviewData?.vehicles ?? null);
+  const [partners,setPartners]=useState<PartnersReportData|null>(null); const [stockCard,setStockCard]=useState<StockCardData|null>(null);
+  const [loading,setLoading]=useState(false); const [error,setError]=useState<string|null>(null); const requestSeq=useRef(0); const first=useRef(true);
 
-  const [activeTab, setActiveTab] = useState<ReportTab>("general");
-  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
-  const [, startTabTransition] = useTransition();
+  const updateUrl=useCallback((nextSection:ReportSection,nextReport=report,replace=false)=>{
+    if(typeof window==="undefined") return; const url=new URL(window.location.href);
+    if(nextSection==="overview"){url.searchParams.delete("section");url.searchParams.delete("report");} else {url.searchParams.set("section",nextSection); if(nextSection==="operations") url.searchParams.set("report",nextReport); else url.searchParams.delete("report");}
+    window.history[replace?"replaceState":"pushState"]({},"",url);
+  },[report]);
+  const navigate=useCallback((nextSection:ReportSection,nextReport?:OperationalReportKey)=>{const resolved=nextReport??report;setSection(nextSection);if(nextReport)setReport(nextReport);updateUrl(nextSection,resolved);},[report,updateUrl]);
+  useEffect(()=>{const onPop=()=>{const next=parseLocation();setSection(next.section);setReport(next.report);};window.addEventListener("popstate",onPop);return()=>window.removeEventListener("popstate",onPop);},[]);
 
-  const handleSelectTab = (tab: ReportTab) => {
-    if (tab === activeTab) return;
-    startTabTransition(() => {
-      setActiveTab(tab);
-    });
-  };
-
-  // Data cache for tabs
-  const [generalData, setGeneralData] = useState<GeneralReportData | null>(initialGeneralData);
-  const [zoneCostData, setZoneCostData] = useState<ZoneCostReportData | null>(null);
-  const [vehicleData, setVehicleData] = useState<VehicleReportData | null>(null);
-  const [partnersData, setPartnersData] = useState<PartnersReportData | null>(null);
-  const [stockCardData, setStockCardData] = useState<StockCardData | null>(null);
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const isInitialMount = useRef<boolean>(true);
-
-  // Load active tab data from server
-  const loadTabData = useCallback(
-    async (tab: ReportTab, range: typeof dateRange, variantId: string) => {
-      setIsLoading(true);
-      try {
-        switch (tab) {
-          case "general":
-          case "xnt": {
-            const res = await getGeneralReportAction({
-              locationId: range.locationId,
-              from: range.from,
-              to: range.to,
-            });
-            setGeneralData(res);
-            break;
-          }
-          case "zones": {
-            const res = await getZoneCostReportAction({
-              from: range.from,
-              to: range.to,
-            });
-            setZoneCostData(res);
-            break;
-          }
-          case "vehicles": {
-            const res = await getVehicleReportAction({
-              from: range.from,
-              to: range.to,
-            });
-            setVehicleData(res);
-            break;
-          }
-          case "partners": {
-            const res = await getPartnersReportAction({
-              from: range.from,
-              to: range.to,
-            });
-            setPartnersData(res);
-            break;
-          }
-          case "stock_card": {
-            if (variantId) {
-              const res = await getStockCardAction({
-                variantId,
-                locationId: range.locationId,
-                from: range.from,
-                to: range.to,
-              });
-              setStockCardData(res);
-            } else {
-              setStockCardData(null);
-            }
-            break;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load report data:", err);
-        const msg = err instanceof Error ? err.message : "Lỗi tải dữ liệu báo cáo";
-        toast.error(msg);
-      } finally {
-        setIsLoading(false);
+  const load=useCallback(async()=>{
+    const seq=++requestSeq.current; setLoading(true); setError(null);
+    try {
+      if(section==="overview"){const data=await getManagementOverviewAction(dateRange);if(seq===requestSeq.current){setOverview(data);setGeneral(data.general);setZones(data.zones);setVehicles(data.vehicles);}}
+      else if(section==="operations"){
+        if(report==="xnt"){const data=await getGeneralReportAction(dateRange);if(seq===requestSeq.current)setGeneral(data);}
+        if(report==="zones"){const data=await getZoneCostReportAction(dateRange);if(seq===requestSeq.current)setZones(data);}
+        if(report==="vehicles"){const data=await getVehicleReportAction(dateRange);if(seq===requestSeq.current)setVehicles(data);}
+        if(report==="partners"){const data=await getPartnersReportAction(dateRange);if(seq===requestSeq.current)setPartners(data);}
+        if(report==="stock_card"){if(!selectedVariantId){if(seq===requestSeq.current)setStockCard(null);}else{const data=await getStockCardAction({...dateRange,variantId:selectedVariantId});if(seq===requestSeq.current)setStockCard(data);}}
       }
-    },
-    []
-  );
+    } catch(e){if(seq===requestSeq.current){const message=e instanceof Error?e.message:"Lỗi tải dữ liệu báo cáo";setError(message);if(section==="overview")setOverview(null);else if(report==="xnt")setGeneral(null);else if(report==="zones")setZones(null);else if(report==="vehicles")setVehicles(null);else if(report==="partners")setPartners(null);else setStockCard(null);toast.error(message);}} finally {if(seq===requestSeq.current)setLoading(false);}
+  },[section,report,dateRange,selectedVariantId]);
+  useEffect(()=>{if(first.current){first.current=false; if(section==="overview"&&initialOverviewData)return; if(section==="operations"&&report==="xnt"&&initialGeneralData)return; if(section==="bi")return;} if(section!=="bi")void load();},[section,report,dateRange,selectedVariantId,load,initialOverviewData,initialGeneralData]);
 
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      // Skip fetching general data on mount if already supplied by server component
-      if ((activeTab === "general" || activeTab === "xnt") && initialGeneralData) {
-        return;
-      }
-    }
-
-    loadTabData(activeTab, dateRange, selectedVariantId);
-  }, [activeTab, dateRange, selectedVariantId, loadTabData, initialGeneralData]);
-
-  // Check if export is allowed for current tab
-  const isExportDisabled = activeTab === "stock_card" && !selectedVariantId;
-
-  // Build export URLs
-  const buildReportUrl = (endpoint: string): string => {
-    const params = new URLSearchParams();
-    params.set("type", getExportType(activeTab));
-    params.set("from", dateRange.from);
-    params.set("to", dateRange.to);
-    if (dateRange.locationId) {
-      params.set("location", dateRange.locationId);
-    }
-    if (activeTab === "stock_card" && selectedVariantId) {
-      params.set("variantId", selectedVariantId);
-    }
-    return `${endpoint}?${params.toString()}`;
-  };
-
-  const exportUrl = buildReportUrl("/api/reports/export");
-  const pdfUrl = buildReportUrl("/api/reports/pdf");
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* 1. Subnav Tabs - Top Navigation (styled like /fuel) */}
-      <div className="overflow-x-auto border-b pb-0.5 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
-        <nav role="tablist" className="-mb-px flex min-w-max space-x-2 sm:space-x-6">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "general"}
-            onClick={() => handleSelectTab("general")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
-              activeTab === "general"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-            }`}
-          >
-            {activeTab === "general" && isLoading ? (
-              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
-            ) : (
-              <BarChart3 className="size-3.5 sm:size-4 text-blue-500" aria-hidden="true" />
-            )}
-            <span>Tổng quan</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "xnt"}
-            onClick={() => handleSelectTab("xnt")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
-              activeTab === "xnt"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-            }`}
-          >
-            {activeTab === "xnt" && isLoading ? (
-              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
-            ) : (
-              <Boxes className="size-3.5 sm:size-4 text-indigo-500" aria-hidden="true" />
-            )}
-            <span>Xuất - Nhập - Tồn</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "zones"}
-            onClick={() => handleSelectTab("zones")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
-              activeTab === "zones"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-            }`}
-          >
-            {activeTab === "zones" && isLoading ? (
-              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
-            ) : (
-              <Home className="size-3.5 sm:size-4 text-amber-500" aria-hidden="true" />
-            )}
-            <span>Theo Trại</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "vehicles"}
-            onClick={() => handleSelectTab("vehicles")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
-              activeTab === "vehicles"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-            }`}
-          >
-            {activeTab === "vehicles" && isLoading ? (
-              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
-            ) : (
-              <Truck className="size-3.5 sm:size-4 text-emerald-500" aria-hidden="true" />
-            )}
-            <span>Phương tiện</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "partners"}
-            onClick={() => handleSelectTab("partners")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
-              activeTab === "partners"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-            }`}
-          >
-            {activeTab === "partners" && isLoading ? (
-              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
-            ) : (
-              <Handshake className="size-3.5 sm:size-4 text-violet-500" aria-hidden="true" />
-            )}
-            <span>Đối tác</span>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === "stock_card"}
-            onClick={() => handleSelectTab("stock_card")}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-2 py-2.5 text-xs sm:text-sm font-medium transition-colors cursor-pointer select-none ${
-              activeTab === "stock_card"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-            }`}
-          >
-            {activeTab === "stock_card" && isLoading ? (
-              <Loader2 className="size-3.5 sm:size-4 animate-spin text-primary" aria-hidden="true" />
-            ) : (
-              <BookOpen className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
-            )}
-            <span>Sổ Thẻ kho</span>
-          </button>
-        </nav>
-      </div>
-
-      {/* 2. Filters + compact export actions on the same row */}
-      <ReportDateFilters
-        value={dateRange}
-        onChange={setDateRange}
-        locations={locations}
-        showLocation={true}
-        actions={
-          activeTab !== "general" ? (
-            <>
-              {isExportDisabled ? (
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  disabled
-                  aria-label="Xuất Excel (.xlsx)"
-                  title="Vui lòng chọn một vật tư trước khi xuất Excel"
-                  className="h-8 w-8 text-muted-foreground sm:w-auto sm:px-2.5"
-                >
-                  <FileSpreadsheet className="size-3.5" aria-hidden="true" />
-                  <span className="hidden text-xs sm:inline">Excel</span>
-                </Button>
-              ) : (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 gap-1.5 p-0 shadow-xs sm:w-auto sm:px-2.5"
-                >
-                  <a href={exportUrl} download aria-label="Xuất Excel (.xlsx)" title="Xuất Excel (.xlsx)">
-                    <FileSpreadsheet
-                      className="size-3.5 text-emerald-600 dark:text-emerald-400"
-                      aria-hidden="true"
-                    />
-                    <span className="hidden text-xs sm:inline">Excel</span>
-                  </a>
-                </Button>
-              )}
-
-              {isExportDisabled ? (
-                <Button
-                  variant="outline"
-                  size="icon-sm"
-                  disabled
-                  aria-label="In Báo Cáo PDF"
-                  title="Vui lòng chọn một vật tư trước khi in PDF"
-                  className="h-8 w-8 text-muted-foreground sm:w-auto sm:px-2.5"
-                >
-                  <Printer className="size-3.5" aria-hidden="true" />
-                  <span className="hidden text-xs sm:inline">PDF</span>
-                </Button>
-              ) : (
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 gap-1.5 p-0 shadow-xs sm:w-auto sm:px-2.5"
-                >
-                  <a
-                    href={pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="In Báo Cáo PDF"
-                    title="In Báo Cáo PDF"
-                  >
-                    <Printer className="size-3.5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                    <span className="hidden text-xs sm:inline">PDF</span>
-                  </a>
-                </Button>
-              )}
-            </>
-          ) : null
-        }
-      />
-
-      {/* 4. Tab Contents */}
-      <div className="space-y-6">
-        {activeTab === "general" && (
-          <GeneralReportTab
-            data={generalData}
-            isLoading={isLoading}
-            onNavigateToXnt={() => setActiveTab("xnt")}
-          />
-        )}
-        {activeTab === "xnt" && (
-          <XntReportTab data={generalData} isLoading={isLoading} />
-        )}
-        {activeTab === "zones" && (
-          <ZoneCostReportTab data={zoneCostData} isLoading={isLoading} />
-        )}
-        {activeTab === "vehicles" && (
-          <VehicleReportTab data={vehicleData} isLoading={isLoading} />
-        )}
-        {activeTab === "partners" && (
-          <PartnersReportTab data={partnersData} isLoading={isLoading} />
-        )}
-        {activeTab === "stock_card" && (
-          <StockCardTab
-            variants={variants}
-            locations={locations}
-            data={stockCardData}
-            selectedVariantId={selectedVariantId}
-            onSelectVariant={setSelectedVariantId}
-            isLoading={isLoading}
-          />
-        )}
-      </div>
-    </div>
-  );
+  const params=new URLSearchParams({type:getExportType(report),from:dateRange.from,to:dateRange.to}); if(dateRange.locationId)params.set("location",dateRange.locationId); if(report==="stock_card"&&selectedVariantId)params.set("variantId",selectedVariantId);
+  const exportDisabled=report==="stock_card"&&!selectedVariantId; const reportMeta=OPERATIONAL_REPORTS.find(item=>item.key===report)!;
+  return <div className="space-y-5">
+    <header><p className="text-sm font-medium text-primary">Trung tâm điều hành</p><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Báo cáo & Phân tích</h1><p className="mt-1 text-sm text-muted-foreground">Theo dõi tín hiệu quản trị, đối soát sổ sách và khám phá dữ liệu chuyên sâu.</p></header>
+    <ReportSectionNav section={section} report={report} onSectionChange={navigate} onReportChange={(next)=>navigate("operations",next)}/>
+    <section id="report-section-panel" role="tabpanel" aria-labelledby={`report-section-${section}`} className="space-y-4">
+      {section!=="bi"&&<ReportDateFilters value={dateRange} onChange={setDateRange} locations={locations} showLocation={section==="overview"||report==="xnt"||report==="stock_card"} actions={section==="operations"?<div className="flex gap-2"><ExportButton disabled={exportDisabled} href={`/api/reports/export?${params}`} label="Excel" icon="excel"/><ExportButton disabled={exportDisabled} href={`/api/reports/pdf?${params}`} label="PDF" icon="pdf" newTab/></div>:undefined}/>}
+      {section==="overview"&&<ManagementOverview data={overview} isLoading={loading} error={error} onNavigate={navigate}/>}
+      {section==="operations"&&<div className="space-y-4"><div><h2 className="text-xl font-bold">{reportMeta.label}</h2><p className="text-sm text-muted-foreground">{reportMeta.description}</p>{error&&<p role="alert" className="mt-2 text-sm text-destructive">{error}</p>}</div>{report==="xnt"&&<XntReportTab data={general} isLoading={loading}/>} {report==="zones"&&<ZoneCostReportTab data={zones} isLoading={loading}/>} {report==="vehicles"&&<VehicleReportTab data={vehicles} isLoading={loading}/>} {report==="partners"&&<PartnersReportTab data={partners} isLoading={loading}/>} {report==="stock_card"&&<StockCardTab variants={variants} locations={locations} data={stockCard} selectedVariantId={selectedVariantId} onSelectVariant={setSelectedVariantId} isLoading={loading}/>}</div>}
+      {section==="bi"&&<MetabaseBiTab/>}
+    </section>
+  </div>;
 }
+function ExportButton({disabled,href,label,icon,newTab}:{disabled:boolean;href:string;label:string;icon:"excel"|"pdf";newTab?:boolean}){const Icon=icon==="excel"?FileSpreadsheet:Printer;if(disabled)return <Button disabled variant="outline" size="sm" title="Vui lòng chọn một vật tư trước"><Icon className="size-4"/>{label}</Button>;return <Button asChild variant="outline" size="sm"><a href={href} target={newTab?"_blank":undefined} rel={newTab?"noopener noreferrer":undefined} download={!newTab||undefined} aria-label={icon==="excel"?"Xuất Excel (.xlsx)":"In Báo Cáo PDF"}><Icon className="size-4"/>{label}</a></Button>}

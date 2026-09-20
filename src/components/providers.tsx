@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { makeQueryClient } from "@/lib/query-client";
 import { OfflineSyncProvider } from "@/components/offline/offline-sync-provider";
+import { PowerSyncProvider } from "@/lib/powersync/provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(makeQueryClient);
@@ -13,9 +14,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-        <OfflineSyncProvider>
-          {children}
-        </OfflineSyncProvider>
+        <PowerSyncProvider>
+          <OfflineSyncProvider>
+            {children}
+          </OfflineSyncProvider>
+        </PowerSyncProvider>
         <Toaster position="top-center" />
       </ThemeProvider>
     </QueryClientProvider>

@@ -3,12 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DevDocTools } from "./dev-doc-tools";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
 
-vi.mock("./actions", () => ({
-  devDeleteDoc: vi.fn().mockResolvedValue(undefined),
-  devReopenDoc: vi.fn().mockResolvedValue(undefined),
+vi.mock("@/features/admin-tools/actions", () => ({
+  adminDeleteDocAction: vi.fn().mockResolvedValue({ ok: true }),
+  adminReopenDocAction: vi.fn().mockResolvedValue({ ok: true }),
+  adminInspectDocAction: vi.fn().mockResolvedValue({
+    document: { id: "123", code: "TEST-01" },
+    dependencies: [],
+    movements_count: 0,
+    can_direct_delete: true,
+  }),
 }));
 
 describe("DevDocTools", () => {
@@ -30,7 +36,7 @@ describe("DevDocTools", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders delete and reopen buttons when isDev is true and canReopen is true", () => {
+  it("renders delete, reopen, and can thiep buttons when isDev is true and canReopen is true", () => {
     render(
       <DevDocTools
         kind="issue"
@@ -46,7 +52,7 @@ describe("DevDocTools", () => {
     expect(screen.getByRole("button", { name: /Xoá/i })).toBeInTheDocument();
   });
 
-  it("renders only delete button when canReopen is false", () => {
+  it("renders only delete and can thiep buttons when canReopen is false", () => {
     render(
       <DevDocTools
         kind="defect"

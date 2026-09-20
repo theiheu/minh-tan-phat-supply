@@ -22,6 +22,7 @@ const eslintConfig = [
       "**/.tmp/**",
       "**/.supahome/**",
       "**/next-env.d.ts",
+      "**/public/@powersync/**",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

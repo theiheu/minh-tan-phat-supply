@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/manifest",
   "/robots.txt",
   "/sitemap.xml",
+  "/@powersync",
 ];
 
 export async function updateSession(request: NextRequest) {

@@ -1,0 +1,166 @@
+openapi: 3.0.0
+info:
+  title: Minh Tan Phat ERP AI Tools API
+  version: 1.0.0
+  description: Cung cấp bộ công cụ tra cứu tồn kho thực tế, lịch sử cấp phát nhiên liệu và tài liệu SOP trang trại cho Dify Agent.
+servers:
+  - url: https://minhtanphat.io.vn/api/ai-tools
+    description: Production ERP API
+  - url: http://127.0.0.1:3000/api/ai-tools
+    description: Local Homelab Server
+
+components:
+  securitySchemes:
+    MtpSecretAuth:
+      type: apiKey
+      in: header
+      name: x-mtp-ai-secret
+      description: Mã bí mật xác thực API Tools nội bộ của Minh Tân Phát ERP.
+
+security:
+  - MtpSecretAuth: []
+
+paths:
+  /stock:
+    get:
+      summary: Tra cứu tồn kho thực tế vật tư theo tên hoặc mã SKU
+      description: Tìm kiếm số lượng tồn kho tức thời tại các vị trí (Kho Tổng, Kho Cơ Điện, Kho Hỏng), cảnh báo tồn thấp và đơn vị tính.
+      operationId: getStockBalance
+      parameters:
+        - name: query
+          in: query
+          required: false
+          description: Từ khóa tên vật tư (VD động cơ, quạt hút, benkocid, van bi)
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Số lượng bản ghi tối đa cần trả về (mặc định 10)
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Kết quả tra cứu tồn kho thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  total_found: { type: integer }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_name: { type: string }
+                        category: { type: string }
+                        unit: { type: string }
+                        total_stock: { type: number }
+                        min_stock: { type: number }
+                        status: { type: string }
+                        locations: { type: string }
+
+  /fuel:
+    get:
+      summary: Tra cứu báo cáo cấp phát xăng dầu & danh sách xe cơ giới
+      description: Lấy tổng số lít dầu Diesel đã bơm theo khoảng thời gian hoặc danh sách xe kèm định mức tiêu hao.
+      operationId: getFuelReport
+      parameters:
+        - name: action
+          in: query
+          required: false
+          description: "Hành động tra cứu: 'dispense_report' (báo cáo bơm dầu) hoặc 'vehicles' (danh sách xe)"
+          schema:
+            type: string
+            enum: [dispense_report, vehicles]
+            default: dispense_report
+        - name: startDate
+          in: query
+          required: false
+          description: Ngày bắt đầu (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          required: false
+          description: Ngày kết thúc (YYYY-MM-DD)
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Số bản ghi tối đa
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Kết quả tra cứu nhiên liệu thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  total_dispenses: { type: integer }
+                  total_liters: { type: number }
+                  records:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code: { type: string }
+                        date: { type: string }
+                        vehicle: { type: string }
+                        fuel_type: { type: string }
+                        quantity_liters: { type: number }
+                        driver: { type: string }
+
+  /sop:
+    get:
+      summary: Tra cứu tài liệu quy trình SOP và cẩm nang kỹ thuật trại
+      description: Tra cứu danh mục tài liệu quy trình vận hành chuồng trại, bảo dưỡng và ứng cứu sự cố.
+      operationId: getSopDocuments
+      parameters:
+        - name: query
+          in: query
+          required: false
+          description: Từ khóa tên quy trình hoặc sự cố (VD mất điện, đổi 1-1, kiểm kê)
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          description: Phân loại tài liệu (sop, user_guide, architecture)
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Số tài liệu tối đa
+          schema:
+            type: integer
+            default: 5
+      responses:
+        '200':
+          description: Danh sách tài liệu SOP phù hợp
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  total_found: { type: integer }
+                  documents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        title: { type: string }
+                        category: { type: string }
+                        summary: { type: string }
+                        source: { type: string }

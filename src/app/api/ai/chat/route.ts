@@ -1,5 +1,6 @@
 import { streamText, Message } from "ai";
 import { getChatModel } from "@/lib/ai/providers/omniroute";
+import { difyClient } from "@/lib/ai/providers/dify";
 import { buildSystemPrompt } from "@/lib/ai/orchestrator/system-prompt";
 import { optimizeMessageHistory } from "@/lib/ai/orchestrator/token-optimizer";
 import { getRegisteredTools } from "@/lib/ai/registry";
@@ -107,7 +108,7 @@ export async function POST(req: Request) {
 
     const { messages }: { messages: Message[] } = parseResult.data as { messages: Message[] };
 
-    // 1. Kiểm tra Cài đặt Bật / Tắt AI và Model tùy chỉnh từ Database
+    // 1. Kiểm tra Cài đặt Bật / Tắt AI và Provider tùy chỉnh từ Database
     const { data: settingsRows } = await db.from("ai_system_settings").select("key, value");
     const settingsMap: Record<string, unknown> = {};
     (settingsRows || []).forEach((row) => {
@@ -121,12 +122,13 @@ export async function POST(req: Request) {
       );
     }
 
+    const effectiveProvider = (typeof settingsMap["ai_provider"] === "string" ? settingsMap["ai_provider"] : aiEnv.provider) as string;
     const effectiveModel = typeof settingsMap["ai_model"] === "string" ? settingsMap["ai_model"] : aiEnv.chatModel;
     
     // WP-11: Clamp max tokens and max steps by server policy
     let effectiveMaxTokens = aiEnv.maxTokens;
     if (typeof settingsMap["ai_max_tokens"] === "number") {
-      effectiveMaxTokens = Math.min(settingsMap["ai_max_tokens"] as number, 2048); // Ensure it does not exceed hard max (e.g., 2048)
+      effectiveMaxTokens = Math.min(settingsMap["ai_max_tokens"] as number, 2048);
     } else {
       effectiveMaxTokens = Math.min(aiEnv.maxTokens, 2048);
     }
@@ -169,7 +171,6 @@ export async function POST(req: Request) {
 
         let convId = recentConv?.id;
         if (!convId) {
-          // Audit Log WP-11: Giới hạn độ dài payload title để không vượt quá mức cho phép
           const convTitle = typeof lastUserMessage.content === 'string' ? lastUserMessage.content.slice(0, 60) : "Cuộc đàm thoại mới";
           const { data: newConv } = await db
             .from("ai_conversations")
@@ -185,7 +186,6 @@ export async function POST(req: Request) {
         }
 
         if (convId) {
-          // Truncate message payload for audit logging if necessary
           const stringContent = typeof lastUserMessage.content === 'string' ? lastUserMessage.content : JSON.stringify(lastUserMessage.content);
           const truncatedContent = stringContent.length > 5000 
             ? stringContent.slice(0, 5000) + " [TRUNCATED]" 
@@ -202,17 +202,40 @@ export async function POST(req: Request) {
       }
     }
 
-    const _safeStringifyLimit = (obj: any, limit: number = 5000) => {
-      if (!obj) return null;
-      try {
-        const str = JSON.stringify(obj);
-        return str.length > limit ? JSON.parse(str.slice(0, limit) + '"}') : obj; // Might still fail
-      } catch {
-        return { warning: "Payload truncated" };
-      }
-    };
-    
-    // Safer approach to limit object size
+    // NẾU CẤU HÌNH SỬ DỤNG DIFY ENGINE
+    if (effectiveProvider === "dify" && difyClient.isConfigured) {
+      const rawUserText = typeof lastUserMessage?.content === "string" ? lastUserMessage.content : JSON.stringify(lastUserMessage?.content || "");
+      const difyRes = await difyClient.streamChat({
+        query: rawUserText,
+        user: user.id,
+      });
+
+      return difyClient.createDataStreamResponse(difyRes, {
+        onFinish: async (fullText) => {
+          try {
+            const { data: latestConv } = await db
+              .from("ai_conversations")
+              .select("id")
+              .eq("user_id", user.id)
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .single();
+
+            if (latestConv?.id && fullText) {
+              await db.from("ai_messages").insert({
+                conversation_id: latestConv.id,
+                role: "assistant",
+                content: fullText.length > 5000 ? fullText.slice(0, 5000) + " [TRUNCATED]" : fullText,
+              });
+            }
+          } catch (saveErr) {
+            console.warn("[Dify Assistant Message Save Error]:", saveErr);
+          }
+        },
+      });
+    }
+
+    // Safer approach to limit object size for native tool calls
     const limitObjDeep = (obj: any, depth = 0, maxDepth = 5): any => {
       if (!obj) return null;
       if (depth >= maxDepth) return "[TRUNCATED_DEPTH]";
@@ -226,13 +249,13 @@ export async function POST(req: Request) {
       return obj;
     };
 
-    // 7. Khởi tạo Stream Text với Tool Calling đa bước
+    // 7. Khởi tạo Stream Text với Native Provider (Omniroute / OpenAI)
     const result = streamText({
       model: getChatModel(effectiveModel),
       system: systemPrompt,
       messages: optimizedMessages,
       tools,
-      maxSteps: 5, // WP-11 hard limit to 5 steps instead of 10 to avoid abuse
+      maxSteps: 5, // WP-11 hard limit to 5 steps
       maxTokens: effectiveMaxTokens,
       onFinish: async ({ text, toolCalls, toolResults }) => {
         try {
