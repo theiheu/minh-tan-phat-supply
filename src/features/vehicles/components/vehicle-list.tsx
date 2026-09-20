@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit3, FileText, Gauge, Image as ImageIcon, MapPin, Plus, QrCode, Truck } from "lucide-react";
+import { Edit3, FileText, Gauge, MapPin, Plus, QrCode, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ZoomableImage } from "@/components/image-lightbox";
 import { toggleVehicleActiveAction } from "../actions";
 import { VEHICLE_TYPE_LABELS, vehicleTypeLabel, type VehicleInput } from "../schema";
 import { VehicleDialog, type EditableVehicle, type VehicleOption } from "./vehicle-dialog";
@@ -105,7 +106,7 @@ export function VehicleList({
                       <TableHead>Loại / Khu vực</TableHead>
                       <TableHead>Nhiên liệu</TableHead>
                       <TableHead>Chỉ số / Định mức</TableHead>
-                      <TableHead>Giấy tờ xe</TableHead>
+                      <TableHead className="w-16 text-center">Giấy tờ xe</TableHead>
                       <TableHead>Trạng thái</TableHead>
                       <TableHead className="text-right">Thao tác</TableHead>
                     </TableRow>
@@ -133,29 +134,26 @@ export function VehicleList({
                               Định mức: {vehicle.fuelNorm == null ? "—" : `${vehicle.fuelNorm.toLocaleString("vi-VN")} ${vehicle.odoUnit === "km" ? "L/100km" : "L/giờ"}`}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="w-16 text-center">
                             {docCount > 0 ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setDocVehicle(vehicle)}
-                                className="h-8 gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700"
-                                title="Xem và quản lý ảnh giấy tờ xe"
-                              >
-                                <FileText className="size-3.5" />
-                                <span>{docCount} ảnh</span>
-                              </Button>
+                              <div className="flex items-center justify-center">
+                                <div className="relative inline-flex">
+                                  <ZoomableImage
+                                    src={vehicle.documentImages[0]}
+                                    images={vehicle.documentImages}
+                                    alt={`Giấy tờ xe ${vehicle.code}`}
+                                    title={`Ảnh giấy tờ & hồ sơ xe — ${vehicle.code}`}
+                                    className="size-10 rounded-md border object-cover shadow-sm transition-transform hover:scale-105"
+                                  />
+                                  {docCount > 1 && (
+                                    <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white shadow pointer-events-none">
+                                      +{docCount - 1}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setDocVehicle(vehicle)}
-                                className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
-                                title="Tải ảnh cà vẹt / giấy tờ xe"
-                              >
-                                <ImageIcon className="size-3.5" />
-                                <span>+ Tải ảnh</span>
-                              </Button>
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
                           </TableCell>
                           <TableCell>

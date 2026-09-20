@@ -60,6 +60,7 @@ export function FuelDispenseDialog({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const [dispenseType, setDispenseType] = useState<"vehicle" | "zone">("vehicle");
   const [vehicleId, setVehicleId] = useState("none");
   const [zoneId, setZoneId] = useState("none");
   const [subZoneId, setSubZoneId] = useState("");
@@ -147,15 +148,26 @@ export function FuelDispenseDialog({
       return;
     }
 
+    if (dispenseType === "zone" && (zoneId === "none" || !zoneId)) {
+      toast.error("Vui lòng chọn khu vực nhận dầu");
+      return;
+    }
+
+    if (dispenseType === "vehicle" && (vehicleId === "none" || !vehicleId)) {
+      toast.error("Vui lòng chọn phương tiện nhận dầu");
+      return;
+    }
+
     startTransition(async () => {
       try {
         await createFuelDispenseAction({
           vehicleId: vehicleId === "none" ? null : vehicleId,
           zoneId: zoneId === "none" ? null : zoneId,
           subZoneId: zoneId === "none" ? null : (subZoneId || null),
+          dispenseType,
           fuelTypeId,
           quantity: numQty,
-          currentOdo: selectedVehicle ? numOdo : null,
+          currentOdo: dispenseType === "vehicle" && selectedVehicle ? numOdo : null,
           driverId: driverId === "custom" || !driverId ? null : driverId,
           driverName: driverName.trim() ? driverName.trim() : undefined,
           meterImages,
@@ -200,16 +212,47 @@ export function FuelDispenseDialog({
 
           <div className="flex-1 min-h-0 overflow-y-auto py-3 overscroll-contain">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Dispense Type Segmented Toggle */}
+            <div className="space-y-1.5 sm:col-span-2 min-w-0">
+              <Label className="text-xs font-semibold">
+                Hình thức cấp phát <span className="text-destructive">*</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDispenseType("vehicle")}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                    dispenseType === "vehicle"
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  🚗 Cấp cho xe
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDispenseType("zone")}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                    dispenseType === "zone"
+                      ? "border-amber-600 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  🏭 Cấp cho toàn khu
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-1.5 sm:col-span-2 min-w-0">
               <Label htmlFor="vehicleId" className="text-xs font-semibold">
-                Phương tiện / Xe nhận dầu
+                {dispenseType === "zone" ? "Phương tiện đến lấy / chở dầu (Tùy chọn)" : "Phương tiện / Xe nhận dầu"} {dispenseType === "vehicle" && <span className="text-destructive">*</span>}
               </Label>
               <Select value={vehicleId} onValueChange={setVehicleId} disabled={pending}>
                 <SelectTrigger id="vehicleId" className="w-full">
-                  <SelectValue placeholder="Chọn xe / máy móc" />
+                  <SelectValue placeholder={dispenseType === "zone" ? "-- Không chọn xe (Nhận trực tiếp tại kho) --" : "Chọn xe / máy móc"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">-- Không chọn xe (Cấp cho khu vực/máy khác) --</SelectItem>
+                  <SelectItem value="none">{dispenseType === "zone" ? "-- Không gán xe --" : "-- Chọn xe --"}</SelectItem>
                   {vehicles.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
                       {v.code} - {v.name} (Odo: {formatOdo(v.current_odo, v.odo_unit)})

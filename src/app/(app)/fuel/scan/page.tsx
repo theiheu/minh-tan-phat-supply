@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { BrandLoading } from "@/components/brand-loading";
 import { requireProfile } from "@/lib/auth";
+import { getCachedSubZones, getCachedZones } from "@/lib/cached-metadata";
 import { getFuelTypes, getVehicleByQrAction } from "@/features/fuel/actions";
 import { FuelQuickScan, type VehicleScanResult } from "@/features/fuel/components/fuel-quick-scan";
 import { parseQrText } from "@/lib/fuel";
@@ -36,7 +37,14 @@ export default async function FuelScanPage({
     }
   }
 
-  const fuelTypes = await fuelTypesPromise;
+  const [fuelTypes, zonesData, subZonesData] = await Promise.all([
+    fuelTypesPromise,
+    getCachedZones(),
+    getCachedSubZones(),
+  ]);
+
+  const zones = zonesData.map((z) => ({ id: z.id, name: z.name }));
+  const subZones = subZonesData.map((s) => ({ id: s.id, zone_id: s.zone_id, name: s.name }));
 
   return (
     <Suspense
@@ -50,6 +58,8 @@ export default async function FuelScanPage({
     >
       <FuelQuickScan
         fuelTypes={fuelTypes}
+        zones={zones}
+        subZones={subZones}
         initialVehicle={initialVehicle}
         initialQueryParam={rawParam}
       />

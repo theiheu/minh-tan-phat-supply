@@ -21,6 +21,14 @@ export class MinhTanPhatPowerSyncConnector implements PowerSyncBackendConnector 
       "";
   }
 
+  getPowersyncUrl(): string {
+    return this.powersyncUrl;
+  }
+
+  setPowersyncUrl(url: string) {
+    this.powersyncUrl = url;
+  }
+
   /**
    * Lấy JWT token từ phiên đăng nhập Supabase Auth hiện tại
    */
@@ -37,7 +45,7 @@ export class MinhTanPhatPowerSyncConnector implements PowerSyncBackendConnector 
         error,
       } = await supabase.auth.getSession();
 
-      if (error || !session) {
+      if (error || !session?.access_token) {
         return null;
       }
 
@@ -48,6 +56,18 @@ export class MinhTanPhatPowerSyncConnector implements PowerSyncBackendConnector 
     } catch (err) {
       console.warn("[PowerSync] Lỗi khi lấy thông tin xác thực Supabase:", err);
       return null;
+    }
+  }
+
+  /**
+   * Làm mới credentials khi token hết hạn
+   */
+  async invalidateCredentials(): Promise<void> {
+    try {
+      const supabase = createClient();
+      await supabase.auth.refreshSession();
+    } catch (err) {
+      console.warn("[PowerSync] Lỗi khi làm mới phiên Supabase:", err);
     }
   }
 

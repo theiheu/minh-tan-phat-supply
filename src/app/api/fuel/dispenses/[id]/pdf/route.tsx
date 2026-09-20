@@ -19,36 +19,52 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { data: d } = await supabase
     .from("fuel_dispenses")
     .select(
-      "code, quantity, current_odo, previous_odo, usage_diff, consumption_rate, driver_name, notes, created_at, vehicle:vehicles(code, name, odo_unit, fuel_norm), zone:zones(name), sub_zone:sub_zones(name), fuel_type:fuel_types(name, unit), dispenser:profiles!fuel_dispenses_dispenser_id_fkey(name)"
+      "code, quantity, current_odo, previous_odo, usage_diff, consumption_rate, dispense_type, driver_name, notes, created_at, vehicle:vehicles(code, name, odo_unit, fuel_norm), zone:zones(name), sub_zone:sub_zones(name), fuel_type:fuel_types(name, unit), dispenser:profiles!fuel_dispenses_dispenser_id_fkey(name)"
     )
     .eq("id", id)
     .single();
 
   if (!d) return new NextResponse("Không tìm thấy phiếu cấp dầu", { status: 404 });
 
+  const isZoneDispense = d.dispense_type === "zone";
   const odoUnit = d.vehicle?.odo_unit ?? "km";
   const qrCode = await generateQrDataUri(getSlipUrl(_req, `/fuel?tab=dispenses`));
 
   const leftFields = [
-    { label: "Phương tiện nhận", value: d.vehicle ? `${d.vehicle.code} - ${d.vehicle.name}` : "Cấp ngoài / Không chọn xe" },
-    { label: "Khu vực / Công trình", value: formatZoneLabel(d.zone?.name, d.sub_zone?.name) },
+    {
+      label: "Hình thức cấp phát",
+      value: isZoneDispense ? "Cấp cho toàn khu vực" : "Cấp riêng cho xe",
+    },
+    {
+      label: isZoneDispense ? "Khu vực được cấp dầu" : "Khu vực hoạt động",
+      value: formatZoneLabel(d.zone?.name, d.sub_zone?.name),
+    },
+    {
+      label: isZoneDispense ? "Xe đến lấy / chở dầu" : "Phương tiện nhận dầu",
+      value: d.vehicle ? `${d.vehicle.code} - ${d.vehicle.name}` : "Cấp ngoài / Không chọn xe",
+    },
     { label: "Tài xế / Người nhận", value: d.driver_name ?? "—" },
     { label: "Người cấp dầu", value: d.dispenser?.name ?? "—" },
     { label: "Ghi chú", value: d.notes },
   ];
 
   const rightFields = [];
-  if (d.current_odo != null) {
-    rightFields.push({ label: "Chỉ số Odo mới", value: formatOdo(Number(d.current_odo), odoUnit) });
-  }
-  if (d.usage_diff != null && Number(d.usage_diff) > 0) {
-    rightFields.push({ label: "Quãng đường / Giờ", value: `+${formatOdo(Number(d.usage_diff), odoUnit)}` });
-  }
-  if (d.consumption_rate != null) {
-    rightFields.push({ label: "Tiêu hao đo được", value: formatConsumptionRate(Number(d.consumption_rate), odoUnit) });
-  }
-  if (d.vehicle?.fuel_norm != null) {
-    rightFields.push({ label: "Định mức quy định", value: formatConsumptionRate(Number(d.vehicle.fuel_norm), odoUnit) });
+  if (isZoneDispense) {
+    rightFields.push({ label: "Mục đích sử dụng", value: "Cấp nhiên liệu toàn khu" });
+    rightFields.push({ label: "Hạch toán", value: "Tính vào chi phí khu vực đã cấp" });
+  } else {
+    if (d.current_odo != null) {
+      rightFields.push({ label: "Chỉ số Odo mới", value: formatOdo(Number(d.current_odo), odoUnit) });
+    }
+    if (d.usage_diff != null && Number(d.usage_diff) > 0) {
+      rightFields.push({ label: "Quãng đường / Giờ", value: `+${formatOdo(Number(d.usage_diff), odoUnit)}` });
+    }
+    if (d.consumption_rate != null) {
+      rightFields.push({ label: "Tiêu hao đo được", value: formatConsumptionRate(Number(d.consumption_rate), odoUnit) });
+    }
+    if (d.vehicle?.fuel_norm != null) {
+      rightFields.push({ label: "Định mức quy định", value: formatConsumptionRate(Number(d.vehicle.fuel_norm), odoUnit) });
+    }
   }
 
   const buffer = await renderToBuffer(

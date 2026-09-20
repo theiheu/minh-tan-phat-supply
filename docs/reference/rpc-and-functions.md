@@ -1,6 +1,6 @@
 # ⚙️ DANH MỤC RPCS, TRIGGERS & POSTGRESQL FUNCTIONS
 
-> Tài liệu tham chiếu chi tiết toàn bộ các hàm lưu trữ (Stored Procedures/RPCs), Triggers và Functions trong cơ sở dữ liệu PostgreSQL của hệ thống **Minh Tân Phát Supply**.
+> Tài liệu tham chiếu chi tiết toàn bộ 77+ hàm lưu trữ (Stored Procedures/RPCs), Triggers và Functions trong cơ sở dữ liệu PostgreSQL của hệ thống **Minh Tân Phát Supply**.
 
 ---
 
@@ -36,8 +36,9 @@
 * **Xử lý tự động:**
   1. Cộng tồn kho cho tất cả SKU trong phiếu.
   2. Cập nhật đơn giá mua vốn (`cost_price`) vào bảng `skus`.
-  3. Tìm kiếm các phiếu yêu cầu **ĐÃ ĐƯỢC DUYỆT (`approved`)** theo thứ tự FIFO để tự động cấp phát (`fulfill_requisition`).
-  4. Lưu vết kết quả `linked_requisition_ids` bền vững.
+  3. Tìm kiếm các phiếu yêu cầu **ĐÃ ĐƯỢC DUYỆT (`approved` hoặc `ordered`)** theo thứ tự FIFO để tự động cấp phát (`fulfill_requisition`).
+  4. Đồng bộ ảnh hóa đơn sang phiếu yêu cầu được liên kết nếu có.
+  5. Lưu vết kết quả `linked_requisition_ids` bền vững.
 
 ### `revert_receipt` / `cancel_receipt`
 * **Mục đích:** Hủy hoặc hoàn tác phiếu nhập kho thông qua bút toán đảo kho.
@@ -55,11 +56,11 @@
 | `submit_requisition` | `requester` | `draft ➜ pending` | Chốt giỏ hàng và gửi lên cấp quản lý phê duyệt. |
 | `approve_requisition` | `technician`, `warehouse`, `owner` | `pending ➜ approved` | Chấp thuận cấp phát vật tư theo phiếu. |
 | `reject_requisition` | `technician`, `warehouse`, `owner` | `pending ➜ rejected` | Từ chối yêu cầu và lưu lý do từ chối. |
-| `fulfill_requisition` | `warehouse` | `approved ➜ issued` | Trừ tồn kho vật lý và ghi sổ cái `stock_movements`. |
+| `fulfill_requisition` | `warehouse` | `approved / ordered ➜ issued` | Trừ tồn kho vật lý và ghi sổ cái `stock_movements`. |
 | `receive_requisition` | `requester` | `issued ➜ received` | Người nhận bấm xác nhận 2 chiều đã nhận đủ hàng, đóng phiếu. |
 | `complete_requisition_direct` | `warehouse`, `owner` | `draft / pending ➜ received` | Cấp phát nhanh trực tiếp tại chỗ không qua chờ duyệt. |
 | `return_requisition_items` | `requester`, `warehouse` | `received ➜ returned` | Trả lại số lượng vật tư thừa về kho và cộng lại tồn kho. |
-| `update_requisition_invoice_images` | `requester`, `warehouse` | `-` | Đính kèm ảnh chứng từ giao nhận hoặc hóa đơn mua gấp. |
+| `update_requisition_invoice_images` | `requester`, `warehouse`, `superuser` | `-` | Đính kèm/cập nhật ảnh hóa đơn mua gấp từ camera mobile. |
 
 ---
 
@@ -111,16 +112,15 @@
 
 ## 8. TRẠM BỒN DẦU & XE CƠ GIỚI (FUEL & VEHICLES RPCS)
 
-### `get_vehicle_by_qr`
-* **Mục đích:** Quét chuỗi QR từ tem decal trên cabin xe, giải mã và trả về thông tin xe, loại nhiên liệu và số công tơ mét gần nhất.
+### `get_vehicle_by_qr(p_qr_text text)`
+* **Mục đích:** Quét chuỗi QR từ tem decal trên cabin xe, giải mã và trả về thông tin xe, khu vực, dãy trại phụ trách (`sub_zone_id`, `sub_zone_name`), loại nhiên liệu và chi tiết lần bơm dầu gần nhất (`last_dispense`).
 
-### `create_fuel_dispense`
-* **Mục đích:** Ghi nhận lượt bơm dầu Diesel cho xe cơ giới qua mã QR.
-* **Xử lý tự động:**
-  1. Trừ số lít dầu trong bồn kho.
-  2. Lấy số ODO lần đổ trước (`prev_meter`), tính quãng đường hoặc số giờ máy hoạt động (`distance_or_hours`).
-  3. Tự động tính chỉ số tiêu hao thực tế: $\text{Lít}/100\text{km} = \frac{\text{Số Lít}}{\text{Quãng đường}} \times 100$ hoặc $\text{Lít}/\text{giờ}$.
-  4. So sánh với định mức chuẩn của xe để tự động cảnh báo bất thường.
+### `create_fuel_dispense(p_vehicle_id, p_zone_id, p_fuel_type_id, p_quantity, p_current_odo, p_driver_name, p_meter_images, p_notes, p_by, p_sub_zone_id, p_driver_id, p_dispense_type)`
+* **Mục đích:** Ghi nhận lượt cấp dầu Diesel đa phương thức.
+* **Hỗ trợ 2 chế độ:**
+  * `p_dispense_type = 'vehicle'`: Cấp dầu cho phương tiện cá thể, tự động tính quãng đường / giờ máy, so sánh định mức tiêu hao.
+  * `p_dispense_type = 'zone'`: Cấp dầu trực tiếp cho Toàn khu hoặc Dãy trại (`sub_zone_id`) phục vụ máy phát điện / dàn quạt khẩn cấp.
+* **Xử lý tự động:** Trừ số lít dầu trong bồn kho, ghi sổ cái nhiên liệu, lưu ảnh đồng hồ công tơ mét.
 
 ### `create_fuel_receipt` & `cancel_fuel_receipt`
 * **Mục đích:** Ghi nhận xe bồn Petrolimex bơm dầu vào bồn tổng và cập nhật sổ cái nhiên liệu.
@@ -134,7 +134,29 @@
 
 ---
 
-## 10. AI COPILOT RAG RPCS
+## 10. QUẢN TRỊ CHỨNG TỪ CẤP CAO (MASTER DOCUMENT CONTROL RPCS)
+
+### `admin_inspect_document_dependencies(p_kind text, p_id uuid)`
+* **Thẩm quyền:** `superuser` và `owner`.
+* **Mục đích:** Trích xuất toàn bộ cây chứng từ phụ thuộc (phiếu xuất, phiếu trả, phiếu sửa, phiếu auto-fulfill) và số lượng bản ghi `stock_movements` liên quan trước khi quyết định xóa chứng từ.
+
+### `admin_force_delete_document(p_kind text, p_id uuid, p_cascade boolean, p_reverse_inventory boolean)`
+* **Thẩm quyền:** `superuser` và `owner`.
+* **Mục đích:** Can thiệp xóa cứng chứng từ rác/sai sót.
+* **Tùy chọn an toàn:**
+  * `p_reverse_inventory = true`: Tự động sinh movement đối ứng đảo kho bảo toàn số dư trước khi xóa.
+  * `p_cascade = true`: Dọn dẹp các chứng từ phụ thuộc cấp dưới theo đúng quy chuẩn.
+
+---
+
+## 11. HỆ THỐNG EMAIL THÔNG BÁO THEO VAI TRÒ (ROLE NOTIFICATIONS RPCS)
+
+### `process_role_email_notifications()`
+* **Mục đích:** Xử lý quét hàng đợi các sự kiện chứng từ mới, đối chiếu bảng `notification_preferences` theo từng vai trò và gửi email tổng hợp batch hoặc cảnh báo tức thì qua Nodemailer SMTP.
+
+---
+
+## 12. AI COPILOT RAG RPCS
 
 ### `search_ai_knowledge`
 * **Mục đích:** Tìm kiếm ngữ nghĩa kết hợp Full-Text Search (Hybrid Search) trên bảng `ai_knowledge_chunks` sử dụng vector embedding và PostgreSQL TSVector.
@@ -144,7 +166,7 @@
 
 ---
 
-## 11. QUẢN TRỊ NGƯỜI DÙNG & BẢO MẬT (USER ADMIN & SECURITY RPCS)
+## 13. QUẢN TRỊ NGƯỜI DÙNG & BẢO MẬT (USER ADMIN & SECURITY RPCS)
 
 ### `admin_purge_user_data` (`SECURITY DEFINER`)
 * **Thẩm quyền:** Duy nhất vai trò `superuser` (Quản trị hệ thống).
@@ -159,3 +181,4 @@
 * `is_accountant()`: Kiểm tra user có quyền Kế toán.
 * `is_warehouse()`: Kiểm tra user có quyền Quản kho.
 * `is_technician()`: Kiểm tra user có quyền Kỹ thuật trưởng.
+* `is_manager()`: Kiểm tra user thuộc nhóm quản lý (`superuser`, `owner`, `accountant`, `warehouse`).

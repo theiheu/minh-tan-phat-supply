@@ -200,6 +200,7 @@ export const fuel_dispenses = new Table({
   meter_images: column.text,
   notes: column.text,
   status: column.text,
+  dispense_type: column.text,
   created_at: column.text,
   updated_at: column.text,
 });

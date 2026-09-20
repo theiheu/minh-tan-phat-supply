@@ -10,7 +10,7 @@
 * **Mục đích:** Khởi động hoặc dừng môi trường phát triển (Dev Server) trên cổng **3001** với thư mục build riêng biệt (`.next-dev`), không ảnh hưởng đến web chính đang chạy.
 * **Cách chạy:**
 ```bash
-bash scripts/dev-up.sh      # Bật dev server
+bash scripts/dev-up.sh      # Bật dev server port 3001
 bash scripts/dev-down.sh    # Tắt sạch tiến trình dev
 ```
 
@@ -27,7 +27,7 @@ bash scripts/deploy.sh
 ```
 
 ### `scripts/setup-prod.sh`
-* **Mục đích:** Thiết lập môi trường Production lần đầu tiên trên máy chủ (tạo thư mục production, cấu hình `.env.production` và cài đặt systemd service).
+* **Mục đích:** Thiết lập môi trường Production lần đầu tiên trên máy chủ (tạo thư mục production, cấu hình `.env.production` và cài đặt systemd service `mtp-web.service`).
 
 ---
 
@@ -40,25 +40,17 @@ bash scripts/deploy.sh
 pnpm seed:complete
 ```
 
+### `scripts/seed-canonical-units.ts`
+* **Mục đích:** Khởi tạo danh mục Đơn vị tính cơ sở chuẩn hóa (`cai`, `kg`, `lit`, `thung`, `hop`, `met`...).
+
 ### `scripts/ensure-superuser.ts`
 * **Mục đích:** Kiểm tra và đảm bảo tài khoản Quản trị cấp cao (`superuser`) luôn tồn tại trong hệ thống, tự động khôi phục nếu bị thiếu.
-* **Cách chạy:**
-```bash
-npx tsx scripts/ensure-superuser.ts
-```
 
 ### `scripts/assign-user-emails.ts` (hoặc `pnpm assign:emails`)
 * **Mục đích:** Tự động gán và đồng bộ địa chỉ email doanh nghiệp SMTP cho toàn bộ tài khoản nhân sự trong trại.
 
-### `scripts/sync-knowledge.ts` (hoặc `pnpm sync:knowledge`)
-* **Mục đích:** Quét tài liệu tri thức trong `docs/`, thực hiện pipeline phân mảnh (chunking) và sinh vector embeddings nạp vào `ai_knowledge_chunks` cho AI Copilot.
-* **Cách chạy:**
-```bash
-pnpm sync:knowledge
-```
-
-### `scripts/test-email.ts` & `scripts/send-reminders-job.ts`
-* **Mục đích:** Kiểm tra kết nối SMTP gửi email thử nghiệm và chạy worker gửi email nhắc nhở mượn dụng cụ quá hạn định kỳ.
+### `scripts/ai-sync-knowledge.ts` & `scripts/dify-sync-knowledge.ts`
+* **Mục đích:** Quét tài liệu tri thức trong `docs/`, thực hiện pipeline phân mảnh (chunking) và sinh vector embeddings nạp vào `ai_knowledge_chunks` cho AI Copilot / Dify RAG.
 
 ---
 
@@ -72,11 +64,7 @@ node scripts/validate-manifest.js
 ```
 
 ### `scripts/benchmark-pages.js`
-* **Mục đích:** Đo lường thời gian phản hồi (Latency) và tốc độ tải trang thực tế của toàn bộ 25+ màn hình trong hệ thống, đảm bảo đạt chuẩn tốc độ ~200ms.
-* **Cách chạy:**
-```bash
-node scripts/benchmark-pages.js
-```
+* **Mục đích:** Đo lường thời gian phản hồi (Latency) và tốc độ tải trang thực tế của toàn bộ 30+ màn hình trong hệ thống, đảm bảo đạt chuẩn tốc độ ~200ms.
 
 ### `scripts/verify-pdf-font.tsx` & `scripts/test-vehicle-qr-pdf.tsx`
 * **Mục đích:** Kiểm tra tính toàn vẹn của font tiếng Việt UTF-8 `Roboto` và kiểm tra khả năng render vector PDF cho tem nhãn mã QR dán xe cơ giới.
@@ -91,10 +79,12 @@ Bộ tập lệnh kiểm thử tự động độc lập từng luồng nghiệp
 |---|---|---|
 | `verify-username-login.ts` | Đăng nhập bằng Username không cần email & Trigger khóa họ tên. | `npx tsx scripts/verify-username-login.ts` |
 | `verify-receipt-flow.ts` | Nhập kho NCC, upload hóa đơn VAT & tự động cấp phát phiếu đã duyệt. | `npx tsx scripts/verify-receipt-flow.ts` |
-| `verify-requisition-flow.ts` | Quy trình yêu cầu vật tư duyệt 2 cấp & xác nhận nhận hàng 2 chiều. | `npx tsx scripts/verify-requisition-flow.ts` |
+| `verify-requisition-flow.ts` | Tiến trình yêu cầu vật tư 5 bước, upload hóa đơn & xác nhận 2 chiều. | `npx tsx scripts/verify-requisition-flow.ts` |
 | `verify-issue-flow.ts` | Xuất kho trực tiếp theo Dãy trại (`sub_zone`) & xuất bán. | `npx tsx scripts/verify-issue-flow.ts` |
 | `verify-defect-exchange.ts` | Đổi 1-1 motor cháy cấp tốc trong 30 giây & nạp kho hỏng. | `npx tsx scripts/verify-defect-exchange.ts` |
 | `verify-exchange-repair.ts` | Vòng đời sửa chữa thiết bị cơ điện & nghiệm thu nhập lại kho. | `npx tsx scripts/verify-exchange-repair.ts` |
-| `verify-fuel-flow.ts` | Quét QR đổ dầu xe ben, nhập ODO & tính định mức $L/100km$. | `npx tsx scripts/verify-fuel-flow.ts` |
+| `verify-fuel-flow.ts` | Quét QR đổ dầu xe ben, cấp dầu toàn khu & tính định mức $L/100km$ / $L/h$. | `npx tsx scripts/verify-fuel-flow.ts` |
 | `verify-stocktake.ts` | Mở phiên kiểm kê, tính chênh lệch thừa/thiếu & duyệt cân bằng. | `npx tsx scripts/verify-stocktake.ts` |
+| `verify-transfers.ts` | Điều chuyển kho nội bộ giữa Kho Tổng, Kho Cơ Điện và Trạm Dầu. | `npx tsx scripts/verify-transfers.ts` |
+| `verify-posting-kernel.ts` | Kiểm tra hạt nhân ghi sổ cái kho Append-Only và đảo bút toán. | `npx tsx scripts/verify-posting-kernel.ts` |
 | `verify-image-permissions.ts`| Phân quyền upload và xóa ảnh hóa đơn trên Supabase Storage. | `npx tsx scripts/verify-image-permissions.ts` |

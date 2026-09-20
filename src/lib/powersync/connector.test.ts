@@ -3,12 +3,14 @@ import { MinhTanPhatPowerSyncConnector } from "./connector";
 import { UpdateType } from "@powersync/web";
 
 const mockGetSession = vi.fn();
+const mockRefreshSession = vi.fn();
 const mockRpc = vi.fn();
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
       getSession: mockGetSession,
+      refreshSession: mockRefreshSession,
     },
     rpc: mockRpc,
   }),
@@ -59,6 +61,12 @@ describe("MinhTanPhatPowerSyncConnector", () => {
       });
       const creds = await connector.fetchCredentials();
       expect(creds).toBeNull();
+    });
+
+    it("invalidates credentials by triggering supabase session refresh", async () => {
+      const connector = new MinhTanPhatPowerSyncConnector();
+      await connector.invalidateCredentials();
+      expect(mockRefreshSession).toHaveBeenCalled();
     });
   });
 

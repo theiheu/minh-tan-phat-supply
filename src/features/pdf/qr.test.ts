@@ -15,16 +15,22 @@ describe("pdf qr helpers", () => {
     expect(large.length).toBeGreaterThan(small.length);
   });
 
-  it("extracts full slip url using request headers", () => {
-    const req = new Request("http://127.0.0.1:3000/api/requisitions/123/pdf", {
-      headers: {
-        host: "app.minhtanphat.vn",
-        "x-forwarded-proto": "https",
-      },
-    });
+  it("extracts full slip url using request headers and prioritizes incoming host header", () => {
+    const prevEnv = process.env.NEXT_PUBLIC_SITE_URL;
+    try {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://dev.minhtanphat.io.vn";
+      const req = new Request("http://127.0.0.1:3000/api/requisitions/123/pdf", {
+        headers: {
+          host: "app.minhtanphat.vn",
+          "x-forwarded-proto": "https",
+        },
+      });
 
-    const url = getSlipUrl(req, "/requisitions/123");
-    expect(url).toBe("https://app.minhtanphat.vn/requisitions/123");
+      const url = getSlipUrl(req, "/requisitions/123");
+      expect(url).toBe("https://app.minhtanphat.vn/requisitions/123");
+    } finally {
+      process.env.NEXT_PUBLIC_SITE_URL = prevEnv;
+    }
   });
 
   it("falls back to request url origin when headers missing", () => {

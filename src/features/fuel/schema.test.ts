@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fuelTypeSchema, fuelTypeUpdateSchema } from "./schema";
+import { fuelDispenseSchema, fuelTypeSchema, fuelTypeUpdateSchema } from "./schema";
 
 describe("fuelTypeSchema", () => {
   it("validates and parses valid fuel type input", () => {
@@ -64,5 +64,42 @@ describe("fuelTypeUpdateSchema", () => {
     expect(parsed.name).toBe("Nước làm mát Coolant");
     expect(parsed.code).toBe("NUOC_MAT");
     expect(parsed.minStock).toBe(20);
+  });
+});
+
+describe("fuelDispenseSchema", () => {
+  const validUuid = "123e4567-e89b-12d3-a456-426614174000";
+
+  it("parses vehicle dispense correctly with default dispenseType", () => {
+    const input = {
+      vehicleId: validUuid,
+      fuelTypeId: validUuid,
+      quantity: "150.5",
+      currentOdo: "12500.5",
+      driverName: "Nguyễn Văn A",
+    };
+    const parsed = fuelDispenseSchema.parse(input);
+    expect(parsed.dispenseType).toBe("vehicle");
+    expect(parsed.quantity).toBe(150.5);
+    expect(parsed.currentOdo).toBe(12500.5);
+    expect(parsed.vehicleId).toBe(validUuid);
+  });
+
+  it("parses zone dispense correctly when dispenseType is zone", () => {
+    const input = {
+      vehicleId: validUuid,
+      zoneId: validUuid,
+      subZoneId: validUuid,
+      dispenseType: "zone",
+      fuelTypeId: validUuid,
+      quantity: "500",
+      notes: "Cấp dầu dự phòng cho máy phát điện trại 1",
+    };
+    const parsed = fuelDispenseSchema.parse(input);
+    expect(parsed.dispenseType).toBe("zone");
+    expect(parsed.quantity).toBe(500);
+    expect(parsed.vehicleId).toBe(validUuid);
+    expect(parsed.zoneId).toBe(validUuid);
+    expect(parsed.currentOdo).toBeUndefined();
   });
 });

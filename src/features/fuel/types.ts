@@ -28,6 +28,7 @@ export interface FuelReportRow {
   quantity: number;
   usage_diff: number | null;
   consumption_rate: number | null;
+  dispense_type?: "vehicle" | "zone" | null;
   created_at: string;
   driver_name: string | null;
   vehicle: {
@@ -38,6 +39,9 @@ export interface FuelReportRow {
     fuel_norm: number | null;
   } | null;
   zone: {
+    name: string;
+  } | null;
+  sub_zone?: {
     name: string;
   } | null;
   fuel_type: {

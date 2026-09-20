@@ -5,22 +5,42 @@ Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply
 
 ---
 
-## [Unreleased] — Nâng cấp kiến trúc Catalog
+## [0.12.0] - 2026-09-20
 
-### In Progress
-- **SKU Catalog Architecture (migrations 0072–0086):** Thay thế toàn bộ mô hình Product/Variant cũ bằng mô hình `Product → SKU → UOM → Stock Ledger` chuẩn hóa.
-  - Normalized attribute definitions, typed attribute values
-  - Multi-level transaction UoM với document snapshots
-  - Append-only Posting Kernel, idempotency, reversal
-  - Lot/expiry/serial tracking policy
-  - BOM versioning cho bộ vật tư ảo và bộ ráp sẵn
-  - Catalog search tăng cường: unaccent tiếng Việt, multi-token, barcode, SKU code
-- **AI Copilot draggable button:** floating button hỗ trợ drag cả touch và mouse
+### Added
+- **Tái thiết Trung tâm Báo cáo & Phân tích BI (`/reports`):**
+  - Tab 1: Tổng quan Ban giám đốc (Executive KPI summary, biểu đồ xu hướng xuất kho theo tháng, top vật tư tiêu hao, cơ cấu danh mục).
+  - Tab 2: Sổ cái & Vận hành (Sổ cái XNT xuất nhập tồn, Thẻ kho chi tiết Stock Card, Định giá tồn kho tức thời).
+  - Tab 3: Phân tích Chi phí Dãy trại (Sub-zone Cost Drilldown) & Đội xe cơ giới (Fleet Fuel Efficiency & ODO).
+  - Tab 4: Tích hợp Metabase / PowerBI trực tiếp và xuất dữ liệu Excel/CSV chuẩn kế toán.
+- **Views Phân tích Metabase BI (Migration 0100):** Cung cấp các view phân tích tối ưu `v_bi_subzone_cost_breakdown`, `v_bi_inventory_xnt_summary`, `v_bi_fleet_fuel_efficiency` và role phân quyền đọc an toàn `metabase_readonly`.
+- **Cấp Dầu Cho Toàn Khu & Phương tiện (Migration 0101):** Hỗ trợ 2 chế độ cấp phát nhiên liệu: Theo phương tiện (`vehicle`) hoặc Cấp cho toàn khu / nhiều dãy trại (`zone` / `sub_zone`). Làm giàu thông tin QR xe với chi tiết lần đổ gần nhất.
+- **Tiến trình Yêu cầu 5 Cột mốc & Upload Hóa đơn (Migration 0097, 0098):**
+  - Cột mốc tiến trình rõ ràng: *Gửi yêu cầu ➔ Kỹ thuật duyệt ➔ Đang đặt hàng NCC ➔ Kho xuất cấp ➔ Hoàn tất*.
+  - Upload hóa đơn/chứng từ trực tiếp từ điện thoại với lightbox phóng to.
+  - Tự động đồng bộ ảnh hóa đơn giữa Phiếu yêu cầu và Phiếu nhập kho (Receipts).
+- **Hồ sơ Giấy tờ Xe Cơ Giới (Migration 0098):** Bổ sung quản lý ảnh đăng kiểm, bảo hiểm, cà vẹt (`document_images`) và cảnh báo hạn đăng kiểm trên giao diện quản trị xe.
+- **Quản trị Chứng từ Cấp cao (Migration 0099):**
+  - RPC `admin_inspect_document_dependencies` kiểm tra toàn diện cây quan hệ phụ thuộc trước khi xóa chứng từ.
+  - RPC `admin_force_delete_document` cho phép Superuser và Chủ trại xóa cứng hoặc đảo kho an toàn đối với các chứng từ rác hoặc sai sót nghiệp vụ.
+- **Động cơ PowerSync Offline-First:** Tích hợp đồng bộ dữ liệu 2 chiều với SQLite WebAssembly trong trình duyệt, phục vụ vận hành thông suốt khi mất kết nối mạng.
+- **Bộ Kiểm thử Hoàn thiện:** Nâng tổng số bài kiểm tra tự động lên **626 tests / 117 test suites (100% passed)**.
 
-### Planned (Poultry ERP Phase 2+)
-- Giai đoạn 1 — Sản lượng & Đàn gà: Quản lý lứa gà theo dãy trại, tỷ lệ đẻ `% Laying Rate`, phân loại trứng.
-- Giai đoạn 2 — Thức ăn & Thú y: Định mức cám (g/con/ngày), FCR, lịch vắc-xin tự động.
-- Giai đoạn 3 — Tài chính Nông trại: Chi phí/quả trứng, Báo cáo Lãi/Lỗ ròng (P&L).
+---
+
+## [0.11.0] - 2026-09-19
+
+### Added
+- **Chuyển giao Toàn diện Catalog SKU Baseline (Migrations 0088 - 0095):**
+  - Chuẩn hóa hạt nhân ghi sổ cái kho Append-Only (`0088_enforce_append_only_ledger`).
+  - Khắc phục tính toán số lượng đơn vị cơ sở theo lô (`0089_fix_receipt_lot_base_quantity`).
+  - Đảm bảo tính lũy đẳng khi hoàn trả vật tư thừa (`0090_return_idempotency`).
+  - Kiểm tra khả dụng tồn kho linh kiện cho Bộ ảo (`0091_virtual_kit_availability`).
+  - Lưu vết kết quả tự động cấp phát bền vững (`0092_auto_fulfill_outcome`).
+  - Chuẩn hóa danh mục Đơn vị tính cơ sở (`0094_seed_canonical_units`) và sửa lỗi tạo phiên kiểm kê (`0095_fix_stocktake_creation`).
+- **Hệ thống Thông báo Email Đa vai trò (Migration 0096):** Quản lý cấu hình thông báo `notification_preferences`, xử lý batch digest định kỳ qua cron endpoint `/api/cron/notifications`.
+- **Tái cấu trúc UI God Components:** Phân tách `ProductDetailDialog`, modularize hooks và components con nhằm tăng khả năng bảo trì.
+- **Proxy An toàn cho Supabase Client:** Khắc phục triệt để vấn đề phân giải cổng kết nối trên trình duyệt.
 
 ---
 
@@ -43,9 +63,6 @@ Ghi nhận các thay đổi quan trọng của dự án **Minh Tân Phát Supply
 - **Quy đổi Đơn vị Tính & Đóng gói Đa cấp:** Thùng, Hộp, ml, Can, Lít, Bao, Kg với hệ số `conversion_factor`. Giỏ hàng cho phép chọn đơn vị linh hoạt, hệ thống tự quy đổi về Base UOM.
 - **Migration 0068 — Auto-fulfill chỉ cho phiếu đã duyệt:** Siết quy trình nhập kho — chỉ Auto-fulfill FIFO cho phiếu `approved`, bỏ qua `pending`.
 - **Tái cấu trúc tài liệu Diátaxis:** `docs/` theo chuẩn quốc tế (Architecture, How-To, Reference, Operations).
-
-### Changed
-- 349 automated tests, 61 test suites, 100% pass.
 
 ---
 

@@ -135,6 +135,7 @@ export interface FuelEventPayload {
   fuelTypeName: string;
   quantity: number;
   unit: string;
+  dispenseType?: "vehicle" | "zone" | string;
   vehicleCode?: string;
   vehicleName?: string;
   currentOdo?: number;

@@ -58,7 +58,7 @@ describe("VehicleList Component", () => {
     },
   ];
 
-  it("renders table with vehicle records and document badges", () => {
+  it("renders table with vehicle records and document image lightbox gallery", () => {
     render(
       <VehicleList
         vehicles={mockVehicles}
@@ -74,14 +74,15 @@ describe("VehicleList Component", () => {
     expect(screen.getAllByText("Xe ben Howo").length).toBeGreaterThan(0);
     expect(screen.getAllByText("MAY-XUC-01").length).toBeGreaterThan(0);
 
-    // Check document images count button for 61C-123.45
-    expect(screen.getByText("2 ảnh")).toBeInTheDocument();
+    // Check document thumbnail for 61C-123.45 with +1 count badge
+    expect(screen.getByAltText("Giấy tờ xe 61C-123.45")).toBeInTheDocument();
+    expect(screen.getByText("+1")).toBeInTheDocument();
 
-    // Check "+ Tải ảnh" button for MAY-XUC-01
-    expect(screen.getByText("+ Tải ảnh")).toBeInTheDocument();
+    // Check no-image placeholder "—"
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
-  it("opens VehicleDocumentsModal when clicking document button", () => {
+  it("opens VehicleDocumentsModal when clicking 'Giấy tờ' action button", () => {
     render(
       <VehicleList
         vehicles={mockVehicles}
@@ -93,7 +94,7 @@ describe("VehicleList Component", () => {
       />
     );
 
-    const docBtn = screen.getByRole("button", { name: /2 ảnh/i });
+    const docBtn = screen.getAllByRole("button", { name: /Giấy tờ/i })[0];
     fireEvent.click(docBtn);
 
     expect(screen.getByText(/Ảnh giấy tờ & Hồ sơ xe: 61C-123.45/i)).toBeInTheDocument();

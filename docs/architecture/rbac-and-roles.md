@@ -1,10 +1,10 @@
 # 🛡️ MA TRẬN PHÂN QUYỀN & VAI TRÒ (RBAC MATRIX)
 
-> Tài liệu đặc tả chi tiết kiến trúc phân quyền 7 vai trò, chính sách Bất biến định danh (Immutable Identity), cơ chế Hybrid Archive & Force Purge và các chính sách bảo mật cấp hàng (Row Level Security) của hệ thống **Minh Tân Phát Supply**.
+> Tài liệu đặc tả chi tiết kiến trúc phân quyền 7 vai trò chuẩn, vai trò BI chuyên biệt (`metabase_readonly`), chính sách Bất biến định danh (Immutable Identity), cơ chế Quản trị Chứng từ Cấp cao (Master Document Control), cơ chế Hybrid Archive & Force Purge và các chính sách bảo mật cấp hàng (Row Level Security) của hệ thống **Minh Tân Phát Supply**.
 
 ---
 
-## 1. HỆ THỐNG 7 VAI TRÒ CHUẨN HÓA (7 CANONICAL ROLES)
+## 1. HỆ THỐNG 7 VAI TRÒ CHUẨN HÓA (7 CANONICAL ROLES) & VAI TRÒ BI
 
 Hệ thống phân quyền được thiết kế chuẩn mực theo chuỗi quản trị vận hành trang trại gia cầm công nghiệp:
 
@@ -16,17 +16,22 @@ flowchart TD
     Owner --> Tech[🔧 technician - Kỹ thuật trưởng / Quản lý khu]
     Tech --> Requester[📋 requester - Công nhân trại / Thợ phụ]
     Warehouse --> Driver[🚛 driver - Tài xế xe ben / máy xúc]
+
+    subgraph ExternalBI [External Business Intelligence]
+        MetabaseRole[📈 metabase_readonly - Tài khoản BI Chỉ đọc]
+    end
 ```
 
 | STT | Mã Vai trò (Role) | Tên vai trò thực tế | Đối tượng đảm nhiệm | Trách nhiệm chính & Giao diện Dashboard |
 |:---:|---|---|---|---|
-| 1 | `superuser` | **Quản trị hệ thống** | Kỹ sư CNTT / DevOps | Toàn quyền kỹ thuật, phân quyền, cấu hình hệ thống, AI Admin, dọn dẹp dữ liệu test (`admin_purge_user_data`). |
-| 2 | `owner` | **Chủ trang trại** | Chủ trại / Ban Giám đốc | Dashboard Executive KPI (tổng tài sản kho, chi phí trại), duyệt thanh lý lớn, duyệt cân bằng kiểm kê, quản trị nhân sự. |
-| 3 | `accountant` | **Kế toán kho & nội bộ** | Nhân viên kế toán | Dashboard Kế toán (giá mua/bán, chi phí theo khu, hóa đơn đỏ VAT, công nợ NCC/Khách hàng, xuất file Excel kế toán). |
-| 4 | `warehouse` | **Quản kho tổng** | Quản lý kho, Thủ kho | Dashboard Kho (phiếu chờ cấp phát, cảnh báo tồn kho thấp, mượn đồ quá hạn, kiểm kê, trạm bồn dầu). |
+| 1 | `superuser` | **Quản trị hệ thống** | Kỹ sư CNTT / DevOps | Toàn quyền kỹ thuật, phân quyền, cấu hình hệ thống, AI Admin, can thiệp xóa cứng chứng từ (`admin_force_delete_document`), dọn dẹp dữ liệu test (`admin_purge_user_data`). |
+| 2 | `owner` | **Chủ trang trại** | Chủ trại / Ban Giám đốc | Dashboard Executive KPI (tổng tài sản kho, chi phí trại), duyệt thanh lý lớn, duyệt cân bằng kiểm kê, quản trị nhân sự và kiểm soát chứng từ cấp cao. |
+| 3 | `accountant` | **Kế toán kho & nội bộ** | Nhân viên kế toán | Dashboard Kế toán (giá mua/bán, chi phí theo khu, hóa đơn đỏ VAT, công nợ NCC/Khách hàng, xuất file Excel kế toán, xem BI views). |
+| 4 | `warehouse` | **Quản kho tổng** | Quản lý kho, Thủ kho | Dashboard Kho (phiếu chờ cấp phát, cảnh báo tồn kho thấp, mượn đồ quá hạn, kiểm kê, trạm bồn dầu, cấp dầu toàn khu). |
 | 5 | `technician` | **Kỹ thuật trưởng** | Kỹ sư cơ điện, Trưởng khu | Dashboard Kỹ thuật (duyệt Cấp 1 phiếu xin cấp, thiết bị đang gửi sửa ngoài, dụng cụ đang mượn, đổi 1-1 khẩn cấp). |
-| 6 | `requester` | **Người yêu cầu** | Công nhân trại, thợ phụ | Dashboard Cá nhân (giỏ hàng nhanh, danh sách phiếu đã duyệt chờ nhận, lịch sử trả hàng thừa, báo hỏng thiết bị). |
-| 7 | `driver` | **Tài xế** | Lái xe ben, xe xúc, xe tải | Dashboard Xe (xe phụ trách, quét QR bơm dầu trong 5 giây, tra cứu lịch sử tiêu hao L/100km & L/h). |
+| 6 | `requester` | **Người yêu cầu** | Công nhân trại, thợ phụ | Dashboard Cá nhân (giỏ hàng nhanh, theo dõi tiến trình 5 bước, upload hóa đơn mua gấp, xác nhận nhận hàng, trả hàng thừa, báo hỏng). |
+| 7 | `driver` | **Tài xế** | Lái xe ben, xe xúc, xe tải | Dashboard Xe (xe phụ trách, quét QR bơm dầu trong 5 giây, xem hồ sơ giấy tờ đăng kiểm/bảo hiểm xe, tra cứu lịch sử tiêu hao). |
+| - | `metabase_readonly` | **Tài khoản BI Chỉ đọc** | Hệ thống Metabase / PowerBI | Role cơ sở dữ liệu chuyên dụng chỉ có quyền `SELECT` trên các View BI (`v_bi_*`), không có quyền truy cập dữ liệu nhạy cảm hay sửa đổi bảng. |
 
 ---
 
@@ -48,6 +53,8 @@ flowchart TD
 | | Hủy phiếu nhập kho (Revert kho) | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Yêu cầu Cấp phát** | Lập phiếu xin cấp vật tư (Giỏ hàng) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | | Duyệt Cấp 1 phiếu yêu cầu (Trưởng khu) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| | Chuyển trạng thái Đặt hàng NCC (`ordered`) | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| | Upload ảnh hóa đơn mua hàng gấp từ mobile | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ (phiếu mình) | ❌ |
 | | Xuất kho giao hàng theo phiếu yêu cầu | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Bấm Xác nhận đã nhận đủ hàng | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | | Trả lại vật tư thừa về kho (`requisition_returns`) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
@@ -64,16 +71,20 @@ flowchart TD
 | | Mượn đồ nghề đi làm trại | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | **Kho Dầu & Xe cộ** | Nhập bồn dầu tổng Petrolimex | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Quét mã QR xe bơm dầu & nhập số ODO | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+| | Cấp dầu cho Toàn khu / Nhiều dãy trại | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Cấu hình định mức tiêu hao xe ($L/100km$, $L/h$) | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| | Upload / Quản lý ảnh cà vẹt, đăng kiểm xe | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| | Upload / Quản lý ảnh đăng kiểm, bảo hiểm xe | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Kiểm kê & Điều chuyển**| Lập phiếu điều chuyển giữa các kho vật lý | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Mở phiên kiểm kê & quét QR đếm thực tế | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | | Phê duyệt cân bằng sai lệch kho (Chủ trại / Kế toán) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Báo cáo & Phân tích** | Báo cáo Doanh thu, Chi phí, Tổng hợp tài chính | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Báo cáo Chi phí vật tư theo từng Dãy trại | ✅ | ✅ | ✅ | ✅ | ✅ (khu mình) | ❌ | ❌ |
 | | Xuất file Excel báo cáo kho & sổ cái | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| | Truy cập Views Metabase / BI Analytics | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Trợ lý AI Copilot** | Trò chuyện hỏi đáp với AI Copilot RAG | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | | Quản trị tài liệu tri thức (`/admin/ai-copilot`) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Quản trị Chứng từ** | Kiểm tra quan hệ phụ thuộc (`admin_inspect_document_dependencies`) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| | Can thiệp xóa cứng / Đảo kho chứng từ (`admin_force_delete_document`) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Quản trị Tài khoản** | Tạo mới tài khoản nhân sự & Đổi vai trò | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Khóa tài khoản / Lưu trữ nhân viên nghỉ việc | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | | Kích hoạt lại nhân viên đi làm lại | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -97,6 +108,11 @@ Hệ thống giải quyết triệt để xung đột giữa nhu cầu dọn d�
    * **Kích hoạt lại một chạm:** Khi nhân viên thời vụ quay lại làm việc, quản lý chỉ cần bấm nút *"Kích hoạt lại"* để mở khóa tài khoản ngay lập tức.
    * **Đặc quyền Superuser (`Force Purge`):** Dành riêng cho Quản trị viên hệ thống khi cần dọn dẹp triệt để dữ liệu test thông qua RPC `admin_purge_user_data` (xóa toàn bộ chứng từ liên kết trước khi xóa tài khoản).
 
-### C. Tài Khoản Hệ Thống Được Bảo Vệ (`is_protected = true`)
+### C. Quản Trị Chứng Từ Cấp Cao (Master Document Control)
+Đối với các trường hợp nhập sai nghiêm trọng cần xóa chứng từ đã phát sinh dữ liệu liên quan:
+* **Kiểm tra phụ thuộc (`admin_inspect_document_dependencies`):** Trả về toàn bộ cây chứng từ phụ thuộc (phiếu xuất, phiếu trả, phiếu sửa, phiếu auto-fulfill) và số lượng bút toán sổ cái.
+* **Xóa an toàn (`admin_force_delete_document`):** Hỗ trợ cờ `p_reverse_inventory = true` để tự động sinh bút toán đảo kho bảo toàn số dư trước khi xóa, hoặc `p_cascade = true` để dọn dẹp các chứng từ phái sinh. Chỉ `superuser` và `owner` có quyền kích hoạt.
+
+### D. Tài Khoản Hệ Thống Được Bảo Vệ (`is_protected = true`)
 * Tài khoản quản trị cấp cao gốc được gắn cờ `is_protected = true`.
 * Trigger `trg_profiles_protect_system_account` bảo vệ tài khoản này khỏi việc bị khóa, bị xóa hoặc bị hạ quyền bởi bất kỳ tài khoản nào khác.

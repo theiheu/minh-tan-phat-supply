@@ -174,7 +174,20 @@ export function FuelDispenseList({
                           {formatDateTime(d.created_at)}
                         </TableCell>
                         <TableCell>
-                          {d.vehicle ? (
+                          {d.dispense_type === "zone" ? (
+                            <div>
+                              <Badge variant="warning" className="text-[9px] px-1 py-0 mb-0.5">
+                                Cấp cho khu
+                              </Badge>
+                              {d.vehicle ? (
+                                <p className="text-[11px] font-semibold text-foreground">
+                                  Xe lấy: <span className="font-mono">{d.vehicle.code}</span>
+                                </p>
+                              ) : (
+                                <p className="text-[11px] text-muted-foreground">Không gán xe</p>
+                              )}
+                            </div>
+                          ) : d.vehicle ? (
                             <div>
                               <span className="font-semibold text-xs">{d.vehicle.code}</span>
                               <p className="text-[11px] text-muted-foreground">{d.vehicle.name}</p>
@@ -207,7 +220,9 @@ export function FuelDispenseList({
                           )}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {d.consumption_rate != null ? (
+                          {d.dispense_type === "zone" ? (
+                            <span className="text-[10px] text-muted-foreground italic">Tính cho khu</span>
+                          ) : d.consumption_rate != null ? (
                             <Badge variant="info" className="text-[10px]">
                               {formatConsumptionRate(Number(d.consumption_rate), odoUnit)}
                             </Badge>

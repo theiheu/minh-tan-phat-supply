@@ -417,6 +417,7 @@ export async function createFuelDispenseAction(input: FuelDispenseInput) {
     p_by: profile.id,
     p_sub_zone_id: (parsed.subZoneId ?? null) as unknown as string,
     p_driver_id: (parsed.driverId ?? null) as unknown as string,
+    p_dispense_type: parsed.dispenseType ?? "vehicle",
   });
 
   if (error) throw new Error(error.message);
@@ -452,6 +453,7 @@ export async function createFuelDispenseAction(input: FuelDispenseInput) {
         vehicleName,
         currentOdo: parsed.currentOdo ?? undefined,
         zoneName,
+        dispenseType: parsed.dispenseType ?? "vehicle",
         dispenserName: profile.name,
         notes: parsed.notes,
       },
@@ -604,7 +606,7 @@ export async function getFuelReportData(opts: {
   let query = supabase
     .from("fuel_dispenses")
     .select(
-      "id, code, quantity, usage_diff, consumption_rate, created_at, driver_name, vehicle:vehicles(id,code,name,odo_unit,fuel_norm), zone:zones(name), fuel_type:fuel_types(name,code)"
+      "id, code, quantity, usage_diff, consumption_rate, dispense_type, created_at, driver_name, vehicle:vehicles(id,code,name,odo_unit,fuel_norm), zone:zones(name), sub_zone:sub_zones(name), fuel_type:fuel_types(name,code)"
     )
     .eq("status", "completed")
     .order("created_at", { ascending: false });

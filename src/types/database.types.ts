@@ -1137,6 +1137,7 @@ export type Database = {
           consumption_rate: number | null
           created_at: string
           current_odo: number | null
+          dispense_type: "vehicle" | "zone"
           dispenser_id: string
           driver_id: string | null
           driver_name: string | null
@@ -1158,6 +1159,7 @@ export type Database = {
           consumption_rate?: number | null
           created_at?: string
           current_odo?: number | null
+          dispense_type?: "vehicle" | "zone"
           dispenser_id: string
           driver_id?: string | null
           driver_name?: string | null
@@ -1179,6 +1181,7 @@ export type Database = {
           consumption_rate?: number | null
           created_at?: string
           current_odo?: number | null
+          dispense_type?: "vehicle" | "zone"
           dispenser_id?: string
           driver_id?: string | null
           driver_name?: string | null

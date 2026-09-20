@@ -1,11 +1,11 @@
-# 📚 TỪ ĐIỂN BẢNG CƠ SỞ DỮ LIỆU (DATABASE TABLES DICTIONARY)
+# 📚 TỪ ĐIỂN BẢNG CƠ SỞ DỮ LIỆU (DATABASE TABLES & VIEWS DICTIONARY)
 
-> Tài liệu tham chiếu chi tiết toàn bộ các bảng cơ sở dữ liệu và views của hệ thống **Minh Tân Phát Supply** trên nền tảng PostgreSQL 17 / Supabase.
+> Tài liệu tham chiếu chi tiết toàn bộ các bảng cơ sở dữ liệu và Views phân tích BI của hệ thống **Minh Tân Phát Supply** trên nền tảng PostgreSQL 17 / Supabase (101 Migrations).
 
 ---
 
 ## MỤC LỤC CÁC PHÂN NHÓM BẢNG
-1. [Tổ chức, Người dùng, Phân quyền & Kiểm toán (6 bảng)](#1-tổ-chức-người-dùng-phân-quyền--kiểm-toán)
+1. [Tổ chức, Người dùng, Phân quyền, Email & Kiểm toán (7 bảng)](#1-tổ-chức-người-dùng-phân-quyền-email--kiểm-toán)
 2. [Danh mục Hàng hóa, SKU, Thuộc tính & BOM (9 bảng)](#2-danh-mục-hàng-hóa-sku-thuộc-tính--bom)
 3. [Đối tác Nhà Cung Cấp & Khách Hàng (2 bảng)](#3-đối-tác-nhà-cung-cấp--khách-hàng)
 4. [Kho Hàng, Sổ Cái Tồn Kho & Lô Hàng (5 bảng + 2 views)](#4-kho-hàng-sổ-cái-tồn-kho--lô-hàng)
@@ -17,10 +17,11 @@
 10. [Trạm Bồn Dầu & Xe Cơ Giới (5 bảng)](#10-trạm-bồn-dầu--xe-cơ-giới)
 11. [Kiểm Kê Kho Định Kỳ (2 bảng)](#11-kiểm-kê-kho-định-kỳ)
 12. [AI Copilot & Tri Thức Vector (6 bảng)](#12-ai-copilot--tri-thức-vector)
+13. [Views Phân Tích Metabase BI (3 views)](#13-views-phân-tích-metabase-bi)
 
 ---
 
-## 1. TỔ CHỨC, NGƯỜI DÙNG, PHÂN QUYỀN & KIỂM TOÁN
+## 1. TỔ CHỨC, NGƯỜI DÙNG, PHÂN QUYỀN, EMAIL & KIỂM TOÁN
 
 ### `zones` — Khu vực địa lý trang trại
 | Cột | Kiểu | Ràng buộc | Diễn giải |
@@ -52,6 +53,16 @@
 | `is_active` | `boolean` | `DEFAULT true` | `true` = Đang làm việc, `false` = Nghỉ việc / Lưu trữ |
 | `is_protected`| `boolean` | `DEFAULT false` | `true` = Tài khoản hệ thống gốc được bảo vệ chống xóa/khóa |
 
+### `notification_preferences` — Cấu hình thông báo email theo người dùng
+| Cột | Kiểu | Ràng buộc | Diễn giải |
+|---|---|---|---|
+| `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
+| `profile_id` | `uuid` | `NOT NULL, UNIQUE, REFERENCES profiles(id)` | Người dùng cấu hình |
+| `email_enabled` | `boolean` | `DEFAULT true` | Bật/tắt nhận email |
+| `instant_alerts` | `boolean` | `DEFAULT true` | Nhận thông báo tức thời khi có phiếu cần duyệt |
+| `daily_digest` | `boolean` | `DEFAULT false` | Nhận báo cáo tổng hợp cuối ngày |
+| `low_stock_alerts` | `boolean` | `DEFAULT true` | Nhận cảnh báo khi tồn kho chạm ngưỡng tối thiểu |
+
 ### `audit_logs` — Sổ nhật ký kiểm toán hệ thống
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
@@ -74,7 +85,7 @@
 | `link` | `text` | `NULL` | Đường dẫn chuyển hướng khi bấm vào |
 | `is_read` | `boolean` | `DEFAULT false` | Đã đọc hay chưa |
 
-### `email_delivery_attempts` — Nhật ký phân phối email SMTP
+### `email_delivery_attempts` / `notification_logs` — Nhật ký phân phối email SMTP
 | Cột | Kiểu | Ràng buộc | Diễn giải |
 |---|---|---|---|
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
@@ -128,6 +139,7 @@
 | `cost_price` | `numeric` | `DEFAULT 0` | Giá vốn mua |
 | `selling_price`| `numeric` | `DEFAULT 0` | Giá xuất bán |
 | `min_stock` | `numeric` | `DEFAULT 0` | Ngưỡng tồn an toàn tối thiểu |
+| `sku_status` | `text` | `DEFAULT 'active'` | `active`, `inactive`, `discontinued` |
 
 ### `sku_transaction_units` — Quy đổi đơn vị đóng gói đa cấp
 | Cột | Kiểu | Ràng buộc | Diễn giải |
@@ -135,7 +147,7 @@
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
 | `sku_id` | `uuid` | `NOT NULL, REFERENCES skus(id)` | Khóa ngoại SKU |
 | `unit_id` | `uuid` | `NOT NULL, REFERENCES units(id)` | Đơn vị quy đổi (VD: Thùng) |
-| `conversion_rate` | `numeric` | `NOT NULL, CHECK > 0` | Hệ số nhân về Base UOM (1 Thùng = 6 Hộp ➜ rate = 6) |
+| `conversion_factor` | `numeric` | `NOT NULL, CHECK > 0` | Hệ số nhân về Base UOM (1 Thùng = 6 Hộp ➜ factor = 6) |
 
 ### `attribute_definitions` & `sku_attribute_values` — Thuộc tính kỹ thuật
 | Bảng | Cột chính | Diễn giải |
@@ -160,7 +172,6 @@
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
 | `code` | `text` | `NOT NULL, UNIQUE` | Mã nhà cung cấp (VD: `NCC-PETRO`, `NCC-TAMHUNG`) |
 | `name` | `text` | `NOT NULL` | Tên đầy đủ công ty / cửa hàng |
-| `contact_person`| `text` | `NULL` | Người liên hệ |
 | `phone` | `text` | `NULL` | Số điện thoại |
 | `address` | `text` | `NULL` | Địa chỉ kinh doanh |
 
@@ -183,7 +194,7 @@
 | `id` | `uuid` | `PRIMARY KEY, DEFAULT gen_random_uuid()` | Khóa chính |
 | `code` | `text` | `NOT NULL, UNIQUE` | `KHO_TONG`, `KHO_CO_DIEN`, `KHO_HONG`, `TRAM_DAU` |
 | `name` | `text` | `NOT NULL` | Tên kho |
-| `type` | `location_type` | `NOT NULL` | `main`, `defect`, `repair`, `other` |
+| `type` | `location_type` | `NOT NULL` | `main`, `defect`, `repair`, `fuel`, `other` |
 
 ### `stock_balances` — Tồn kho khả dụng thời gian thực
 | Cột | Kiểu | Ràng buộc | Diễn giải |
@@ -199,7 +210,7 @@
 | `location_id` | `uuid` | `NOT NULL, REFERENCES stock_locations(id)` | Vị trí kho biến động |
 | `sku_id` | `uuid` | `NOT NULL, REFERENCES skus(id)` | SKU biến động |
 | `quantity_change`| `numeric` | `NOT NULL` | Số lượng (+ tăng, - giảm) |
-| `movement_type` | `movement_type` | `NOT NULL` | `receipt_in`, `issue_out`, `exchange_out`, `defect_collect_in`, `transfer_out`, `transfer_in`, `stocktake_adjust`, `revert_reversal`... |
+| `movement_type` | `text` | `NOT NULL` | `receipt_in`, `issue_out`, `exchange_out`, `defect_collect_in`, `transfer_out`, `transfer_in`, `stocktake_adjust`, `reversal`... |
 | `reference_type`| `text` | `NOT NULL` | Tên bảng chứng từ phát sinh (`receipts`, `issues`, `requisitions`...) |
 | `reference_id` | `uuid` | `NOT NULL` | Khóa chính chứng từ phát sinh |
 | `balance_after` | `numeric` | `NOT NULL` | Số dư tồn kho tức thời sau biến động |
@@ -217,9 +228,10 @@
 | `code` | `text` | `NOT NULL, UNIQUE` | Mã phiếu (VD: `NK-202609-001`) |
 | `supplier_id` | `uuid` | `NOT NULL, REFERENCES suppliers(id)` | Nhà cung cấp |
 | `location_id` | `uuid` | `NOT NULL, REFERENCES stock_locations(id)` | Kho nhập hàng |
-| `status` | `receipt_status` | `DEFAULT 'draft'` | `draft`, `posted`, `cancelled` |
+| `status` | `text` | `DEFAULT 'draft'` | `draft`, `posted`, `cancelled` |
 | `invoice_no` | `text` | `NULL` | Số hóa đơn VAT / Phiếu giao hàng |
 | `invoice_images`| `text[]` | `DEFAULT '{}'` | Danh sách đường dẫn ảnh hóa đơn trên Supabase Storage |
+| `linked_requisition_ids` | `uuid[]` | `DEFAULT '{}'` | Danh sách phiếu yêu cầu được auto-fulfill khi nhập |
 | `total_amount` | `numeric` | `DEFAULT 0` | Tổng giá trị tiền hàng |
 | `created_by` | `uuid` | `REFERENCES profiles(id)` | Người lập phiếu |
 
@@ -247,8 +259,9 @@
 | `zone_id` | `uuid` | `NOT NULL, REFERENCES zones(id)` | Khu vực nhận |
 | `sub_zone_id` | `uuid` | `NULL, REFERENCES sub_zones(id)` | Dãy trại nhận chi tiết |
 | `priority` | `text` | `DEFAULT 'normal'` | `normal`, `urgent` |
-| `status` | `requisition_status` | `DEFAULT 'draft'` | `draft`, `pending`, `approved`, `issued`, `received`, `rejected`, `cancelled` |
+| `status` | `text` | `DEFAULT 'draft'` | `draft`, `pending`, `approved`, `ordered`, `issued`, `received`, `rejected`, `cancelled` |
 | `invoice_images`| `text[]` | `DEFAULT '{}'` | Ảnh chứng từ/hóa đơn đính kèm |
+| `auto_fulfilled_by_receipt_id` | `uuid` | `NULL, REFERENCES receipts(id)` | Phiếu nhập kho đã tự động cấp phát |
 
 ### `requisition_returns` & `requisition_return_items` — Hoàn trả vật tư thừa
 | Bảng | Cột chính | Diễn giải |
@@ -297,10 +310,10 @@
 
 | Bảng | Cột chính | Diễn giải |
 |---|---|---|
-| `vehicles` | `id, code, name, type, license_plate, calc_unit, standard_rate, last_meter, qr_text, document_images` | Dàn xe cơ giới, định mức tiêu hao và ảnh cà vẹt |
+| `vehicles` | `id, code, name, type, license_plate, odo_unit, fuel_norm, current_odo, qr_token, document_images, inspection_expiry` | Dàn xe cơ giới, định mức tiêu hao, ảnh đăng kiểm/bảo hiểm |
 | `fuel_types` | `id, code, name, unit, is_active` | Danh mục loại nhiên liệu (Dầu DO 0.05S) |
 | `fuel_receipts` | `id, code, fuel_type_id, quantity, unit_cost, supplier_name, invoice_no` | Phiếu xe bồn Petrolimex nhập dầu vào trạm |
-| `fuel_dispenses`| `id, code, vehicle_id, fuel_type_id, dispensed_liters, current_meter, prev_meter, distance_or_hours, consumption_rate, status` | Lượt quét QR bơm dầu xe |
+| `fuel_dispenses`| `id, code, vehicle_id, zone_id, sub_zone_id, fuel_type_id, quantity, current_odo, consumption_rate, dispense_type, meter_images, status` | Lượt quét QR bơm dầu xe hoặc cấp dầu toàn khu |
 | `fuel_movements`| `id, fuel_type_id, quantity_change, movement_type, reference_id, balance_after` | Sổ cái biến động bồn dầu |
 
 ---
@@ -324,3 +337,13 @@
 | `ai_messages` | `id, conversation_id, role, content, tool_calls, tool_results` | Lịch sử tin nhắn hội thoại |
 | `ai_quick_prompts` | `id, label, prompt, icon, display_order, is_active` | Câu hỏi mẫu cài sẵn |
 | `ai_rate_limits` | `id, user_id, window_start, request_count` | Bộ đếm giới hạn tốc độ gọi API AI |
+
+---
+
+## 13. VIEWS PHÂN TÍCH METABASE BI
+
+| Tên View | Mục đích Phân Tích | Cột dữ liệu chính |
+|---|---|---|
+| `v_bi_subzone_cost_breakdown` | Chi phí xuất vật tư theo Khu & Dãy trại | `issue_id, issue_code, issue_date, report_month, zone_name, sub_zone_name, category_name, sku_code, product_name, quantity, unit_price, total_cost_vnd, creator_name` |
+| `v_bi_inventory_xnt_summary` | Tổng hợp Tồn kho & Sức khỏe kho tức thời | `sku_id, sku_code, product_name, category_name, base_unit, location_code, location_name, current_balance, min_stock_level, unit_price, total_stock_value, inventory_health_status` |
+| `v_bi_fleet_fuel_efficiency` | Giám sát Bồn dầu & Hiệu suất Đội xe | `dispense_id, dispense_code, vehicle_code, vehicle_name, vehicle_type, odo_unit, fuel_norm, driver_name, dispense_date, quantity, current_odo, consumption_rate, efficiency_status` |

@@ -21,18 +21,30 @@ export async function generateQrDataUri(text: string, width = 160): Promise<stri
  */
 export function getSlipUrl(req: Request, path: string): string {
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  let origin = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!origin && host) {
-    const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
+  let origin = "";
+  if (host) {
+    const proto =
+      req.headers.get("x-forwarded-proto") ||
+      (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
     origin = `${proto}://${host}`;
-  }
-  if (!origin) {
+  } else {
     try {
-      origin = new URL(req.url).origin;
+      const parsed = new URL(req.url);
+      if (parsed.origin && parsed.origin !== "null") {
+        origin = parsed.origin;
+      }
     } catch {
-      origin = "https://minhtanphat.io.vn";
+      // ignore
     }
   }
+
+  if (!origin && process.env.NEXT_PUBLIC_SITE_URL) {
+    origin = process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  if (!origin) {
+    origin = "https://minhtanphat.io.vn";
+  }
+
   const cleanOrigin = origin.replace(/\/+$/, "");
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${cleanOrigin}${cleanPath}`;

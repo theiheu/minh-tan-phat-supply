@@ -178,6 +178,8 @@ export interface FuelLogInput {
   quantity: number;
   usage_diff?: number | null;
   usageDiff?: number | null;
+  dispense_type?: string | null;
+  dispenseType?: string | null;
   created_at?: string;
   createdAt?: string;
   [key: string]: unknown;
@@ -193,6 +195,8 @@ export function calculateVehicleConsumption(
   const logsByVehicle = new Map<string, FuelLogInput[]>();
 
   for (const log of logs) {
+    const dispType = log.dispense_type || log.dispenseType;
+    if (dispType === "zone") continue;
     const vId = log.vehicle_id || log.vehicleId;
     if (!vId) continue;
     let list = logsByVehicle.get(vId);

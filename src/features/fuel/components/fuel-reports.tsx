@@ -49,7 +49,7 @@ export function FuelReports({
     >();
 
     for (const r of reportData) {
-      if (!r.vehicle) continue;
+      if (!r.vehicle || r.dispense_type === "zone") continue;
       const key = r.vehicle.id;
       const existing = map.get(key) ?? {
         vehicleId: r.vehicle.id,
@@ -122,9 +122,10 @@ export function FuelReports({
     // Sheet 1: Chi tiết từng lần cấp dầu
     const detailRows = reportData.map((r) => ({
       "Mã phiếu": r.code,
+      "Hình thức cấp": r.dispense_type === "zone" ? "Cấp cho toàn khu" : "Cấp cho xe",
       "Thời gian": formatDateTime(r.created_at),
-      "Phương tiện": r.vehicle ? `${r.vehicle.code} - ${r.vehicle.name}` : "Khác / Không gán xe",
-      "Khu vực": r.zone?.name ?? "Chưa phân khu",
+      "Phương tiện / Xe lấy": r.vehicle ? `${r.vehicle.code} - ${r.vehicle.name}` : "Khác / Không gán xe",
+      "Khu vực nhận": r.zone?.name ?? "Chưa phân khu",
       "Loại nhiên liệu": r.fuel_type?.name ?? "—",
       "Số lít": Number(r.quantity),
       "Đoạn đường / Giờ chạy": r.usage_diff ? Number(r.usage_diff) : "—",

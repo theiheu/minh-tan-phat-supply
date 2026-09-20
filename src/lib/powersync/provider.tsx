@@ -3,7 +3,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { PowerSyncContext } from "@powersync/react";
 import { PowerSyncDatabase } from "@powersync/web";
-import { getPowerSyncDatabase, initPowerSync } from "./db";
+import {
+  getPowerSyncDatabase,
+  connectPowerSync,
+  disconnectPowerSync,
+} from "./db";
+import { createClient } from "@/lib/supabase/client";
 
 interface PowerSyncProviderState {
   db: PowerSyncDatabase | null;
@@ -35,34 +40,73 @@ export function PowerSyncProvider({
   useEffect(() => {
     let isMounted = true;
 
-    async function setup() {
-      try {
-        const instance = getPowerSyncDatabase();
-        if (!instance) return;
+    try {
+      const instance = getPowerSyncDatabase();
 
-        if (isMounted) {
-          setDb(instance);
-        }
-
-        // Tự động kết nối backend nếu có URL hoặc môi trường hỗ trợ
-        await initPowerSync({ powersyncUrl });
-
-        if (isMounted) {
-          setIsReady(true);
-        }
-      } catch (err) {
-        console.warn("[PowerSyncProvider] Lỗi khi khởi tạo PowerSync:", err);
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setIsReady(true); // Vẫn đánh dấu ready để không chặn render app
-        }
+      if (!instance) {
+        if (isMounted) setIsReady(true);
+        return;
       }
+
+      if (isMounted) {
+        setDb(instance);
+        setIsReady(true);
+      }
+    } catch (err) {
+      console.warn("[PowerSyncProvider] Lỗi khi tạo database instance:", err);
+      if (isMounted) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setIsReady(true);
+      }
+      return;
     }
 
-    setup();
+    const targetUrl = powersyncUrl || process.env.NEXT_PUBLIC_POWERSYNC_URL;
+    const supabase = createClient();
+
+    // 1. Kiểm tra phiên đăng nhập ban đầu và kết nối nếu đã xác thực
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (!isMounted) return;
+        if (session?.access_token && targetUrl) {
+          try {
+            await connectPowerSync({ powersyncUrl: targetUrl });
+          } catch (err) {
+            console.warn("[PowerSyncProvider] Lỗi kết nối ban đầu:", err);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("[PowerSyncProvider] Không thể lấy session:", err);
+      });
+
+    // 2. Lắng nghe thay đổi trạng thái xác thực (đăng nhập, làm mới token, đăng xuất)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session?.access_token && targetUrl) {
+          try {
+            await connectPowerSync({ powersyncUrl: targetUrl });
+          } catch (err) {
+            console.warn("[PowerSyncProvider] Lỗi kết nối sau khi đăng nhập:", err);
+          }
+        }
+      } else if (event === "SIGNED_OUT" || !session) {
+        try {
+          await disconnectPowerSync();
+        } catch (err) {
+          console.warn("[PowerSyncProvider] Lỗi ngắt kết nối sau khi đăng xuất:", err);
+        }
+      }
+    });
 
     return () => {
       isMounted = false;
+      subscription?.unsubscribe();
     };
   }, [powersyncUrl]);
 

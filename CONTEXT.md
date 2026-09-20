@@ -26,8 +26,8 @@ Mọi agent, developer và tài liệu trong repo phải tuân thủ nghiêm ng�
 
 | Thuật ngữ | Định nghĩa & Ý nghĩa Vận hành |
 |---|---|
-| **Phiếu yêu cầu (Requisition)** | Công nhân/Trưởng trại lập phiếu xin cấp vật tư trên điện thoại. Quy trình duyệt 2 cấp: Kỹ thuật duyệt cấp 1 ➔ Quản kho xuất cấp cấp 2. |
-| **Phiếu nhập kho (Receipt / GRN)** | Nhập vật tư từ Nhà cung cấp, gắn số hóa đơn VAT, upload ảnh chứng từ và tự động cấp phát (Auto-fulfill) cho phiếu đã duyệt. |
+| **Phiếu yêu cầu (Requisition)** | Công nhân/Trưởng trại lập phiếu xin cấp vật tư trên điện thoại. Quy trình tiến trình 5 cột mốc: *Gửi yêu cầu ➔ Kỹ thuật duyệt ➔ Đang đặt hàng NCC ➔ Kho xuất cấp ➔ Hoàn tất*. Hỗ trợ đính kèm ảnh hóa đơn mua gấp và đồng bộ với phiếu nhập. |
+| **Phiếu nhập kho (Receipt / GRN)** | Nhập vật tư từ Nhà cung cấp, gắn số hóa đơn VAT, upload ảnh chứng từ có lightbox và tự động cấp phát (Auto-fulfill) cho phiếu đã duyệt. |
 | **Phiếu xuất kho (Issue / PXK)** | Xuất vật tư trực tiếp gắn theo Dãy trại (`sub_zones`) để hạch toán chi phí, hoặc xuất bán thương mại cho khách hàng. |
 | **Phiếu báo hỏng (Defect Note)** | Ghi nhận sự cố hư hỏng tại trại, bắt buộc chụp >= 1 ảnh hiện trường và mô tả lỗi để phục vụ đối soát. |
 | **Đổi 1-1 cấp tốc (Quick Exchange)** | Nghiệp vụ khẩn cấp cứu trại: Xuất ngay thiết bị mới và thu thiết bị cháy về Kho Hỏng trong 30 giây (1 transaction). |
@@ -35,9 +35,10 @@ Mọi agent, developer và tài liệu trong repo phải tuân thủ nghiêm ng�
 | **Phiếu thanh lý (Liquidation)** | Bán phế liệu ve chai hoặc tiêu hủy thiết bị không thể phục hồi, Chủ trại duyệt thu tiền về quỹ. |
 | **Mượn - Trả dụng cụ (Tool Borrowing)** | Quản lý tủ đồ nghề dùng chung (máy hàn, máy khoan, thang nhôm). Có hẹn ngày trả và gửi email cảnh báo quá hạn. |
 | **Khu vực & Dãy trại (Zones & Sub-zones)** | Cây không gian 2 cấp: Khu lớn (`zones`, VD: Khu A, Khu B) và Dãy trại con (`sub_zones`, VD: Trại A1, A2). |
-| **Kho dầu & Xe cơ giới (Fuel & Fleet)** | Trạm bồn dầu Diesel nội bộ: Quét tem QR xe, ghi nhận ODO/giờ máy, tự động tính L/100km hoặc L/h, cảnh báo bất thường. |
+| **Kho dầu & Xe cơ giới (Fuel & Fleet)** | Trạm bồn dầu Diesel nội bộ: Quét tem QR xe trong 5 giây, ghi nhận ODO/giờ máy, tính tiêu hao L/100km hoặc L/h, hỗ trợ cấp dầu phương tiện hoặc cấp trực tiếp theo Toàn khu / Dãy trại, quản lý hồ sơ đăng kiểm xe. |
 | **Kiểm kê kho (Stocktake)** | Đếm tồn kho thực tế định kỳ bằng điện thoại, chụp ảnh bằng chứng, đối soát thừa/thiếu và duyệt cân bằng tồn kho. |
 | **Chuyển kho (Transfer)** | Điều chuyển vật tư giữa Kho Tổng, Kho Cơ Điện, Kho Hỏng, Trạm Bồn Dầu với lịch sử minh bạch. |
+| **Báo cáo & Phân tích BI (Reports & BI)** | Trung tâm báo cáo đa góc nhìn (Tổng quan Ban giám đốc, Sổ cái XNT, Chi phí Dãy trại, Hiệu suất Đội xe, Metabase BI Views). |
 
 ---
 
@@ -46,12 +47,15 @@ Mọi agent, developer và tài liệu trong repo phải tuân thủ nghiêm ng�
 | Thuật ngữ | Định nghĩa Kỹ thuật & Ràng buộc |
 |---|---|
 | **Server Actions** | Hàm `async` đánh dấu `'use server'` trong Next.js App Router, chạy hoàn toàn trên server, gọi trực tiếp từ Client Component với Zod validation. |
-| **Security Definer RPC** | Hàm PostgreSQL chạy với đặc quyền quản trị viên DB để thực hiện các transaction phức tạp, kiểm tra số dư và ghi sổ cái kho an toàn. |
+| **Security Definer RPC** | Hàm PostgreSQL chạy với đặc quyền quản trị viên DB để thực hiện các transaction phức tạp, kiểm tra số dư và ghi sổ cái kho an toàn (77+ RPCs). |
 | **Row Level Security (RLS)** | Chính sách bảo mật cấp hàng trong PostgreSQL 17 đảm bảo từng vai trò chỉ đọc/ghi đúng dữ liệu được phép. |
 | **Immutable Identity** | Nguyên tắc bất biến định danh: Sau khi tạo tài khoản, `name` và `username` bị khóa vĩnh viễn bởi DB Trigger `trg_profiles_prevent_identity_change`. |
 | **Hybrid Archive & Force Purge** | Nhân sự có lịch sử chứng từ ➔ chuyển sang trạng thái Lưu trữ (`is_active = false`); Tài khoản trống ➔ Xóa vĩnh viễn (Hard Delete); Superuser có quyền Purge toàn diện (`admin_purge_user_data`). |
+| **Master Document Control** | Superuser và Chủ trại có quyền kiểm tra quan hệ phụ thuộc chứng từ (`admin_inspect_document_dependencies`) và can thiệp xóa cứng/đảo kho an toàn (`admin_force_delete_document`). |
 | **Append-Only Ledger** | Bảng `stock_movements` không được phép `UPDATE` hay `DELETE` (DB Trigger chặn). Mọi thao tác hoàn tác phải tạo movement đối ứng (reversal). |
-| **Auto-Fulfill Outcome** | Sau khi nhập kho, hệ thống tự động quét và hoàn tất các phiếu yêu cầu đã duyệt (`approved`) theo thứ tự FIFO và lưu vết bền vững. |
+| **PowerSync Offline-First** | Đồng bộ dữ liệu 2 chiều giữa Supabase PostgreSQL và SQLite WebAssembly trong trình duyệt, đảm bảo thao tác mượt mà trong vùng mất sóng của trang trại. |
+| **Metabase BI Views** | Bộ Analytical Views (`v_bi_subzone_cost_breakdown`, `v_bi_inventory_xnt_summary`, `v_bi_fleet_fuel_efficiency`) phân quyền cho user `metabase_readonly` để trực quan hóa biểu đồ BI ngoài mà không can thiệp dữ liệu giao dịch. |
+| **Role-Based Email Notifications** | Động cơ gửi email SMTP định kỳ (hourly digest, alert tức thì) dựa trên ma trận vai trò và cấu hình sở thích của người dùng (`notification_preferences`). |
 | **Vector PDF Engine** | Render PDF trực tiếp phía client/server bằng `@react-pdf/renderer` với font tiếng Việt nhúng sẵn (`Roboto-Regular`, `Roboto-Bold`), chuẩn hóa nhận diện thương hiệu và mã QR tra cứu. |
 | **AI Copilot RAG** | Hệ thống trợ lý AI tích hợp qua Vercel AI SDK, trích xuất dữ liệu kho và tài liệu SOP vận hành trại với cơ chế rate limit và chunking chuẩn hóa. |
 
